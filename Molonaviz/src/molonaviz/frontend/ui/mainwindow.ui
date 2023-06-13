@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1827</width>
+    <height>831</height>
+   </rect>
+  </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
+  </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::CustomContextMenu</enum>
+  </property>
+  <property name="windowTitle">
+   <string>MolonaViz</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,1">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,1,1,1">
+      <item>
+       <widget class="QDockWidget" name="dockDatabaseName">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="features">
+         <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+        </property>
+        <widget class="QWidget" name="dockWidgetContents_8">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QLabel" name="fullDatabaseNameLabel">
+            <property name="text">
+             <string>A long      text</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDockWidget" name="dockDataSPoints">
+        <property name="features">
+         <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+        </property>
+        <property name="windowTitle">
+         <string>Data Points</string>
+        </property>
+        <widget class="QWidget" name="dockWidgetContents_9">
+         <layout class="QVBoxLayout" name="verticalLayout_12">
+          <item>
+           <widget class="QTreeView" name="treeViewDataSPoints">
+            <property name="contextMenuPolicy">
+             <enum>Qt::DefaultContextMenu</enum>
+            </property>
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <attribute name="headerVisible">
+             <bool>false</bool>
+            </attribute>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDockWidget" name="dockSensors">
+        <property name="features">
+         <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+        </property>
+        <property name="allowedAreas">
+         <set>Qt::AllDockWidgetAreas</set>
+        </property>
+        <property name="windowTitle">
+         <string>Current lab: </string>
+        </property>
+        <widget class="QWidget" name="dockWidgetContents_10">
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QTabWidget" name="tabWidget">
+            <property name="currentIndex">
+             <number>2</number>
+            </property>
+            <widget class="QWidget" name="tab_7">
+             <attribute name="title">
+              <string>Pressure Sensors</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_13">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QTreeView" name="treeViewPressureSensors">
+                <attribute name="headerVisible">
+                 <bool>false</bool>
+                </attribute>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="tab_8">
+             <attribute name="title">
+              <string>Shafts</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_14">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QTreeView" name="treeViewShafts">
+                <attribute name="headerVisible">
+                 <bool>false</bool>
+                </attribute>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="tab_9">
+             <attribute name="title">
+              <string>Thermometers</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_15">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QTreeView" name="treeViewThermometers">
+                <attribute name="headerVisible">
+                 <bool>false</bool>
+                </attribute>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDockWidget" name="dockAppMessages">
+        <property name="features">
+         <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+        </property>
+        <property name="windowTitle">
+         <string>Application Messages</string>
+        </property>
+        <widget class="QWidget" name="dockWidgetContents">
+         <layout class="QVBoxLayout" name="verticalLayout_16">
+          <item>
+           <widget class="QTextEdit" name="textEditApplicationMessages"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButtonClear">
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QMdiArea" name="mdiArea">
+      <property name="tabsClosable">
+       <bool>true</bool>
+      </property>
+      <property name="tabsMovable">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1827</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuStudy">
+    <property name="title">
+     <string>Study</string>
+    </property>
+    <addaction name="actionCreateStudy"/>
+    <addaction name="actionOpenStudy"/>
+    <addaction name="separator"/>
+    <addaction name="actionCloseStudy"/>
+   </widget>
+   <widget class="QMenu" name="menuSPoint">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="title">
+     <string>Point</string>
+    </property>
+    <addaction name="actionImportSPoint"/>
+    <addaction name="actionOpenSPoint"/>
+    <addaction name="actionRemoveSPoint"/>
+   </widget>
+   <widget class="QMenu" name="menuWindows">
+    <property name="title">
+     <string>Windows</string>
+    </property>
+    <addaction name="actionSwitchToTabbedView"/>
+    <addaction name="actionSwitchToSubWindowView"/>
+    <addaction name="actionSwitchToCascadeView"/>
+    <addaction name="separator"/>
+    <addaction name="actionHideShowSPoints"/>
+    <addaction name="actionHideShowSensors"/>
+    <addaction name="actionHideShowAppMessages"/>
+   </widget>
+   <widget class="QMenu" name="menuMolonaViz">
+    <property name="title">
+     <string>MolonaViz</string>
+    </property>
+    <widget class="QMenu" name="menuPreferences">
+     <property name="title">
+      <string>Preferences</string>
+     </property>
+     <widget class="QMenu" name="menuTemperature">
+      <property name="title">
+       <string>Temperature</string>
+      </property>
+      <addaction name="actionTempToKelvin"/>
+      <addaction name="actionTempToCelsius"/>
+     </widget>
+     <addaction name="menuTemperature"/>
+    </widget>
+    <addaction name="actionAboutMolonaViz"/>
+    <addaction name="menuPreferences"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuitMolonaViz"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionOpenUserguideFR"/>
+   </widget>
+   <widget class="QMenu" name="menuLabo">
+    <property name="title">
+     <string>Laboratory</string>
+    </property>
+    <addaction name="actionImportLab"/>
+   </widget>
+   <widget class="QMenu" name="menuDatabase">
+    <property name="title">
+     <string>Database</string>
+    </property>
+    <addaction name="actionChangeDatabase"/>
+   </widget>
+   <addaction name="menuMolonaViz"/>
+   <addaction name="menuDatabase"/>
+   <addaction name="menuStudy"/>
+   <addaction name="menuSPoint"/>
+   <addaction name="menuLabo"/>
+   <addaction name="menuWindows"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionCreateStudy">
+   <property name="text">
+    <string>Create Study</string>
+   </property>
+  </action>
+  <action name="actionOpenStudy">
+   <property name="text">
+    <string>Open Study</string>
+   </property>
+  </action>
+  <action name="actionCloseStudy">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Close Study</string>
+   </property>
+  </action>
+  <action name="actionCreateStudy2">
+   <property name="text">
+    <string>CreateStudy2</string>
+   </property>
+  </action>
+  <action name="actionImportSPoint">
+   <property name="text">
+    <string>Import Sampling Point</string>
+   </property>
+  </action>
+  <action name="actionOpenSPoint">
+   <property name="text">
+    <string>Open Sampling Point</string>
+   </property>
+  </action>
+  <action name="actionRemoveSPoint">
+   <property name="text">
+    <string>Remove Sampling Point</string>
+   </property>
+  </action>
+  <action name="actionSwitchToTabbedView">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Switch To Tabbed View</string>
+   </property>
+  </action>
+  <action name="actionSwitchToSubWindowView">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Switch To SubWindow View</string>
+   </property>
+  </action>
+  <action name="actionAboutMolonaViz">
+   <property name="text">
+    <string>About MolonaViz</string>
+   </property>
+  </action>
+  <action name="actionQuitMolonaViz">
+   <property name="text">
+    <string>Quit MolonaViz</string>
+   </property>
+  </action>
+  <action name="actionHideShowSPoints">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Points</string>
+   </property>
+  </action>
+  <action name="actionHideShowSensors">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Sensors</string>
+   </property>
+  </action>
+  <action name="actionHideShowAppMessages">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Application Messages</string>
+   </property>
+  </action>
+  <action name="actionTempToKelvin">
+   <property name="text">
+    <string>Kelvin</string>
+   </property>
+  </action>
+  <action name="actionTempToCelsius">
+   <property name="text">
+    <string>Celsius</string>
+   </property>
+  </action>
+  <action name="actionSwitchToCascadeView">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Switch To Cascade View</string>
+   </property>
+  </action>
+  <action name="actionOpenUserguideFR">
+   <property name="text">
+    <string>Open Userguide (FR)</string>
+   </property>
+  </action>
+  <action name="actionImportLab">
+   <property name="text">
+    <string>Import Laboratory</string>
+   </property>
+  </action>
+  <action name="actionChangeDatabase">
+   <property name="text">
+    <string>Change Database</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

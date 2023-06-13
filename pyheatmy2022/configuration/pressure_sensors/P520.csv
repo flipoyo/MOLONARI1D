@@ -1,0 +1,7 @@
+Sensor_Name,P520
+Datalogger,Rasberry PI
+Calibration_Date,2016/08/12 10:10:10
+Intercept,1.33063041535079
+dU/dH,5.52770388401728
+dU/dT,0.00249334935671834
+Sigma_Meas_P,0.01
