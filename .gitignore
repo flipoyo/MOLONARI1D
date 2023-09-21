@@ -1,0 +1,14 @@
+src/molonaviz/config.txt
+*/__pycache__
+*/*/__pycache__
+*/*/*/__pycache__
+*/*/*/*/__pycache__
+*/.ipynb_checkpoints
+*/*/.ipynb_checkpoints
+*/*/*/.ipynb_checkpoints
+*/*/*/*/.ipynb_checkpoints
+*/*egg-info
+.project
+.pydevproject
+.cproject
+.settings
