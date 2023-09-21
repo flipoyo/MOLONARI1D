@@ -66,4 +66,4 @@ For more informations on the software, please check the folder
 You are now set to use the ecosystem. To launch it, you can simply run ```molonaviz``` in a terminal.
 
  
-![logo](Figures/schemaMOLONARI_smll.png)
+![logo](Figures/schemaMOLONARI.png)
