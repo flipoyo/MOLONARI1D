@@ -14,20 +14,25 @@ The other software **Molonaviz** is a GUI that allows for the management of the 
 ## Contributors
 MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021. under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors. Fabien Ors contributed to the 2021 and 2022 editions by conceptualising **Molonaviz**. 
 
-The MOLONARI1D project is integrated into the french project [EQUIPEX+ TERRA FORMA] ([http://www.google.com](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires) "link to TERRA FORMA") led by CNRS. 
+The MOLONARI1D project is integrated into the french project [EQUIPEX+ TERRA FORMA](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires) "link to TERRA FORMA") led by CNRS. 
+
+The student contributors are, for **PyHeatMy**:
+- 2021 Mathis Bourdin & Youri Tchouboukoff
+- 2022 Guillaume de Rochefort, Loris Megy, Valentin Alleaume
+
+for **Molonaviz**:
+- 2021 
+- 2022 software restarted from scratch by Guillaume Vigne
 
 ## Copyright
 
 [![License](https://img.shields.io/badge/License-EPL_2.0-blue.svg)](https://opensource.org/licenses/EPL-2.0)
 
-&copy; 2022 Contributors to the CaWaQS software.
+&copy; Contributors to the MOLONARI1D softwares.
 
 *All rights reserved*. This software and the accompanying materials are made available under the terms of the Eclipse Public License (EPL) v2.0 which accompanies this distribution, and is available at http://www.eclipse.org/legal/epl-v20.html.
 
-MIT
-
-2021 Mathis Bourdin & Youri Tchouboukoff
-2022 Amélie Impéror, Antoine Poirier, Guillaume de Rochefort, Loris Megy, Paul Bonin Ciosi, Valentin Alleaume, Xinbei Jiang
+**PyHeatMy** and **Molonaviz**  were first released under the MIT license.
 
 
 ## Warning on reliability
