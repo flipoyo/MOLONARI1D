@@ -12,7 +12,8 @@ The other software **Molonaviz** is a GUI that allows for the management of the 
 
 
 ## Contributors
-MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021. under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors. 
+MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021. under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors.
+
 - Nicolas Flipo supervises the MOLONARI 1D ecosystem
 - Aurelien Baudin and Agnès Rivière supervise the monitoring device development and their __in situ__ deployment
 - Nicolas Flipo and Thomas Romary supervise the development of **PyHeatMy**
