@@ -2,8 +2,6 @@
 
 ![logo](Figures/logo_MOLONARI_smll.png) 
 
-## The MOLONARI1D ecosystem
-
 MOLONARI means MOnitoring LOcal des échanges NAppe-RIvière, which translates in english LOcal MOnitoring of Stream-aquifer exchanges (LOMOS)
 
 The ecosystem is dedicated to the monitoring of water and heat exchanges in riverbed. It includes monitoring devices and two softwares under the EPLv2.0 license. 
@@ -28,7 +26,7 @@ The student contributors are, for **PyHeatMy**:
 - 2022 Guillaume de Rochefort, Loris Megy, Valentin Alleaume
 
 for **Molonaviz**:
-- 2021 Charlotte 
+- 2021 Sandra Clodion et Charlotte de Mailly Nesle
 - 2022 software restarted from scratch by Guillaume Vigne
 
 ## Copyright
