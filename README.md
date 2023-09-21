@@ -1,4 +1,4 @@
-# MOLONARI1D ecosystem
+#  ![logo_MOLONARI.png] MOLONARI1D ecosystem
 
 ## The MOLONARI1D ecosystem
 
