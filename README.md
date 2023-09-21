@@ -1,7 +1,7 @@
 #  MOLONARI1D ecosystem
 
-![logo](Figures/logo_MOLONARI.png)  
-![logo](Figures/schemaMOLONARI.png)
+![logo](Figures/logo_MOLONARI_smll.png)  
+![logo](Figures/schemaMOLONARI_smll.png)
 
 ## The MOLONARI1D ecosystem
 
