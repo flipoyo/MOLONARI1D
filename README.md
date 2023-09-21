@@ -30,7 +30,7 @@ for **Molonaviz**:
 - 2022 software restarted from scratch by Guillaume Vigne
 
 for **hardwareProgramming**:
-- 2022 Wissam Karrou for the Ardhuino Uno programming
+- 2022 Wissam Karrou for the Arduino Uno programming
 
 ## Copyright
 
