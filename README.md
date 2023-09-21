@@ -15,11 +15,11 @@ The other software **Molonaviz** is a GUI that allows for the management of the 
 MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021. under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors.
 
 - Nicolas Flipo supervises the MOLONARI 1D ecosystem
-- Aurelien Baudin and Agnès Rivière supervise the monitoring device development and their __in situ__ deployment
+- Aurelien Baudin and Agnès Rivière supervise the **monitoring device development** and their **__in situ__ deployment**
 - Nicolas Flipo and Thomas Romary supervise the development of **PyHeatMy**
 - Fabien Ors contributed to the 2021 and 2022 editions by conceptualising **Molonaviz**
 
-The MOLONARI1D project is integrated into the french project [EQUIPEX+ TERRA FORMA](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires) "link to TERRA FORMA") led by CNRS. 
+The MOLONARI1D project is integrated into the french project [EQUIPEX+ TERRA FORMA](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires "link to TERRA FORMA") led by CNRS. 
 
 The student contributors are, for **PyHeatMy**:
 - 2021 Mathis Bourdin & Youri Tchouboukoff
