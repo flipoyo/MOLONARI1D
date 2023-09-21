@@ -29,6 +29,9 @@ for **Molonaviz**:
 - 2021 Sandra Clodion et Charlotte de Mailly Nesle
 - 2022 software restarted from scratch by Guillaume Vigne
 
+for **hardwareProgramming**:
+- 2022 Wissam Karrou for the Ardhuino Uno programming
+
 ## Copyright
 
 [![License](https://img.shields.io/badge/License-EPL_2.0-blue.svg)](https://opensource.org/licenses/EPL-2.0)
