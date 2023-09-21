@@ -1,4 +1,7 @@
-#  ![logo_MOLONARI.png] MOLONARI1D ecosystem
+#  MOLONARI1D ecosystem
+
+![logo](Figures/logo_MOLONARI.png)  
+![logo](Figures/schemaMOLONARI.png)
 
 ## The MOLONARI1D ecosystem
 
@@ -12,7 +15,7 @@ The other software **Molonaviz** is a GUI that allows for the management of the 
 
 
 ## Contributors
-MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021. under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors.
+MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021, under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors.
 
 - Nicolas Flipo supervises the MOLONARI 1D ecosystem
 - Aurelien Baudin and Agnès Rivière supervise the **monitoring device development** and their **_in situ_ deployment**
