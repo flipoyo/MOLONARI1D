@@ -26,6 +26,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
         self.samplingPoint = samplingPoint
         self.coordinator = spointCoordinator
+        
         self.computeEngine = Compute(self.coordinator)
         self.computeEngine.DirectModelFinished.connect(self.updateAllViews)
         self.computeEngine.MCMCFinished.connect(self.updateAllViews)
@@ -389,6 +390,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 df_cleaned = dlg.getCleanedMeasures()
                 if not df_cleaned.empty:
                     self.coordinator.insert_cleaned_measures(df_cleaned)
+                    self.checkBoxRawData.setEnabled(True)
+
 
                 self.updateAllViews()
                 self.handleComputationsButtons()
