@@ -390,7 +390,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 df_cleaned = dlg.getCleanedMeasures()
                 if not df_cleaned.empty:
                     self.coordinator.insert_cleaned_measures(df_cleaned)
-                    self.checkBoxRawData.setEnabled(True)
+                    self.checkBoxRawData.setEnabled(True)  # le bouton est actif si clean up (TL)
 
 
                 self.updateAllViews()

@@ -3,6 +3,10 @@ This file regroups different view inheriting from matplotlib's canvas. They are 
 """
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
+from matplotlib.cm import ScalarMappable
+import matplotlib.dates as mdates
+
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import matplotlib.dates as mdates
@@ -217,12 +221,25 @@ class UmbrellaView(GraphView1D):
         """
         This function needs to be overloaded for the umbrellas, as the plot function must be like plot(temps, depth) with depths being fixed.
         """
+
+        cmap = plt.get_cmap('Reds')
+        colors = [cmap(i / len(self.y.items())) for i in range(len(self.y.items()))]
+        list_labels = [label for label in self.y.keys()]
+
         for index, (label, data) in enumerate(self.y.items()):
+
             if len(self.x) == len(data):
-                self.axes.plot( data,self.x, label=label)
+                self.axes.plot( data,self.x, color=colors[index])
+                
+                
+        norm = Normalize(vmin=0, vmax=len(self.y.items()))
+        sm = ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])        
+        colorbar = self.fig.colorbar(mappable=sm,ax=self.axes, ticks=np.linspace(0, len(self.y.items()), len(self.y.items())),)
+        colorbar.set_ticklabels(list_labels)
+
         self.axes.legend(loc='best')
         self.axes.set_ylabel(self.ylabel)
-
         self.axes.set_xlabel(self.xlabel)
         self.axes.set_title(self.title)
         self.axes.grid(True)

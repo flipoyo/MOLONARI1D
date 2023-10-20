@@ -117,7 +117,7 @@ class SelectCanvas(CompareCanvas):
         var_plotted = self.reference_data.copy(deep = True)
         mask = self.inside(event1, event2)
         self.last_selection = var_plotted[mask]
-        self.selected_data = pd.concat([self.selected_data, self.last_selection], axis = 0)
+        self.selected_data = pd.concat([self.selected_data, self.last_selection], axis = 0)  # multiselection (TL)
         self.selected_data.drop_duplicates(inplace = True)
         self.plotData(self.field)
 
