@@ -241,9 +241,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         for i in range(nb_cells):
             flows[i, :] = - K_list[i]*nablaH[i, :]
-
+        
         self._flows = flows  # calcul du débit spécifique
-
+        plt.plot(nablaH[:, 10], self._z_solve)
+        plt.plot(self._flows[:, 10], self._z_solve)
+        print("addition modification")
         if verbose:
             print("Done.")
 
