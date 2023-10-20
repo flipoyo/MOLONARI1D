@@ -10,9 +10,17 @@ from matplotlib.figure import Figure
 import matplotlib.cm as cm
 from matplotlib.ticker import MaxNLocator
 import numpy as np
-from ..interactions.MoloModel import MoloModel
-from ..interactions.MoloView import MoloView
-from ..utils.general import dateToMdates
+from molonaviz.interactions.MoloModel import MoloModel
+from molonaviz.interactions.MoloView import MoloView
+from molonaviz.utils.general import dateToMdates
+
+import sys
+
+def afficher_message_erreur(message):
+    sys.stderr.write(message + '\n')
+    sys.stderr.flush()
+
+
 
 class GraphView(MoloView, FigureCanvasQTAgg):
     """
@@ -24,7 +32,7 @@ class GraphView(MoloView, FigureCanvasQTAgg):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         FigureCanvasQTAgg.__init__(self, self.fig)
         self.fig.tight_layout(h_pad=5, pad=5)
-        self.axes = self.fig.add_subplot(111)
+        self.ax = self.fig.add_subplot(111)
 
 class GraphView1D(GraphView):
     """
@@ -45,9 +53,11 @@ class GraphView1D(GraphView):
         self.ylabel=ylabel
         self.title = title
         self.time_dependent = time_dependent
+         # Créez les axes et associez-les à self.ax
+        self.ax = self.fig.add_subplot(111)
 
     def onUpdate(self):
-        self.axes.clear()
+        self.ax.clear()
         self.resetData()
         self.retrieveData()
         self.setup_x()
@@ -61,22 +71,22 @@ class GraphView1D(GraphView):
         if self.time_dependent:
             self.x = dateToMdates(self.x)
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-            self.axes.xaxis.set_major_formatter(formatter)
-            self.axes.xaxis.set_major_locator(MaxNLocator(4))
-            plt.setp(self.axes.get_xticklabels(), rotation = 15)
+            self.ax.xaxis.set_major_formatter(formatter)
+            self.ax.xaxis.set_major_locator(MaxNLocator(4))
+            plt.setp(self.ax.get_xticklabels(), rotation = 15)
         else:
             pass
 
     def plotData(self):
         for index, (label, data) in enumerate(self.y.items()):
             if len(self.x) == len(data):
-                self.axes.plot(self.x, data, label=label)
-        self.axes.legend(loc='best')
-        self.axes.set_ylabel(self.ylabel)
+                self.ax.plot(self.x, data, label=label)
+        self.ax.legend(loc='best')
+        self.ax.set_ylabel(self.ylabel)
 
-        self.axes.set_xlabel(self.xlabel)
-        self.axes.set_title(self.title)
-        self.axes.grid(True)
+        self.ax.set_xlabel(self.xlabel)
+        self.ax.set_title(self.title)
+        self.ax.grid(True)
 
     def resetData(self):
         self.x = []
@@ -100,10 +110,16 @@ class GraphView2D(GraphView):
         self.x = []
         self.y = []
         self.cmap = []
+
+        # créer une colorbar
         self.colorbar = None
+     
 
     def onUpdate(self):
-        self.axes.clear()
+      
+        self.ax.clear()
+        # initialize the axes
+        self.ax = self.fig.add_subplot(111)
         self.resetData()
         self.retrieveData()
         self.setup_x()
@@ -117,29 +133,27 @@ class GraphView2D(GraphView):
         if self.time_dependent:
             self.x = dateToMdates(self.x)
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-            self.axes.xaxis.set_major_formatter(formatter)
-            self.axes.xaxis.set_major_locator(MaxNLocator(4))
-            plt.setp(self.axes.get_xticklabels(), rotation = 15)
+            self.ax.xaxis.set_major_formatter(formatter)
+            self.ax.xaxis.set_major_locator(MaxNLocator(4))
+            plt.setp(self.ax.get_xticklabels(), rotation = 15)
         else:
             pass
 
     def plotData(self):
         if self.cmap.shape[1] ==len(self.x) and self.cmap.shape[0] == len(self.y):
             #View is not empty and should display something
-            image = self.axes.imshow(self.cmap, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], float(self.y[-1]), float(self.y[0])], data="float")
+            image = self.ax.imshow(self.cmap, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], float(self.y[-1]), float(self.y[0])], data="float")
             self.colorbar = self.fig.colorbar(image) # Add a colorbar
-            self.axes.xaxis_date()
-            self.axes.set_title(self.title)
-            self.axes.set_ylabel(self.ylabel)
-            self.axes.set_xlabel(self.xlabel)
+            self.ax.xaxis_date()
+            self.ax.set_title(self.title)
+            self.ax.set_ylabel(self.ylabel)
+            self.ax.set_xlabel(self.xlabel)
 
     def resetData(self):
         self.x = []
         self.y = []
         self.cmap = []
-        if self.colorbar:
-            # If a colorbar exists, remove it
-            self.colorbar.remove()
+            
 
 class GraphViewHisto(GraphView):
     """
@@ -157,16 +171,16 @@ class GraphViewHisto(GraphView):
         self.bins = bins
 
     def onUpdate(self):
-        self.axes.clear()
+        self.ax.clear()
         self.resetData()
         self.retrieveData()
         self.plotData()
         self.draw()
 
     def plotData(self):
-        self.axes.hist(self.data, edgecolor='black', bins=self.bins, alpha=.3, density=True, color=self.color)
-        self.axes.set_title(self.title)
-        self.axes.set_xlabel(self.xlabel)
+        self.ax.hist(self.data, edgecolor='black', bins=self.bins, alpha=.3, density=True, color=self.color)
+        self.ax.set_title(self.title)
+        self.ax.set_xlabel(self.xlabel)
 
     def resetData(self):
         self.data = []
@@ -219,13 +233,13 @@ class UmbrellaView(GraphView1D):
         """
         for index, (label, data) in enumerate(self.y.items()):
             if len(self.x) == len(data):
-                self.axes.plot( data,self.x, label=label)
-        self.axes.legend(loc='best')
-        self.axes.set_ylabel(self.ylabel)
+                self.ax.plot( data,self.x, label=label)
+        self.ax.legend(loc='best')
+        self.ax.set_ylabel(self.ylabel)
 
-        self.axes.set_xlabel(self.xlabel)
-        self.axes.set_title(self.title)
-        self.axes.grid(True)
+        self.ax.set_xlabel(self.xlabel)
+        self.ax.set_title(self.title)
+        self.ax.grid(True)
 
 class TempDepthView(GraphView1D):
     """
