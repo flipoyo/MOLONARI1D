@@ -1,4 +1,5 @@
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, 
+from ..utils.QlineEdit import QlineEdit
 from ..utils.general import displayCriticalMessage
 from ..utils.get_files import get_ui_asset
 
@@ -12,8 +13,17 @@ class DialogOpenDatabase(QtWidgets.QDialog,From_DialogOpenDatabase):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
 
+        self.field = QlineEdit()
         self.pushButtonExistingDir.clicked.connect(self.browseExistingDir)
         self.pushButtonCreateDir.clicked.connect(self.browseCreateDir)
+        self.lineEditExistingDataDir.returnPressed.connect(self.accept)
+        self.lineEditExistingDataDir.clicked.connect(self.lineEditExistingDataDir.changeText)
+        self.lineEditCreateDataDir.clicked.connect(self.lineEditCreateDataDir.changeText)
+        self.lineEditDataName.clicked.connect(self.lineEditDataName.changeText)
+
+
+    def changeText(self):
+        self.setText(self.field)
 
     def accept(self):
         """
@@ -35,6 +45,8 @@ class DialogOpenDatabase(QtWidgets.QDialog,From_DialogOpenDatabase):
             self.lineEditExistingDataDir.setText(fileDir)
             self.lineEditCreateDataDir.setText("")
             self.lineEditDataName.setText("")
+
+
 
     def browseCreateDir(self):
         """
