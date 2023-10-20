@@ -207,6 +207,76 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         moinslog10K_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
             layersList, nb_cells)
+        ## zhan: ici H_init a causé un problème sous le cas stratifié
+        array_moinslog10K = np.array([float(x.params.moinslog10K) for x in layersList])
+        array_K = 10 ** (-array_moinslog10K)
+        array_eps = np.zeros(len(layersList))
+        array_eps[0] = layersList[0].zLow
+        for idx in range(1, len(layersList)):
+            array_eps[idx] = layersList[idx].zLow - layersList[idx - 1].zLow
+        array_Hinter = np.zeros(len(layersList) + 1)
+        array_Hinter[0] = self._dH[0]
+        array_Hinter[-1] = 0.0
+        N = len(array_Hinter) - 1
+        H_gauche = np.zeros((N-1, N-1))
+        H_droite = np.zeros((N-1, N-1))
+        scalar_gauche = np.zeros(N-1)
+        scalar_droite = np.zeros(N-1)
+        scalar_gauche[0] = array_K[0] * array_Hinter[0] / array_eps[0]
+        scalar_droite[-1] = -array_K[-1] * array_Hinter[-1] / array_eps[-1]
+        H_gauche[0,0] = -array_K[0] / array_eps[0]
+        for diag in range(1, N-1):
+            H_gauche[diag, diag - 1] = array_K[diag] / array_eps[diag]
+            H_gauche[diag, diag] = -array_K[diag] / array_eps[diag]
+
+        H_droite[N-2, N-2] = array_K[-1] / array_eps[-1]
+        for diag in range(0, N-2):
+            H_droite[diag, diag + 1] = -array_K[diag + 1] / array_eps[diag + 1]
+            H_droite[diag, diag] = array_K[diag + 1] / array_eps[diag + 1]
+        
+        Matrix_b = scalar_gauche - scalar_droite
+        Matrix_A = H_droite - H_gauche
+        H_sol = np.linalg.solve(Matrix_A, Matrix_b)
+        for idx in range(len(H_sol)):
+            array_Hinter[idx + 1] = H_sol[idx]
+        # generate L list
+        list_array_L = []
+        cnt = 0
+        for idx in range(len(layersList) - 1):
+            cnt_start = cnt
+            while cnt < len(self._z_solve):
+                if self._z_solve[cnt] <= layersList[idx].zLow and self._z_solve[cnt + 1] > layersList[idx].zLow:
+                    list_array_L.append(self._z_solve[cnt_start:cnt + 1])
+                    cnt += 1
+                    break
+                else:
+                    cnt += 1
+        list_array_L.append(self._z_solve[cnt:])
+        # generate nablaH list
+        list_array_nablaH = []
+        for idx in range(len(list_array_L)):
+            if idx > 0: 
+                print(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) * 0.2)
+                list_array_nablaH.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - list_array_L[idx - 1][-1]))
+            else:
+                print(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) * 0.2)
+                list_array_nablaH.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - 0))
+        print("charge hydraulique sur chaque interface", array_Hinter)
+        if verbose:
+
+            for idx in range(len(list_array_L)):
+                plt.plot(list_array_nablaH[idx], list_array_L[idx])
+            plt.plot(H_init, self._z_solve)
+            plt.title("charge hydraulique stratifiée initialisé")
+            plt.show()
+        H_init = list_array_nablaH[0]
+        for idx in range(1, len(list_array_nablaH)):
+            H_init = np.concatenate((H_init, list_array_nablaH[idx]))
+        print(len(H_init))
+        # for 
+
+        # H_init = 
+        ## zhan
 
         heigth = abs(self._real_z[-1] - self._real_z[0])
         Ss_list = n_list / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
@@ -243,9 +313,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             flows[i, :] = - K_list[i]*nablaH[i, :]
         
         self._flows = flows  # calcul du débit spécifique
-        plt.plot(nablaH[:, 10], self._z_solve)
-        plt.plot(self._flows[:, 10], self._z_solve)
-        print("addition modification")
         if verbose:
             print("Done.")
 
