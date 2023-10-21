@@ -45,7 +45,8 @@ class GraphView1D(GraphView):
     """
     def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="", xlabel=""):
         super().__init__(molomodel)
-
+        # Créez les axes et associez-les à self.ax
+        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
         #x and y correspond to the data which should be displayed on the x-axis and y-axis (ex: x=Date,y=Pressure)
         self.x = []
         self.y = {}
@@ -53,8 +54,9 @@ class GraphView1D(GraphView):
         self.ylabel=ylabel
         self.title = title
         self.time_dependent = time_dependent
-         # Créez les axes et associez-les à self.ax
-        self.ax = self.fig.add_subplot(111)
+        self.colorbar = None
+       
+
 
     def onUpdate(self):
         self.ax.clear()
@@ -91,6 +93,8 @@ class GraphView1D(GraphView):
     def resetData(self):
         self.x = []
         self.y = {}
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.get_yaxis().set_visible(False)
 
 class GraphView2D(GraphView):
     """
@@ -102,29 +106,41 @@ class GraphView2D(GraphView):
     """
     def __init__(self, molomodel: MoloModel | None,time_dependent=False,title="",xlabel = "",ylabel=""):
         super().__init__(molomodel)
+        
 
+        # Créez les axes et associez-les à self.ax
+        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
+        # remove x date scale
+        self.ax.get_xaxis().set_visible(False)
         self.time_dependent = time_dependent
         self.title = title
         self.ylabel = ylabel
         self.xlabel = xlabel
-        self.x = []
-        self.y = []
+        self.y = self.model.get_depths()
+        self.x = self.model.get_dates()
         self.cmap = []
 
         # créer une colorbar
         self.colorbar = None
-     
+             
+        
 
     def onUpdate(self):
-      
+               
         self.ax.clear()
-        # initialize the axes
-        self.ax = self.fig.add_subplot(111)
+               
+        #Créez les axes et associez-les à self.ax, en enlevant les échelles [0, 1]
+        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
+        self.ax.get_xaxis().set_visible(False)
+        # paramétrer l'échelle des axes
+        self.y = self.model.get_depths()
+        self.x = self.model.get_dates()
         self.resetData()
         self.retrieveData()
         self.setup_x()
         self.plotData()
         self.draw()
+        
 
     def setup_x(self):
         """
@@ -140,6 +156,7 @@ class GraphView2D(GraphView):
             pass
 
     def plotData(self):
+        
         if self.cmap.shape[1] ==len(self.x) and self.cmap.shape[0] == len(self.y):
             #View is not empty and should display something
             image = self.ax.imshow(self.cmap, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], float(self.y[-1]), float(self.y[0])], data="float")
@@ -148,11 +165,18 @@ class GraphView2D(GraphView):
             self.ax.set_title(self.title)
             self.ax.set_ylabel(self.ylabel)
             self.ax.set_xlabel(self.xlabel)
+        
 
     def resetData(self):
         self.x = []
         self.y = []
         self.cmap = []
+       
+        # hide color bar, not remove it
+        if self.colorbar is not None:
+            self.colorbar.ax.set_visible(False)
+            self.colorbar = None
+        
             
 
 class GraphViewHisto(GraphView):
