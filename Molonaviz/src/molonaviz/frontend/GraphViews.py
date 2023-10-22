@@ -3,6 +3,10 @@ This file regroups different view inheriting from matplotlib's canvas. They are 
 """
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
+from matplotlib.cm import ScalarMappable
+import matplotlib.dates as mdates
+
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import matplotlib.dates as mdates
@@ -34,6 +38,9 @@ class GraphView(MoloView, FigureCanvasQTAgg):
         self.fig.tight_layout(h_pad=5, pad=5)
         self.ax = self.fig.add_subplot(111)
 
+    def get_model(self, model):
+        return MoloView.get_model(model)
+
 class GraphView1D(GraphView):
     """
     Abstract class to represent 1D views (such the pressure and temperature plots).
@@ -46,7 +53,7 @@ class GraphView1D(GraphView):
     def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="", xlabel=""):
         super().__init__(molomodel)
         # Créez les axes et associez-les à self.ax
-        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
+        self.axes = self.fig.add_subplot(111, sharex=self.axes, sharey=self.axes)
         #x and y correspond to the data which should be displayed on the x-axis and y-axis (ex: x=Date,y=Pressure)
         self.x = []
         self.y = {}
@@ -59,7 +66,7 @@ class GraphView1D(GraphView):
 
 
     def onUpdate(self):
-        self.ax.clear()
+        self.axes.clear()
         self.resetData()
         self.retrieveData()
         self.setup_x()
@@ -73,28 +80,31 @@ class GraphView1D(GraphView):
         if self.time_dependent:
             self.x = dateToMdates(self.x)
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-            self.ax.xaxis.set_major_formatter(formatter)
-            self.ax.xaxis.set_major_locator(MaxNLocator(4))
-            plt.setp(self.ax.get_xticklabels(), rotation = 15)
+            self.axes.xaxis.set_major_formatter(formatter)
+            self.axes.xaxis.set_major_locator(MaxNLocator(4))
+            plt.setp(self.axes.get_xticklabels(), rotation = 15)
         else:
             pass
 
     def plotData(self):
         for index, (label, data) in enumerate(self.y.items()):
             if len(self.x) == len(data):
-                self.ax.plot(self.x, data, label=label)
-        self.ax.legend(loc='best')
-        self.ax.set_ylabel(self.ylabel)
+                self.axes.plot(self.x, data, label=label)
+        self.axes.legend(loc='best')
+        self.axes.set_ylabel(self.ylabel)
 
-        self.ax.set_xlabel(self.xlabel)
-        self.ax.set_title(self.title)
-        self.ax.grid(True)
+        self.axes.set_xlabel(self.xlabel)
+        self.axes.set_title(self.title)
+        self.axes.grid(True)
 
     def resetData(self):
         self.x = []
         self.y = {}
-        self.ax.get_xaxis().set_visible(False)
-        self.ax.get_yaxis().set_visible(False)
+        self.axes.get_xaxis().set_visible(False)
+        self.axes.get_yaxis().set_visible(False)
+
+    def get_model(self, model):
+        return super().get_model(model)
 
 class GraphView2D(GraphView):
     """
@@ -231,7 +241,7 @@ class PressureView(GraphView1D):
 
 class TemperatureView(GraphView1D):
     """
-    Concrete class to display the Pressure in "Data arrays and plots" tab.
+    Concrete class to display the temperature in "Data arrays and plots" tab.
     """
     def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="", ylabel="Temperature (°C)", xlabel=""):
         super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
@@ -255,15 +265,28 @@ class UmbrellaView(GraphView1D):
         """
         This function needs to be overloaded for the umbrellas, as the plot function must be like plot(temps, depth) with depths being fixed.
         """
-        for index, (label, data) in enumerate(self.y.items()):
-            if len(self.x) == len(data):
-                self.ax.plot( data,self.x, label=label)
-        self.ax.legend(loc='best')
-        self.ax.set_ylabel(self.ylabel)
 
-        self.ax.set_xlabel(self.xlabel)
-        self.ax.set_title(self.title)
-        self.ax.grid(True)
+        cmap = plt.get_cmap('Reds')
+        colors = [cmap(i / len(self.y.items())) for i in range(len(self.y.items()))]
+        list_labels = [label for label in self.y.keys()]
+
+        for index, (label, data) in enumerate(self.y.items()):
+
+            if len(self.x) == len(data):
+                self.axes.plot( data,self.x, color=colors[index])
+                
+                
+        norm = Normalize(vmin=0, vmax=len(self.y.items()))
+        sm = ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])        
+        colorbar = self.fig.colorbar(mappable=sm,ax=self.axes, ticks=np.linspace(0, len(self.y.items()), len(self.y.items())),)
+        colorbar.set_ticklabels(list_labels)
+
+        self.axes.legend(loc='best')
+        self.axes.set_ylabel(self.ylabel)
+        self.axes.set_xlabel(self.xlabel)
+        self.axes.set_title(self.title)
+        self.axes.grid(True)
 
 class TempDepthView(GraphView1D):
     """
@@ -274,9 +297,13 @@ class TempDepthView(GraphView1D):
     The basis state is [None, []], as no quantile can be displayed, and the view can't know at which depth is the thermometer.
     options is NOT considered to be part of internal data, and will not be modified when calling resetData.
     """
-    def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="", ylabel="Temperature (°C)", xlabel="",options=[None,[]]):
-        super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
+    def __init__(self, sensors:MoloModel | None, molomodel: MoloModel | None, time_dependent=True, title="", ylabel="Temperature (°C)", xlabel="",options=[None,[]]):
+        super().__init__(molomodel,time_dependent, title, ylabel, xlabel)
         self.options = options
+        self.sensors = sensors
+        self.molomodel = molomodel
+    
+        
 
     def updateOptions(self,options):
         self.options = options
@@ -285,9 +312,10 @@ class TempDepthView(GraphView1D):
     def retrieveData(self):
         if self.options[0] is not None: #A computation has been done.
             depth_thermo = self.options[0]
-            self.x = self.model.get_dates()
+            self.x = self.molomodel.get_dates()
+            self.y  = {f"Sensor n°{i}":np.float64(temp) for i,temp in enumerate(self.sensors.get_temperatures())}
             for quantile in self.options[1]:
-                self.y[f"Temperature at depth {depth_thermo:.3f} m - quantile {quantile}"] = self.model.get_temp_by_date(depth_thermo, quantile)
+                self.y[f"Temperature at depth {depth_thermo:.3f} m - quantile {quantile}"] = self.molomodel.get_temp_by_date(depth_thermo, quantile)
 
 class WaterFluxView(GraphView1D):
     """

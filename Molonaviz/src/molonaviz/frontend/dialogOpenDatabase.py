@@ -14,6 +14,7 @@ class DialogOpenDatabase(QtWidgets.QDialog,From_DialogOpenDatabase):
 
         self.pushButtonExistingDir.clicked.connect(self.browseExistingDir)
         self.pushButtonCreateDir.clicked.connect(self.browseCreateDir)
+        self.lineEditExistingDataDir.returnPressed.connect(self.accept)
 
     def accept(self):
         """
@@ -35,6 +36,8 @@ class DialogOpenDatabase(QtWidgets.QDialog,From_DialogOpenDatabase):
             self.lineEditExistingDataDir.setText(fileDir)
             self.lineEditCreateDataDir.setText("")
             self.lineEditDataName.setText("")
+
+
 
     def browseCreateDir(self):
         """

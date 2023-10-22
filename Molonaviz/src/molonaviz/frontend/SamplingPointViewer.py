@@ -26,6 +26,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
         self.samplingPoint = samplingPoint
         self.coordinator = spointCoordinator
+        
         self.computeEngine = Compute(self.coordinator)
         self.computeEngine.DirectModelFinished.connect(self.updateAllViews)
         self.computeEngine.MCMCFinished.connect(self.updateAllViews)
@@ -55,7 +56,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         tempMapModel = self.coordinator.get_temp_map_model()
         self.umbrella_view = UmbrellaView(tempMapModel)
         self.tempmap_view = TempMapView(tempMapModel)
-        self.depth_view = TempDepthView(tempMapModel)
+        self.depth_view = TempDepthView(self.coordinator.get_temp_model(), tempMapModel)
         paramsDistrModel = self.coordinator.get_params_distr_model()
         self.logk_view = Log10KView(paramsDistrModel)
         self.conductivity_view = ConductivityView(paramsDistrModel)
@@ -389,6 +390,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 df_cleaned = dlg.getCleanedMeasures()
                 if not df_cleaned.empty:
                     self.coordinator.insert_cleaned_measures(df_cleaned)
+                    self.checkBoxRawData.setEnabled(True)  # le bouton est actif si clean up (TL)
+
 
                 self.updateAllViews()
                 self.handleComputationsButtons()
