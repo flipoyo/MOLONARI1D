@@ -15,6 +15,12 @@ class MoloView:
             self.register(molomodel)
         self.model = molomodel
 
+    def get_model(self, model : MoloModel | None = None):
+        """
+        Return the model this view is subscribed to.
+        """
+        return self.model
+
     def register(self, model : MoloModel | None):
         """
         Subscribe this view to the given MoloModel.
