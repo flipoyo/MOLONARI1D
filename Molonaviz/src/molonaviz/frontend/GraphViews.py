@@ -279,8 +279,8 @@ class UmbrellaView(GraphView1D):
         norm = Normalize(vmin=0, vmax=len(self.y.items()))
         sm = ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])        
-        colorbar = self.fig.colorbar(mappable=sm,ax=self.ax, ticks=np.linspace(0, len(self.y.items()), len(self.y.items())),)
-        colorbar.set_ticklabels(list_labels)
+        self.colorbar = self.fig.colorbar(mappable=sm,ax=self.ax, ticks=np.linspace(0, len(self.y.items()), len(self.y.items())),)
+        self.colorbar.set_ticklabels(list_labels)
         
 
         self.ax.legend(loc='best')
@@ -292,9 +292,8 @@ class UmbrellaView(GraphView1D):
     def resetData(self):
         self.x = []
         self.y = {}
-        self.ax.get_xaxis().set_visible(False)
-        self.ax.get_yaxis().set_visible(False)
-        self.ax.clear()
+        self.cmap = []
+
         # hide color bar, not remove it
         if self.colorbar is not None:
             self.colorbar.ax.set_visible(False)
@@ -302,6 +301,9 @@ class UmbrellaView(GraphView1D):
 
     def onUpdate(self):
         self.ax.clear()
+        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.get_xaxis().set_visible(False)
         self.resetData()
         self.retrieveData()
         self.plotData()
