@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
 from PyQt5.QtSql import QSqlQuery
 from pyheatmy import *
-from numpy import shape
+from numpy import shape 
 
 from ..utils.general import databaseDateToDatetime, datetimeToDatabaseDate
 from .SPointCoordinator import SPointCoordinator

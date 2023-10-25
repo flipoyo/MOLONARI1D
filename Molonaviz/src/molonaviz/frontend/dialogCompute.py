@@ -50,7 +50,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         self.groupBoxMCMC.setChecked(False)
 
-        
         self.InitValues()
 
     def InitValues(self):
@@ -58,6 +57,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         Set the default values in the tables for both the direct model and the MCMC
         """
         #Direct model
+
         self.spinBoxNLayersDirect.setValue(len(self.input))
         self.tableWidget.setRowCount(len(self.input))
 
@@ -66,6 +66,16 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditncr.setText("3")
         self.lineEditc.setText("0.1")
         self.lineEditcstar.setText("1e-6")
+        layerBottom = int((self.maxdepth))
+
+        for i in range(len(self.input)):
+            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom)))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i]["Perm"])))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i]["Poro"])))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i]["ThConduct"])))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i]["ThCap"])))
+
 
         #MCMC
         self.lineEditMaxIterMCMC.setText("5000")
@@ -91,19 +101,20 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
     def SaveInput(self, item):
 
         nb_layers = self.spinBoxNLayersDirect.value()
-        for i in range(nb_layers):
-            if item is not None and item.column() in [1, 2, 3, 4]:
-                value = item.text()
-                if value:
-                    column = item.column()
-                    if column == 1:
-                        self.input[i]["Perm"] = float(value)
-                    elif column == 2:
-                        self.input[i]["Poro"] = float(value)
-                    elif column == 3:
-                        self.input[i]["ThConduct"] = float(value)
-                    elif column == 4:
-                        self.input[i]["ThCap"] = float(value)
+    
+        if item is not None and item.column() in [1, 2, 3, 4]:
+            value = item.text()
+            if value:
+                column = item.column()
+                i = item.row()
+                if column == 1:
+                    self.input[i]["Perm"] = float(value)
+                elif column == 2:
+                    self.input[i]["Poro"] = float(value)
+                elif column == 3:
+                    self.input[i]["ThConduct"] = float(value)
+                elif column == 4:
+                    self.input[i]["ThCap"] = float(value)
 
         with open(self.chemin_input_direct_compute, 'w') as fichier:
             json.dump(self.input, fichier, indent=4)
@@ -214,10 +225,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             thermcap.append(float(self.tableWidget.item(i, 4).text()))
             depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
 
-            self.input[i]["Perm"] = float(self.tableWidget.item(i, 1).text())
-            self.input[i]["Poro"] = float(self.tableWidget.item(i, 2).text())
-            self.input[i]["ThConduct"] = float(self.tableWidget.item(i, 3).text())  
-            self.input[i]["ThCap"] = float(self.tableWidget.item(i, 4).text())
 
         with open(self.chemin_input_direct_compute, 'w') as fichier:
             json.dump(self.input, fichier, indent=4)
