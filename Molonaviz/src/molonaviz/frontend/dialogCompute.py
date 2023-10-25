@@ -283,4 +283,4 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = tuple(quantiles)
         quantiles = [float(quantile) for quantile in quantiles]
 
-        return nb_iter, all_priors, nb_cells, quantiles
+        return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar
