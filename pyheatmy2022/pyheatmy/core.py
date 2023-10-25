@@ -181,7 +181,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         if verbose:
             print("Done.")
 
-    def _compute_solve_transi_multiple_layers(self, layersList, nb_cells, verbose):
+    def _compute_solve_transi_multiple_layers(self, layersList, nb_cells, verbose, perm = False):
         dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule
         self._z_solve = dz/2 + np.array([k*dz for k in range(nb_cells)])
 
@@ -191,7 +191,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         all_dt = np.array([(self._times[j+1] - self._times[j]).total_seconds()
                            for j in range(len(self._times) - 1)])  # le tableau des pas de temps (dépend des données d'entrée)
         isdtconstant = np.all(all_dt == all_dt[0])
-
+        # zhan: H_init linear
         H_init = self._dH[0] - self._dH[0] * self._z_solve / self._real_z[-1]
         # fixe toutes les charges de l'aquifère à 0 (à tout temps)
         H_aq = np.zeros(len(self._times))
@@ -207,6 +207,74 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         moinslog10K_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
             layersList, nb_cells)
+        
+        ## zhan1: ici H_init a causé un problème sous le cas stratifié
+        ##
+        array_moinslog10K = np.array([float(x.params.moinslog10K) for x in layersList])
+        array_K = 10 ** (-array_moinslog10K)
+        array_eps = np.zeros(len(layersList)) # eps de chaque couche
+        array_eps[0] = layersList[0].zLow
+        for idx in range(1, len(layersList)):
+            array_eps[idx] = layersList[idx].zLow - layersList[idx - 1].zLow
+        array_Hinter = np.zeros(len(layersList) + 1) # charge hydraulique de chaque interface
+        array_Hinter[0] = self._dH[0]
+        array_Hinter[-1] = 0.0
+        N = len(array_Hinter) - 1
+        # calculate Hinter
+        H_gauche = np.zeros((N-1, N-1))
+        H_droite = np.zeros((N-1, N-1))
+        scalar_gauche = np.zeros(N-1)
+        scalar_droite = np.zeros(N-1)
+        scalar_gauche[0] = array_K[0] * array_Hinter[0] / array_eps[0]
+        scalar_droite[-1] = -array_K[-1] * array_Hinter[-1] / array_eps[-1]
+        H_gauche[0,0] = -array_K[0] / array_eps[0]
+        for diag in range(1, N-1):
+            H_gauche[diag, diag - 1] = array_K[diag] / array_eps[diag]
+            H_gauche[diag, diag] = -array_K[diag] / array_eps[diag]
+
+        H_droite[N-2, N-2] = array_K[-1] / array_eps[-1]
+        for diag in range(0, N-2):
+            H_droite[diag, diag + 1] = -array_K[diag + 1] / array_eps[diag + 1]
+            H_droite[diag, diag] = array_K[diag + 1] / array_eps[diag + 1]
+        
+        Matrix_b = scalar_gauche - scalar_droite
+        Matrix_A = H_droite - H_gauche
+        H_sol = np.linalg.solve(Matrix_A, Matrix_b)
+        for idx in range(len(H_sol)):
+            array_Hinter[idx + 1] = H_sol[idx]
+        #
+        # list_array_L: couper le profondeur selon l'épaisseur de chaque couche
+        list_array_L = []
+        cnt = 0
+        for idx in range(len(layersList) - 1):
+            cnt_start = cnt
+            while cnt < len(self._z_solve):
+                if self._z_solve[cnt] <= layersList[idx].zLow and self._z_solve[cnt + 1] > layersList[idx].zLow:
+                    list_array_L.append(self._z_solve[cnt_start:cnt + 1])
+                    cnt += 1
+                    break
+                else:
+                    cnt += 1
+        list_array_L.append(self._z_solve[cnt:])
+        #
+        # calculer H de chaque couche
+        list_array_H = []
+        for idx in range(len(list_array_L)):
+            if idx > 0: 
+                list_array_H.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - list_array_L[idx - 1][-1]))
+            else:
+                list_array_H.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - 0))
+        if verbose:
+            print("charge hydraulique sur chaque interface", array_Hinter)
+            for idx in range(len(list_array_L)):
+                plt.plot(list_array_H[idx], list_array_L[idx])
+            plt.plot(H_init, self._z_solve)
+            plt.title("charge hydraulique stratifiée initialisé")
+            plt.show()
+        H_init = list_array_H[0]
+        for idx in range(1, len(list_array_H)):
+            H_init = np.concatenate((H_init, list_array_H[idx]))
+        ## zhan1 
 
         heigth = abs(self._real_z[-1] - self._real_z[0])
         Ss_list = n_list / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
@@ -215,15 +283,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             print("--- Compute Solve Transi ---")
             for layer in layersList:
                 print(layer)
-
+        
         H_res = compute_H_stratified(
             moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
 
-        T_res = compute_T_stratified(moinslog10K_list, n_list, lambda_s_list,
-                                     rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, T_init, T_riv, T_aq)
-
-        self._temps = T_res
-        self._H_res = H_res  # stocke les résultats
+        ## zhanmod4: charge hydraulique stratifié cste
+        ##
+        if perm == True:
+            for col_idx in range(len(self._H_res[0])):
+                H_res[:, col_idx] = H_init[:]
+        ##
+        ##zhanmod4
 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
@@ -236,6 +306,31 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
 
         K_list = 10 ** - moinslog10K_list
+        ## zhanmod2: cal de nablaH sous le cas stratifié
+        ##
+        nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
+
+        for i in range(1, nb_cells - 1):
+            if K_list[i] == K_list[i - 1] and K_list[i+1] != K_list[i]:
+                nablaH[i, :] = (H_res[i, :] - H_res[i-1, :]) / dz
+                
+            if K_list[i] != K_list[i - 1] and K_list[i+1] == K_list[i]:
+                nablaH[i, :] = (H_res[i+1, :] - H_res[i, :]) / dz
+            else: 
+                nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
+
+        nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
+        ##
+
+        ## zhanmod5: ajoute nablaH dans la computation de T strat
+        T_res = compute_T_stratified(moinslog10K_list, n_list, lambda_s_list,
+                                     rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
+        ## zhanmod5
+
+        self._temps = T_res
+        self._H_res = H_res  # stocke les résultats
+
+        ## zhanmod2L: cal de nablaH sous le cas stratifié
 
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -248,14 +343,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             print("Done.")
 
     @checker
-    def compute_solve_transi(self, layersList: Union[tuple, Sequence[Layer]], nb_cells: int, verbose=True):
+    def compute_solve_transi(self, layersList: Union[tuple, Sequence[Layer]], nb_cells: int, verbose=True, perm = False):
         """
         Computes H, T and flow for each time and depth of the discretization of the column.
         """
         if isinstance(layersList, tuple):
             layer = [Layer("Layer 1", self._real_z[-1],
                            layersList[0], layersList[1], layersList[2], layersList[3])]
-            self.compute_solve_transi(layer, nb_cells, verbose)
+            self.compute_solve_transi(layer, nb_cells, verbose, perm)
 
         else:
             # Checking the layers are well defined
@@ -267,7 +362,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             else:
                 self._compute_solve_transi_multiple_layers(
-                    self._layersList, nb_cells, verbose)
+                    self._layersList, nb_cells, verbose, perm)
 
     @ compute_solve_transi.needed
     def get_id_sensors(self):
