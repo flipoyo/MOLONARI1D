@@ -318,14 +318,14 @@ def compute_T_stratified(
 
     # First we need to compute the gradient of H(z, t)
 
-    # nablaH = zeros((n_cell, n_times), float32)
+    nablaH = zeros((n_cell, n_times), float32)
 
-    # nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
+    nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
 
-    # for i in range(1, n_cell - 1):
-    #     nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
+    for i in range(1, n_cell - 1):
+        nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
 
-    # nablaH[n_cell - 1, :] = 2*(H_aq - H_res[n_cell - 2, :])/(3*dz)
+    nablaH[n_cell - 1, :] = 2*(H_aq - H_res[n_cell - 2, :])/(3*dz)
 
     # Now we can compute T(z, t)
 

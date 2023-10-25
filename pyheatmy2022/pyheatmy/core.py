@@ -200,7 +200,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         if self.inter_mode == 'lagrange':
             T_init = np.array([self.lagr(z) for z in self._z_solve])
-        elif self.inter_mode == 'linear':
+        elif self.inter_mode == 'linear': 
             T_init = self.linear(self._z_solve)
         T_riv = self._T_riv
         T_aq = self._T_aq
@@ -208,6 +208,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         moinslog10K_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
             layersList, nb_cells)
         ## zhan: ici H_init a causé un problème sous le cas stratifié
+        ##
         array_moinslog10K = np.array([float(x.params.moinslog10K) for x in layersList])
         array_K = 10 ** (-array_moinslog10K)
         array_eps = np.zeros(len(layersList)) # eps de chaque couche
