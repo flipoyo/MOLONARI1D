@@ -50,7 +50,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         self.groupBoxMCMC.setChecked(False)
 
-        
         self.InitValues()
 
     def InitValues(self):
@@ -58,8 +57,20 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         Set the default values in the tables for both the direct model and the MCMC
         """
         #Direct model
+
         self.spinBoxNLayersDirect.setValue(len(self.input))
         self.tableWidget.setRowCount(len(self.input))
+
+        layerBottom = int((self.maxdepth))
+
+        for i in range(len(self.input)):
+            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom)))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i]["Perm"])))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i]["Poro"])))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i]["ThConduct"])))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i]["ThCap"])))
+
 
         #MCMC
         self.lineEditMaxIterMCMC.setText("5000")
@@ -203,7 +214,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
 
 
-        with open(InputDirectCompute, 'w') as fichier:
+        with open(self.chemin_input_direct_compute, 'w') as fichier:
             json.dump(self.input, fichier, indent=4)
 
         layers = [f"Layer {i+1}" for i in range(nb_layers)]

@@ -1,12 +1,6 @@
 [
     {
-        "Perm": 1000.0,
-        "Poro": 0.15,
-        "ThConduct": 3.4,
-        "ThCap": 5000000.0
-    },
-    {
-        "Perm": 1000.0,
+        "Perm": 1e-05,
         "Poro": 0.15,
         "ThConduct": 3.4,
         "ThCap": 5000000.0
