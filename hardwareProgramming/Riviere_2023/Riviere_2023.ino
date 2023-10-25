@@ -12,10 +12,13 @@ Arduino MKR WAN 1310
 
 #include "internals/Lora.cpp"
 #include "internals/Low_Power.cpp"
-#include "internals/Pressure_Sensor.cpp"
+#include "internals/Pressure_Sensor.hpp"
 #include "internals/Temp_Sensor.cpp"
 #include "internals/Time.cpp"
 #include "internals/Internal_Log.cpp"
+
+
+PressureSensor pressureSensor(A6, 6);
 
 
 void setup() {
@@ -23,10 +26,16 @@ void setup() {
   InitialiseLora();
   InitialiseRTC();
   InitialiseLog();
-}
 
+  Serial.begin(115200);
+}
 
 void loop() {
   // put your main code here, to run repeatedly:
 
+  PRESSURE_T pressure = pressureSensor.MeasurePressure();
+
+  Serial.println(pressure);
+
+  delay(1000);
 }
