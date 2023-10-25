@@ -322,11 +322,10 @@ class TempDepthView(GraphView1D):
     def __init__(self, sensorsdatas: TemperatureDataModel | None , molomodel: SolvedTemperatureModel | None, spointcoordinator : SPointCoordinator, time_dependent=True, title="", ylabel="Temperature (°C)", xlabel="",options=[None,[]]):
         super().__init__(molomodel,time_dependent, title, ylabel, xlabel)
         self.molomodel = molomodel
-        #super().resetData()
-        #super().__init__(sensorsdatas,time_dependent, title, ylabel, xlabel)
         self.sensorsdatas = sensorsdatas
         self.options = options
         self.coordinator = spointcoordinator
+        
     
         
 
@@ -336,17 +335,17 @@ class TempDepthView(GraphView1D):
 
     def retrieveData(self):
         if self.options[0] is not None: #A computation has been done.
+            select_temperatures = self.coordinator.build_cleaned_measures(field ="Temp")
+            self.sensorsdatas.new_queries([select_temperatures])
             depth_thermo = self.options[0]
-            #sensor_index = None
-            #for i in [1,2,3]:
-            #    if self.coordinator.thermo_depth(i) == depth_thermo:
-            #        sensor_index = i
+            sensor_index = None
+            for i in [1,2,3]:
+                if self.coordinator.thermo_depth(i) == depth_thermo:
+                    sensor_index = i
             self.x = self.molomodel.get_dates()
-            #self.y[f"Sensor n°{sensor_index}"] = self.sensorsdatas.get_temperatures()[sensor_index]
+            self.y[f"Sensor n°{sensor_index}"] = self.sensorsdatas.get_temperatures()[sensor_index]
             for quantile in self.options[1]:
                 self.y[f"Temperature at depth {depth_thermo:.3f} m - quantile {quantile}"] = self.molomodel.get_temp_by_date(depth_thermo, quantile)
-            for i in range(1,4):
-                self.y[f"Sensor n°{i}"] = self.sensorsdatas.get_temperatures()[i]
 
 
 class WaterFluxView(GraphView1D):
