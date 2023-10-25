@@ -16,6 +16,8 @@ Arduino MKR WAN 1310
 #include "internals/Temp_Sensor.cpp"
 #include "internals/Time.cpp"
 #include "internals/Internal_Log.cpp"
+#include "internals/Measure.h"
+#include "internals/testSample.h"
 
 
 PressureSensor pressureSensor(A6, 6);
