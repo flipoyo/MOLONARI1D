@@ -53,7 +53,7 @@ class GraphView1D(GraphView):
     def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="", xlabel=""):
         super().__init__(molomodel)
         # Créez les axes et associez-les à self.ax
-        self.axes = self.fig.add_subplot(111, sharex=self.axes, sharey=self.axes)
+        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
         #x and y correspond to the data which should be displayed on the x-axis and y-axis (ex: x=Date,y=Pressure)
         self.x = []
         self.y = {}
@@ -66,7 +66,7 @@ class GraphView1D(GraphView):
 
 
     def onUpdate(self):
-        self.axes.clear()
+        self.ax.clear()
         self.resetData()
         self.retrieveData()
         self.setup_x()
@@ -80,28 +80,28 @@ class GraphView1D(GraphView):
         if self.time_dependent:
             self.x = dateToMdates(self.x)
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-            self.axes.xaxis.set_major_formatter(formatter)
-            self.axes.xaxis.set_major_locator(MaxNLocator(4))
-            plt.setp(self.axes.get_xticklabels(), rotation = 15)
+            self.ax.xaxis.set_major_formatter(formatter)
+            self.ax.xaxis.set_major_locator(MaxNLocator(4))
+            plt.setp(self.ax.get_xticklabels(), rotation = 15)
         else:
             pass
 
     def plotData(self):
         for index, (label, data) in enumerate(self.y.items()):
             if len(self.x) == len(data):
-                self.axes.plot(self.x, data, label=label)
-        self.axes.legend(loc='best')
-        self.axes.set_ylabel(self.ylabel)
+                self.ax.plot(self.x, data, label=label)
+        self.ax.legend(loc='best')
+        self.ax.set_ylabel(self.ylabel)
 
-        self.axes.set_xlabel(self.xlabel)
-        self.axes.set_title(self.title)
-        self.axes.grid(True)
+        self.ax.set_xlabel(self.xlabel)
+        self.ax.set_title(self.title)
+        self.ax.grid(True)
 
     def resetData(self):
         self.x = []
         self.y = {}
-        self.axes.get_xaxis().set_visible(False)
-        self.axes.get_yaxis().set_visible(False)
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.get_yaxis().set_visible(False)
 
     def get_model(self, model):
         return super().get_model(model)
@@ -273,20 +273,40 @@ class UmbrellaView(GraphView1D):
         for index, (label, data) in enumerate(self.y.items()):
 
             if len(self.x) == len(data):
-                self.axes.plot( data,self.x, color=colors[index])
+                self.ax.plot( data,self.x, color=colors[index])
                 
                 
         norm = Normalize(vmin=0, vmax=len(self.y.items()))
         sm = ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])        
-        colorbar = self.fig.colorbar(mappable=sm,ax=self.axes, ticks=np.linspace(0, len(self.y.items()), len(self.y.items())),)
+        colorbar = self.fig.colorbar(mappable=sm,ax=self.ax, ticks=np.linspace(0, len(self.y.items()), len(self.y.items())),)
         colorbar.set_ticklabels(list_labels)
+        
 
-        self.axes.legend(loc='best')
-        self.axes.set_ylabel(self.ylabel)
-        self.axes.set_xlabel(self.xlabel)
-        self.axes.set_title(self.title)
-        self.axes.grid(True)
+        self.ax.legend(loc='best')
+        self.ax.set_ylabel(self.ylabel)
+        self.ax.set_xlabel(self.xlabel)
+        self.ax.set_title(self.title)
+        self.ax.grid(True)
+
+    def resetData(self):
+        self.x = []
+        self.y = {}
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.get_yaxis().set_visible(False)
+        self.ax.clear()
+        # hide color bar, not remove it
+        if self.colorbar is not None:
+            self.colorbar.ax.set_visible(False)
+            self.colorbar = None
+
+    def onUpdate(self):
+        self.ax.clear()
+        self.resetData()
+        self.retrieveData()
+        self.plotData()
+        self.draw()
+
 
 class TempDepthView(GraphView1D):
     """
