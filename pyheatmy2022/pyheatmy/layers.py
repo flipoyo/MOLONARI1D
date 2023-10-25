@@ -22,7 +22,7 @@ class Layer:
 
     @classmethod
     def from_dict(cls, monolayer_dict):
-        return cls(**monolayer_dict)
+        return [cls(**monolayer_dict)]
 
 class LayerPriors(ParamsPriors):
     '''Rassemble tout les priors relatfifs aux params d'une couche'''
