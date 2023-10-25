@@ -1,5 +1,10 @@
 // This file will contain all functions relative to LoRa communication
 
+// Check that the file has not been imported before
+#ifndef MY_LORA
+#define MY_LORA
+
+
 #include <LoRa.h>
 
 
@@ -31,3 +36,5 @@ void SendData(/* Parameters */) {
 
 
 // Other functions ...
+
+#endif
