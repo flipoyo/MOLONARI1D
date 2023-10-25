@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 import matplotlib.dates as mdates
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.gridspec import GridSpec
 
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -17,14 +19,7 @@ import numpy as np
 from molonaviz.interactions.MoloModel import MoloModel
 from molonaviz.interactions.MoloView import MoloView
 from molonaviz.utils.general import dateToMdates
-
-import sys
-
-def afficher_message_erreur(message):
-    sys.stderr.write(message + '\n')
-    sys.stderr.flush()
-
-
+from molonaviz.utils.general import displayCriticalMessage, displayWarningMessage, createDatabaseDirectory
 
 class GraphView(MoloView, FigureCanvasQTAgg):
     """
@@ -116,36 +111,26 @@ class GraphView2D(GraphView):
     """
     def __init__(self, molomodel: MoloModel | None,time_dependent=False,title="",xlabel = "",ylabel=""):
         super().__init__(molomodel)
-        
-
-        # Créez les axes et associez-les à self.ax
-        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
-        # remove x date scale
-        self.ax.get_xaxis().set_visible(False)
+   
         self.time_dependent = time_dependent
         self.title = title
         self.ylabel = ylabel
         self.xlabel = xlabel
-        self.y = self.model.get_depths()
-        self.x = self.model.get_dates()
         self.cmap = []
 
         # créer une colorbar
         self.colorbar = None
-             
+        
         
 
     def onUpdate(self):
                
         self.ax.clear()
+        self.resetData()
                
         #Créez les axes et associez-les à self.ax, en enlevant les échelles [0, 1]
-        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
-        self.ax.get_xaxis().set_visible(False)
-        # paramétrer l'échelle des axes
-        self.y = self.model.get_depths()
-        self.x = self.model.get_dates()
-        self.resetData()
+        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)      
+
         self.retrieveData()
         self.setup_x()
         self.plotData()
@@ -161,7 +146,8 @@ class GraphView2D(GraphView):
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
             self.ax.xaxis.set_major_formatter(formatter)
             self.ax.xaxis.set_major_locator(MaxNLocator(4))
-            plt.setp(self.ax.get_xticklabels(), rotation = 15)
+            plt.setp(self.ax.get_xticklabels(), rotation = 7.5)
+            self.ax.set_xlim(self.x[0], self.x[-1])
         else:
             pass
 
@@ -170,12 +156,16 @@ class GraphView2D(GraphView):
         if self.cmap.shape[1] ==len(self.x) and self.cmap.shape[0] == len(self.y):
             #View is not empty and should display something
             image = self.ax.imshow(self.cmap, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], float(self.y[-1]), float(self.y[0])], data="float")
-            self.colorbar = self.fig.colorbar(image) # Add a colorbar
+            self.colorbar = self.fig.colorbar(image, ax=self.ax, use_gridspec=True)
+                
             self.ax.xaxis_date()
             self.ax.set_title(self.title)
             self.ax.set_ylabel(self.ylabel)
-            self.ax.set_xlabel(self.xlabel)
-        
+            
+            
+    def retrieveData(self):
+        self.y = self.model.get_depths()
+        self.x = self.model.get_dates()
 
     def resetData(self):
         self.x = []
@@ -187,7 +177,9 @@ class GraphView2D(GraphView):
             self.colorbar.ax.set_visible(False)
             self.colorbar = None
         
-            
+        # remove scales
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.get_yaxis().set_visible(False)
 
 class GraphViewHisto(GraphView):
     """
@@ -256,7 +248,7 @@ class UmbrellaView(GraphView1D):
     """
     def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="Depth (m)", xlabel="Temperature (°C)", nb_dates =10):
         super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
-        self.nb_dates = nb_dates
+        self.nb_dates = nb_dates     
 
     def retrieveData(self):
         self.x,self.y = self.model.get_depth_by_temp(self.nb_dates)
@@ -265,7 +257,7 @@ class UmbrellaView(GraphView1D):
         """
         This function needs to be overloaded for the umbrellas, as the plot function must be like plot(temps, depth) with depths being fixed.
         """
-
+        
         cmap = plt.get_cmap('Reds')
         colors = [cmap(i / len(self.y.items())) for i in range(len(self.y.items()))]
         list_labels = [label for label in self.y.keys()]
@@ -275,19 +267,15 @@ class UmbrellaView(GraphView1D):
             if len(self.x) == len(data):
                 self.ax.plot( data,self.x, color=colors[index])
                 
-                
-        norm = Normalize(vmin=0, vmax=len(self.y.items()))
-        sm = ScalarMappable(cmap=cmap, norm=norm)
-        sm.set_array([])        
-        self.colorbar = self.fig.colorbar(mappable=sm,ax=self.ax, ticks=np.linspace(0, len(self.y.items()), len(self.y.items())),)
-        self.colorbar.set_ticklabels(list_labels)
-        
+        # inverse the y-axis
+        self.ax.set_ylim(0.55, 0)
 
-        self.ax.legend(loc='best')
+        self.ax.legend(list_labels, loc='best')
         self.ax.set_ylabel(self.ylabel)
         self.ax.set_xlabel(self.xlabel)
-        self.ax.set_title(self.title)
+        self.ax.set_title('Umbrellas plot')
         self.ax.grid(True)
+                
 
     def resetData(self):
         self.x = []
@@ -298,12 +286,12 @@ class UmbrellaView(GraphView1D):
         if self.colorbar is not None:
             self.colorbar.ax.set_visible(False)
             self.colorbar = None
-
-    def onUpdate(self):
         self.ax.clear()
         self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
         self.ax.get_xaxis().set_visible(False)
         self.ax.get_xaxis().set_visible(False)
+
+    def onUpdate(self):
         self.resetData()
         self.retrieveData()
         self.plotData()
