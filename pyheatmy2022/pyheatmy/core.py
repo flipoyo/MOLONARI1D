@@ -210,14 +210,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ## zhan: ici H_init a causé un problème sous le cas stratifié
         array_moinslog10K = np.array([float(x.params.moinslog10K) for x in layersList])
         array_K = 10 ** (-array_moinslog10K)
-        array_eps = np.zeros(len(layersList))
+        array_eps = np.zeros(len(layersList)) # eps de chaque couche
         array_eps[0] = layersList[0].zLow
         for idx in range(1, len(layersList)):
             array_eps[idx] = layersList[idx].zLow - layersList[idx - 1].zLow
-        array_Hinter = np.zeros(len(layersList) + 1)
+        array_Hinter = np.zeros(len(layersList) + 1) # charge hydraulique de chaque interface
         array_Hinter[0] = self._dH[0]
         array_Hinter[-1] = 0.0
         N = len(array_Hinter) - 1
+        # calculate Hinter
         H_gauche = np.zeros((N-1, N-1))
         H_droite = np.zeros((N-1, N-1))
         scalar_gauche = np.zeros(N-1)
@@ -239,7 +240,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         H_sol = np.linalg.solve(Matrix_A, Matrix_b)
         for idx in range(len(H_sol)):
             array_Hinter[idx + 1] = H_sol[idx]
-        # generate L list
+        #
+        # list_array_L: couper le profondeur selon l'épaisseur de chaque couche
         list_array_L = []
         cnt = 0
         for idx in range(len(layersList) - 1):
@@ -252,31 +254,25 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 else:
                     cnt += 1
         list_array_L.append(self._z_solve[cnt:])
-        # generate nablaH list
-        list_array_nablaH = []
+        #
+        # calculer H de chaque couche
+        list_array_H = []
         for idx in range(len(list_array_L)):
             if idx > 0: 
-                print(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) * 0.2)
-                list_array_nablaH.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - list_array_L[idx - 1][-1]))
+                list_array_H.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - list_array_L[idx - 1][-1]))
             else:
-                print(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) * 0.2)
-                list_array_nablaH.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - 0))
-        print("charge hydraulique sur chaque interface", array_Hinter)
+                list_array_H.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - 0))
         if verbose:
-
+            print("charge hydraulique sur chaque interface", array_Hinter)
             for idx in range(len(list_array_L)):
-                plt.plot(list_array_nablaH[idx], list_array_L[idx])
+                plt.plot(list_array_H[idx], list_array_L[idx])
             plt.plot(H_init, self._z_solve)
             plt.title("charge hydraulique stratifiée initialisé")
             plt.show()
-        H_init = list_array_nablaH[0]
-        for idx in range(1, len(list_array_nablaH)):
-            H_init = np.concatenate((H_init, list_array_nablaH[idx]))
-        print(len(H_init))
-        # for 
-
-        # H_init = 
-        ## zhan
+        H_init = list_array_H[0]
+        for idx in range(1, len(list_array_H)):
+            H_init = np.concatenate((H_init, list_array_H[idx]))
+        ## zhan 
 
         heigth = abs(self._real_z[-1] - self._real_z[0])
         Ss_list = n_list / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
@@ -289,29 +285,41 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         H_res = compute_H_stratified(
             moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
 
-        T_res = compute_T_stratified(moinslog10K_list, n_list, lambda_s_list,
-                                     rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, T_init, T_riv, T_aq)
-
-        self._temps = T_res
         self._H_res = H_res  # stocke les résultats
+        
+        # zhan: charge hydraulique stratifié cste
+        # for col_idx in range(len(self._H_res[0])):
+        #     self._H_res[:, col_idx] = H_init[:]
+        # 
 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
+        K_list = 10 ** - moinslog10K_list
+
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
         nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
 
         for i in range(1, nb_cells - 1):
-            nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
+            if K_list[i] == K_list[i - 1] and K_list[i+1] != K_list[i]:
+                nablaH[i, :] = (H_res[i, :] - H_res[i-1, :]) / dz
+                
+            if K_list[i] != K_list[i - 1] and K_list[i+1] == K_list[i]:
+                nablaH[i, :] = (H_res[i+1, :] - H_res[i, :]) / dz
+            else: 
+                nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
 
         nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
 
-        K_list = 10 ** - moinslog10K_list
+        T_res = compute_T_stratified(moinslog10K_list, n_list, lambda_s_list,
+                                     rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
 
+        self._temps = T_res
+        
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
         for i in range(nb_cells):
             flows[i, :] = - K_list[i]*nablaH[i, :]
-        
+
         self._flows = flows  # calcul du débit spécifique
         if verbose:
             print("Done.")
