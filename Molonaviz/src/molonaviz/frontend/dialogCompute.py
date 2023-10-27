@@ -61,6 +61,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.spinBoxNLayersDirect.setValue(len(self.input))
         self.tableWidget.setRowCount(len(self.input))
 
+        self.lineEditChains.setText("10")
+        self.lineEditDelta.setText("3")
+        self.lineEditncr.setText("3")
+        self.lineEditc.setText("0.1")
+        self.lineEditcstar.setText("1e-6")
         layerBottom = int((self.maxdepth))
 
         for i in range(len(self.input)):
@@ -133,6 +138,13 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         #MCMC
         self.lineEditMaxIterMCMC.setText("5000")
+
+        self.lineEditChains.setText("10")
+        self.lineEditDelta.setText("3")
+        self.lineEditncr.setText("3")
+        self.lineEditc.setText("0.1")
+        self.lineEditcstar.setText("1e-6")
+
         self.lineEditKMin.setText("4")
         self.lineEditKMax.setText("9")
         self.lineEditMoinsLog10KSigma.setText("0.01")
@@ -227,6 +239,12 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         nb_iter = int(self.lineEditMaxIterMCMC.text())
         nb_cells = self.spinBoxNCellsDirect.value()
 
+        nb_chains = int(self.lineEditChains.text())
+        delta = float(self.lineEditDelta.text())
+        ncr = float(self.lineEditncr.text())
+        c = float(self.lineEditc.text())
+        cstar = float(self.lineEditcstar.text())
+
         #The user's input is not a permeability but a -log10(permeability)
         moins10logKmin = float(self.lineEditKMin.text())
         moins10logKmax = float(self.lineEditKMax.text())
@@ -265,4 +283,4 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = tuple(quantiles)
         quantiles = [float(quantile) for quantile in quantiles]
 
-        return nb_iter, all_priors, nb_cells, quantiles
+        return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar
