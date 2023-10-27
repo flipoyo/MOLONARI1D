@@ -294,6 +294,12 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         thermoDepth = self.coordinator.thermo_depth(depth_id)
         self.depth_view.updateOptions([thermoDepth,quantiles])
         self.depth_view.onUpdate() #Refresh the view
+        
+    def refreshUmbrellaView(self):
+        """
+        This method is called when the user changes the displayed layer in the temperature map.
+        """
+        self.umbrella_view.onUpdate()
 
     def setPressureAndTemperatureTables(self):
         """
@@ -319,6 +325,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.setPressureAndTemperatureTables()
         self.setupCheckboxesQuantiles()
         self.refreshTempDepthView()
+        self.refreshUmbrellaView()
 
         self.linkAllViewsLayouts()
 

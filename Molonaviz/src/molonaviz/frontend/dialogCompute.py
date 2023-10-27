@@ -42,7 +42,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         #MCMC
         self.lineEditMaxIterMCMC.setText("5000")
-        self.lineEditKMin.setText("3")
+        self.lineEditKMin.setText("4")
         self.lineEditKMax.setText("9")
         self.lineEditMoinsLog10KSigma.setText("0.01")
 
@@ -54,7 +54,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditThermalConductivityMax.setText("5")
         self.lineEditThermalConductivitySigma.setText("0.05")
 
-        self.lineEditThermalCapacityMin.setText("1000")
+        self.lineEditThermalCapacityMin.setText("1e6")
         self.lineEditThermalCapacityMax.setText("1e7")
         self.lineEditThermalCapacitySigma.setText("100")
 
