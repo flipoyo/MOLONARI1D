@@ -7,7 +7,8 @@ from .layers import Layer
 
 @dataclass
 class StateOld:
-    '''deprecated version, no stratification'''
+    """deprecated version, no stratification"""
+
     params: Param
     energy: float
     ratio_accept: float

@@ -1,18 +1,19 @@
 import numpy as np
 from typing import Sequence
 
-from .params import Param, Prior, ParamsPriors
+from params import Param, Prior, ParamsPriors
 
 
 class Layer:
-    def __init__(self,
+    def __init__(
+        self,
         name: str,
         zLow: float,
         moinslog10K: float,
         n: float,
         lambda_s: float,
-        rhos_cs: float
-        ):
+        rhos_cs: float,
+    ):
         self.name = name
         self.zLow = zLow
         self.params = Param(moinslog10K, n, lambda_s, rhos_cs)
@@ -24,8 +25,9 @@ class Layer:
     def from_dict(cls, monolayer_dict):
         return cls(**monolayer_dict)
 
+
 class LayerPriors(ParamsPriors):
-    '''Rassemble tout les priors relatfifs aux params d'une couche'''
+    """Rassemble tout les priors relatfifs aux params d'une couche"""
 
     def __init__(self, name: str, z_low: float, priors: Sequence[Prior]):
         ParamsPriors.__init__(self, priors)
@@ -47,7 +49,9 @@ class AllPriors:
         return [prior.sample() for prior in self.layered_prior_list]
 
     def perturb(self, param):
-        return [prior.perturb(val) for prior, val in zip(self.layered_prior_list, param)]
+        return [
+            prior.perturb(val) for prior, val in zip(self.layered_prior_list, param)
+        ]
 
     def __iter__(self):
         return self.layered_prior_list.__iter__()
@@ -65,8 +69,7 @@ class AllPriors:
 def layersListCreator(layersListInput):
     layersList = list()
     for name, zLow, moinslog10K, n, lambda_s, rhos_cs in layersListInput:
-        layersList.append(
-            Layer(name, zLow, moinslog10K, n, lambda_s, rhos_cs))
+        layersList.append(Layer(name, zLow, moinslog10K, n, lambda_s, rhos_cs))
     return layersList
 
 
@@ -79,12 +82,23 @@ def sortLayersList(layersList):
 
 def getListParameters(layersList, nbCells: int):
     dz = layersList[-1].zLow / nbCells
-    currentAltitude = dz/2
+    currentAltitude = dz / 2
     listParameters = list()
     for layer in layersList:
         while currentAltitude < layer.zLow:
             listParameters.append(
-                [layer.params.moinslog10K, layer.params.n, layer.params.lambda_s, layer.params.rhos_cs])
+                [
+                    layer.params.moinslog10K,
+                    layer.params.n,
+                    layer.params.lambda_s,
+                    layer.params.rhos_cs,
+                ]
+            )
             currentAltitude += dz
     listParameters = np.array(listParameters)
-    return listParameters[:, 0], listParameters[:, 1], listParameters[:, 2], listParameters[:, 3]
+    return (
+        listParameters[:, 0],
+        listParameters[:, 1],
+        listParameters[:, 2],
+        listParameters[:, 3],
+    )
