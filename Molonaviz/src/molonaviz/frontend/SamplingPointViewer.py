@@ -294,6 +294,12 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         thermoDepth = self.coordinator.thermo_depth(depth_id)
         self.depth_view.updateOptions([thermoDepth,quantiles])
         self.depth_view.onUpdate() #Refresh the view
+        
+    def refreshUmbrellaView(self):
+        """
+        This method is called when the user changes the displayed layer in the temperature map.
+        """
+        self.umbrella_view.onUpdate()
 
     def setPressureAndTemperatureTables(self):
         """
@@ -319,6 +325,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.setPressureAndTemperatureTables()
         self.setupCheckboxesQuantiles()
         self.refreshTempDepthView()
+        self.refreshUmbrellaView()
 
         self.linkAllViewsLayouts()
 
@@ -403,8 +410,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.coordinator.delete_computations()
             if dlg.computationIsMCMC():
                 #MCMC
-                nb_iter, all_priors, nb_cells, quantiles = dlg.getInputMCMC()
-                self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles)
+                nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar = dlg.getInputMCMC()
+                self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar)
             else:
                 #Direct Model
                 params, nb_cells = dlg.getInputDirectModel()

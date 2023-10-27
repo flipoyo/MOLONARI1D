@@ -131,89 +131,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         if self._layersList[-1].zLow != self._real_z[-1]:
             raise ValueError("Last layer does not match the end of the column.")
 
-    def _compute_solve_transi_one_layer(self, layer, nb_cells, verbose=True):
-        dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule
-        self._z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
-
-        self._id_sensors = [
-            np.argmin(np.abs(z - self._z_solve)) for z in self._real_z[1:-1]
-        ]
-
-        all_dt = np.array(
-            [
-                (self._times[j + 1] - self._times[j]).total_seconds()
-                for j in range(len(self._times) - 1)
-            ]
-        )  # le tableau des pas de temps (dépend des données d'entrée)
-        isdtconstant = np.all(all_dt == all_dt[0])
-
-        H_init = self._dH[0] - self._dH[0] * self._z_solve / self._real_z[-1]
-        # fixe toutes les charges de l'aquifère à 0 (à tout temps)
-        H_aq = np.zeros(len(self._times))
-
-        H_riv = (
-            self._dH
-        )  # self.dH contient déjà les charges de la rivière à tout temps, stocke juste dans une variable locale
-
-        # crée les températures initiales (t=0) sur toutes les profondeurs (milieu des cellules)
-        if self.inter_mode == "lagrange":
-            T_init = np.array([self.lagr(z) for z in self._z_solve])
-        elif self.inter_mode == "linear":
-            T_init = self.linear(self._z_solve)
-
-        T_riv = self._T_riv
-        T_aq = self._T_aq
-
-        moinslog10K, n, lambda_s, rhos_cs = layer.params
-
-        if verbose:
-            print(
-                "--- Compute Solve Transi ---",
-                f"One layer : moinslog10K = {moinslog10K}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}",
-                sep="\n",
-            )
-
-        heigth = abs(self._real_z[-1] - self._real_z[0])
-        Ss = n / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
-
-        H_res = compute_H(
-            moinslog10K, Ss, all_dt, isdtconstant, dz, H_init, H_riv, H_aq
-        )  # calcule toutes les charges à tout temps et à toute profondeur
-
-        T_res = compute_T(
-            moinslog10K,
-            n,
-            lambda_s,
-            rhos_cs,
-            all_dt,
-            dz,
-            H_res,
-            H_riv,
-            H_aq,
-            T_init,
-            T_riv,
-            T_aq,
-        )  # calcule toutes les températures à tout temps et à toute profondeur
-
-        self._temps = T_res
-        self._H_res = H_res  # stocke les résultats
-
-        # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
-        nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
-
-        nablaH[0, :] = 2 * (H_res[1, :] - H_riv) / (3 * dz)
-
-        for i in range(1, nb_cells - 1):
-            nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
-
-        nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
-
-        K = 10**-moinslog10K
-        self._flows = -K * nablaH  # calcul du débit spécifique
-
-        if verbose:
-            print("Done.")
-
     def _compute_solve_transi_multiple_layers(self, layersList, nb_cells, verbose):
         dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule
         self._z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
@@ -326,16 +243,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         else:
             # Checking the layers are well defined
             self._check_layers(layersList)
-
-            if len(self._layersList) == 1:
-                self._compute_solve_transi_one_layer(
-                    self._layersList[0], nb_cells, verbose
-                )
-
-            else:
-                self._compute_solve_transi_multiple_layers(
-                    self._layersList, nb_cells, verbose
-                )
+            self._compute_solve_transi_multiple_layers(
+                self._layersList, nb_cells, verbose)
 
     @compute_solve_transi.needed
     def get_id_sensors(self):

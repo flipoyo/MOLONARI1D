@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 import matplotlib.dates as mdates
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.gridspec import GridSpec
 
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -17,14 +19,7 @@ import numpy as np
 from molonaviz.interactions.MoloModel import MoloModel
 from molonaviz.interactions.MoloView import MoloView
 from molonaviz.utils.general import dateToMdates
-
-import sys
-
-def afficher_message_erreur(message):
-    sys.stderr.write(message + '\n')
-    sys.stderr.flush()
-
-
+from molonaviz.utils.general import displayCriticalMessage, displayWarningMessage, createDatabaseDirectory
 
 class GraphView(MoloView, FigureCanvasQTAgg):
     """
@@ -53,7 +48,7 @@ class GraphView1D(GraphView):
     def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="", xlabel=""):
         super().__init__(molomodel)
         # Créez les axes et associez-les à self.ax
-        self.axes = self.fig.add_subplot(111, sharex=self.axes, sharey=self.axes)
+        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
         #x and y correspond to the data which should be displayed on the x-axis and y-axis (ex: x=Date,y=Pressure)
         self.x = []
         self.y = {}
@@ -66,91 +61,12 @@ class GraphView1D(GraphView):
 
 
     def onUpdate(self):
-        self.axes.clear()
-        self.resetData()
-        self.retrieveData()
-        self.setup_x()
-        self.plotData()
-        self.draw()
-
-    def setup_x(self):
-        """
-        This method allows to apply changes to the data on the x-axis (for example, format a date).
-        """
-        if self.time_dependent:
-            self.x = dateToMdates(self.x)
-            formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-            self.axes.xaxis.set_major_formatter(formatter)
-            self.axes.xaxis.set_major_locator(MaxNLocator(4))
-            plt.setp(self.axes.get_xticklabels(), rotation = 15)
-        else:
-            pass
-
-    def plotData(self):
-        for index, (label, data) in enumerate(self.y.items()):
-            if len(self.x) == len(data):
-                self.axes.plot(self.x, data, label=label)
-        self.axes.legend(loc='best')
-        self.axes.set_ylabel(self.ylabel)
-
-        self.axes.set_xlabel(self.xlabel)
-        self.axes.set_title(self.title)
-        self.axes.grid(True)
-
-    def resetData(self):
-        self.x = []
-        self.y = {}
-        self.axes.get_xaxis().set_visible(False)
-        self.axes.get_yaxis().set_visible(False)
-
-    def get_model(self, model):
-        return super().get_model(model)
-
-class GraphView2D(GraphView):
-    """
-    Abstract class to represent 2D views (such the temperature heat maps).
-    There are three main attributes in this class:
-        -self.x is a 1D array and will be displayed on the x-axis
-        -self.y is a 1D array and will be displayed one the y-axis
-        -self.cmap is a 2D array: the value self.y[i,j] is actually the value of a pixel.
-    """
-    def __init__(self, molomodel: MoloModel | None,time_dependent=False,title="",xlabel = "",ylabel=""):
-        super().__init__(molomodel)
-        
-
-        # Créez les axes et associez-les à self.ax
-        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
-        # remove x date scale
-        self.ax.get_xaxis().set_visible(False)
-        self.time_dependent = time_dependent
-        self.title = title
-        self.ylabel = ylabel
-        self.xlabel = xlabel
-        self.y = self.model.get_depths()
-        self.x = self.model.get_dates()
-        self.cmap = []
-
-        # créer une colorbar
-        self.colorbar = None
-             
-        
-
-    def onUpdate(self):
-               
         self.ax.clear()
-               
-        #Créez les axes et associez-les à self.ax, en enlevant les échelles [0, 1]
-        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
-        self.ax.get_xaxis().set_visible(False)
-        # paramétrer l'échelle des axes
-        self.y = self.model.get_depths()
-        self.x = self.model.get_dates()
         self.resetData()
         self.retrieveData()
         self.setup_x()
         self.plotData()
         self.draw()
-        
 
     def setup_x(self):
         """
@@ -166,16 +82,89 @@ class GraphView2D(GraphView):
             pass
 
     def plotData(self):
+        for index, (label, data) in enumerate(self.y.items()):
+            if len(self.x) == len(data):
+                self.ax.plot(self.x, data, label=label)
+        self.ax.legend(loc='best')
+        self.ax.set_ylabel(self.ylabel)
+
+        self.ax.set_xlabel(self.xlabel)
+        self.ax.set_title(self.title)
+        self.ax.grid(True)
+
+    def resetData(self):
+        self.x = []
+        self.y = {}
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.get_yaxis().set_visible(False)
+
+    def get_model(self, model):
+        return super().get_model(model)
+
+class GraphView2D(GraphView):
+    """
+    Abstract class to represent 2D views (such the temperature heat maps).
+    There are three main attributes in this class:
+        -self.x is a 1D array and will be displayed on the x-axis
+        -self.y is a 1D array and will be displayed one the y-axis
+        -self.cmap is a 2D array: the value self.y[i,j] is actually the value of a pixel.
+    """
+    def __init__(self, molomodel: MoloModel | None,time_dependent=False,title="",xlabel = "",ylabel=""):
+        super().__init__(molomodel)
+   
+        self.time_dependent = time_dependent
+        self.title = title
+        self.ylabel = ylabel
+        self.xlabel = xlabel
+        self.cmap = []
+
+        # créer une colorbar
+        self.colorbar = None
+        
+        
+
+    def onUpdate(self):
+               
+        self.ax.clear()
+        self.resetData()
+               
+        #Créez les axes et associez-les à self.ax, en enlevant les échelles [0, 1]
+        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)      
+
+        self.retrieveData()
+        self.setup_x()
+        self.plotData()
+        self.draw()
+        
+
+    def setup_x(self):
+        """
+        This method allows to apply changes to the data on the x-axis (for example, format a date).
+        """
+        if self.time_dependent:
+            self.x = dateToMdates(self.x)
+            formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
+            self.ax.xaxis.set_major_formatter(formatter)
+            self.ax.xaxis.set_major_locator(MaxNLocator(4))
+            plt.setp(self.ax.get_xticklabels(), rotation = 7.5)
+        else:
+            pass
+
+    def plotData(self):
         
         if self.cmap.shape[1] ==len(self.x) and self.cmap.shape[0] == len(self.y):
             #View is not empty and should display something
             image = self.ax.imshow(self.cmap, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], float(self.y[-1]), float(self.y[0])], data="float")
-            self.colorbar = self.fig.colorbar(image) # Add a colorbar
+            self.colorbar = self.fig.colorbar(image, ax=self.ax, use_gridspec=True)
+                
             self.ax.xaxis_date()
             self.ax.set_title(self.title)
             self.ax.set_ylabel(self.ylabel)
-            self.ax.set_xlabel(self.xlabel)
-        
+            
+            
+    def retrieveData(self):
+        self.y = self.model.get_depths()
+        self.x = self.model.get_dates()
 
     def resetData(self):
         self.x = []
@@ -187,7 +176,9 @@ class GraphView2D(GraphView):
             self.colorbar.ax.set_visible(False)
             self.colorbar = None
         
-            
+        # remove scales
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.get_yaxis().set_visible(False)
 
 class GraphViewHisto(GraphView):
     """
@@ -256,7 +247,7 @@ class UmbrellaView(GraphView1D):
     """
     def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="Depth (m)", xlabel="Temperature (°C)", nb_dates =10):
         super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
-        self.nb_dates = nb_dates
+        self.nb_dates = nb_dates     
 
     def retrieveData(self):
         self.x,self.y = self.model.get_depth_by_temp(self.nb_dates)
@@ -265,7 +256,7 @@ class UmbrellaView(GraphView1D):
         """
         This function needs to be overloaded for the umbrellas, as the plot function must be like plot(temps, depth) with depths being fixed.
         """
-
+        
         cmap = plt.get_cmap('Reds')
         colors = [cmap(i / len(self.y.items())) for i in range(len(self.y.items()))]
         list_labels = [label for label in self.y.keys()]
@@ -273,20 +264,38 @@ class UmbrellaView(GraphView1D):
         for index, (label, data) in enumerate(self.y.items()):
 
             if len(self.x) == len(data):
-                self.axes.plot( data,self.x, color=colors[index])
+                self.ax.plot( data,self.x, color=colors[index])
                 
-                
-        norm = Normalize(vmin=0, vmax=len(self.y.items()))
-        sm = ScalarMappable(cmap=cmap, norm=norm)
-        sm.set_array([])        
-        colorbar = self.fig.colorbar(mappable=sm,ax=self.axes, ticks=np.linspace(0, len(self.y.items()), len(self.y.items())),)
-        colorbar.set_ticklabels(list_labels)
+        # inverse the y-axis
+        self.ax.set_ylim(0.55, 0)
 
-        self.axes.legend(loc='best')
-        self.axes.set_ylabel(self.ylabel)
-        self.axes.set_xlabel(self.xlabel)
-        self.axes.set_title(self.title)
-        self.axes.grid(True)
+        self.ax.legend(list_labels, loc='best')
+        self.ax.set_ylabel(self.ylabel)
+        self.ax.set_xlabel(self.xlabel)
+        self.ax.set_title('Umbrellas plot')
+        self.ax.grid(True)
+                
+
+    def resetData(self):
+        self.x = []
+        self.y = {}
+        self.cmap = []
+
+        # hide color bar, not remove it
+        if self.colorbar is not None:
+            self.colorbar.ax.set_visible(False)
+            self.colorbar = None
+        self.ax.clear()
+        self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.get_xaxis().set_visible(False)
+
+    def onUpdate(self):
+        self.resetData()
+        self.retrieveData()
+        self.plotData()
+        self.draw()
+
 
 class TempDepthView(GraphView1D):
     """

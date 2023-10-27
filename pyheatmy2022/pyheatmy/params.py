@@ -94,11 +94,11 @@ if __name__ == "__main__":
         [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
     )
 
-    priors2 = ParamsPriors(
-        [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
-    )
+#     priors2 = ParamsPriors(
+#         [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
+#     )
 
-    geom = AllPriors([priors1, priors2])
+#     geom = AllPriors([priors1, priors2])
 
     class Layer:
         def __init__(
@@ -114,9 +114,9 @@ if __name__ == "__main__":
             self.zLow = zLow
             self.params = Param(moinslog10K, n, lambda_s, rhos_cs)
 
-        # The repr() function returns a printable representational string of the given object.
-        def __repr__(self) -> str:
-            return self.name + f" : ends at {self.zLow} m. " + self.params.__repr__()
+#         # The repr() function returns a printable representational string of the given object.
+#         def __repr__(self) -> str:
+#             return self.name + f" : ends at {self.zLow} m. " + self.params.__repr__()
 
     def layersListCreator(layersListInput):
         layersList = list()

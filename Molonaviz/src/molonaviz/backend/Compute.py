@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
 from PyQt5.QtSql import QSqlQuery
 from pyheatmy import *
-from numpy import shape
+from numpy import shape 
 
 from ..utils.general import databaseDateToDatetime, datetimeToDatabaseDate
 from .SPointCoordinator import SPointCoordinator
@@ -12,7 +12,7 @@ class ColumnMCMCRunner(QtCore.QObject):
     """
     finished = QtCore.pyqtSignal()
 
-    def __init__(self, col, nb_iter: int, all_priors: dict, nb_cells: str, quantiles: list):
+    def __init__(self, col, nb_iter: int, all_priors: dict, nb_cells: str, quantiles: list, nb_chains: int, delta: float, ncr, c, cstar):
         super(ColumnMCMCRunner, self).__init__()
 
         self.col = col
@@ -20,10 +20,18 @@ class ColumnMCMCRunner(QtCore.QObject):
         self.all_priors = all_priors
         self.nb_cells = nb_cells
         self.quantiles = quantiles
+        
+        self.nb_chains = nb_chains
+        self.delta = delta
+        self.ncr = ncr
+        self.c = c
+        self.cstar = cstar
+
 
     def run(self):
         print("Launching MCMC...")
         self.col.compute_mcmc(self.nb_iter, self.all_priors, self.nb_cells, self.quantiles)
+        # self.col.compute_dream_mcmc(self.nb_iter, self.all_priors, self.nb_cells, self.quantiles, self.nb_chains, self.delta, self.ncr, self.c, self.cstar)
         self.finished.emit()
 
 class ColumnDirectModelRunner(QtCore.QObject):
@@ -47,7 +55,7 @@ class ColumnDirectModelRunner(QtCore.QObject):
 class Compute(QtCore.QObject):
     """
     How to use this class :
-    - Initialise the compute engine by giving it the  database connection and ID of the current Point.
+    - Initialise the compute engine by giving it the database connection and ID of the current Point.
     - When computations are needed, create an associated Column objected. This requires cleaned measures to be in the database for this point. This can be made by calling compute.set_column()
     - Launch the computation :
         - with given parameters : compute.compute_direct_model(params: tuple, nb_cells: int, sensorDir: str)
@@ -260,7 +268,7 @@ class Compute(QtCore.QObject):
         insertRMSE.exec()
         self.con.commit()
 
-    def compute_MCMC(self, nb_iter: int, all_priors : list, nb_cells: str, quantiles: tuple):
+    def compute_MCMC(self, nb_iter: int, all_priors : list, nb_cells: str, quantiles: tuple, nb_chains: int, delta: float, ncr, c, cstar):
         """
         Launch the MCMC computation with given parameters.
         """
@@ -271,7 +279,7 @@ class Compute(QtCore.QObject):
         self.update_nb_cells(nb_cells)
 
         self.set_column() #Updates self.col
-        self.mcmc_runner = ColumnMCMCRunner(self.col, nb_iter, all_priors, nb_cells, quantiles)
+        self.mcmc_runner = ColumnMCMCRunner(self.col, nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar)
         self.mcmc_runner.finished.connect(self.end_MCMC)
         self.mcmc_runner.moveToThread(self.thread)
         self.thread.started.connect(self.mcmc_runner.run)
