@@ -147,6 +147,7 @@ class GraphView2D(GraphView):
             self.ax.xaxis.set_major_formatter(formatter)
             self.ax.xaxis.set_major_locator(MaxNLocator(4))
             plt.setp(self.ax.get_xticklabels(), rotation = 7.5)
+            #self.ax.set_xlim(self.x[0], self.x[-1])
         else:
             pass
 
