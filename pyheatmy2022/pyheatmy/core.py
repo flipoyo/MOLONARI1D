@@ -631,7 +631,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_cells: int,
         nb_chain: int,
         quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
-        verbose=True,
+        verbose=False,
         sigma2=1.0,
         delta=3,
         ncr=3,
@@ -712,7 +712,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 f"Number of cells : {nb_cells}",
                 f"Number of iterations : {nb_iter}",
                 f"Number of chains : {nb_chain}",
-                "Launch Mcmc",
+                "--------------------",
                 sep="\n",
             )
 
@@ -748,9 +748,18 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         J = np.zeros((nb_layer, ncr))
         pcr = np.ones((nb_layer, ncr)) / ncr
         nb_accepted = 0  # nombre de propositions acceptées
+        nb_burn_in_iter = 0  # nombre d'itération de burn-in
+
+        # initialisation des chaines
+        for i in range(nb_chain):
+            self.compute_solve_transi(
+                convert_to_layer(name_layer, z_low, X[i]), nb_cells, verbose=False
+            )
+            _temp[0][i] = self.get_temps_solve()
+            _energy[0][i] = compute_energy(_temp[0][i][ind_ref, :])
 
         if verbose:
-            print("Burn in phase")
+            print("--- Begin Burn in phase ---")
         for i in range(nb_iter):
             # Initialisation pour les nouveaux paramètres
             x_new = np.zeros((nb_layer, nb_param))
@@ -812,11 +821,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     dX = np.zeros((nb_layer, nb_param))
                     X_new[j] = X[j]
                     _temp[i + 1][j] = _temp[i - 1][j]
+                    _energy[i + 1][j] = _energy[i - 1][j]
 
                 # Update J and n_id
                 for l in range(nb_layer):
                     J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
                     n_id[l, id] += 1
+
             # Update pcr
             for l in range(nb_layer):
                 pcr[l] = J[l] / n_id[l]
@@ -825,7 +836,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             # Update parameters values
             X = X_new
             _params[i + 1] = X_new
-
             # Check for convergence
             if gelman_rubin(i + 2, nb_param, nb_layer, _params[: i + 2]):
                 if verbose:
@@ -833,90 +843,90 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 break
             nb_burn_in_iter += 1
 
-            _params = np.zeros((nb_iter + 1, nb_chain, nb_layer, nb_param))
+        _params = np.zeros((nb_iter + 1, nb_chain, nb_layer, nb_param))
+        _params[0] = X
+        _temp = np.zeros(
+            (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
+        )
+        _energy = np.zeros((nb_iter + 1, nb_chain))
+        for i in trange(nb_iter, desc="Mcmc Computation ", file=sys.stdout):
+            # Initialize arrays for new parameter values
+            x_new = np.zeros((nb_layer, nb_param))
+            X_new = np.zeros((nb_chain, nb_layer, nb_param))
+            std_X = np.std(X, axis=0)
 
-            _params[0] = X
-            _temp = np.zeros(
-                (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
-            )
-            _energy = np.zeros((nb_iter + 1, nb_chain))
-            for i in trange(nb_iter, desc="Mcmc Computation ", file=sys.stdout):
+            # Loop over chains
+            for j in range(nb_chain):
                 # Initialize arrays for new parameter values
-                x_new = np.zeros((nb_layer, nb_param))
-                X_new = np.zeros((nb_chain, nb_layer, nb_param))
-                std_X = np.std(X, axis=0)
+                dX = np.zeros((nb_layer, nb_param))
 
-                # Loop over chains
-                for j in range(nb_chain):
-                    # Initialize arrays for new parameter values
-                    dX = np.zeros((nb_layer, nb_param))
+                # Loop over layers
+                for l in range(nb_layer):
+                    # Select a crossover point
+                    id = np.random.choice(ncr, p=pcr[l])
 
-                    # Loop over layers
-                    for l in range(nb_layer):
-                        # Select a crossover point
-                        id = np.random.choice(ncr, p=pcr[l])
+                    # Generate random numbers
+                    z = np.random.uniform(0, 1, nb_param)
+                    A = z <= cr_vec[id]
+                    d_star = np.sum(A)
 
-                        # Generate random numbers
-                        z = np.random.uniform(0, 1, nb_param)
-                        A = z <= cr_vec[id]
-                        d_star = np.sum(A)
+                    # If no parameters are selected, select the smallest one
+                    if d_star == 0:
+                        A[np.argmin(z)] = True
+                        d_star = 1
 
-                        # If no parameters are selected, select the smallest one
-                        if d_star == 0:
-                            A[np.argmin(z)] = True
-                            d_star = 1
+                    # Generate random numbers
+                    lambd = np.random.uniform(-c, c, d_star)
+                    zeta = np.random.normal(0, c_star, d_star)
 
-                        # Generate random numbers
-                        lambd = np.random.uniform(-c, c, d_star)
-                        zeta = np.random.normal(0, c_star, d_star)
+                    # Select chains for difference vectors
+                    choose = np.delete(np.arange(nb_chain), j)
+                    a = np.random.choice(choose, delta, replace=False)
+                    choose = np.delete(choose, np.where(np.isin(a, choose)))
+                    b = np.random.choice(choose, delta, replace=False)
 
-                        # Select chains for difference vectors
-                        choose = np.delete(np.arange(nb_chain), j)
-                        a = np.random.choice(choose, delta, replace=False)
-                        choose = np.delete(choose, np.where(np.isin(a, choose)))
-                        b = np.random.choice(choose, delta, replace=False)
-
-                        # Compute difference vectors
-                        gamma = 2.38 / np.sqrt(2 * d_star * delta)
-                        dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
-                            X[a, l][:, A] - X[b, l][:, A], axis=0
-                        )
-
-                        # Compute new parameter values
-                        x_new[l] = X[j, l] + dX[l]
-                        x_new[l] = check_range(x_new[l], ranges[l])
-
-                    # Compute new temperature profile and energy
-                    self.compute_solve_transi(
-                        convert_to_layer(name_layer, z_low, x_new),
-                        nb_cells,
-                        verbose=False,
+                    # Compute difference vectors
+                    gamma = 2.38 / np.sqrt(2 * d_star * delta)
+                    dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
+                        X[a, l][:, A] - X[b, l][:, A], axis=0
                     )
-                    temp_new = self.get_temps_solve()
-                    energy_new = compute_energy(temp_new[ind_ref, :])
 
-                    # Compute acceptance probability
-                    log_ratio_accept = compute_log_acceptance(energy_new, _energy[i][j])
+                    # Compute new parameter values
+                    x_new[l] = X[j, l] + dX[l]
+                    x_new[l] = check_range(x_new[l], ranges[l])
 
-                    # Accept or reject new parameter values
-                    if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
-                        X_new[j] = x_new
-                        _temp[i + 1][j] = temp_new
-                        _energy[i + 1][j] = energy_new
-                    else:
-                        dX = np.zeros((nb_layer, nb_param))
-                        X_new[j] = X[j]
-                        _temp[i + 1][j] = _temp[i - 1][j]
-                        _energy[i + 1][j] = _energy[i - 1][j]
+                # Compute new temperature profile and energy
+                self.compute_solve_transi(
+                    convert_to_layer(name_layer, z_low, x_new),
+                    nb_cells,
+                    verbose=False,
+                )
+                temp_new = self.get_temps_solve()
+                energy_new = compute_energy(temp_new[ind_ref, :])
 
-                    # Update J and n_id
-                    for l in range(nb_layer):
-                        J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
-                        n_id[l, id] += 1
+                # Compute acceptance probability
+                log_ratio_accept = compute_log_acceptance(energy_new, _energy[i][j])
 
-                # Update parameter values
-                X = X_new
-                _params[i + 1] = X_new
+                # Accept or reject new parameter values
+                if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
+                    X_new[j] = x_new
+                    _temp[i + 1][j] = temp_new
+                    _energy[i + 1][j] = energy_new
+                else:
+                    dX = np.zeros((nb_layer, nb_param))
+                    X_new[j] = X[j]
+                    _temp[i + 1][j] = _temp[i - 1][j]
+                    _energy[i + 1][j] = _energy[i - 1][j]
+
+                # Update J and n_id
+                for l in range(nb_layer):
+                    J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
+                    n_id[l, id] += 1
+
+            # Update parameter values
+            X = X_new
+            _params[i + 1] = X_new
+        return _params
 
     @checker
     def compute_mcmc(
