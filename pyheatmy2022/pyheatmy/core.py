@@ -18,8 +18,6 @@ from .utils import (
     C_W,
     RHO_W,
     LAMBDA_W,
-    compute_H,
-    compute_T,
     compute_H_stratified,
     compute_T_stratified,
     conv,
@@ -244,7 +242,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             # Checking the layers are well defined
             self._check_layers(layersList)
             self._compute_solve_transi_multiple_layers(
-                self._layersList, nb_cells, verbose)
+                self._layersList, nb_cells, verbose
+            )
 
     @compute_solve_transi.needed
     def get_id_sensors(self):
