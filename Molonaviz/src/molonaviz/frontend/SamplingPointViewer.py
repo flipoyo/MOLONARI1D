@@ -14,7 +14,7 @@ from .dialogsCleanup import DialogCleanup
 from .dialogCompute import DialogCompute
 from ..utils.get_files import get_ui_asset
 
-
+From_DisplayParameters = uic.loadUiType(get_ui_asset("DisplayParameters.ui"))[0]
 From_SamplingPointViewer = uic.loadUiType(get_ui_asset("SamplingPointViewer.ui"))[0]
 
 class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
@@ -73,7 +73,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
 
         # Link every button to their function
-        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams)
+        self.displayparam.clicked.connect(self.changeDisplayedParams)
         self.radioButtonTherm1.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm2.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm3.clicked.connect(self.refreshTempDepthView)
@@ -205,26 +205,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.infosModel = infosModel
         self.tableViewInfos.setModel(self.infosModel)
 
-    def setupComboBoxLayers(self):
-        """
-        Setup the Combo box and which will be used to display the parameters.
-        """
-        layers = self.coordinator.layers_depths()
-        for layer in layers:
-            self.comboBoxSelectLayer.addItem(str(layer))
-        if len(layers) > 0:
-            # By default, show the parameters associated with the first layer.
-            self.changeDisplayedParams(layers[0])
-
-    def changeDisplayedParams(self, layer : float):
-        """
-        Display in the table view the parameters corresponding to the given layer, and update histograms.
-        """
-        self.paramsModel = self.coordinator.get_params_model(layer)
-        self.tableViewParams.setModel(self.paramsModel)
-        #Resize the table view so it looks pretty
-        self.tableViewParams.resizeColumnsToContents()
-        self.coordinator.refresh_params_distr(layer)
 
     def setupCheckboxesQuantiles(self):
         """
@@ -321,7 +301,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         Update all the views displaying results by asking the backend to refresh the models.
         """
         self.comboBoxSelectLayer.clear()
-        self.setupComboBoxLayers()
         self.setPressureAndTemperatureTables()
         self.setupCheckboxesQuantiles()
         self.refreshTempDepthView()
@@ -385,6 +364,11 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.updateAllViews()
             self.handleComputationsButtons()
 
+    def changeDisplayedParams(self):
+        dlg = DisplayParameters(self.coordinator)
+        res = dlg.exec()
+    
+
     def cleanup(self):
         dlg = DialogCleanup(self.coordinator,self.samplingPoint)
         res = dlg.exec()
@@ -393,6 +377,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             confirmRes = confirm.exec()
             if confirmRes == QtWidgets.QDialog.Accepted:
                 #Clean the database first before putting new data
+                print("oui")
                 self.coordinator.delete_processed_data()
                 df_cleaned = dlg.getCleanedMeasures()
                 if not df_cleaned.empty:
@@ -442,3 +427,28 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         This is called when the right horizontal splitter in the fluxes tab is moved. Move the left one accordingly.
         """
         self.fluxesSplitterHorizLeft.setSizes(self.fluxesSplitterHorizRight.sizes())
+
+class DisplayParameters(QtWidgets.QWidget, From_DisplayParameters):
+     def __init__(self, spointCoordinator : SPointCoordinator):
+        super(DisplayParameters, self).__init__()
+        QtWidgets.QWidget.__init__(self)
+        self.setupUi(self)
+
+        self.coordinator = spointCoordinator
+        layers = self.coordinator.layers_depths()
+
+        self.tableWidget.setRowCount(len(layers))
+        for i in range(len(layers)):
+            self.paramsModel = self.coordinator.get_params_model(layers[i])
+            self.tableWidget.setVerticalHeaderItem(i,  (f"Layer {i+1}")) 
+            self.tableWidget.setItem(i, 0, str(layers[i])) #In cm
+            self.tableWidget.setItem(i, 1, str(self.paramsModel["Perm"]))
+            self.tableWidget.setItem(i, 2, str(self.paramsModel["Poro"]))
+            self.tableWidget.setItem(i, 3, (str(self.paramsModel["ThConduct"])))
+            self.tableWidget.setItem(i, 4, ('{:.2e}'.format(self.paramsModel["ThCap"])))
+        #Resize the table view so it looks pretty
+        self.tableViewParams.resizeColumnsToContents()
+
+
+
+    
