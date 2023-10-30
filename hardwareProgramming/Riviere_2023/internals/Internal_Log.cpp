@@ -4,23 +4,20 @@
 #include <FlashStorage.h>
 #include "Measure.h"
 #include "testSample.h"
+#include "InternalData.h"
 
 // Reserve a portion of flash memory to store a Measure.
-FlashStorage(flashData, Measure);
+FlashStorage(flashData, InternalData);
 
-
-// Initialise the log module for the first time.
-void InitialiseLog(/* Parameters */) {
-  Serial.begin(9600);
+unsigned int GetAvailableMemory(InternalData internalData) {
+  unsigned int lenthOfArray = sizeof(internalData.data)/sizeof(Measure);
+  return lenthOfArray - internalData.nbOfMeasures;
 }
 
-void DisplayMeasure(Measure newData, int writeIndex) {
-  if (writeIndex > 0) {
-    Serial.print("New data written at index ");
-    Serial.println(writeIndex);
-    }
-  // Serial.print("Date: ");
-  // Serial.println(newData.date);
+// Display a Measure on the Serial monitor.
+void DisplayMeasure(Measure newData) {
+  Serial.print("Date: ");
+  Serial.println(newData.date);
   Serial.print("Capteur1: ");
   Serial.println(newData.mesure1);
   Serial.print("Capteur2: ");
@@ -32,10 +29,39 @@ void DisplayMeasure(Measure newData, int writeIndex) {
 
 }
 
+// Display all the data stored in the internal memory.
+void DisplayFlashMemory() {
+  // Read the current Flash memory
+  InternalData internalData = flashData.read();
+
+  Serial.println("Number of measures stored in Flash memory so far:");
+  Serial.println(internalData.nbOfMeasures);
+
+  for (int i = 0; i < internalData.nbOfMeasures; i++) {
+    Serial.println();
+    Serial.print("Measure number :");
+    Serial.println(i+1);
+    DisplayMeasure(internalData.data[i]);
+  }
+  flashData.write(internalData);
+}
+
+void DisplayMemoryState(InternalData internalData){
+  if (Serial) {
+    Serial.println("-------------MEMORY-STATE-----------------------");
+    Serial.println("Data stored in Flash memory so far:");
+    Serial.println(internalData.nbOfMeasures);
+    Serial.println("Number of available memory slots:");
+    Serial.println(internalData.availableMemory);
+    Serial.println("------------------------------------------------");
+  }
+}
+
+// Convert a testSample to a Measure.
 Measure ConvertToWritableData(testSample rawData) {
   Measure formattedData;
-  //Todo
   formattedData.valid = true;
+  strncpy(formattedData.date,rawData.date,21);
   formattedData.mesure1 = rawData.mesure1;
   formattedData.mesure2 = rawData.mesure2;
   formattedData.mesure3 = rawData.mesure3;
@@ -43,32 +69,50 @@ Measure ConvertToWritableData(testSample rawData) {
   return formattedData;
 }
 
-// The exact signature of this function has to be determined
-void LogData(testSample rawData) {
-  // Create a new Measure instance
-  Measure newData;
-  newData = ConvertToWritableData(rawData);
+void InitialiseLog() {
+  // Read the current Flash memory
+  InternalData internalData = flashData.read();
 
-  
-  // Read the last written data from Flash
-  Measure lastData;
-  lastData = flashData.read();
-
-  if (lastData.valid) {
-    Serial.println("Last data written:");
-    DisplayMeasure(lastData, 0);
-    
+  // Initialize the Flash memory if it is the first time the board is used.
+  if (internalData.nbOfMeasures == 0) {
+    Serial.println("Hello There ! This device's empty and ready to store some data.");
+    internalData.availableMemory = GetAvailableMemory(internalData);
   }
+
+  //In the cas there are some mesure, give them to the user
   else {
-    Serial.println("No data written yet");
+    Serial.println("Hello Back ! There are some data stored in the Flash memory.");
+    DisplayMemoryState(internalData);
   }
-  
-  flashData.write(newData);
-  // DisplayWhatHappened(lastData, writeIndex);
-  // DisplayWhatHappened(newData, writeIndex);
+
+  flashData.write(internalData);
 }
 
-// The exact signature of this function has to be determined
-void GetData(/* Parameters */) {
-  // Todo
+// Log the data in the internal memory.
+void LogData(testSample rawData) {
+  // Read the current Flash memory
+  InternalData internalData = flashData.read();
+
+  if (internalData.availableMemory > 0) {
+    // Create a new Measure instance
+    Measure newData;
+    newData = ConvertToWritableData(rawData);
+
+    // Get the number of measures already stored
+    int nbOfMeasures = internalData.nbOfMeasures;
+    
+    //Append the last measure to the new data
+    internalData.data[nbOfMeasures] = newData;
+    internalData.nbOfMeasures++;
+    internalData.availableMemory--;
+  }
+
+  else if (Serial) {
+    Serial.println("No more memory available.");
+  }
+
+  // Write the new data in Flashs
+    flashData.write(internalData);
+
+    DisplayMemoryState(internalData);
 }

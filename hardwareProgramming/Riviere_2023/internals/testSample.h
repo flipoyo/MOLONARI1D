@@ -3,7 +3,7 @@
 
 class testSample {
     public:
-        // char date[9];
+        char date[21];
         unsigned short mesure1;
         unsigned short mesure2;
         unsigned short mesure3;

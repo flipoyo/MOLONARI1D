@@ -18,26 +18,62 @@ Arduino MKR WAN 1310
 #include "internals/Internal_Log.cpp"
 #include "internals/Measure.h"
 #include "internals/testSample.h"
+#include "internals/InternalData.h"
 
 
 PressureSensor pressureSensor(A6, 6);
 
 
 void setup() {
-  // put your setup code here, to run once:
   InitialiseLora();
   InitialiseRTC();
+
+  Serial.begin(9600);
   InitialiseLog();
 
-  Serial.begin(115200);
+  // TESTINGS
+  delay(5000);
+
+  testSample test1;
+  strncpy(test1.date,"27/10/2023",21);
+  test1.mesure1 = 1111;
+  test1.mesure2 = 2222;
+  test1.mesure3 = 3333;
+  test1.mesure4 = 4444;
+
+  LogData(test1);
+
+  delay(5000);
+
+  testSample test2;
+  strncpy(test2.date,"27/10/2023",21);
+  test2.mesure1 = 72;
+  test2.mesure2 = 73;
+  test2.mesure3 = 0;
+  test2.mesure4 = 0;
+
+  LogData(test2);
+
+  delay(5000);
+
+  testSample test3;
+  strncpy(test3.date,"27/10/2023",21);
+  test3.mesure1 = 1;
+  test3.mesure2 = 2;
+  test3.mesure3 = 3;
+  test3.mesure4 = 4;
+
+  LogData(test3);
+
+  delay(5000);
+
+  DisplayFlashMemory();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // Get immidiately the data stored in FlashMemory
 
-  PRESSURE_T pressure = pressureSensor.MeasurePressure();
+  // PRESSURE_T pressure = pressureSensor.MeasurePressure();
+  // Serial.println(pressure);
 
-  Serial.println(pressure);
-
-  Sleep(1000);
 }
