@@ -117,6 +117,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="displayparam">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>Show MCMC best parameters</string>
        </property>
@@ -198,8 +201,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>1314</width>
-                 <height>540</height>
+                 <width>1334</width>
+                 <height>612</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -573,8 +576,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1361</width>
-             <height>400</height>
+             <width>1369</width>
+             <height>428</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -623,8 +626,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1361</width>
-             <height>399</height>
+             <width>1369</width>
+             <height>427</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_9">
