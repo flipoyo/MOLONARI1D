@@ -572,10 +572,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_cells: int,  # le nombre de cellules de la colonne
         # les quantiles pour l'affichage de stats sur les valeurs de température
         quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        nb_chains: int = 10,
+        delta = 2,
+        ncr = 3,
+        c = 0.1,
+        cstar = 1e-6,
         verbose=True,  # affiche texte explicatifs ou non
         sigma2=None,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1/x)
-    ):
+        ):
+
         if sigma2 is None:
             self.compute_mcmc_with_sigma2(
                 nb_iter, all_priors, nb_cells, quantile, verbose, sigma2_temp_prior)
