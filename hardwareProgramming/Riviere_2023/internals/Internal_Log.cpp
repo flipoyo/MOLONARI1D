@@ -116,3 +116,12 @@ void LogData(testSample rawData) {
 
     DisplayMemoryState(internalData);
 }
+
+
+Measure GetMeasurementById(unsigned int id) {
+
+}
+
+unsigned int GetLastMeasurementId() {
+
+}
