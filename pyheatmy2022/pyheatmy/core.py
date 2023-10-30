@@ -21,6 +21,11 @@ from .utils import (
     compute_H_stratified,
     compute_T_stratified,
     conv,
+    compute_energy,
+    compute_log_acceptance,
+    convert_to_layer,
+    check_range,
+    gelman_rubin,
 )
 from .layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
 
@@ -647,61 +652,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._real_z[-1] / nb_cells
         _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-        # temp_ref = self._T_measures[:, :].T
-        temp_ref = self.get_temps_solve()[ind_ref, :]
+        temp_ref = self._T_measures[:, :].T
+        # temp_ref = self.get_temps_solve()[ind_ref, :]
         nb_layer = len(all_priors)
         nb_param = 4
-
-        def compute_energy(temp: np.array):
-            norm2 = np.nansum((temp - temp_ref) ** 2)
-            return 0.5 * norm2 / sigma2
-
-        def compute_log_acceptance(actual_energy: float, prev_energy: float):
-            return prev_energy - actual_energy
-
-        def convert_to_layer(name_layer, z_low, params):
-            return [Layer(name_layer[i], z_low[i], *params[i]) for i in range(nb_layer)]
-
-        def check_range(x, ranges):
-            while np.sum(x < ranges[:, 0]) + np.sum(x > ranges[:, 1]) > 0:
-                x = (
-                    (x < ranges[:, 0]) * (ranges[:, 1] - (ranges[:, 0] - x))
-                    + (x > ranges[:, 1]) * (ranges[:, 0] + (x - ranges[:, 1]))
-                    + (x >= ranges[:, 0]) * (x <= ranges[:, 1]) * x
-                )
-            return x
-
-        def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
-            R = np.zeros((nb_layer, nb_param))
-            for l in range(nb_layer):
-                chains_layered = chains[:, :, l, :]
-                # Variances intra-chaînes des paramètres
-                Var_intra = np.var(chains_layered, axis=0)
-
-                # Moyenne des variances intra-chaîne
-                var_intra = np.mean(Var_intra, axis=0)
-
-                # Moyennes de chaque chaîne
-                means_chains = np.mean(chains_layered, axis=0)
-
-                # Variance entre les moyennes des chaînes, dite inter-chaînes
-                var_inter = np.var(means_chains, axis=0)
-
-                # Calcul de l'indicateur de Gelman-Rubin
-                for j in range(nb_param):
-                    if np.isclose(var_intra[j], 0):
-                        R[l, j] = 2
-                    else:
-                        R[l, j] = np.sqrt(
-                            var_inter[j]
-                            / var_intra[j]
-                            * (nb_current_iter - 1)
-                            / nb_current_iter
-                            + 1
-                        )  # Vérifier la formule
-
-            # On considère que la phase de burn-in est terminée dès que R < threshold
-            return np.all(R < threshold)
 
         if verbose:
             print(
@@ -752,10 +706,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # initialisation des chaines
         for i in range(nb_chain):
             self.compute_solve_transi(
-                convert_to_layer(name_layer, z_low, X[i]), nb_cells, verbose=False
+                convert_to_layer(nb_layer, name_layer, z_low, X[i]),
+                nb_cells,
+                verbose=False,
             )
             _temp_burn_in[0][i] = self.get_temps_solve()
-            _energy_burn_in[0][i] = compute_energy(_temp_burn_in[0][i][ind_ref, :])
+            _energy_burn_in[0][i] = compute_energy(
+                _temp_burn_in[0][i][ind_ref, :], temp_ref, sigma2
+            )
 
         if verbose:
             print("--- Begin Burn in phase ---")
@@ -803,10 +761,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                 # Compute new temperature profile and energy
                 self.compute_solve_transi(
-                    convert_to_layer(name_layer, z_low, x_new), nb_cells, verbose=False
+                    convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                    nb_cells,
+                    verbose=False,
                 )
                 temp_new = self.get_temps_solve()
-                energy_new = compute_energy(temp_new[ind_ref, :])
+                energy_new = compute_energy(temp_new[ind_ref, :], temp_ref, sigma2)
 
                 # Compute acceptance probability
                 log_ratio_accept = compute_log_acceptance(
@@ -855,7 +815,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         for c in range(nb_chain):
             self._states.append(
                 State(
-                    layers=convert_to_layer(name_layer, z_low, X[c]),
+                    layers=convert_to_layer(nb_layer, name_layer, z_low, X[c]),
                     energy=_energy[0][c],
                     ratio_accept=1,
                     sigma2_temp=sigma2,
@@ -910,12 +870,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                 # Compute new temperature profile and energy
                 self.compute_solve_transi(
-                    convert_to_layer(name_layer, z_low, x_new),
+                    convert_to_layer(nb_layer, name_layer, z_low, x_new),
                     nb_cells,
                     verbose=False,
                 )
                 temp_new = self.get_temps_solve()
-                energy_new = compute_energy(temp_new[ind_ref, :])
+                energy_new = compute_energy(temp_new[ind_ref, :], temp_ref, sigma2)
 
                 # Compute acceptance probability
                 log_ratio_accept = compute_log_acceptance(energy_new, _energy[i][j])
@@ -928,7 +888,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     nb_accepted += 1
                     self._states.append(
                         State(
-                            layers=convert_to_layer(name_layer, z_low, x_new),
+                            layers=convert_to_layer(nb_layer, name_layer, z_low, x_new),
                             energy=energy_new,
                             ratio_accept=nb_accepted / (i * 10 + j + 1),
                             sigma2_temp=sigma2,

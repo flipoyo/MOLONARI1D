@@ -1,7 +1,8 @@
-from numpy import float32, full, zeros, indices
+from numpy import float32, zeros, nansum, sum, var, mean, isclose, sqrt, all
 from numpy.linalg import solve
 from numba import njit
 
+from .layers import Layer
 from .solver import solver, tri_product
 from .params import Prior, PARAM_LIST
 
@@ -10,6 +11,7 @@ LAMBDA_W = 0.6071
 RHO_W = 1000
 C_W = 4185
 ALPHA = 0.4
+
 
 def conv(layer):
     name, prof, priors = layer
@@ -23,6 +25,60 @@ def conv(layer):
         return layer
 
 
+def compute_energy(temp1, temp2, sigma2: float):
+    norm2 = nansum((temp1 - temp2) ** 2)
+    return 0.5 * norm2 / sigma2
+
+
+def compute_log_acceptance(current_energy: float, prev_energy: float):
+    return prev_energy - current_energy
+
+
+def convert_to_layer(nb_layer, name_layer, z_low, params):
+    return [Layer(name_layer[i], z_low[i], *params[i]) for i in range(nb_layer)]
+
+
+def check_range(x, ranges):
+    while sum(x < ranges[:, 0]) + sum(x > ranges[:, 1]) > 0:
+        x = (
+            (x < ranges[:, 0]) * (ranges[:, 1] - (ranges[:, 0] - x))
+            + (x > ranges[:, 1]) * (ranges[:, 0] + (x - ranges[:, 1]))
+            + (x >= ranges[:, 0]) * (x <= ranges[:, 1]) * x
+        )
+    return x
+
+
+def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
+    R = zeros((nb_layer, nb_param))
+    for l in range(nb_layer):
+        chains_layered = chains[:, :, l, :]
+        # Variances intra-chaînes des paramètres
+        Var_intra = var(chains_layered, axis=0)
+
+        # Moyenne des variances intra-chaîne
+        var_intra = mean(Var_intra, axis=0)
+
+        # Moyennes de chaque chaîne
+        means_chains = mean(chains_layered, axis=0)
+
+        # Variance entre les moyennes des chaînes, dite inter-chaînes
+        var_inter = var(means_chains, axis=0)
+
+        # Calcul de l'indicateur de Gelman-Rubin
+        for j in range(nb_param):
+            if isclose(var_intra[j], 0):
+                R[l, j] = 2
+            else:
+                R[l, j] = sqrt(
+                    var_inter[j]
+                    / var_intra[j]
+                    * (nb_current_iter - 1)
+                    / nb_current_iter
+                    + 1
+                )
+
+    # On considère que la phase de burn-in est terminée dès que R < threshold
+    return all(R < threshold)
 
 
 @njit
