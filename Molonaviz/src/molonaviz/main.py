@@ -27,11 +27,12 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
     """
     The main window of the Molonaviz application.
     """
-    def __init__(self):
+    def __init__(self,messagethread : QtCore.QThread):
         # Call constructor of parent classes
         super(MainWindow, self).__init__()
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
+        self.messagethread = messagethread
 
         #Setup the views
         self.thermoView = ThermometerTreeView(None)
@@ -200,7 +201,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         Close the database and revert Molonaviz to its initial state.
         """
         self.closeChildren()
-        self.con.close()
+        if self.con is not None :
+            self.con.close()
         self.con = None
 
         self.actionCreateStudy.setEnabled(True)
@@ -448,6 +450,9 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         Close the database when user quits the app.
         """
         try:
+            if self.messagethread.isRunning():
+                self.messagethread.quit()
+                self.messagethread.wait()
             self.closeChildren()
             self.con.close()
             self.con = None
@@ -465,11 +470,14 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon(get_imgs("MolonavizIcon.png")))
-    mainWin = MainWindow()
-    mainWin.showMaximized()
 
     # Create thread that will be used to display application messages.
     messageThread = QtCore.QThread()
+
+    mainWin = MainWindow(messageThread)
+    mainWin.showMaximized()
+
+    
     my_receiver = Receiver(mainWin.messageQueue)
     my_receiver.printMessage.connect(mainWin.printApplicationMessage)
     my_receiver.moveToThread(messageThread)
