@@ -647,7 +647,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._real_z[-1] / nb_cells
         _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-        temp_ref = self._T_measures[:, :].T
+        # temp_ref = self._T_measures[:, :].T
+        temp_ref = self.get_temps_solve()[ind_ref, :]
         nb_layer = len(all_priors)
         nb_param = 4
 
@@ -699,8 +700,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                             + 1
                         )  # Vérifier la formule
 
-            # print("R = ", R)
-
             # On considère que la phase de burn-in est terminée dès que R < threshold
             return np.all(R < threshold)
 
@@ -733,10 +732,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         )
         _params = np.zeros((nb_iter + 1, nb_chain, nb_layer, nb_param))
         _params[0] = X
-        _temp = np.zeros(
+        _temp_burn_in = np.zeros(
             (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
         )
-        _energy = np.zeros((nb_iter + 1, nb_chain))
+        _energy_burn_in = np.zeros((nb_iter + 1, nb_chain))
         temp_new = np.zeros((nb_cells, len(self._times)))
         energy_new = 0
         name_layer = [all_priors.sample()[i].name for i in range(nb_layer)]
@@ -755,8 +754,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             self.compute_solve_transi(
                 convert_to_layer(name_layer, z_low, X[i]), nb_cells, verbose=False
             )
-            _temp[0][i] = self.get_temps_solve()
-            _energy[0][i] = compute_energy(_temp[0][i][ind_ref, :])
+            _temp_burn_in[0][i] = self.get_temps_solve()
+            _energy_burn_in[0][i] = compute_energy(_temp_burn_in[0][i][ind_ref, :])
 
         if verbose:
             print("--- Begin Burn in phase ---")
@@ -810,18 +809,20 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 energy_new = compute_energy(temp_new[ind_ref, :])
 
                 # Compute acceptance probability
-                log_ratio_accept = compute_log_acceptance(energy_new, _energy[i][j])
+                log_ratio_accept = compute_log_acceptance(
+                    energy_new, _energy_burn_in[i][j]
+                )
 
                 # Accept of reject new parameter values
                 if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
                     X_new[j] = x_new
-                    _temp[i + 1][j] = temp_new
-                    _energy[i + 1][j] = energy_new
+                    _temp_burn_in[i + 1][j] = temp_new
+                    _energy_burn_in[i + 1][j] = energy_new
                 else:
                     dX = np.zeros((nb_layer, nb_param))
                     X_new[j] = X[j]
-                    _temp[i + 1][j] = _temp[i - 1][j]
-                    _energy[i + 1][j] = _energy[i - 1][j]
+                    _temp_burn_in[i + 1][j] = _temp_burn_in[i - 1][j]
+                    _energy_burn_in[i + 1][j] = _energy_burn_in[i - 1][j]
 
                 # Update J and n_id
                 for l in range(nb_layer):
@@ -830,7 +831,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             # Update pcr
             for l in range(nb_layer):
-                pcr[l] = J[l] / n_id[l]
+                pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
                 pcr[l] = pcr[l] / np.sum(pcr[l])
 
             # Update parameters values
@@ -848,7 +849,19 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temp = np.zeros(
             (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
         )
+        _temp[0] = _temp_burn_in[-1]
         _energy = np.zeros((nb_iter + 1, nb_chain))
+        _energy[0] = _energy_burn_in[max(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)]
+        for c in range(nb_chain):
+            self._states.append(
+                State(
+                    layers=convert_to_layer(name_layer, z_low, X[c]),
+                    energy=_energy[0][c],
+                    ratio_accept=1,
+                    sigma2_temp=sigma2,
+                )
+            )
+
         for i in trange(nb_iter, desc="Mcmc Computation ", file=sys.stdout):
             # Initialize arrays for new parameter values
             x_new = np.zeros((nb_layer, nb_param))
@@ -912,11 +925,22 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     X_new[j] = x_new
                     _temp[i + 1][j] = temp_new
                     _energy[i + 1][j] = energy_new
+                    nb_accepted += 1
+                    self._states.append(
+                        State(
+                            layers=convert_to_layer(name_layer, z_low, x_new),
+                            energy=energy_new,
+                            ratio_accept=nb_accepted / (i * 10 + j + 1),
+                            sigma2_temp=sigma2,
+                        )
+                    )
                 else:
                     dX = np.zeros((nb_layer, nb_param))
                     X_new[j] = X[j]
                     _temp[i + 1][j] = _temp[i - 1][j]
                     _energy[i + 1][j] = _energy[i - 1][j]
+                    self._states.append(self._states[-nb_chain])
+                self._acceptance[i, j] = nb_accepted / (i * 10 + j + 1)
 
                 # Update J and n_id
                 for l in range(nb_layer):
