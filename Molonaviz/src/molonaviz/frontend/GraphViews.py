@@ -5,6 +5,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
+import matplotlib.ticker as ticker
+from matplotlib.ticker import MaxNLocator
 import matplotlib.dates as mdates
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.gridspec import GridSpec
@@ -47,7 +49,7 @@ class GraphView1D(GraphView):
         -self.x is a 1D array and will be displayed one the x-axis
         -self.y is a dictionnary of 1D array : the keys are the labels which should be displayed. This is useful to plot many graphs on the same view (quantiles for example).
     """
-    def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="", xlabel=""):
+    def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="", xlabel="", loc='best'):
         super().__init__(molomodel)
         # Créez les axes et associez-les à self.ax
         self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
@@ -59,6 +61,7 @@ class GraphView1D(GraphView):
         self.title = title
         self.time_dependent = time_dependent
         self.colorbar = None
+        self.loc = loc
        
 
 
@@ -84,10 +87,12 @@ class GraphView1D(GraphView):
             pass
 
     def plotData(self):
+        self.ax.yaxis.set_major_locator(MaxNLocator(integer=True))
         for index, (label, data) in enumerate(self.y.items()):
             if len(self.x) == len(data):
+
                 self.ax.plot(self.x, data, label=label)
-        self.ax.legend(loc='best')
+        self.ax.legend(loc= self.loc)
         self.ax.set_ylabel(self.ylabel)
 
         self.ax.set_xlabel(self.xlabel)
@@ -309,8 +314,8 @@ class TempDepthView(GraphView1D):
     The basis state is [None, []], as no quantile can be displayed, and the view can't know at which depth is the thermometer.
     options is NOT considered to be part of internal data, and will not be modified when calling resetData.
     """
-    def __init__(self, sensorsdatas: TemperatureDataModel | None , molomodel: SolvedTemperatureModel | None, spointcoordinator : SPointCoordinator, time_dependent=True, title="", ylabel="Temperature (°C)", xlabel="",options=[None,[]]):
-        super().__init__(molomodel,time_dependent, title, ylabel, xlabel)
+    def __init__(self, sensorsdatas: TemperatureDataModel | None , molomodel: SolvedTemperatureModel | None, spointcoordinator : SPointCoordinator, time_dependent=True, title="", ylabel="Temperature (°C)", xlabel="",options=[None,[]], loc='best'):
+        super().__init__(molomodel,time_dependent, title, ylabel, xlabel, loc)
         self.molomodel = molomodel
         self.sensorsdatas = sensorsdatas
         self.options = options
