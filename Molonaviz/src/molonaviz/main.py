@@ -474,6 +474,15 @@ def main():
     my_receiver.printMessage.connect(mainWin.printApplicationMessage)
     my_receiver.moveToThread(messageThread)
     messageThread.started.connect(my_receiver.run)
+
+    def on_thread_finished():
+        messageThread.quit()  # Properly stop the thread
+        messageThread.wait()  # Wait for the thread to finish
+        app.quit()  # Quit the application
+
+    messageThread.finished.connect(on_thread_finished)
+
+    messageThread.start()
     messageThread.start()
 
     sys.exit(app.exec())
