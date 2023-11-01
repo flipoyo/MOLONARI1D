@@ -1,15 +1,16 @@
 from PyQt5 import QtWidgets, uic
 from math import log10
 from PyQt5.QtWidgets import QTableWidgetItem
+from PyQt5.QtSql import QSqlQuery
+
 from ..utils.get_files import get_ui_asset
-import json
-import os
+from ..backend.SPointCoordinator import SPointCoordinator
 
 
 From_DialogCompute = uic.loadUiType(get_ui_asset("dialogCompute.ui"))[0]
 
 class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
-    def __init__(self, maxdepth : int):
+    def __init__(self, maxdepth : int, spointcoordinator : SPointCoordinator):
         """
         To create a DialogCompute instance, one must give the maximum depth of the river in meters. This can be obtained with the maxDepth function for the sampling point coordinator.
         """
@@ -18,24 +19,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
 
-                # Chemin complet vers le fichier JSON defaultParameters.json
-        self.chemin_default_parameters = os.path.join(os.path.dirname(__file__), "../backend/defaultParameters.json")
-
-        # Ouvrir le fichier JSON en mode lecture
-        with open(self.chemin_default_parameters, 'r') as fichier:
-            DefaultParameters = json.load(fichier)
-
-        # Chemin complet vers le fichier JSON InputDirectCompute.json
-        self.chemin_input_direct_compute = os.path.join(os.path.dirname(__file__), "../backend/InputDirectCompute.json")
-
-        # Ouvrir le fichier JSON InputDirectCompute.json en mode lecture
-        with open(self.chemin_input_direct_compute, 'r') as fichier:
-            InputDirectCompute = json.load(fichier)
-
-
-        self.defaultValues = DefaultParameters #Default values displayed for the layers
         self.maxdepth = maxdepth * 100
-        self.input = InputDirectCompute
+        self.input = spointcoordinator.get_params_model()
+        self.layers = spointcoordinator.get_layers()
 
         #Prevent the user from writing something in the spin box.
         self.spinBoxNLayersDirect.lineEdit().setReadOnly(True)
@@ -58,7 +44,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         """
         #Direct model
 
-        self.spinBoxNLayersDirect.setValue(len(self.input))
+        self.spinBoxNLayersDirect.setValue(len(self.layers))
         self.tableWidget.setRowCount(len(self.input))
 
         self.lineEditChains.setText("10")
@@ -66,17 +52,18 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditncr.setText("3")
         self.lineEditc.setText("0.1")
         self.lineEditcstar.setText("1e-6")
-        layerBottom = int((self.maxdepth/nb_layers))
-
-        for i in range(len(self.input)):
-            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom(i+1))))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i]["Perm"])))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i]["Poro"])))
-            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i]["ThConduct"])))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i]["ThCap"])))
 
 
+        num_rows = len(self.input)
+        num_cols = len(self.input[0])
+
+    
+        for col in range(num_cols):
+            self.tableWidget.setVerticalHeaderItem(row, QTableWidgetItem(f"Layer {col+1}"))
+            self.tableWidget.setItem(row, 0, QTableWidgetItem(self.layers[col]))
+            for row in range(num_rows):
+                self.tableWidget.setItem(row, col, QTableWidgetItem(self.input[row][col]))
+            
         #MCMC
         self.lineEditMaxIterMCMC.setText("5000")
         self.lineEditKMin.setText("4")
@@ -98,28 +85,52 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditQuantiles.setText("0.05,0.5,0.95")
 
 
-    def SaveInput(self, item):
+    def SaveInput(self):
+
+        """
+        Save the layers and the last parameters in the database.
+        """
 
         nb_layers = self.spinBoxNLayersDirect.value()
+        depths = []
+        log10permeability = []
+        porosity = []
+        thermconduct = []
+        thermcap = []
+
+        for i in range (nb_layers):
+            log10permeability.append(-log10(abs(float(self.tableWidget.item(i, 1).text())))) #Apply -log10 to the permeability values
+            porosity.append(float(self.tableWidget.item(i, 2).text()))
+            thermconduct.append(float(self.tableWidget.item(i, 3).text()))
+            thermcap.append(float(self.tableWidget.item(i, 4).text()))
+            depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
+
+        layers = [f"Layer {i+1}" for i in range(nb_layers)]
+        params = list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap))
+        insertlayer = QSqlQuery(self.con)
+        insertlayer.prepare("INSERT INTO Layer (Name, Depth, PointKey) VALUES (:Name, :Depth, :PointKey)")
+        insertlayer.bindValue(":PointKey", self.pointID)
+
+        insertparams = QSqlQuery(self.con)
+        insertparams.prepare(f"""INSERT INTO Parameters (Permeability, ThermConduct, Porosity, Capacity, Layer, PointKey)
+                           VALUES (:Permeability, :ThermConduct, :Porosity, :Capacity, :Layer, :PointKey)""")
+        insertparams.bindValue(":PointKey", self.pointID)
+
+        self.con.transaction()
+        for layer, depth, perm, n, lamb, rho in params:
+            insertlayer.bindValue(":Name", layer)
+            insertlayer.bindValue(":Depth", depth)
+            insertlayer.exec()
+
+            insertparams.bindValue(":Permeability", perm)
+            insertparams.bindValue(":ThermConduct", lamb)
+            insertparams.bindValue(":Porosity", n)
+            insertparams.bindValue(":Capacity", rho)
+            insertparams.bindValue(":Layer", insertlayer.lastInsertId())
+            insertparams.exec()
+        self.con.commit()
     
-        if item is not None and item.column() in [1, 2, 3, 4]:
-            value = item.text()
-            if value:
-                column = item.column()
-                i = item.row()
-                if column == 1:
-                    self.input[i]["Perm"] = float(value)
-                elif column == 2:
-                    self.input[i]["Poro"] = float(value)
-                elif column == 3:
-                    self.input[i]["ThConduct"] = float(value)
-                elif column == 4:
-                    self.input[i]["ThCap"] = float(value)
-
-        with open(self.chemin_input_direct_compute, 'w') as fichier:
-            json.dump(self.input, fichier, indent=4)
-
-
+    
     def setDefaultValues(self):
         """
         Set the default values in the tables for both the direct model and the MCMC
@@ -131,10 +142,10 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setVerticalHeaderItem(0, QTableWidgetItem(f"Layer {1}"))
         layerBottom = int((self.maxdepth))
         self.tableWidget.setItem(0, 0, QTableWidgetItem(str(layerBottom))) #In cm
-        self.tableWidget.setItem(0, 1, QTableWidgetItem(str(self.defaultValues["Perm"])))
-        self.tableWidget.setItem(0, 2, QTableWidgetItem(str(self.defaultValues["Poro"])))
-        self.tableWidget.setItem(0, 3, QTableWidgetItem(str(self.defaultValues["ThConduct"])))
-        self.tableWidget.setItem(0, 4, QTableWidgetItem('{:.2e}'.format(self.defaultValues["ThCap"])))
+        self.tableWidget.setItem(0, 1, QTableWidgetItem(str(1e-5)))
+        self.tableWidget.setItem(0, 2, QTableWidgetItem(str(0.15)))
+        self.tableWidget.setItem(0, 3, QTableWidgetItem(str(3.4)))
+        self.tableWidget.setItem(0, 4, QTableWidgetItem('{:.2e}'.format(5e6)))
 
         #MCMC
         self.lineEditMaxIterMCMC.setText("5000")
@@ -173,7 +184,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         if len(self.input) < nb_layers:
     
             for _ in range(nb_layers - len(self.input)):
-                self.input.append(self.defaultValues.copy())
+                self.input.append({"Perm": 1e-5, "Poro": 0.15,"ThConduct": 3.4,"ThCap": 5e6})
         elif len(self.input) > nb_layers:
     
             for _ in range(len(self.input) - nb_layers):

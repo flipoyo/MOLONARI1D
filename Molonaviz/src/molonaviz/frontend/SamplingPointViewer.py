@@ -226,7 +226,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         """
         Display in the table view the parameters corresponding to the given layer, and update histograms.
         """
-        self.paramsModel = self.coordinator.get_params_model(layer)
+        self.paramsModel = self.coordinator.get_best_params_model(layer)
         #Resize the table view so it looks pretty
         self.coordinator.refresh_params_distr(layer)
 
@@ -466,7 +466,7 @@ class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
         layers = self.coordinator.layers_depths()
 
         self.tableViewParams = QTableView()
-        self.paramsModel = self.coordinator.get_params_model(layers[0])
+        self.paramsModel = self.coordinator.get_best_params_model(layers[0])
         self.tableViewParams.setModel(self.paramsModel)
         #Resize the table view so it looks pretty
         self.tableViewParams.resizeColumnsToContents()

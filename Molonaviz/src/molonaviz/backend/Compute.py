@@ -112,7 +112,7 @@ class Compute(QtCore.QObject):
             print("Please wait while for the previous computation to end")
             return
 
-        # self.save_layers_and_params(params)
+        self.save_layers_and_params(params)
         self.update_nb_cells(nb_cells)
 
         self.set_column() #Updates self.col
@@ -150,7 +150,7 @@ class Compute(QtCore.QObject):
         insertlayer.bindValue(":PointKey", self.pointID)
 
         insertparams = QSqlQuery(self.con)
-        insertparams.prepare(f"""INSERT INTO BestParameters (Permeability, ThermConduct, Porosity, Capacity, Layer, PointKey)
+        insertparams.prepare(f"""INSERT INTO Parameters (Permeability, ThermConduct, Porosity, Capacity, Layer, PointKey)
                            VALUES (:Permeability, :ThermConduct, :Porosity, :Capacity, :Layer, :PointKey)""")
         insertparams.bindValue(":PointKey", self.pointID)
 
