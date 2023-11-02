@@ -4,8 +4,9 @@
 
 class Measure {
   public:
-    bool valid;
-    char date[21];
+    unsigned int id;
+    char date[11];
+    char time[9];
     unsigned short mesure1;
     unsigned short mesure2;
     unsigned short mesure3;

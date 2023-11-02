@@ -1,81 +1,56 @@
-#include <FlashStorage.h>
+#include <SD.h>
+#include <SPI.h>
 
-// Define the size of each measurement data
-#define MEASUREMENT_SIZE 20
+File myFile;
 
-// Define the maximum number of measurements to store
-#define MAX_MEASUREMENTS (2 * 1024 * 1024) / MEASUREMENT_SIZE
-
-// Define the starting address for storing measurements in flash
-#define FLASH_START_ADDRESS 0
-
-// Create a FlashStorage object to interact with the flash memory
-// FlashStorageClass flashData[MAX_MEASUREMENTS];
-
-class Measurement {
-public:
-  float temperature;
-  float pressure;
-
-  Measurement() : temperature(0), pressure(0) {}
-
-  Measurement(float temp, float press) : temperature(temp), pressure(press) {}
-};
-
-
-FlashStorage(flashData[MAX_MEASUREMENTS], Measurement[MAX_MEASUREMENTS]);
-
-class FlashMeasurementStorage {
-public:
-  void appendMeasurement(const Measurement& measurement) {
-    if (measurementCount < MAX_MEASUREMENTS) {
-      flashData[measurementCount].write(measurement);
-      measurementCount++;
-    }
-  }
-
-  void retrieveMeasurement(int index, Measurement& measurement) {
-    if (index >= 0 && index < measurementCount) {
-      flashData[index].read(measurement);
-    }
-  }
-
-  int getMeasurementCount() {
-    return measurementCount;
-  }
-
-private:
-  int measurementCount = 0;
-};
-
-FlashMeasurementStorage measurementStorage;
+int pinCS = 6; // Pin 10 on Arduino Uno
 
 void setup() {
-  // Initialize the Arduino board
+    
   Serial.begin(9600);
+  pinMode(pinCS, OUTPUT);
+  
+  // SD Card Initialization
+  if (SD.begin())
+  {
+    Serial.println("SD card is ready to use.");
+  } else
+  {
+    Serial.println("SD card initialization failed");
+    return;
+  }
+  
+  // Create/Open file 
+  myFile = SD.open("test.txt", FILE_WRITE);
+  
+  // if the file opened okay, write to it:
+  if (myFile) {
+    Serial.println("Writing to file...");
+    // Write to file
+    myFile.println("Testing text 1, 2 ,3...");
+    myFile.close(); // close the file
+    Serial.println("Done.");
+  }
+  // if the file didn't open, print an error:
+  else {
+    Serial.println("error opening test.txt");
+  }
+
+  // Reading the file
+  myFile = SD.open("test.txt");
+  if (myFile) {
+    Serial.println("Read:");
+    // Reading the whole file
+    while (myFile.available()) {
+      Serial.write(myFile.read());
+   }
+    myFile.close();
+  }
+  else {
+    Serial.println("error opening test.txt");
+  }
+  
 }
-
 void loop() {
-  // Sample temperature and pressure values
-  float temperatureValue = 25.5;
-  float pressureValue = 1013.2;
-
-  // Create a measurement
-  Measurement measurement(temperatureValue, pressureValue);
-
-  // Append the measurement to the flash storage
-  measurementStorage.appendMeasurement(measurement);
-
-  // You can also retrieve measurements as needed
-  int measurementIndex = 0;
-  Measurement retrievedMeasurement;
-  measurementStorage.retrieveMeasurement(measurementIndex, retrievedMeasurement);
-
-  // Print the retrieved measurement
-  Serial.print("Retrieved Measurement - Temperature: ");
-  Serial.print(retrievedMeasurement.temperature);
-  Serial.print(", Pressure: ");
-  Serial.println(retrievedMeasurement.pressure);
-
-  delay(1000); // Delay for testing
+  // empty
 }
