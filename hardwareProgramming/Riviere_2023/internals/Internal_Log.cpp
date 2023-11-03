@@ -192,7 +192,7 @@ class LogReader {
 
   private :
   File file;
-}
+};
 
 
 #endif
