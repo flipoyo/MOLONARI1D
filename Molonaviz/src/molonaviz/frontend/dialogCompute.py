@@ -240,8 +240,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         nb_cells = self.spinBoxNCellsDirect.value()
 
         nb_chains = int(self.lineEditChains.text())
-        delta = float(self.lineEditDelta.text())
-        ncr = float(self.lineEditncr.text())
+        delta = int(self.lineEditDelta.text())
+        ncr = int(self.lineEditncr.text())
         c = float(self.lineEditc.text())
         cstar = float(self.lineEditcstar.text())
 
