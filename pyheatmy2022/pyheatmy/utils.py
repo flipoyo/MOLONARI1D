@@ -50,8 +50,8 @@ def compute_T_stratified(
         bidimensional array of T(z, t).
     """
     rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
-    K_list0 = 10.0 ** -moinslog10K_list
-    K_list = interface_transition(K_list0)
+    K_list = 10.0 ** -moinslog10K_list
+    #K_list = interface_transition(K_list0)
     lambda_m_list = (n_list * (LAMBDA_W) ** 0.5 +
                      (1.0 - n_list) * (lambda_s_list) ** 0.5) ** 2
 
@@ -198,8 +198,8 @@ def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_
     H_res = zeros((n_cell, n_times), float32)
     H_res[:, 0] = H_init
     
-    K_list0 = 10.0 ** - moinslog10K_list
-    K_list = interface_transition(K_list0)
+    K_list = 10.0 ** - moinslog10K_list
+    #K_list = interface_transition(K_list0)
     KsurSs_list = K_list/Ss_list
 
     # Check if dt is constant :

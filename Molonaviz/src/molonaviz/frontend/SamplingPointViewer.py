@@ -412,6 +412,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 #MCMC
                 nb_iter, all_priors, nb_cells, quantiles = dlg.getInputMCMC()
                 self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles)
+                
+                
             else:
                 #Direct Model
                 params, nb_cells = dlg.getInputDirectModel()

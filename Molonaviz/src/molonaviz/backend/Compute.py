@@ -41,7 +41,9 @@ class ColumnDirectModelRunner(QtCore.QObject):
     def run(self):
         print("Launching Direct Model...")
         layers = layersListCreator(self.params)
+        
         self.col.compute_solve_transi(layers, self.nb_cells)
+        
         self.finished.emit()
 
 class Compute(QtCore.QObject):
@@ -101,7 +103,7 @@ class Compute(QtCore.QObject):
         Launch the direct model with given parameters per layer.
         """
         if self.thread.isRunning():
-            print("Please wait while for the previous computation to end")
+            print("Please wait for the previous computation to end")
             return
 
         self.save_layers_and_params(params)
