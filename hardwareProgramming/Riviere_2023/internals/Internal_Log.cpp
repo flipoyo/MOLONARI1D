@@ -174,4 +174,25 @@ Measure GetMeasurementById(unsigned int id) {
 }
 
 
+// Object meant to read a series of samples from the CSV file
+class LogReader {
+  public :
+  // Open the file
+  LogReader(String filename) {}
+
+  // Sets the cursor to a given line
+  void MoveCursor(unsigned int lineId);
+
+  // Get a measure, and move cursor to the next line
+  Measure ReadMeasure();
+
+  // Destroy the object and release all its ressources
+  void Dispose();
+
+
+  private :
+  File file;
+}
+
+
 #endif
