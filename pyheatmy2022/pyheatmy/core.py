@@ -806,14 +806,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         _params = np.zeros((nb_iter + 1, nb_chain, nb_layer, nb_param))
         _params[0] = X
+        _flows = np.zeros((nb_iter + 1, nb_chain, nb_cells, len(self._times)))
         _temp = np.zeros(
             (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
         )  # réinitialisation des températures
-        _flows = np.zeros((nb_iter + 1, nb_chain, nb_cells, len(self._times)))
-        _temp[0] = _temp_burn_in[-1]  # initialisation des températures
+        _temp[0] = _temp_burn_in[
+            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+        ]  # initialisation des températures
         _energy = np.zeros((nb_iter + 1, nb_chain))  # réinitialisation des énergies
         _energy[0] = _energy_burn_in[
-            max(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
         ]  # initialisation des énergies
 
         del _temp_burn_in  # suppression variable burn-in
@@ -974,7 +976,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         sigma2=None,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
     ):
-
         if nb_chain < 2:
             if sigma2 is None:
                 self.compute_mcmc_with_sigma2(
