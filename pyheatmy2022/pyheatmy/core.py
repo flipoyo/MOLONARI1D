@@ -652,8 +652,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._real_z[-1] / nb_cells
         _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-        temp_ref = self._T_measures[:, :].T
-        # temp_ref = self.get_temps_solve()[ind_ref, :]
+        # temp_ref = self._T_measures[:, :].T
+        temp_ref = self.get_temps_solve()[ind_ref, :]
         nb_layer = len(all_priors)
         nb_param = 4
 
@@ -746,7 +746,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     # Select chains for difference vectors
                     choose = np.delete(np.arange(nb_chain), j)
                     a = np.random.choice(choose, delta, replace=False)
-                    choose = np.delete(choose, np.where(np.isin(a, choose)))
+                    choose = np.delete(choose, np.where(np.isin(choose, a)))
                     b = np.random.choice(choose, delta, replace=False)
 
                     # Compute difference vectors
@@ -806,13 +806,22 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         _params = np.zeros((nb_iter + 1, nb_chain, nb_layer, nb_param))
         _params[0] = X
+        _flows = np.zeros((nb_iter + 1, nb_chain, nb_cells, len(self._times)))
         _temp = np.zeros(
             (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
-        )
-        _flows = np.zeros((nb_iter + 1, nb_chain, nb_cells, len(self._times)))
-        _temp[0] = _temp_burn_in[-1]
-        _energy = np.zeros((nb_iter + 1, nb_chain))
-        _energy[0] = _energy_burn_in[max(nb_burn_in_iter, len(_energy_burn_in) - 1)]
+        )  # réinitialisation des températures
+        _temp[0] = _temp_burn_in[
+            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+        ]  # initialisation des températures
+        _energy = np.zeros((nb_iter + 1, nb_chain))  # réinitialisation des énergies
+        _energy[0] = _energy_burn_in[
+            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+        ]  # initialisation des énergies
+
+        del _temp_burn_in  # suppression variable burn-in
+        del _energy_burn_in  # suppression variable burn-in
+
+        # initialisation des états
         for c in range(nb_chain):
             self._states.append(
                 State(
@@ -856,7 +865,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     # Select chains for difference vectors
                     choose = np.delete(np.arange(nb_chain), j)
                     a = np.random.choice(choose, delta, replace=False)
-                    choose = np.delete(choose, np.where(np.isin(a, choose)))
+                    choose = np.delete(choose, np.where(np.isin(choose, a)))
                     b = np.random.choice(choose, delta, replace=False)
 
                     # Compute difference vectors
@@ -902,8 +911,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     _temp[i + 1][j] = _temp[i - 1][j]
                     _flows[i + 1][j] = _flows[i - 1][j]
                     _energy[i + 1][j] = _energy[i - 1][j]
-                    self._states.append(self._states[-nb_chain])
-                self._acceptance[i, j] = nb_accepted / (i * 10 + j + 1)
+                    self._states.append(
+                        State(
+                            layers=self._states[-nb_chain].layers,
+                            energy=self._states[-nb_chain].energy,
+                            ratio_accept=nb_accepted / (i * 10 + j + 1),
+                            sigma2_temp=sigma2,
+                        )
+                    )  # ajout de l'état à la liste des états
+                self._acceptance[i, j] = nb_accepted / (
+                    i * 10 + j + 1
+                )  # mise à jour des taux d'acceptation
 
                 # Update J and n_id
                 for l in range(nb_layer):
@@ -955,10 +973,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         c=0.1,
         cstar=1e-6,
         verbose=True,  # affiche texte explicatifs ou non
-        sigma2=0.1,
+        sigma2=None,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
     ):
-
         if nb_chain < 2:
             if sigma2 is None:
                 self.compute_mcmc_with_sigma2(
