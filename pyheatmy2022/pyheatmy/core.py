@@ -967,7 +967,27 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         verbose=True,  # affiche texte explicatifs ou non
         sigma2=None,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
+        DREAM=False,
+        nb_chain=10,
+        delta=3,
+        ncr=3,
+        c=0.1,
+        c_star=1e-6,
     ):
+        if DREAM:
+            return self.compute_dream_mcmc_without_sigma2(
+                nb_iter,
+                all_priors,
+                nb_cells,
+                nb_chain,
+                quantile,
+                verbose,
+                sigma2,
+                delta,
+                ncr,
+                c,
+                c_star,
+            )
         if sigma2 is None:
             self.compute_mcmc_with_sigma2(
                 nb_iter, all_priors, nb_cells, quantile, verbose, sigma2_temp_prior
