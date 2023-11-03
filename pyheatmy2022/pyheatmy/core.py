@@ -15,7 +15,7 @@ from .state import State
 from .checker import checker
 
 from .utils import (
-    C_W,
+        C_W,
     RHO_W,
     LAMBDA_W,
     compute_H_stratified,
@@ -26,6 +26,7 @@ from .utils import (
     convert_to_layer,
     check_range,
     gelman_rubin,
+    interface_transition,
 )
 from .layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
 
@@ -132,7 +133,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             raise ValueError("Your list of layers is empty.")
 
         if self._layersList[-1].zLow != self._real_z[-1]:
-            raise ValueError("Last layer does not match the end of the column.")
+            self._layersList[-1].zLow = self._real_z[-1]
+            # raise ValueError(
+            #     "Last layer does not match the end of the column.")
 
     def _compute_solve_transi_multiple_layers(self, layersList, nb_cells, verbose):
         dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule
@@ -209,10 +212,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         for i in range(1, nb_cells - 1):
             nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
 
-        nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
-
-        K_list = 10**-moinslog10K_list
-
+        nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
+        
+        K_list0 = 10 ** - moinslog10K_list
+        K_list = interface_transition(K_list0)
+        
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
         for i in range(nb_cells):
@@ -347,7 +351,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         lambda_m_list = (
             n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
         ) ** 2  # conductivité thermique du milieu poreux équivalent
-
+        
         # création du gradient de température
         nablaT = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -361,7 +365,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         )
 
         conduc_flows = np.zeros((nb_cells, len(self._times)), np.float32)
-
+        
         for i in range(nb_cells):
             conduc_flows[i, :] = lambda_m_list[i] * nablaT[i, :]
 

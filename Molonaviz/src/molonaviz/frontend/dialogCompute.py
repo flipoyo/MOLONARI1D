@@ -66,11 +66,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditncr.setText("3")
         self.lineEditc.setText("0.1")
         self.lineEditcstar.setText("1e-6")
-        layerBottom = int((self.maxdepth))
+        layerBottom = int((self.maxdepth/nb_layers))
 
         for i in range(len(self.input)):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom)))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom(i+1))))
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i]["Perm"])))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i]["Poro"])))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i]["ThConduct"])))
@@ -184,11 +184,13 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}")) 
             layerBottom = int((self.maxdepth/nb_layers))
 
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom))) #In cm
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom*(i+1)))) #In cm
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i]["Perm"])))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i]["Poro"])))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i]["ThConduct"])))
             self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i]["ThCap"])))
+
+            self.tableWidget.setItem(nb_layers -1, 0, QTableWidgetItem(str(int((self.maxdepth))))) #In cm
 
         with open(self.chemin_input_direct_compute, 'w') as fichier:
             json.dump(self.input, fichier, indent=4)
@@ -224,10 +226,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             thermconduct.append(float(self.tableWidget.item(i, 3).text()))
             thermcap.append(float(self.tableWidget.item(i, 4).text()))
             depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
-
-
-        with open(self.chemin_input_direct_compute, 'w') as fichier:
-            json.dump(self.input, fichier, indent=4)
 
         layers = [f"Layer {i+1}" for i in range(nb_layers)]
         return list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap)), nb_cells
