@@ -1,10 +1,14 @@
 // This file will contain all the code to track time using the integrated Real Time Clock (RTC) of the MKR board
 
+#ifndef TIME
+#define TIME
+
+
 #include <RTCZero.h>
 
-// The data type of a pressure measurement
-// Placeholder : The exact type needs to be determined
-#define DATE_T unsigned long
+
+
+RTCZero internalRtc;
 
 
 // Initialise the RTC module for the first time.
@@ -13,10 +17,16 @@ void InitialiseRTC(/* Parameters */) {
 }
 
 
-// Return the current time
-DATE_T GetCurrentDate() {
+// Return the current date (JJ/MM/AAAA)
+String GetCurrentDate() {
   // Todo
+  return "01/01/2000";
 }
 
+// Return the current hour (HH:MM:SS)
+String GetCurrentHour() {
+  // Todo
+  return "00:00:00";
+}
 
-// Other functions ...
+#endif
