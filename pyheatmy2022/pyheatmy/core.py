@@ -708,7 +708,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         if verbose:
             print(
-                "--- Compute Mcmc ---",
+                "--- Compute DREAM MCMC ---",
                 "Priors :",
                 *(f"    {prior}" for prior in all_priors),
                 f"Number of cells : {nb_cells}",
@@ -852,7 +852,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 )
             )
 
-        for i in trange(nb_iter, desc="Mcmc Computation ", file=sys.stdout):
+        for i in trange(nb_iter, desc="DREAM MCMC Computation", file=sys.stdout):
             # Initialisation pour les nouveaux paramètres
             x_new = np.zeros((nb_layer, nb_param))
             X_new = np.zeros((nb_chain, nb_layer, nb_param))
