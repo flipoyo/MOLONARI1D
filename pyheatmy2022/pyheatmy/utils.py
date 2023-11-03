@@ -1,4 +1,4 @@
-from numpy import float32, full, zeros, indices
+from numpy import float32, full, zeros, indices, array
 from numpy.linalg import solve
 from numba import njit
 
@@ -398,6 +398,36 @@ def compute_T_stratified(
 
 @njit
 def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+    # K1 = 10 ** (-moinslog10K_list[0])
+    # K2 = 10 ** (-moinslog10K_list[-1])
+    # print("begin modification")
+    # h0 = dz
+    # h1 = h0 / 2
+    # h2 = h0 / 2
+    # print("K1, K2, dz", K1, K2, dz)
+    # A_layer = zeros((6,6))
+    # b_layer = zeros(6)
+    # A_layer[0, 0] = 1
+    # A_layer[0, 1] = -1
+    # A_layer[1, 2] = K1
+    # A_layer[1, 3] = -K2
+    # A_layer[2, 0] = 1
+    # A_layer[2, 2] = -h1
+    # A_layer[2, 4] = h1 * h1  / 2
+    # A_layer[3, 0] = 1
+    # A_layer[3, 2] =  -(h0 + h1)
+    # A_layer[3, 4] = (h0 + h1)*(h0 + h1) / 2
+    # A_layer[4, 1] = 1
+    # A_layer[4, 3] = h2
+    # A_layer[4, 5] = h2 * h2  / 2
+    # A_layer[5, 1] = 1
+    # A_layer[5, 3] = h0 + h2
+    # A_layer[5, 5] = (h0 + h2) * (h0 + h2) / 2
+    # b_layer = array([0, 0, H_init[49], H_init[48], H_init[50], H_init[51]])
+    # H_layer = solve(A_layer, b_layer)
+    # Hb = H_layer[0]
+    # print("zhan test", Hb)
+    
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
 
     Parameters
@@ -426,11 +456,16 @@ def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_
     H_res : float array
         bidimensional array of H(z, t).
     """
+
     n_cell = len(H_init)
+    print("zhan ncell", n_cell)
     n_times = len(all_dt) + 1
 
     H_res = zeros((n_cell, n_times), float32)
-    H_res[:, 0] = H_init
+    H_res[:, 0] = H_init[:]
+    # H_res[0:50, 0] = H_init[0:50]
+    # H_res[51:101, 0] = H_init[50:100]
+    # H_res[50, 0] = Hb
 
     K_list = 10.0 ** -moinslog10K_list
     KsurSs_list = K_list/Ss_list
@@ -443,9 +478,9 @@ def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_
         lower_diagonal_B = KsurSs_list[1:]*alpha/dz**2
         lower_diagonal_B[-1] = 4*KsurSs_list[n_cell - 1]*alpha/(3*dz**2)
 
-        diagonal_B = 1/dt - 2*KsurSs_list*alpha/dz**2
-        diagonal_B[0] = 1/dt - 4*KsurSs_list[0]*alpha/dz**2
-        diagonal_B[-1] = 1/dt - 4*KsurSs_list[n_cell - 1]*alpha/dz**2
+        diagonal_B =  1/dt - 2*KsurSs_list*alpha/dz**2
+        diagonal_B[0] =  1/dt - 4*KsurSs_list[0]*alpha/dz**2
+        diagonal_B[-1] =  1/dt - 4*KsurSs_list[n_cell - 1]*alpha/dz**2
 
         upper_diagonal_B = KsurSs_list[:-1]*alpha/dz**2
         upper_diagonal_B[0] = 4*KsurSs_list[0]*alpha/(3*dz**2)
@@ -454,13 +489,27 @@ def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_
         lower_diagonal_A = - KsurSs_list[1:]*(1-alpha)/dz**2
         lower_diagonal_A[-1] = - 4*KsurSs_list[n_cell - 1]*(1-alpha)/(3*dz**2)
 
-        diagonal_A = 1/dt + 2*KsurSs_list*(1-alpha)/dz**2
-        diagonal_A[0] = 1/dt + 4*KsurSs_list[0]*(1-alpha)/dz**2
-        diagonal_A[-1] = 1/dt + 4*KsurSs_list[n_cell - 1]*(1-alpha)/dz**2
+        diagonal_A =  1/dt + 2*KsurSs_list*(1-alpha)/dz**2
+        diagonal_A[0] =  1/dt + 4*KsurSs_list[0]*(1-alpha)/dz**2
+        diagonal_A[-1] =  1/dt + 4*KsurSs_list[n_cell - 1]*(1-alpha)/dz**2
 
         upper_diagonal_A = - KsurSs_list[:-1]*(1-alpha)/dz**2
         upper_diagonal_A[0] = - 4*KsurSs_list[0]*(1-alpha)/(3*dz**2)
 
+        print("lower_diagonal_A", lower_diagonal_A)
+        print("diagonal_A", diagonal_A)
+        print("upper_diagonal_A", upper_diagonal_A)
+        ## zhan
+        print("zhan K interface", KsurSs_list[len(diagonal_B) // 2], len(diagonal_B) // 2, len(diagonal_A) // 2)
+        diagonal_B[len(diagonal_B) // 2] = 1/dt - (KsurSs_list[0] + KsurSs_list[-1]) *alpha/dz**2
+        lower_diagonal_B[len(diagonal_B) // 2 - 1] = KsurSs_list[0]*alpha/dz**2
+        upper_diagonal_B[len(diagonal_B) // 2] = KsurSs_list[-1]*alpha/dz**2
+        diagonal_A[len(diagonal_A) // 2] = 1/dt + (KsurSs_list[0] + KsurSs_list[-1]) *(1-alpha)/dz**2
+        lower_diagonal_A[len(diagonal_A) // 2 - 1] = - KsurSs_list[0]*(1-alpha)/dz**2
+        upper_diagonal_A[len(diagonal_A) // 2] = - KsurSs_list[-1]*(1-alpha)/dz**2
+
+
+        ##
         for j in range(n_times - 1):
             # Compute H at time times[j+1]
 
@@ -473,9 +522,16 @@ def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_
 
             B_fois_H_plus_c = tri_product(
                 lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j]) + c
+            print("zhan B_fois_H_plus_c")
+            if j == 0:
+                for elex in B_fois_H_plus_c:
+                    print(elex) 
+            print()
 
             H_res[:, j+1] = solver(lower_diagonal_A, diagonal_A,
                                    upper_diagonal_A, B_fois_H_plus_c)
+            
+        
     else:  # dt is not constant so A and B and not constant
         for j, dt in enumerate(all_dt):
             # Compute H at time times[j+1]
