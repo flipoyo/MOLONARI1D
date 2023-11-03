@@ -51,7 +51,7 @@ def compute_T_stratified(
     """
     rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
     K_list = 10.0 ** -moinslog10K_list
-    #K_list = interface_transition(K_list0)
+
     lambda_m_list = (n_list * (LAMBDA_W) ** 0.5 +
                      (1.0 - n_list) * (lambda_s_list) ** 0.5) ** 2
 
@@ -139,27 +139,6 @@ def compute_T_stratified(
             T_res[:, j+1] = solve(A, B_fois_T_plus_c)
 
     return T_res
-@njit
-def interface_transition(stratified_data,transition_semilenght=3 ):
-    indexes= list()
-    data_trans = zeros(shape(stratified_data))
-    
-    for i in range(shape(stratified_data)[0]-1):
-        eps = stratified_data[i+1]-stratified_data[i] 
-        if abs(eps)>= 10**(-15):
-            indexes.append(i)
-            
-    for i in range(shape(stratified_data)[0]):
-        data_trans[i]=stratified_data[i]
-    for index in indexes:
-        data_inf = stratified_data[index]
-        data_sup = stratified_data[index + 1]
-        for j in range(transition_semilenght):
-            
-            data_trans[index - transition_semilenght + j] = data_inf + (data_sup - data_inf) * j / (2 * transition_semilenght)
-            
-            data_trans[index + j] = data_inf + (data_sup - data_inf) * (j + transition_semilenght) / (2 * transition_semilenght)
-    return data_trans
 
 
 @njit
@@ -199,7 +178,7 @@ def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_
     H_res[:, 0] = H_init
     
     K_list = 10.0 ** - moinslog10K_list
-    #K_list = interface_transition(K_list0)
+    
     KsurSs_list = K_list/Ss_list
 
     # Check if dt is constant :
