@@ -24,15 +24,15 @@ void OnLoraReceivePacket(int packetSize) {
   }
 
   
-  unsigned int senderId = ReadUInt();
-  unsigned int destinationId = ReadUInt();
+  unsigned int senderId = ReadFromLoRa<unsigned int>();
+  unsigned int destinationId = ReadFromLoRa<unsigned int>();
 
   if (destinationId != networkId) {
     ClearBytes(packetSize - 8);
     return;
   }
 
-  unsigned int thisPacketNumber = ReadUInt();
+  unsigned int thisPacketNumber = ReadFromLoRa<unsigned int>();
 
   // If the packet has already been received, ignore the packet
   if (thisPacketNumber < receivedPacketNumber) {
@@ -51,7 +51,7 @@ void OnLoraReceivePacket(int packetSize) {
 
 
 void HandleDataRequest(unsigned int senderId) {
-  unsigned int requestedSampleId = ReadUInt();
+  unsigned int requestedSampleId = ReadFromLoRa<unsigned int>();
   unsigned int lastSampleId = GetLastMeasurementId();
 
   for (unsigned int id = requestedSampleId; id <= lastSampleId; id++)
@@ -69,13 +69,17 @@ void ClearBytes(unsigned int length) {
   }
 }
 
-unsigned int ReadUInt() {
-  int byte1 = LoRa.read();
-  int byte2 = LoRa.read();
-  int byte3 = LoRa.read();
-  int byte4 = LoRa.read();
 
-  return static_cast<unsigned int>(byte1 | (byte2 << 8) | (byte3 << 16) | (byte4 << 24));
+template<typename T>
+T ReadFromLoRa() {
+  char bytes[sizeof(T)];
+
+  for (size_t i = 0; i < sizeof(T); i++)
+  {
+    bytes[i] = static_cast<char>(LoRa.read());
+  }
+  
+  return *reinterpret_cast<T*>(&bytes);
 }
 
 

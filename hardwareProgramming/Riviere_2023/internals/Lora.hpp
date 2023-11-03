@@ -32,7 +32,8 @@ void OnLoraReceivePacket(int packetSize);
 void HandleDataRequest(unsigned int senderId);
 
 void ClearBytes(unsigned int length);
-unsigned int ReadUInt();
+template<typename T>
+T ReadFromLoRa();
 
 bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType);
 bool SendMeasurement(Measure measures, unsigned int destinationId);
