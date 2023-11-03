@@ -1,9 +1,5 @@
 import csv
-import numpy as np
 from PyQt5 import QtWidgets, QtCore, uic, QtGui
-from PyQt5.QtWidgets import QMainWindow, QTableView, QVBoxLayout, QWidget
-from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel
-
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 from ..interactions.Containers import SamplingPoint
@@ -18,7 +14,7 @@ from .dialogsCleanup import DialogCleanup
 from .dialogCompute import DialogCompute
 from ..utils.get_files import get_ui_asset
 
-From_DisplayParameters = uic.loadUiType(get_ui_asset("DisplayParameters.ui"))[0]
+
 From_SamplingPointViewer = uic.loadUiType(get_ui_asset("SamplingPointViewer.ui"))[0]
 
 class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
@@ -30,7 +26,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
         self.samplingPoint = samplingPoint
         self.coordinator = spointCoordinator
-        
         self.computeEngine = Compute(self.coordinator)
         self.computeEngine.DirectModelFinished.connect(self.updateAllViews)
         self.computeEngine.MCMCFinished.connect(self.updateAllViews)
@@ -50,9 +45,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.fluxesSplitterHorizRight.setSizes([QtGui.QGuiApplication.primaryScreen().virtualSize().width(),QtGui.QGuiApplication.primaryScreen().virtualSize().width()])
 
         #Create all view and link them to the correct models
-        tempDepthModel = self.coordinator.get_temp_model()
         self.graphpress = PressureView(self.coordinator.get_pressure_model())
-        self.graphtemp = TemperatureView(tempDepthModel)
+        self.graphtemp = TemperatureView(self.coordinator.get_temp_model())
         self.waterflux_view = WaterFluxView(self.coordinator.get_water_fluxes_model())
         fluxesModel = self.coordinator.get_heatfluxes_model()
         self.advective_view = AdvectiveFlowView(fluxesModel)
@@ -61,7 +55,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         tempMapModel = self.coordinator.get_temp_map_model()
         self.umbrella_view = UmbrellaView(tempMapModel)
         self.tempmap_view = TempMapView(tempMapModel)
-        self.depth_view = TempDepthView(tempDepthModel, tempMapModel, self.coordinator, loc='lower right')
+        self.depth_view = TempDepthView(tempMapModel)
         paramsDistrModel = self.coordinator.get_params_distr_model()
         self.logk_view = Log10KView(paramsDistrModel)
         self.conductivity_view = ConductivityView(paramsDistrModel)
@@ -78,8 +72,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
 
         # Link every button to their function
-        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams2)
-        self.displayparam.clicked.connect(self.changeDisplayedParams)
+        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams)
         self.radioButtonTherm1.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm2.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm3.clicked.connect(self.refreshTempDepthView)
@@ -220,16 +213,17 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.comboBoxSelectLayer.addItem(str(layer))
         if len(layers) > 0:
             # By default, show the parameters associated with the first layer.
-            self.changeDisplayedParams2(layers[0])
+            self.changeDisplayedParams(layers[0])
 
-    def changeDisplayedParams2(self, layer : float):
+    def changeDisplayedParams(self, layer : float):
         """
         Display in the table view the parameters corresponding to the given layer, and update histograms.
         """
         self.paramsModel = self.coordinator.get_params_model(layer)
+        self.tableViewParams.setModel(self.paramsModel)
         #Resize the table view so it looks pretty
+        self.tableViewParams.resizeColumnsToContents()
         self.coordinator.refresh_params_distr(layer)
-
 
     def setupCheckboxesQuantiles(self):
         """
@@ -299,12 +293,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         thermoDepth = self.coordinator.thermo_depth(depth_id)
         self.depth_view.updateOptions([thermoDepth,quantiles])
         self.depth_view.onUpdate() #Refresh the view
-        
-    def refreshUmbrellaView(self):
-        """
-        This method is called when the user changes the displayed layer in the temperature map.
-        """
-        self.umbrella_view.onUpdate()
 
     def setPressureAndTemperatureTables(self):
         """
@@ -330,7 +318,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.setPressureAndTemperatureTables()
         self.setupCheckboxesQuantiles()
         self.refreshTempDepthView()
-        self.refreshUmbrellaView()
 
         self.linkAllViewsLayouts()
 
@@ -390,12 +377,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.updateAllViews()
             self.handleComputationsButtons()
 
-    def changeDisplayedParams(self):
-        dlg = DisplayParameters(self.coordinator)
-        res = dlg.exec()
-        if res == QtWidgets.QDialog.Accepted:
-            None
-
     def cleanup(self):
         dlg = DialogCleanup(self.coordinator,self.samplingPoint)
         res = dlg.exec()
@@ -404,13 +385,10 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             confirmRes = confirm.exec()
             if confirmRes == QtWidgets.QDialog.Accepted:
                 #Clean the database first before putting new data
-                print("oui")
                 self.coordinator.delete_processed_data()
                 df_cleaned = dlg.getCleanedMeasures()
                 if not df_cleaned.empty:
                     self.coordinator.insert_cleaned_measures(df_cleaned)
-                    self.checkBoxRawData.setEnabled(True)  # le bouton est actif si clean up (TL)
-
 
                 self.updateAllViews()
                 self.handleComputationsButtons()
@@ -424,8 +402,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 #MCMC
                 nb_iter, all_priors, nb_cells, quantiles = dlg.getInputMCMC()
                 self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles)
-                
-                
             else:
                 #Direct Model
                 params, nb_cells = dlg.getInputDirectModel()
@@ -456,27 +432,3 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         This is called when the right horizontal splitter in the fluxes tab is moved. Move the left one accordingly.
         """
         self.fluxesSplitterHorizLeft.setSizes(self.fluxesSplitterHorizRight.sizes())
-
-class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
-     def __init__(self, spointCoordinator : SPointCoordinator):
-        super(DisplayParameters, self).__init__()
-        QtWidgets.QWidget.__init__(self)
-        self.setupUi(self)
-
-        self.coordinator = spointCoordinator
-        layers = self.coordinator.layers_depths()
-
-        self.tableViewParams = QTableView()
-        self.paramsModel = self.coordinator.get_params_model(layers[0])
-        self.tableViewParams.setModel(self.paramsModel)
-        #Resize the table view so it looks pretty
-        self.tableViewParams.resizeColumnsToContents()
-        self.coordinator.refresh_params_distr(layers[0])
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.tableViewParams)
-        self.setLayout(layout)
-
-        self.tableViewParams.resizeColumnsToContents()
-
-    

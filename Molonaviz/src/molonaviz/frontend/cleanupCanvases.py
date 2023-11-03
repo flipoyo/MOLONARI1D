@@ -105,11 +105,10 @@ class SelectCanvas(CompareCanvas):
     def __init__(self, reference_data: pd.DataFrame, field):
         super().__init__(reference_data)
 
-        self.field = field # The only field which will be shown
+        self.field = field# The only field which will be shown
         self.x = self.reference_data["Date"]
         self.y = self.reference_data[self.field]
         self.last_selection = createEmptyDf()
-        self.selected_data = createEmptyDf()
 
         self.selector = RectangleSelector(self.axes, self.selectPoints, useblit=True)
 
@@ -117,8 +116,6 @@ class SelectCanvas(CompareCanvas):
         var_plotted = self.reference_data.copy(deep = True)
         mask = self.inside(event1, event2)
         self.last_selection = var_plotted[mask]
-        self.selected_data = pd.concat([self.selected_data, self.last_selection], axis = 0)  # multiselection (TL)
-        self.selected_data.drop_duplicates(inplace = True)
         self.plotData(self.field)
 
     def inside(self, event1, event2):
@@ -153,7 +150,6 @@ class SelectCanvas(CompareCanvas):
 
     def reset(self):
         self.last_selection = self.createEmptyDf()
-        self.selected_data = self.createEmptyDf()
 
     def getSelectedPoints(self):
-        return self.selected_data
+        return self.last_selection
