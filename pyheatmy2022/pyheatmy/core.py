@@ -15,7 +15,7 @@ from .state import State
 from .checker import checker
 
 from .utils import (
-        C_W,
+    C_W,
     RHO_W,
     LAMBDA_W,
     compute_H_stratified,
@@ -212,11 +212,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         for i in range(1, nb_cells - 1):
             nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
 
-        nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
-        
-        K_list0 = 10 ** - moinslog10K_list
+        nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
+
+        K_list0 = 10**-moinslog10K_list
         K_list = interface_transition(K_list0)
-        
+
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
         for i in range(nb_cells):
@@ -351,7 +351,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         lambda_m_list = (
             n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
         ) ** 2  # conductivité thermique du milieu poreux équivalent
-        
+
         # création du gradient de température
         nablaT = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -365,7 +365,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         )
 
         conduc_flows = np.zeros((nb_cells, len(self._times)), np.float32)
-        
+
         for i in range(nb_cells):
             conduc_flows[i, :] = lambda_m_list[i] * nablaT[i, :]
 
@@ -821,10 +821,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             nb_burn_in_iter += 1  # incrémentation du numbre d'itération de burn-in
 
         # Transition après le burn in
-        _params = np.zeros(
-            (nb_iter + 1, nb_chain, nb_layer, nb_param)
-        )  # réinitialisation des paramètres
-        _params[0] = X  # initialisation des paramètres
+        del _params  # la variable _params n'est plus utile, on stocke les itérations dans la classe State
 
         _flows = np.zeros(
             (nb_iter + 1, nb_chain, nb_cells, len(self._times))
@@ -945,7 +942,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             # Actualisation des paramètres à la fin de l'itération
             X = X_new
-            _params[i + 1] = X_new
 
         # Calcul des quantiles pour la température
         _temp = _temp.reshape((nb_iter + 1) * nb_chain, nb_cells, len(self._times))
