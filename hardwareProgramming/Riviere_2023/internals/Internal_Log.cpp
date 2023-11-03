@@ -5,7 +5,12 @@
 #include <SPI.h>
 #include <String.h>
 #include "Measure.h"
-#include "testSample.h"
+
+
+// Check that the file has not been imported before
+#ifndef INTERNAL_LOG
+#define INTERNAL_LOG
+
 
 const int CSpin = 6;
 const char filename[] = "datalog.csv";
@@ -167,3 +172,6 @@ Measure GetMeasurementById(unsigned int id) {
   }
   file.close();
 }
+
+
+#endif

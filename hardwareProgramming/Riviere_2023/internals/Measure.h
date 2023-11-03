@@ -1,4 +1,6 @@
 
+
+// Check that the file has not been imported before
 #ifndef MEASURE_CLASS
 #define MEASURE_CLASS
 
