@@ -652,8 +652,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._real_z[-1] / nb_cells
         _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-        temp_ref = self._T_measures[:, :].T
-        # temp_ref = self.get_temps_solve()[ind_ref, :]
+        # temp_ref = self._T_measures[:, :].T
+        temp_ref = self.get_temps_solve()[ind_ref, :]
         nb_layer = len(all_priors)
         nb_param = 4
 
@@ -746,7 +746,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     # Select chains for difference vectors
                     choose = np.delete(np.arange(nb_chain), j)
                     a = np.random.choice(choose, delta, replace=False)
-                    choose = np.delete(choose, np.where(np.isin(a, choose)))
+                    choose = np.delete(choose, np.where(np.isin(choose, a)))
                     b = np.random.choice(choose, delta, replace=False)
 
                     # Compute difference vectors
@@ -865,7 +865,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     # Select chains for difference vectors
                     choose = np.delete(np.arange(nb_chain), j)
                     a = np.random.choice(choose, delta, replace=False)
-                    choose = np.delete(choose, np.where(np.isin(a, choose)))
+                    choose = np.delete(choose, np.where(np.isin(choose, a)))
                     b = np.random.choice(choose, delta, replace=False)
 
                     # Compute difference vectors
