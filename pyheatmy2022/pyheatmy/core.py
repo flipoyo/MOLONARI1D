@@ -14,7 +14,7 @@ from .params import Param, ParamsPriors, Prior, PARAM_LIST
 from .state import State
 from .checker import checker
 
-from .utils import C_W, RHO_W, LAMBDA_W, compute_H_stratified, compute_T_stratified , interface_transition
+from .utils import C_W, RHO_W, LAMBDA_W, compute_H_stratified, compute_T_stratified 
 from .layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
 
 
@@ -32,6 +32,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         sigma_meas_T: float,  # écart type de l'incertitude sur les valeurs de température capteur
         # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         inter_mode: str = 'linear',
+        eps = 10 ** -9
     ):
         # ! Pour l'instant on suppose que les temps matchent
         self._times = [t for t, _ in dH_measures]
@@ -79,6 +80,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                                               *self._T_measures[0], self._T_aq[0]])
         # crée la fonction affine par morceaux faisant coincider les températures connues à la profondeur réelle
         self.inter_mode = inter_mode
+        self.eps = eps
         self.tests()  # teste que les conditions nécessaires à l'analyse sont remplies
 
     def tests(self):
@@ -116,10 +118,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         if len(self._layersList) == 0:
             raise ValueError("Your list of layers is empty.")
 
-        if self._layersList[-1].zLow != self._real_z[-1]:
-            self._layersList[-1].zLow = self._real_z[-1]
-            # raise ValueError(
-            #     "Last layer does not match the end of the column.")
+        if abs(self._layersList[-1].zLow-self._real_z[-1]) >= self.eps:
+            
+            raise ValueError(
+                "Last layer does not match the end of the column.")
 
     def _compute_solve_transi_multiple_layers(self, layersList, nb_cells, verbose):
         dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule
@@ -168,15 +170,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
-        nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
-
+        
         for i in range(1, nb_cells - 1):
             nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
+        nablaH[0, :] = nablaH[1, :]
 
-        nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
+        nablaH[nb_cells - 1, :] = nablaH[nb_cells - 2, :]
         
-        K_list0 = 10 ** - moinslog10K_list
-        K_list = interface_transition(K_list0)
+        K_list = 10 ** - moinslog10K_list
+        
         
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -304,13 +306,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # création du gradient de température
         nablaT = np.zeros((nb_cells, len(self._times)), np.float32)
 
-        nablaT[0, :] = 2*(self._temps[1, :] - self._T_riv)/(3*dz)
+        
 
         for i in range(1, nb_cells - 1):
             nablaT[i, :] = (self._temps[i+1, :] - self._temps[i-1, :])/(2*dz)
-
-        nablaT[nb_cells - 1, :] = 2 * \
-            (self._T_aq - self._temps[nb_cells - 2, :])/(3*dz)
+        nablaT[0, :] = nablaT[1, :]
+        nablaT[nb_cells - 1, :] = nablaT[nb_cells - 2, :]
 
         conduc_flows = np.zeros((nb_cells, len(self._times)), np.float32)
         
