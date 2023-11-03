@@ -1,4 +1,16 @@
-from numpy import float32, zeros, nansum, sum, var, mean, isclose, sqrt, all
+from numpy import (
+    float32,
+    zeros,
+    nansum,
+    sum,
+    var,
+    mean,
+    isclose,
+    sqrt,
+    all,
+    array,
+    shape,
+)
 from numpy.linalg import solve
 from numba import njit
 
