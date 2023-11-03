@@ -1,4 +1,16 @@
-from numpy import float32, zeros, nansum, sum, var, mean, isclose, sqrt, all
+from numpy import (
+    float32,
+    zeros,
+    nansum,
+    sum,
+    var,
+    mean,
+    isclose,
+    sqrt,
+    all,
+    array,
+    shape,
+)
 from numpy.linalg import solve
 from numba import njit
 
@@ -300,6 +312,10 @@ def compute_H_stratified(
 
     K_list = 10.0**-moinslog10K_list
     KsurSs_list = K_list / Ss_list
+    
+    K_list = 10.0 ** - moinslog10K_list
+    
+    KsurSs_list = K_list/Ss_list
 
     # Check if dt is constant :
     if isdtconstant:  # dt is constant so A and B are constant

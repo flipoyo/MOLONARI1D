@@ -73,7 +73,9 @@ class ColumnDirectModelRunner(QtCore.QObject):
     def run(self):
         print("Launching Direct Model...")
         layers = layersListCreator(self.params)
+        
         self.col.compute_solve_transi(layers, self.nb_cells)
+        
         self.finished.emit()
 
 
@@ -145,7 +147,7 @@ class Compute(QtCore.QObject):
         Launch the direct model with given parameters per layer.
         """
         if self.thread.isRunning():
-            print("Please wait while for the previous computation to end")
+            print("Please wait for the previous computation to end")
             return
 
         self.save_layers_and_params(params)
@@ -190,10 +192,8 @@ class Compute(QtCore.QObject):
         insertlayer.bindValue(":PointKey", self.pointID)
 
         insertparams = QSqlQuery(self.con)
-        insertparams.prepare(
-            f"""INSERT INTO BestParameters (Permeability, ThermConduct, Porosity, Capacity, Layer, PointKey)
-                           VALUES (:Permeability, :ThermConduct, :Porosity, :Capacity, :Layer, :PointKey)"""
-        )
+        insertparams.prepare(f"""INSERT INTO Parameters (Permeability, ThermConduct, Porosity, Capacity, Layer, PointKey)
+                           VALUES (:Permeability, :ThermConduct, :Porosity, :Capacity, :Layer, :PointKey)""")
         insertparams.bindValue(":PointKey", self.pointID)
 
         self.con.transaction()
