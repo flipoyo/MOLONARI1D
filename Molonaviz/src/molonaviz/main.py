@@ -483,6 +483,5 @@ def main():
     messageThread.finished.connect(on_thread_finished)
 
     messageThread.start()
-    messageThread.start()
 
     sys.exit(app.exec())
