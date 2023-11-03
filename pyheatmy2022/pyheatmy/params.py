@@ -71,47 +71,47 @@ class ParamsPriors:
         return self.prior_list.__len__()
 
 
-# if __name__ == '__main__':
-#     import numpy as np
+if __name__ == '__main__':
+    import numpy as np
 
-#     def reciprocal(x): return 1/x
-#     priors = {
-#         "moinslog10K": ((1.5, 6.), .01),  # (intervalle, sigma)
-#         "n": ((.01, .25), .01),
-#         "lambda_s": ((1, 5), .1),
-#         "rhos_cs": ((1e6, 1e7), 1e5),
-#     }
-#     priors1 = ParamsPriors(
-#         [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
-#     )
+    def reciprocal(x): return 1/x
+    priors = {
+        "moinslog10K": ((1.5, 6.), .01),  # (intervalle, sigma)
+        "n": ((.01, .25), .01),
+        "lambda_s": ((1, 5), .1),
+        "rhos_cs": ((1e6, 1e7), 1e5),
+    }
+    priors1 = ParamsPriors(
+        [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
+    )
 
-#     priors2 = ParamsPriors(
-#         [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
-#     )
+    priors2 = ParamsPriors(
+        [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
+    )
 
-#     geom = AllPriors([priors1, priors2])
+    geom = AllPriors([priors1, priors2])
 
-#     class Layer:
-#         def __init__(self, name: str, zLow: float, moinslog10K: float, n: float, lambda_s: float, rhos_cs: float):
-#             self.name = name
-#             self.zLow = zLow
-#             self.params = Param(moinslog10K, n, lambda_s, rhos_cs)
+    class Layer:
+        def __init__(self, name: str, zLow: float, moinslog10K: float, n: float, lambda_s: float, rhos_cs: float):
+            self.name = name
+            self.zLow = zLow
+            self.params = Param(moinslog10K, n, lambda_s, rhos_cs)
 
-#         # The repr() function returns a printable representational string of the given object.
-#         def __repr__(self) -> str:
-#             return self.name + f" : ends at {self.zLow} m. " + self.params.__repr__()
+        # The repr() function returns a printable representational string of the given object.
+        def __repr__(self) -> str:
+            return self.name + f" : ends at {self.zLow} m. " + self.params.__repr__()
 
-#     def layersListCreator(layersListInput):
-#         layersList = list()
-#         for name, zLow, moinslog10K, n, lambda_s, rhos_cs in layersListInput:
-#             layersList.append(
-#                 Layer(name, zLow, moinslog10K, n, lambda_s, rhos_cs))
-#         return layersList
+    def layersListCreator(layersListInput):
+        layersList = list()
+        for name, zLow, moinslog10K, n, lambda_s, rhos_cs in layersListInput:
+            layersList.append(
+                Layer(name, zLow, moinslog10K, n, lambda_s, rhos_cs))
+        return layersList
 
-#     init_param = geom.sample()
-#     print(init_param)
-#     print(geom.perturb(init_param))
-#     print(layersListCreator(
-#         [a+b for a, b in zip([('couche1', 10), ('couche2', 20)], geom.perturb(init_param))]))
-#     print(geom[0])
-#     print(Layer('couche', 1, *geom[0].sample()))
+    init_param = geom.sample()
+    print(init_param)
+    print(geom.perturb(init_param))
+    print(layersListCreator(
+        [a+b for a, b in zip([('couche1', 10), ('couche2', 20)], geom.perturb(init_param))]))
+    print(geom[0])
+    print(Layer('couche', 1, *geom[0].sample()))

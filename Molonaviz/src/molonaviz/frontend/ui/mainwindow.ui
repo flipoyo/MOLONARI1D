@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>623</width>
+    <width>1827</width>
     <height>831</height>
    </rect>
   </property>
@@ -49,9 +49,6 @@
       </item>
       <item>
        <widget class="QDockWidget" name="dockDataSPoints">
-        <property name="toolTip">
-         <string>Your points.</string>
-        </property>
         <property name="features">
          <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
         </property>
@@ -79,9 +76,6 @@
       </item>
       <item>
        <widget class="QDockWidget" name="dockSensors">
-        <property name="toolTip">
-         <string>This is your current laboratory.</string>
-        </property>
         <property name="features">
          <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
         </property>
@@ -234,7 +228,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>623</width>
+     <width>1827</width>
      <height>26</height>
     </rect>
    </property>

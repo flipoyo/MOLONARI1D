@@ -2,8 +2,6 @@ from PyQt5 import QtWidgets, uic
 from math import log10
 from PyQt5.QtWidgets import QTableWidgetItem
 from ..utils.get_files import get_ui_asset
-import json
-import os
 
 
 From_DialogCompute = uic.loadUiType(get_ui_asset("dialogCompute.ui"))[0]
@@ -18,24 +16,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
 
-                # Chemin complet vers le fichier JSON defaultParameters.json
-        self.chemin_default_parameters = os.path.join(os.path.dirname(__file__), "../backend/defaultParameters.json")
-
-        # Ouvrir le fichier JSON en mode lecture
-        with open(self.chemin_default_parameters, 'r') as fichier:
-            DefaultParameters = json.load(fichier)
-
-        # Chemin complet vers le fichier JSON InputDirectCompute.json
-        self.chemin_input_direct_compute = os.path.join(os.path.dirname(__file__), "../backend/InputDirectCompute.json")
-
-        # Ouvrir le fichier JSON InputDirectCompute.json en mode lecture
-        with open(self.chemin_input_direct_compute, 'r') as fichier:
-            InputDirectCompute = json.load(fichier)
-
-
-        self.defaultValues = DefaultParameters #Default values displayed for the layers
+        self.defaultValues = {"Perm": 1e-5, "Poro": 0.15, "ThConduct": 3.4, "ThCap": 5e6} #Default values displayed for the layers
         self.maxdepth = maxdepth * 100
-        self.input = InputDirectCompute
 
         #Prevent the user from writing something in the spin box.
         self.spinBoxNLayersDirect.lineEdit().setReadOnly(True)
@@ -46,79 +28,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.pushButtonRestoreDefault.clicked.connect(self.setDefaultValues)
         self.pushButtonRun.clicked.connect(self.run)
 
-        self.tableWidget.itemChanged.connect(self.SaveInput)
-
         self.groupBoxMCMC.setChecked(False)
 
-        self.InitValues()
-
-    def InitValues(self):
-        """
-        Set the default values in the tables for both the direct model and the MCMC
-        """
-        #Direct model
-
-        self.spinBoxNLayersDirect.setValue(len(self.input))
-        self.tableWidget.setRowCount(len(self.input))
-
-        self.lineEditChains.setText("10")
-        self.lineEditDelta.setText("3")
-        self.lineEditncr.setText("3")
-        self.lineEditc.setText("0.1")
-        self.lineEditcstar.setText("1e-6")
-        self.layerBottom = int((self.maxdepth/len(self.input)))
-
-        for i in range(len(self.input)):
-            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(self.layerBottom*(i+1))))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i]["Perm"])))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i]["Poro"])))
-            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i]["ThConduct"])))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i]["ThCap"])))
-
-
-        #MCMC
-        self.lineEditMaxIterMCMC.setText("5000")
-        self.lineEditKMin.setText("4")
-        self.lineEditKMax.setText("9")
-        self.lineEditMoinsLog10KSigma.setText("0.01")
-
-        self.lineEditPorosityMin.setText("0.01")
-        self.lineEditPorosityMax.setText("0.25")
-        self.lineEditPorositySigma.setText("0.01")
-
-        self.lineEditThermalConductivityMin.setText("1")
-        self.lineEditThermalConductivityMax.setText("5")
-        self.lineEditThermalConductivitySigma.setText("0.05")
-
-        self.lineEditThermalCapacityMin.setText("1e6")
-        self.lineEditThermalCapacityMax.setText("1e7")
-        self.lineEditThermalCapacitySigma.setText("100")
-
-        self.lineEditQuantiles.setText("0.05,0.5,0.95")
-
-
-    def SaveInput(self, item):
-
-        nb_layers = self.spinBoxNLayersDirect.value()
-    
-        if item is not None and item.column() in [1, 2, 3, 4]:
-            value = item.text()
-            if value:
-                column = item.column()
-                i = item.row()
-                if column == 1:
-                    self.input[i]["Perm"] = float(value)
-                elif column == 2:
-                    self.input[i]["Poro"] = float(value)
-                elif column == 3:
-                    self.input[i]["ThConduct"] = float(value)
-                elif column == 4:
-                    self.input[i]["ThCap"] = float(value)
-
-        with open(self.chemin_input_direct_compute, 'w') as fichier:
-            json.dump(self.input, fichier, indent=4)
-
+        self.setDefaultValues()
 
     def setDefaultValues(self):
         """
@@ -126,26 +38,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         """
         #Direct model
         self.spinBoxNLayersDirect.setValue(1)
-        self.tableWidget.setRowCount(1)
-
-        self.tableWidget.setVerticalHeaderItem(0, QTableWidgetItem(f"Layer {1}"))
-        layerBottom = int((self.maxdepth))
-        self.tableWidget.setItem(0, 0, QTableWidgetItem(str(layerBottom))) #In cm
-        self.tableWidget.setItem(0, 1, QTableWidgetItem(str(self.defaultValues["Perm"])))
-        self.tableWidget.setItem(0, 2, QTableWidgetItem(str(self.defaultValues["Poro"])))
-        self.tableWidget.setItem(0, 3, QTableWidgetItem(str(self.defaultValues["ThConduct"])))
-        self.tableWidget.setItem(0, 4, QTableWidgetItem('{:.2e}'.format(self.defaultValues["ThCap"])))
+        self.updateNBLayers(1)
 
         #MCMC
         self.lineEditMaxIterMCMC.setText("5000")
-
-        self.lineEditChains.setText("10")
-        self.lineEditDelta.setText("3")
-        self.lineEditncr.setText("3")
-        self.lineEditc.setText("0.1")
-        self.lineEditcstar.setText("1e-6")
-
-        self.lineEditKMin.setText("4")
+        self.lineEditKMin.setText("3")
         self.lineEditKMax.setText("9")
         self.lineEditMoinsLog10KSigma.setText("0.01")
 
@@ -157,7 +54,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditThermalConductivityMax.setText("5")
         self.lineEditThermalConductivitySigma.setText("0.05")
 
-        self.lineEditThermalCapacityMin.setText("1e6")
+        self.lineEditThermalCapacityMin.setText("1000")
         self.lineEditThermalCapacityMax.setText("1e7")
         self.lineEditThermalCapacitySigma.setText("100")
 
@@ -170,31 +67,14 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         #Clear the table
         self.tableWidget.setRowCount(nb_layers)
 
-        if len(self.input) < nb_layers:
-    
-            for _ in range(nb_layers - len(self.input)):
-                self.input.append(self.defaultValues.copy())
-        elif len(self.input) > nb_layers:
-    
-            for _ in range(len(self.input) - nb_layers):
-                self.input.pop()
-
-
         for i in range(nb_layers):
-            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}")) 
-            layerBottom = int((self.maxdepth/nb_layers))
-
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom*(i+1)))) #In cm
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i]["Perm"])))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i]["Poro"])))
-            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i]["ThConduct"])))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i]["ThCap"])))
-
-            self.tableWidget.setItem(nb_layers -1, 0, QTableWidgetItem(str(int((self.maxdepth))))) #In cm
-
-        with open(self.chemin_input_direct_compute, 'w') as fichier:
-            json.dump(self.input, fichier, indent=4)
-
+            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
+            layerBottom = int((self.maxdepth/nb_layers)*(i+1))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom))) #In cm
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.defaultValues["Perm"])))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.defaultValues["Poro"])))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.defaultValues["ThConduct"])))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.defaultValues["ThCap"])))
 
     def run(self):
         """
@@ -226,7 +106,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             thermconduct.append(float(self.tableWidget.item(i, 3).text()))
             thermcap.append(float(self.tableWidget.item(i, 4).text()))
             depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
-
         layers = [f"Layer {i+1}" for i in range(nb_layers)]
         return list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap)), nb_cells
 
@@ -236,12 +115,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         """
         nb_iter = int(self.lineEditMaxIterMCMC.text())
         nb_cells = self.spinBoxNCellsDirect.value()
-
-        nb_chains = int(self.lineEditChains.text())
-        delta = float(self.lineEditDelta.text())
-        ncr = float(self.lineEditncr.text())
-        c = float(self.lineEditc.text())
-        cstar = float(self.lineEditcstar.text())
 
         #The user's input is not a permeability but a -log10(permeability)
         moins10logKmin = float(self.lineEditKMin.text())
@@ -281,4 +154,4 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = tuple(quantiles)
         quantiles = [float(quantile) for quantile in quantiles]
 
-        return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar
+        return nb_iter, all_priors, nb_cells, quantiles
