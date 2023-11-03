@@ -652,8 +652,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._real_z[-1] / nb_cells
         _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-        # temp_ref = self._T_measures[:, :].T
-        temp_ref = self.get_temps_solve()[ind_ref, :]
+        temp_ref = self._T_measures[:, :].T
+        # temp_ref = self.get_temps_solve()[ind_ref, :]
         nb_layer = len(all_priors)
         nb_param = 4
 
@@ -973,7 +973,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         c=0.1,
         cstar=1e-6,
         verbose=True,  # affiche texte explicatifs ou non
-        sigma2=None,
+        sigma2=1.0,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
     ):
         if nb_chain < 2:
