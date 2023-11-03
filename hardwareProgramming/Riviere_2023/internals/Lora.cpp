@@ -5,36 +5,117 @@
 #define MY_LORA
 
 
-#include <LoRa.h>
-
-
-// Incomplete template : the functions will need to be redefined
+#include "Lora.hpp"
 
 
 // Initialise the lora module for the first time. Call before any other LoRa function
-void InitialiseLora(/* Parameters */) {
-  // Todo
+void InitialiseLora(float frequency) {
+  LoRa.begin(frequency);
+
+  LoRa.onReceive(OnLoraReceivePacket);
+  LoRa.receive();
+}
+
+void OnLoraReceivePacket(int packetSize) {
+  // If the header is incomplete, ignore the packet
+  if (packetSize < 13) {
+    ClearBytes(packetSize);
+    return;
+  }
+
+  
+  unsigned int senderId = ReadUInt();
+  unsigned int destinationId = ReadUInt();
+
+  if (destinationId != networkId) {
+    ClearBytes(packetSize - 8);
+    return;
+  }
+
+  unsigned int thisPacketNumber = ReadUInt();
+
+  // If the packet has already been received, ignore the packet
+  if (thisPacketNumber < receivedPacketNumber) {
+    ClearBytes(packetSize - 12);
+    return;
+  }
+  receivedPacketNumber = thisPacketNumber;
+
+  char requestId = LoRa.read();
+
+  if (requestId == DT_REQ) {
+    HandleDataRequest(senderId);
+    return;
+  }
+}
+
+
+void HandleDataRequest(unsigned int senderId) {
+  unsigned int requestedSampleId = ReadUInt();
+  unsigned int lastSampleId = GetLastMeasurementId();
+
+  for (unsigned int id = requestedSampleId; id <= lastSampleId; id++)
+  {
+    Measure measure = GetMeasurementById(id);
+    SendMeasurement(measure, senderId);
+  }
+}
+
+
+void ClearBytes(unsigned int length) {
+  for (size_t i = 0; i < length; i++)
+  {
+    LoRa.read();
+  }
+}
+
+unsigned int ReadUInt() {
+  int byte1 = LoRa.read();
+  int byte2 = LoRa.read();
+  int byte3 = LoRa.read();
+  int byte4 = LoRa.read();
+
+  return static_cast<unsigned int>(byte1 | (byte2 << 8) | (byte3 << 16) | (byte4 << 24));
 }
 
 
 // Temporarily disable the LoRa module to save battery. It can be waken up with WakeUpLora
 void SleepLora() {
-  // Todo
+  LoRa.sleep();
 }
 
 
 // Re-enable the LoRa module if it was asleep. I.E. Exit low-power mode for the LoRa module
 void WakeUpLora() {
-  // Todo
+  // TODO : test that this works
+  LoRa.receive();
+}
+
+
+bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType) {
+  bool success = (bool)LoRa.beginPacket();
+  if (!success) {
+    return false;
+  }
+
+  LoRa.write(reinterpret_cast<uint8_t*>(&networkId), sizeof(networkId));
+  LoRa.write(reinterpret_cast<uint8_t*>(&destinationId), sizeof(destinationId));
+  LoRa.write(reinterpret_cast<uint8_t*>(&sentPacketNumber), sizeof(sentPacketNumber));
+  LoRa.write(reinterpret_cast<uint8_t*>(&requestType), sizeof(requestType));
+  LoRa.write(reinterpret_cast<uint8_t*>(&payload), payloadSize);
+
+  success = (bool)LoRa.endPacket();
+
+  sentPacketNumber++;
+
+  return success;
 }
 
 
 // The exact signature of this function has to be determined
-void SendData(/* Parameters */) {
-
+bool SendMeasurement(Measure measure, unsigned int destinationId) {
+  return SendPacket(&measure, sizeof(measure), destinationId, DT_RPL);
 }
 
-
-// Other functions ...
 
 #endif

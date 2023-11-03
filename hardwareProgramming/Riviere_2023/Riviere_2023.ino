@@ -10,7 +10,7 @@ Required hardware :
 Arduino MKR WAN 1310
 */
 
-#include "internals/Lora.cpp"
+#include "internals/Lora.hpp"
 #include "internals/Low_Power.cpp"
 #include "internals/Pressure_Sensor.hpp"
 #include "internals/Temp_Sensor.cpp"
