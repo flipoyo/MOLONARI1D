@@ -834,7 +834,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temp[0] = _temp_burn_in[-1]  # initialisation des températures
         _energy = np.zeros((nb_iter + 1, nb_chain))  # réinitialisation des énergies
         _energy[0] = _energy_burn_in[
-            max(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
         ]  # initialisation des énergies
 
         del _temp_burn_in  # suppression variable burn-in
@@ -927,7 +927,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     _temp[i + 1][j] = _temp[i - 1][j]
                     _energy[i + 1][j] = _energy[i - 1][j]
                     self._states.append(
-                        self._states[-nb_chain]
+                        State(
+                            layers=self._states[-nb_chain].layers,
+                            energy=self._states[-nb_chain].energy,
+                            ratio_accept=nb_accepted / (i * 10 + j + 1),
+                            sigma2_temp=sigma2,
+                        )
                     )  # ajout de l'état à la liste des états
                 self._acceptance[i, j] = nb_accepted / (
                     i * 10 + j + 1
