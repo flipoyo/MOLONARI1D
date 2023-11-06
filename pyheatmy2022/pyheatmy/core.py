@@ -136,7 +136,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             raise ValueError(
                 "Last layer does not match the end of the column.")
 
-
     def _compute_solve_transi_multiple_layers(self, layersList, nb_cells, verbose):
         dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule
         self._z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
@@ -207,16 +206,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
-        nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
-
+        
         for i in range(1, nb_cells - 1):
             nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
+        nablaH[0, :] = nablaH[1, :]
 
         nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
         nablaH[nb_cells - 1, :] = nablaH[nb_cells - 2, :]
         
         K_list = 10 ** - moinslog10K_list
-
+        
+        
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
         for i in range(nb_cells):
@@ -351,20 +351,19 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         lambda_m_list = (
             n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
         ) ** 2  # conductivité thermique du milieu poreux équivalent
-
+        
         # création du gradient de température
         nablaT = np.zeros((nb_cells, len(self._times)), np.float32)
 
-        nablaT[0, :] = 2*(self._temps[1, :] - self._T_riv)/(3*dz)
+        
 
         for i in range(1, nb_cells - 1):
             nablaT[i, :] = (self._temps[i+1, :] - self._temps[i-1, :])/(2*dz)
-
-        nablaT[nb_cells - 1, :] = 2 * \
-            (self._T_aq - self._temps[nb_cells - 2, :])/(3*dz)
+        nablaT[0, :] = nablaT[1, :]
+        nablaT[nb_cells - 1, :] = nablaT[nb_cells - 2, :]
 
         conduc_flows = np.zeros((nb_cells, len(self._times)), np.float32)
-
+        
         for i in range(nb_cells):
             conduc_flows[i, :] = lambda_m_list[i] * nablaT[i, :]
 

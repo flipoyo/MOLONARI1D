@@ -346,7 +346,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 spointName = dlg.selectedSPoint()
                 widgetviewer = self.currentStudy.openSPoint(spointName)
 
-                subwindow = SubWindow(widgetviewer)
+                subwindow = SubWindow(widgetviewer, title = spointName)
                 self.mdiArea.addSubWindow(subwindow)
                 subwindow.show()
 
@@ -364,7 +364,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             spointName = self.treeViewDataSPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
 
         widgetviewer = self.currentStudy.openSPoint(spointName)
-        subwindow = SubWindow(widgetviewer)
+        subwindow = SubWindow(widgetviewer, title = spointName)
         self.mdiArea.addSubWindow(subwindow)
         subwindow.show()
 

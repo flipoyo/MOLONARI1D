@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from numpy import (
     float32,
     zeros,
@@ -12,9 +11,6 @@ from numpy import (
     array,
     shape,
 )
-=======
-from numpy import float32, full, zeros, indices
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
 from numpy.linalg import solve
 from numba import njit
 
