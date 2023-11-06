@@ -5,6 +5,11 @@ void setup() {
   Serial.begin(9600);
   while (!Serial);
 
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(1000);
+  digitalWrite(LED_BUILTIN, LOW);
+
   Serial.println("LoRa Receiver");
 
   if (!LoRa.begin(868E6)) {
@@ -26,6 +31,6 @@ void loop() {
     }
 
     // print RSSI of packet
-    Serial.println("' with RSSI " + String(LoRa.packetRssi()) + "dbm and SNR " + String(LoRa.packetSnr()) + "dbm");
+    Serial.println("' with RSSI " + String(LoRa.packetRssi()) + "dbm and SNR " + String(LoRa.packetSnr()) + "db");
   }
 }

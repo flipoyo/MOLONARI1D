@@ -9,7 +9,9 @@
 
 
 // Initialise the lora module for the first time. Call before any other LoRa function
-void InitialiseLora(float frequency) {
+void InitialiseLora(void (*_onGetMeasureCallback)(Measure), float frequency) {
+  onGetMeasureCallback = _onGetMeasureCallback;
+
   LoRa.begin(frequency);
 
   LoRa.onReceive(OnLoraReceivePacket);
@@ -43,22 +45,17 @@ void OnLoraReceivePacket(int packetSize) {
 
   char requestId = LoRa.read();
 
-  if (requestId == DT_REQ) {
-    HandleDataRequest(senderId);
+  if (requestId == DT_RPL) {
+    HandleDataReplyPacket();
     return;
   }
 }
 
 
-void HandleDataRequest(unsigned int senderId) {
-  unsigned int requestedSampleId = ReadFromLoRa<unsigned int>();
-  unsigned int lastSampleId = GetLastMeasurementId();
+void HandleDataReplyPacket() {
+  Measure measure = ReadFromLoRa<Measure>();
 
-  for (unsigned int id = requestedSampleId; id <= lastSampleId; id++)
-  {
-    Measure measure = GetMeasurementById(id);
-    SendMeasurement(measure, senderId);
-  }
+  onGetMeasureCallback(measure);
 }
 
 
@@ -96,6 +93,11 @@ void WakeUpLora() {
 }
 
 
+bool RequestMeasurement(unsigned int lastMeasurementId, unsigned int destinationId) {
+  return SendPacket(&lastMeasurementId, sizeof(lastMeasurementId), destinationId, DT_REQ);
+}
+
+
 bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType) {
   bool success = (bool)LoRa.beginPacket();
   if (!success) {
@@ -113,12 +115,6 @@ bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int dest
   sentPacketNumber++;
 
   return success;
-}
-
-
-// The exact signature of this function has to be determined
-bool SendMeasurement(Measure measure, unsigned int destinationId) {
-  return SendPacket(&measure, sizeof(measure), destinationId, DT_RPL);
 }
 
 
