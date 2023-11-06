@@ -2,10 +2,10 @@ PRAGMA foreign_keys = off;
 BEGIN TRANSACTION;
 
 -- Table: BestParameters
-CREATE TABLE BestParameters (ID INTEGER PRIMARY KEY AUTOINCREMENT, Permeability REAL, ThermConduct REAL, Porosity REAL, Capacity REAL, Layer INTEGER REFERENCES Layer (ID), PointKey INTEGER REFERENCES Point (ID));
+CREATE TABLE BestParameters (ID INTEGER PRIMARY KEY AUTOINCREMENT, Permeability REAL, Porosity REAL, ThermConduct REAL, Capacity REAL, Layer INTEGER REFERENCES Layer (ID), PointKey INTEGER REFERENCES Point (ID));
 
 -- Table: BestParameters
-CREATE TABLE Parameters (ID INTEGER PRIMARY KEY AUTOINCREMENT, Permeability REAL, ThermConduct REAL, Porosity REAL, Capacity REAL, Layer INTEGER REFERENCES Layer (ID), PointKey INTEGER REFERENCES Point (ID));
+CREATE TABLE Parameters (ID INTEGER PRIMARY KEY AUTOINCREMENT, Permeability REAL, Porosity REAL, ThermConduct REAL,  Capacity REAL, Layer INTEGER REFERENCES Layer (ID), PointKey INTEGER REFERENCES Point (ID));
 
 -- Table: CleanedMeasures
 CREATE TABLE CleanedMeasures (ID INTEGER PRIMARY KEY AUTOINCREMENT, Date INTEGER REFERENCES Date (ID), TempBed REAL NOT NULL, Temp1 REAL NOT NULL, Temp2 REAL NOT NULL, Temp3 REAL NOT NULL, Temp4 REAL NOT NULL, Pressure REAL NOT NULL, PointKey INTEGER REFERENCES Point (ID));

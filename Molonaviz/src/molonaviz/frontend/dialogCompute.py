@@ -23,19 +23,21 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.interaction_occurred = False
         self.maxdepth = maxdepth * 100
         self.layers = spointcoordinator.layers_depths()
-        self.params =[] 
+        self.params =[]
         for layer in self.layers:
-            self.params = spointcoordinator.get_params_model(layer)
+            self.params.append(spointcoordinator.get_params_model(layer))
         self.input = []
-        num_rows = len(self.layers)
+        print(self.params)
+        num_rows = len(self.layers) 
         num_cols = 5
         self.compute = compute
 
-        for row in range(num_rows -1):
-            self.input.append([])
-            for col in range(num_cols):
-                valeur = self.params.index(row, col).data()
-                self.input[row].append(valeur)
+        if self.params:
+            for row in range(num_rows):
+                self.input.append([])
+                for col in range(num_cols):
+                    valeur = self.params[row].index(0, col).data()
+                    self.input[row].append(valeur)
                 
 
         
@@ -48,16 +50,16 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.spinBoxNLayersDirect.valueChanged.connect(self.updateNBLayers)
         self.pushButtonRestoreDefault.clicked.connect(self.setDefaultValues)
         self.pushButtonRun.clicked.connect(self.run)
-        self.closeEvent = self.handleCloseEvent
-
         self.tableWidget.itemChanged.connect(self.SaveInput)
 
         self.groupBoxMCMC.setChecked(False)
 
-        if self.input == []:
+        if (self.input == []) or (self.input[0] == []) or (self.input[0][3] is None):
             self.setDefaultValues()
         else:
             self.InitValues()
+
+        self.interaction_occurred = True
 
     def InitValues(self):
         """
@@ -72,7 +74,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         for i in range(len(self.input)):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(self.layers[i])))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(round(self.layers[i]*100))))
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
@@ -112,23 +114,25 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         Save the layers and the last parameters in the database.
         """
         if self.interaction_occurred:
+
+            nb_cells = self.spinBoxNCellsDirect.value()
             nb_layers = self.spinBoxNLayersDirect.value()
             depths = []
             log10permeability = []
-            porosity = [] 
+            porosity = []
             thermconduct = []
             thermcap = []
 
-            for i in range (nb_layers):
-                log10permeability.append(-log10(abs(float(self.tableWidget.item(i, 1).text())))) #Apply -log10 to the permeability values
+            for i in range (nb_layers  - 1):
+                log10permeability.append(float(self.tableWidget.item(i, 1).text())) #Apply -log10 to the permeability values
                 porosity.append(float(self.tableWidget.item(i, 2).text()))
                 thermconduct.append(float(self.tableWidget.item(i, 3).text()))
                 thermcap.append(float(self.tableWidget.item(i, 4).text()))
                 depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
 
             layers = [f"Layer {i+1}" for i in range(nb_layers)]
-            params = list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap))
-
+            params =  list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap))
+        
             self.compute.save_layers_and_params(params)
         
     def setDefaultValues(self):
@@ -139,7 +143,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.spinBoxNLayersDirect.setValue(1)
         self.tableWidget.setRowCount(1)
 
-        self.input.append([1e-5, 0.15, 3.4, 5e6])
+        self.input = [[1e-5, 0.15, 3.4, 5e6]]
 
         self.tableWidget.setVerticalHeaderItem(0, QTableWidgetItem(f"Layer {1}"))
         layerBottom = int((self.maxdepth))
@@ -147,7 +151,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setItem(0, 1, QTableWidgetItem(str(self.input[0][0])))
         self.tableWidget.setItem(0, 2, QTableWidgetItem(str(self.input[0][1])))
         self.tableWidget.setItem(0, 3, QTableWidgetItem(str(self.input[0][2])))
-        self.tableWidget.setItem(0, 4, QTableWidgetItem(str(self.input[0][3])))
+        self.tableWidget.setItem(0, 4, QTableWidgetItem(str('{:.2e}'.format(self.input[0][3]))))
 
         #MCMC
         self.lineEditMaxIterMCMC.setText("5000")
@@ -176,34 +180,37 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         self.lineEditQuantiles.setText("0.05,0.5,0.95")
 
+        self.SaveInput()
+
     def updateNBLayers(self, nb_layers : int):
         """
         This function is called when the user changes the spinbox showing the number of layers: i is the new number of layers.
         """
-        #Clear the table
-        self.tableWidget.setRowCount(nb_layers)
+        if self.interaction_occurred == True:
+                    #Clear the table
+            self.tableWidget.setRowCount(nb_layers)
 
-        if len(self.input) < nb_layers:
-    
-            for _ in range(nb_layers - len(self.input)):
-                self.input.append([ 1e-5, 0.15, 3.4, 5e6])
-        elif len(self.input) > nb_layers:
-    
-            for _ in range(len(self.input) - nb_layers):
-                self.input.pop()
+            if len(self.input) < nb_layers:
+        
+                for _ in range(nb_layers - len(self.input)):
+                    self.input.append([ 1e-5, 0.15, 3.4, 5e6])
+            elif len(self.input) > nb_layers:
+        
+                for _ in range(len(self.input) - nb_layers):
+                    self.input.pop()
 
 
-        for i in range(nb_layers):
-            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}")) 
-            layerBottom = int((self.maxdepth/nb_layers))
+            for i in range(len(self.input)):
+                self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}")) 
+                layerBottom = int((self.maxdepth/nb_layers))
 
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom*(i+1)))) #In cm
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
-            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem(str(self.input[i][3])))
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom*(i+1)))) #In cm
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
+                self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
+            self.tableWidget.setItem(nb_layers, 0, QTableWidgetItem(str(self.maxdepth))) #In cm
 
-        self.SaveInput()
 
     def run(self):
         """
@@ -212,11 +219,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.interaction_occurred = True
         super().accept()
 
-    
-    def handleCloseEvent(self, event):
-        # La fenêtre est en train de se fermer, sauvegardez les données
-        self.SaveInput()
-        event.accept()
 
     def computationIsMCMC(self):
         """

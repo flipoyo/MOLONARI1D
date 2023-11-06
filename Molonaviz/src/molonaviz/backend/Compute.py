@@ -141,10 +141,20 @@ class Compute(QtCore.QObject):
         updatePoint.prepare(f"UPDATE Point SET DiscretStep = {nb_cells} WHERE ID = {self.pointID}")
         updatePoint.exec()
 
+    def clear_tables(self):
+        clear_layer_query = QSqlQuery(self.con)
+        clear_layer_query.exec("DELETE FROM Layer")
+
+        clear_params_query = QSqlQuery(self.con)
+        clear_params_query.exec("DELETE FROM Parameters")
+
     def save_layers_and_params(self, data : list[list]):
         """
         Save the layers and the last parameters in the database.
+
         """
+        self.clear_tables() #Clear the tables before inserting new data.
+        
         insertlayer = QSqlQuery(self.con)
         insertlayer.prepare("INSERT INTO Layer (Name, Depth, PointKey) VALUES (:Name, :Depth, :PointKey)")
         insertlayer.bindValue(":PointKey", self.pointID)
