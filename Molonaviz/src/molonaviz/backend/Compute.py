@@ -14,6 +14,7 @@ class ColumnMCMCRunner(QtCore.QObject):
 
     finished = QtCore.pyqtSignal()
 
+<<<<<<< HEAD
     def __init__(
         self,
         col,
@@ -27,6 +28,9 @@ class ColumnMCMCRunner(QtCore.QObject):
         c,
         cstar,
     ):
+=======
+    def __init__(self, col, nb_iter: int, all_priors: dict, nb_cells: str, quantiles: list):
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
         super(ColumnMCMCRunner, self).__init__()
 
         self.col = col
@@ -35,6 +39,7 @@ class ColumnMCMCRunner(QtCore.QObject):
         self.nb_cells = nb_cells
         self.quantiles = quantiles
 
+<<<<<<< HEAD
         self.nb_chains = nb_chains
         self.delta = delta
         self.ncr = ncr
@@ -54,6 +59,11 @@ class ColumnMCMCRunner(QtCore.QObject):
             self.c,
             self.cstar,
         )
+=======
+    def run(self):
+        print("Launching MCMC...")
+        self.col.compute_mcmc(self.nb_iter, self.all_priors, self.nb_cells, self.quantiles)
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
         self.finished.emit()
 
 
@@ -73,16 +83,14 @@ class ColumnDirectModelRunner(QtCore.QObject):
     def run(self):
         print("Launching Direct Model...")
         layers = layersListCreator(self.params)
-        
         self.col.compute_solve_transi(layers, self.nb_cells)
-        
         self.finished.emit()
 
 
 class Compute(QtCore.QObject):
     """
     How to use this class :
-    - Initialise the compute engine by giving it the database connection and ID of the current Point.
+    - Initialise the compute engine by giving it the  database connection and ID of the current Point.
     - When computations are needed, create an associated Column objected. This requires cleaned measures to be in the database for this point. This can be made by calling compute.set_column()
     - Launch the computation :
         - with given parameters : compute.compute_direct_model(params: tuple, nb_cells: int, sensorDir: str)
@@ -147,7 +155,7 @@ class Compute(QtCore.QObject):
         Launch the direct model with given parameters per layer.
         """
         if self.thread.isRunning():
-            print("Please wait for the previous computation to end")
+            print("Please wait while for the previous computation to end")
             return
 
         self.save_layers_and_params(params)
@@ -332,6 +340,7 @@ class Compute(QtCore.QObject):
         insertRMSE.exec()
         self.con.commit()
 
+<<<<<<< HEAD
     def compute_MCMC(
         self,
         nb_iter: int,
@@ -344,6 +353,9 @@ class Compute(QtCore.QObject):
         c,
         cstar,
     ):
+=======
+    def compute_MCMC(self, nb_iter: int, all_priors : list, nb_cells: str, quantiles: tuple):
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
         """
         Launch the MCMC computation with given parameters.
         """
@@ -353,6 +365,7 @@ class Compute(QtCore.QObject):
 
         self.update_nb_cells(nb_cells)
 
+<<<<<<< HEAD
         self.set_column()  # Updates self.col
         self.mcmc_runner = ColumnMCMCRunner(
             self.col,
@@ -366,6 +379,10 @@ class Compute(QtCore.QObject):
             c,
             cstar,
         )
+=======
+        self.set_column() #Updates self.col
+        self.mcmc_runner = ColumnMCMCRunner(self.col, nb_iter, all_priors, nb_cells, quantiles)
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
         self.mcmc_runner.finished.connect(self.end_MCMC)
         self.mcmc_runner.moveToThread(self.thread)
         self.thread.started.connect(self.mcmc_runner.run)

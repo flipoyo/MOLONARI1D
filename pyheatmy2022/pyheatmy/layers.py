@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Sequence
 
-from .params import Param, Prior, ParamsPriors
+from params import Param, Prior, ParamsPriors
 
 
 class Layer:
@@ -23,7 +23,7 @@ class Layer:
 
     @classmethod
     def from_dict(cls, monolayer_dict):
-        return [cls(**monolayer_dict)]
+        return cls(**monolayer_dict)
 
 
 class LayerPriors(ParamsPriors):

@@ -4,8 +4,11 @@ from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtSql import QSqlQuery
 
 from ..utils.get_files import get_ui_asset
+<<<<<<< HEAD
 from ..backend.SPointCoordinator import SPointCoordinator
 from ..backend.Compute import Compute
+=======
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
 
 
 From_DialogCompute = uic.loadUiType(get_ui_asset("dialogCompute.ui"))[0]
@@ -20,6 +23,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
 
+<<<<<<< HEAD
         self.interaction_occurred = False
         self.maxdepth = maxdepth * 100
         self.layers = spointcoordinator.layers_depths()
@@ -39,6 +43,10 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                 
 
         
+=======
+        self.defaultValues = {"Perm": 1e-5, "Poro": 0.15, "ThConduct": 3.4, "ThCap": 5e6} #Default values displayed for the layers
+        self.maxdepth = maxdepth * 100
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
 
         #Prevent the user from writing something in the spin box.
         self.spinBoxNLayersDirect.lineEdit().setReadOnly(True)
@@ -50,10 +58,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.pushButtonRun.clicked.connect(self.run)
         self.closeEvent = self.handleCloseEvent
 
-        self.tableWidget.itemChanged.connect(self.SaveInput)
-
         self.groupBoxMCMC.setChecked(False)
 
+<<<<<<< HEAD
         if self.input == []:
             self.setDefaultValues()
         else:
@@ -128,6 +135,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
             layers = [f"Layer {i+1}" for i in range(nb_layers)]
             params = list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap))
+=======
+        self.setDefaultValues()
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
 
             self.compute.save_layers_and_params(params)
         
@@ -137,6 +147,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         """
         #Direct model
         self.spinBoxNLayersDirect.setValue(1)
+<<<<<<< HEAD
         self.tableWidget.setRowCount(1)
 
         self.input.append([1e-5, 0.15, 3.4, 5e6])
@@ -148,17 +159,13 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setItem(0, 2, QTableWidgetItem(str(self.input[0][1])))
         self.tableWidget.setItem(0, 3, QTableWidgetItem(str(self.input[0][2])))
         self.tableWidget.setItem(0, 4, QTableWidgetItem(str(self.input[0][3])))
+=======
+        self.updateNBLayers(1)
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
 
         #MCMC
         self.lineEditMaxIterMCMC.setText("5000")
-
-        self.lineEditChains.setText("10")
-        self.lineEditDelta.setText("3")
-        self.lineEditncr.setText("3")
-        self.lineEditc.setText("0.1")
-        self.lineEditcstar.setText("1e-6")
-
-        self.lineEditKMin.setText("4")
+        self.lineEditKMin.setText("3")
         self.lineEditKMax.setText("9")
         self.lineEditMoinsLog10KSigma.setText("0.01")
 
@@ -170,7 +177,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditThermalConductivityMax.setText("5")
         self.lineEditThermalConductivitySigma.setText("0.05")
 
-        self.lineEditThermalCapacityMin.setText("1e6")
+        self.lineEditThermalCapacityMin.setText("1000")
         self.lineEditThermalCapacityMax.setText("1e7")
         self.lineEditThermalCapacitySigma.setText("100")
 
@@ -183,6 +190,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         #Clear the table
         self.tableWidget.setRowCount(nb_layers)
 
+<<<<<<< HEAD
         if len(self.input) < nb_layers:
     
             for _ in range(nb_layers - len(self.input)):
@@ -204,6 +212,16 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setItem(i, 4, QTableWidgetItem(str(self.input[i][3])))
 
         self.SaveInput()
+=======
+        for i in range(nb_layers):
+            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
+            layerBottom = int((self.maxdepth/nb_layers)*(i+1))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom))) #In cm
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.defaultValues["Perm"])))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.defaultValues["Poro"])))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.defaultValues["ThConduct"])))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.defaultValues["ThCap"])))
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
 
     def run(self):
         """
@@ -242,7 +260,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             thermconduct.append(float(self.tableWidget.item(i, 3).text()))
             thermcap.append(float(self.tableWidget.item(i, 4).text()))
             depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
-
         layers = [f"Layer {i+1}" for i in range(nb_layers)]
         return list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap)), nb_cells
 
@@ -253,12 +270,15 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         nb_iter = int(self.lineEditMaxIterMCMC.text())
         nb_cells = self.spinBoxNCellsDirect.value()
 
+<<<<<<< HEAD
         nb_chains = int(self.lineEditChains.text())
         delta = int(self.lineEditDelta.text())
         ncr = int(self.lineEditncr.text())
         c = float(self.lineEditc.text())
         cstar = float(self.lineEditcstar.text())
 
+=======
+>>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
         #The user's input is not a permeability but a -log10(permeability)
         moins10logKmin = float(self.lineEditKMin.text())
         moins10logKmax = float(self.lineEditKMax.text())
@@ -297,4 +317,4 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = tuple(quantiles)
         quantiles = [float(quantile) for quantile in quantiles]
 
-        return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar
+        return nb_iter, all_priors, nb_cells, quantiles
