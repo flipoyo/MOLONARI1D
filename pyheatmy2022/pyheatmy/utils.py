@@ -397,7 +397,8 @@ def compute_T_stratified(
 
 
 @njit
-def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+def compute_H_stratified(list_zLow, z_solve, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+    print("zhan list_zLow", list_zLow)
     # K1 = 10 ** (-moinslog10K_list[0])
     # K2 = 10 ** (-moinslog10K_list[-1])
     # print("begin modification")
@@ -463,16 +464,26 @@ def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_
 
     H_res = zeros((n_cell, n_times), float32)
     H_res[:, 0] = H_init[:]
-    # H_res[0:50, 0] = H_init[0:50]
-    # H_res[51:101, 0] = H_init[50:100]
-    # H_res[50, 0] = Hb
-
     K_list = 10.0 ** -moinslog10K_list
     KsurSs_list = K_list/Ss_list
 
     # Check if dt is constant :
     if isdtconstant:  # dt is constant so A and B are constant
         dt = all_dt[0]
+
+        ## zhan: caractériser l'interface
+        print("carateristique of interface:")
+        for zlow in list_zLow:
+            for z_idx in range(len(z_solve) - 1):
+                if z_solve[z_idx] <= zlow and z_solve[z_idx + 1] > zlow:
+                    if abs(z_solve[z_idx] - zlow) < 1e-9:
+                        print(zlow, "interface symetric with index", z_idx)
+                    elif abs(z_solve[z_idx + 1] - zlow) < 1e-9:
+                        print(zlow, "interface symetric with index", z_idx + 1)
+                    else:
+                        print(zlow, "interface asymetric with neighbour index", (z_idx, z_idx + 1))
+
+
 
         # Defining the 3 diagonals of B
         lower_diagonal_B = KsurSs_list[1:]*alpha/dz**2
@@ -496,20 +507,33 @@ def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_
         upper_diagonal_A = - KsurSs_list[:-1]*(1-alpha)/dz**2
         upper_diagonal_A[0] = - 4*KsurSs_list[0]*(1-alpha)/(3*dz**2)
 
-        print("lower_diagonal_A", lower_diagonal_A)
-        print("diagonal_A", diagonal_A)
-        print("upper_diagonal_A", upper_diagonal_A)
-        ## zhan
-        print("zhan K interface", KsurSs_list[len(diagonal_B) // 2], len(diagonal_B) // 2, len(diagonal_A) // 2)
-        diagonal_B[len(diagonal_B) // 2] = 1/dt - (KsurSs_list[0] + KsurSs_list[-1]) *alpha/dz**2
-        lower_diagonal_B[len(diagonal_B) // 2 - 1] = KsurSs_list[0]*alpha/dz**2
-        upper_diagonal_B[len(diagonal_B) // 2] = KsurSs_list[-1]*alpha/dz**2
-        diagonal_A[len(diagonal_A) // 2] = 1/dt + (KsurSs_list[0] + KsurSs_list[-1]) *(1-alpha)/dz**2
-        lower_diagonal_A[len(diagonal_A) // 2 - 1] = - KsurSs_list[0]*(1-alpha)/dz**2
-        upper_diagonal_A[len(diagonal_A) // 2] = - KsurSs_list[-1]*(1-alpha)/dz**2
+        # ## zhan: mod Nov 3 cas symetric
+        # diagonal_B[len(diagonal_B) // 2] = 1/dt - (KsurSs_list[0] + KsurSs_list[-1]) *alpha/dz**2
+        # lower_diagonal_B[len(diagonal_B) // 2 - 1] = KsurSs_list[0]*alpha/dz**2
+        # upper_diagonal_B[len(diagonal_B) // 2] = KsurSs_list[-1]*alpha/dz**2
+        # diagonal_A[len(diagonal_A) // 2] = 1/dt + (KsurSs_list[0] + KsurSs_list[-1]) *(1-alpha)/dz**2
+        # lower_diagonal_A[len(diagonal_A) // 2 - 1] = - KsurSs_list[0]*(1-alpha)/dz**2
+        # upper_diagonal_A[len(diagonal_A) // 2] = - KsurSs_list[-1]*(1-alpha)/dz**2
+        # ##
 
+        ## zhan: mod Nov 6 cas asymetric
+        k1 = KsurSs_list[0]
+        k2 = KsurSs_list[-1]
+        keq = 1 / (1/k1/2 + 1/k2/2)
+        diagonal_B[len(diagonal_B) //  2 - 1] = 1/dt - (k1 + keq) *alpha/dz**2
+        lower_diagonal_B[len(diagonal_B) //  2 - 1 - 1] = k1*alpha/dz**2
+        upper_diagonal_B[len(diagonal_B) //  2 - 1] = keq*alpha/dz**2
+        diagonal_A[len(diagonal_A) //  2 - 1] = 1/dt + (k1 + keq) *(1-alpha)/dz**2
+        lower_diagonal_A[len(diagonal_A) //  2 - 1 - 1] = - k1*(1-alpha)/dz**2
+        upper_diagonal_A[len(diagonal_A) //  2 - 1] = - keq*(1-alpha)/dz**2
 
-        ##
+        diagonal_B[len(diagonal_B) //  2] = 1/dt - (k2 + keq) *alpha/dz**2
+        lower_diagonal_B[len(diagonal_B) //  2 - 1] = keq*alpha/dz**2
+        upper_diagonal_B[len(diagonal_B) //  2] = k2*alpha/dz**2
+        diagonal_A[len(diagonal_A) //  2] = 1/dt + (k2 + keq) *(1-alpha)/dz**2
+        lower_diagonal_A[len(diagonal_A) //  2 - 1] = - keq*(1-alpha)/dz**2
+        upper_diagonal_A[len(diagonal_A) //  2] = - k2*(1-alpha)/dz**2
+
         for j in range(n_times - 1):
             # Compute H at time times[j+1]
 
@@ -522,11 +546,6 @@ def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_
 
             B_fois_H_plus_c = tri_product(
                 lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j]) + c
-            print("zhan B_fois_H_plus_c")
-            if j == 0:
-                for elex in B_fois_H_plus_c:
-                    print(elex) 
-            print()
 
             H_res[:, j+1] = solver(lower_diagonal_A, diagonal_A,
                                    upper_diagonal_A, B_fois_H_plus_c)

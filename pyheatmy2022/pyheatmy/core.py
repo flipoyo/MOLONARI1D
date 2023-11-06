@@ -207,6 +207,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         moinslog10K_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
             layersList, nb_cells)
+
         ## zhan: ici H_init a causé un problème sous le cas stratifié
         ##
         array_moinslog10K = np.array([float(x.params.moinslog10K) for x in layersList])
@@ -257,6 +258,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         list_array_L.append(self._z_solve[cnt:])
         #
         # calculer H de chaque couche
+
         list_array_H = []
         for idx in range(len(list_array_L)):
             if idx > 0: 
@@ -276,7 +278,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         H_init = list_array_H[0]
         for idx in range(1, len(list_array_H)):
             H_init = np.concatenate((H_init, list_array_H[idx]))
-            print()
         ## zhan 
 
         heigth = abs(self._real_z[-1] - self._real_z[0])
@@ -288,23 +289,19 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 print(layer)
             print('Hinter', array_Hinter)
         
-        ## zhan: cas ponctuel
-        print("zhan moinslog10K_list", moinslog10K_list)
-        print("length de chaque couche ")
-        for H_coupe in list_array_H:
-            print(len(H_coupe))
-        moinslog10K_list[5] = 2 / (1 / moinslog10K_list[0] + 1 / moinslog10K_list[-1])
-        # if verbose:
-        #     plt.scatter(moinslog10K_list[47:53], self._z_solve[47:53], s = 2)
-        #     plt.show()
         H_riv = np.array([H_init[0] for _ in H_riv])
         # H_aq = np.array([H_init[-1] for _ in H_riv])
-        print("H_riv", H_riv)
-        print("H_aq", H_aq)
+        if verbose:
+            print("conditions aux limites")
+            print("H_riv", H_riv)
+            print("H_aq", H_aq)
         ##
-        print("avant entrer", moinslog10K_list)
+        list_zLow = []
+        for layer in layersList:
+            list_zLow.append(layer.zLow)
+        list_zLow.pop()
         H_res = compute_H_stratified(
-            moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            list_zLow, self._z_solve, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
 
         self._H_res = H_res  # stocke les résultats
         
