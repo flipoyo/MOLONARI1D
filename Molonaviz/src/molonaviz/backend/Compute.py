@@ -2,6 +2,7 @@ from PyQt5 import QtCore
 from PyQt5.QtSql import QSqlQuery
 from pyheatmy import *
 from numpy import shape
+from numpy import shape
 
 from ..utils.general import databaseDateToDatetime, datetimeToDatabaseDate
 from .SPointCoordinator import SPointCoordinator
@@ -14,7 +15,6 @@ class ColumnMCMCRunner(QtCore.QObject):
 
     finished = QtCore.pyqtSignal()
 
-<<<<<<< HEAD
     def __init__(
         self,
         col,
@@ -28,9 +28,7 @@ class ColumnMCMCRunner(QtCore.QObject):
         c,
         cstar,
     ):
-=======
-    def __init__(self, col, nb_iter: int, all_priors: dict, nb_cells: str, quantiles: list):
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
+
         super(ColumnMCMCRunner, self).__init__()
 
         self.col = col
@@ -39,7 +37,6 @@ class ColumnMCMCRunner(QtCore.QObject):
         self.nb_cells = nb_cells
         self.quantiles = quantiles
 
-<<<<<<< HEAD
         self.nb_chains = nb_chains
         self.delta = delta
         self.ncr = ncr
@@ -48,22 +45,8 @@ class ColumnMCMCRunner(QtCore.QObject):
 
     def run(self):
         print("Launching MCMC...")
-        self.col.compute_mcmc(
-            self.nb_iter,
-            self.all_priors,
-            self.nb_cells,
-            self.quantiles,
-            self.nb_chains,
-            self.delta,
-            self.ncr,
-            self.c,
-            self.cstar,
-        )
-=======
-    def run(self):
-        print("Launching MCMC...")
         self.col.compute_mcmc(self.nb_iter, self.all_priors, self.nb_cells, self.quantiles)
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
+        # self.col.compute_dream_mcmc(self.nb_iter, self.all_priors, self.nb_cells, self.quantiles, self.nb_chains, self.delta, self.ncr, self.c, self.cstar)
         self.finished.emit()
 
 
@@ -340,7 +323,7 @@ class Compute(QtCore.QObject):
         insertRMSE.exec()
         self.con.commit()
 
-<<<<<<< HEAD
+
     def compute_MCMC(
         self,
         nb_iter: int,
@@ -353,9 +336,6 @@ class Compute(QtCore.QObject):
         c,
         cstar,
     ):
-=======
-    def compute_MCMC(self, nb_iter: int, all_priors : list, nb_cells: str, quantiles: tuple):
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
         """
         Launch the MCMC computation with given parameters.
         """
@@ -379,10 +359,10 @@ class Compute(QtCore.QObject):
             c,
             cstar,
         )
-=======
+
         self.set_column() #Updates self.col
         self.mcmc_runner = ColumnMCMCRunner(self.col, nb_iter, all_priors, nb_cells, quantiles)
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
+
         self.mcmc_runner.finished.connect(self.end_MCMC)
         self.mcmc_runner.moveToThread(self.thread)
         self.thread.started.connect(self.mcmc_runner.run)

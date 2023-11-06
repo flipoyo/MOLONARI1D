@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from .params import Param, ParamsPriors, Prior, PARAM_LIST
-from .checker import checker
-from .core import Column
+from params import Param, ParamsPriors, Prior, PARAM_LIST
+from checker import checker
+from core import Column
 from pyheatmy import DEFAULT_dH, DEFAULT_T_riv, DEFAULT_T_aq, DEFAULT_time_step, CODE_Temp, CODE_list_sensors, CODE_scalar
 from scipy.interpolate import interp1d #lagrange
 

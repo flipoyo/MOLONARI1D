@@ -219,12 +219,12 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         """
         Display in the table view the parameters corresponding to the given layer, and update histograms.
         """
-<<<<<<< HEAD
+
         self.paramsModel = self.coordinator.get_best_params_model(layer)
-=======
-        self.paramsModel = self.coordinator.get_params_model(layer)
+
+       
         self.tableViewParams.setModel(self.paramsModel)
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
+
         #Resize the table view so it looks pretty
         self.tableViewParams.resizeColumnsToContents()
         self.coordinator.refresh_params_distr(layer)
@@ -404,14 +404,11 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.coordinator.delete_computations()
             if dlg.computationIsMCMC():
                 #MCMC
-<<<<<<< HEAD
+
                 nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar = dlg.getInputMCMC()
                 self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar)
                 self.displayparam.setEnabled(True)
-=======
-                nb_iter, all_priors, nb_cells, quantiles = dlg.getInputMCMC()
-                self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles)
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
+
             else:
                 #Direct Model
                 params, nb_cells = dlg.getInputDirectModel()
@@ -442,7 +439,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         This is called when the right horizontal splitter in the fluxes tab is moved. Move the left one accordingly.
         """
         self.fluxesSplitterHorizLeft.setSizes(self.fluxesSplitterHorizRight.sizes())
-<<<<<<< HEAD
 
 class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
      def __init__(self, spointCoordinator : SPointCoordinator):
@@ -468,5 +464,4 @@ class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
         self.tableViewParams.resizeColumnsToContents()
 
     
-=======
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
+

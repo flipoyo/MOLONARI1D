@@ -346,7 +346,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 spointName = dlg.selectedSPoint()
                 widgetviewer = self.currentStudy.openSPoint(spointName)
 
-                subwindow = SubWindow(widgetviewer, title = spointName)
+                subwindow = SubWindow(widgetviewer)
                 self.mdiArea.addSubWindow(subwindow)
                 subwindow.show()
 
@@ -364,7 +364,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             spointName = self.treeViewDataSPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
 
         widgetviewer = self.currentStudy.openSPoint(spointName)
-        subwindow = SubWindow(widgetviewer, title = spointName)
+        subwindow = SubWindow(widgetviewer)
         self.mdiArea.addSubWindow(subwindow)
         subwindow.show()
 
@@ -474,7 +474,7 @@ def main():
     my_receiver.printMessage.connect(mainWin.printApplicationMessage)
     my_receiver.moveToThread(messageThread)
     messageThread.started.connect(my_receiver.run)
-<<<<<<< HEAD
+
 
     def on_thread_finished():
         messageThread.quit()  # Properly stop the thread
@@ -483,8 +483,7 @@ def main():
 
     messageThread.finished.connect(on_thread_finished)
 
-=======
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
+
     messageThread.start()
 
     sys.exit(app.exec())

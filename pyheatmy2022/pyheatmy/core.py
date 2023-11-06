@@ -206,16 +206,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
-        
+        nablaH[0, :] = 2 * (H_res[1, :] - H_riv) / (3 * dz)
+
         for i in range(1, nb_cells - 1):
-            nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
-        nablaH[0, :] = nablaH[1, :]
+            nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
 
         nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
         nablaH[nb_cells - 1, :] = nablaH[nb_cells - 2, :]
         
-        K_list = 10 ** - moinslog10K_list
-        
+        K_list0 = 10 ** - moinslog10K_list
+        K_list = interface_transition(K_list0)
         
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -355,12 +355,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # création du gradient de température
         nablaT = np.zeros((nb_cells, len(self._times)), np.float32)
 
-        
+        nablaT[0, :] = 2 * (self._temps[1, :] - self._T_riv) / (3 * dz)
 
         for i in range(1, nb_cells - 1):
-            nablaT[i, :] = (self._temps[i+1, :] - self._temps[i-1, :])/(2*dz)
-        nablaT[0, :] = nablaT[1, :]
-        nablaT[nb_cells - 1, :] = nablaT[nb_cells - 2, :]
+            nablaT[i, :] = (self._temps[i + 1, :] - self._temps[i - 1, :]) / (2 * dz)
+
+        nablaT[nb_cells - 1, :] = (
+            2 * (self._T_aq - self._temps[nb_cells - 2, :]) / (3 * dz)
+        )
 
         conduc_flows = np.zeros((nb_cells, len(self._times)), np.float32)
         
@@ -658,7 +660,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
         temp_ref = self._T_measures[:, :].T
 
-        # quantité des différents paramètres
+        # quantités des différents paramètres
         nb_layer = len(all_priors)  # nombre de couches
         nb_param = 4  # nombre de paramètres à estimer par couche
         nb_accepted = 0  # nombre de propositions acceptées
@@ -675,12 +677,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         z_low = [all_priors.sample()[i].zLow for i in range(nb_layer)]
 
         # stockage pour le burn-in, supprimé par la suite
-        _temp_burn_in = np.zeros(
-            (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
+        _temp_act = np.zeros(
+            (nb_chain, nb_cells, len(self._times)), np.float32
         )
+        _temp_old = np.zeros(
+            (nb_chain, nb_cells, len(self._times)), np.float32
+        ) # Conservation du dernier profil accepté
         _energy_burn_in = np.zeros((nb_iter + 1, nb_chain))
 
-        # variables pour l'état courrant
+        # variables pour l'état courant
         temp_new = np.zeros((nb_cells, len(self._times)))
         energy_new = 0
         X = np.array([np.array(all_priors.sample()) for _ in range(nb_chain)])
@@ -699,7 +704,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         _params = np.zeros(
             (nb_iter + 1, nb_chain, nb_layer, nb_param)
-        )  # stockage des paramètrs
+        )  # stockage des paramètres
         _params[0] = X  # initialisation des paramètres
 
         # objets liés à DREAM
@@ -727,9 +732,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 nb_cells,
                 verbose=False,
             )
-            _temp_burn_in[0][i] = self.get_temps_solve()
+            _temp_act[i] = self.get_temps_solve()
             _energy_burn_in[0][i] = compute_energy(
-                _temp_burn_in[0][i][ind_ref, :], temp_ref, sigma2
+                _temp_act[i][ind_ref, :], temp_ref, sigma2
             )
 
         if verbose:
@@ -765,7 +770,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
                     x_new[l] = check_range(
                         x_new[l], ranges[l]
-                    )  # vérifaication des bornes et réajustement si besoin
+                    )  # vérification des bornes et réajustement si besoin
 
                 # Calcul du profil de température associé aux nouveaux paramètres
                 self.compute_solve_transi(
@@ -780,7 +785,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     temp_new[ind_ref, :], temp_ref, sigma2
                 )  # calcul de l'énergie
 
-                # calcul de la probabilité d'accpetation
+                # calcul de la probabilité d'acceptation
                 log_ratio_accept = compute_log_acceptance(
                     energy_new, _energy_burn_in[i][j]
                 )
@@ -788,14 +793,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 # Acceptation ou non des nouveaux paramètres
                 if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
                     X_new[j] = x_new  # actualisation des paramètres pour la chaine j
-                    _temp_burn_in[i + 1][j] = temp_new
+                    _temp_old[j] = _temp_act[j]
+                    _temp_act[j] = temp_new
                     _energy_burn_in[i + 1][j] = energy_new
                 else:
                     dX = np.zeros((nb_layer, nb_param))
                     X_new[j] = X[
                         j
                     ]  # conservation des anciens paramètres pour la chaine j
-                    _temp_burn_in[i + 1][j] = _temp_burn_in[i - 1][j]
+                    _temp_act[j] = _temp_old[j]
                     _energy_burn_in[i + 1][j] = _energy_burn_in[i - 1][j]
 
                 # Mise à jour des paramètres de la couche j pour DREAM
@@ -828,20 +834,22 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             (nb_iter + 1, nb_chain, nb_cells, len(self._times))
         )  # initisaliton du flow
 
-        _temp = np.zeros(
-            (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
-        )  # réinitialisation des températures
-        _temp[0] = _temp_burn_in[
-            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
-        ]  # initialisation des températures
+        # Préparation du sous-échantillonnage
+        n_sous_ech_space = 4 # Une mesure conservée pour 2 cm
+        n_sous_ech_time = 2 # Une mesure conservée pour 30 min
+        nb_cells_sous_ech = int( np.ceil(nb_cells / n_sous_ech_space) )
+        nb_times_sous_ech = int( np.ceil(len(self._times) / n_sous_ech_time) )
+
+
+        _temp = np.zeros((nb_iter+1, nb_chain, nb_cells_sous_ech, nb_times_sous_ech), np.float32)
+        _temp[0] = _temp_act[:, ::n_sous_ech_space, ::n_sous_ech_time]  # initialisation des températures sous-échantillonnées
 
         _energy = np.zeros((nb_iter + 1, nb_chain))  # réinitialisation des énergies
         _energy[0] = _energy_burn_in[
             min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
         ]  # initialisation des énergies
 
-        del _temp_burn_in  # suppression variable burn-in
-        del _energy_burn_in  # suppression variable burn-in
+        del _energy_burn_in  # suppression variables burn-in
 
         # initialisation des états
         for c in range(nb_chain):
@@ -882,10 +890,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         X[a, l][:, A] - X[b, l][:, A], axis=0
                     )
 
-                    x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
+                    x_new[l] = X[j, l] + dX[l]  # calcul du potentiel nouveau paramètre
                     x_new[l] = check_range(
                         x_new[l], ranges[l]
-                    )  # vérifaication des bornes et réajustement si besoin
+                    )  # vérification des bornes et réajustement si besoin
 
                 # Calcul du profil de température associé aux nouveaux paramètres
                 self.compute_solve_transi(
@@ -900,13 +908,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     temp_new[ind_ref, :], temp_ref, sigma2
                 )  # calcul de l'énergie
 
-                # calcul de la probabilité d'accpetation
+                # calcul de la probabilité d'acceptation
                 log_ratio_accept = compute_log_acceptance(energy_new, _energy[i][j])
 
                 # Acceptation ou non des nouveaux paramètres
                 if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
                     X_new[j] = x_new
-                    _temp[i + 1][j] = temp_new
+                    _temp_old[j] = _temp_act[j]
+                    _temp_act[j] = temp_new
+                    _temp[i + 1][j] = temp_new[::n_sous_ech_space, ::n_sous_ech_time]
                     _flows[i + 1][j] = self.get_flows_solve()
                     _energy[i + 1][j] = energy_new
                     nb_accepted += 1
@@ -921,7 +931,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 else:
                     dX = np.zeros((nb_layer, nb_param))
                     X_new[j] = X[j]
-                    _temp[i + 1][j] = _temp[i - 1][j]
+                    _temp_act[j] = _temp_old[j]
+                    _temp[i + 1][j] = _temp_old[j][::n_sous_ech_space, ::n_sous_ech_time]
                     _flows[i + 1][j] = _flows[i - 1][j]
                     _energy[i + 1][j] = _energy[i - 1][j]
                     self._states.append(
@@ -946,7 +957,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             _params[i + 1] = X_new
 
         # Calcul des quantiles pour la température
-        _temp = _temp.reshape((nb_iter + 1) * nb_chain, nb_cells, len(self._times))
+        _temp = _temp.reshape((nb_iter + 1) * nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
         _flows = _flows.reshape((nb_iter + 1) * nb_chain, nb_cells, len(self._times))
 
         self._quantiles_temps = {
@@ -984,7 +995,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         c=0.1,
         cstar=1e-6,
         verbose=True,  # affiche texte explicatifs ou non
-        sigma2=1.0,
+        sigma2=None,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
     ):
         if nb_chain < 2:
