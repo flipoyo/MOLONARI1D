@@ -4,6 +4,8 @@
 #ifndef MEASURE_CLASS
 #define MEASURE_CLASS
 
+const char filename[] = "datalog.csv";
+
 class Measure {
   public:
     unsigned int id;
