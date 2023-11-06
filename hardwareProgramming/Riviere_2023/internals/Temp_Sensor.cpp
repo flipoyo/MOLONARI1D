@@ -19,8 +19,8 @@ TEMP_T MeasureTemperature(int alimPin, int measurePin) {
   //Unpower the sensor
   //Return the read value in degrees
   digitalWrite(alimPin, HIGH);
-  delay(200)
+  delay(200);
   double temp = analogRead(measurePin);
   digitalWrite(alimPin, LOW);
-  return (temp*5/1024-0.5)*100;
+  return (temp*3.3/1024-0.5)*100;
 }
