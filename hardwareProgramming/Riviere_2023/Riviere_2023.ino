@@ -10,6 +10,9 @@ Required hardware :
 Arduino MKR WAN 1310
 */
 
+#define MEASURE_T unsigned int
+#define toRealNumber toInt
+
 #include "internals/Lora.cpp"
 #include "internals/Low_Power.cpp"
 #include "internals/Pressure_Sensor.hpp"
@@ -22,7 +25,7 @@ Arduino MKR WAN 1310
 
 const int CSpin = 6;
 
-// Reader reader;
+Reader reader;
 Writer writer;
 PressureSensor pressureSensor(A6, 6);
 
@@ -46,21 +49,14 @@ void setup() {
 
     
     Serial.println("Start Writing...");
-
-
-    for (int i=0; i<5; i++){
-
-      unsigned int test[4] = {41,55455,123,1};
-      writer.LogData(test);
-
-      unsigned int test1[4] = {7,3,0,2};
-      writer.LogData(test1);
-    }
-
     
-    Serial.println("Finished Writing");
+    for (int i=0; i<100; i++){
+      Serial.println(i);
 
+      writer.LogData(41);
 
+      delay(1000);
+    }
     }
 
 

@@ -35,64 +35,48 @@ void GetCurrentTime(Measure* measure) {
 //Class methods
 
 void Writer::WriteInNewLine(Measure data){
-    File file = SD.open(filename, FILE_WRITE);
+    this->file.print(data.id);
+    this->file.print(",");
+    this->file.print(data.date);
+    this->file.print(",");
+    this->file.print(data.time);
+    this->file.print(",");
+    this->file.print(data.mesure1);
+    this->file.print(",");
+    this->file.print(data.mesure2);
+    this->file.print(",");
+    this->file.print(data.mesure3);
+    this->file.print(",");
+    this->file.println(data.mesure4);
 
-    file.print(data.id);
-    file.print(",");
-    file.print(data.date);
-    file.print(",");
-    file.print(data.time);
-    file.print(",");
-    file.print(data.mesure1);
-    file.print(",");
-    file.print(data.mesure2);
-    file.print(",");
-    file.print(data.mesure3);
-    file.print(",");
-    file.println(data.mesure4);
-
-    file.close();
+    this->file.flush();
 }
 
-void Writer::ConvertToWriteableMeasure(Measure* measure, unsigned int raw_measure[4]) {
-    measure->mesure1 = raw_measure[0];
-    measure->mesure2 = raw_measure[1];
-    measure->mesure3 = raw_measure[2];
-    measure->mesure4 = raw_measure[3];
+void Writer::ConvertToWriteableMeasure(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4) {
+    measure->mesure1 = mesure1;
+    measure->mesure2 = mesure2;
+    measure->mesure3 = mesure3;
+    measure->mesure4 = mesure4;
 }
 
 void Writer::EstablishConnection() {
     this->next_id = GetNextLine();
+    this->file = SD.open(filename, FILE_WRITE);
 }
 
-void Writer::LogData(unsigned int raw_measure[4]) {
+void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4) {
 
     // Create a new Measure
     Measure data;
-    this->ConvertToWriteableMeasure(&data, raw_measure);
+    this->ConvertToWriteableMeasure(&data, mesure1, mesure2, mesure3, mesure4);
     GetCurrentTime(&data);
     data.id = this->next_id;
-    WriteInNewLine(data);
+
+    if (this->file){
+        WriteInNewLine(data);
+    }
 
     this->next_id++;
 }
-
-// void Writer::LogData(unsigned int raw_measure[2]) {
-
-//     //pre-format the raw data
-//     unsigned int extended_raw_measure[4] = {raw_measure[0], raw_measure[1], 0, 0};
-
-//     // Create a new Measure
-//     Measure data;
-//     this->ConvertToWriteableMeasure(&data, extended_raw_measure);
-//     GetCurrentTime(&data);
-//     data.id = this->next_id;
-    
-//     if (this->file) {
-//       WriteInNewLine(data);
-//     }
-
-//     this->next_id++;
-// }
 
 #endif
