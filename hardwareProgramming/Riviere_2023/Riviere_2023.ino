@@ -15,43 +15,62 @@ Arduino MKR WAN 1310
 #include "internals/Pressure_Sensor.hpp"
 #include "internals/Temp_Sensor.cpp"
 #include "internals/Time.cpp"
-#include "internals/Internal_Log.cpp"
+#include "internals/Internal_Log_Initializer.cpp"
 #include "internals/Measure.h"
-// #include "internals/testSample.h" Deprecated
-// #include "internals/InternalData.h" Deprecated
+#include "internals/Reader.h"
+#include "internals/Writer.h"
 
+const int CSpin = 6;
 
+// Reader reader;
+Writer writer;
 PressureSensor pressureSensor(A6, 6);
+
 
 
 void setup() {
   Serial.begin(9600);
 
+  while (!Serial){
+  }
+  
   InitialiseLora();
   InitialiseRTC();
-  bool didIt = InitialiseLog();
+  bool connectionEstablished = InitialiseLog(CSpin);
 
-  if (didIt) {
+  if (connectionEstablished) {
     Serial.println("SD card initialized");
-
+    // reader.EstablishConnection();
+    writer.EstablishConnection();
     // TESTINGS
 
-    unsigned int test1[4] = {sizeof("Id,Date,Time,Capteur1,Capteur2,Capteur3,Capteur4"),sizeof("\n"),sizeof(Measure),777};
-    LogData(test1);
+    
+    Serial.println("Start Writing...");
 
-    unsigned int test2[4] = {1,9,0,456456};
-    LogData(test2);
-  }
-  else {
-    Serial.println("SD card failed to initialize");
-  }
+
+    for (int i=0; i<5; i++){
+
+      unsigned int test[4] = {41,55455,123,1};
+      writer.LogData(test);
+
+      unsigned int test1[4] = {7,3,0,2};
+      writer.LogData(test1);
+    }
+
+    
+    Serial.println("Finished Writing");
+
+
+    }
+
+
+    else {
+      Serial.println("SD card failed to initialize");
+    }
 
 }
 
 void loop() {
-  // Get immidiately the data stored in FlashMemory
-
   // PRESSURE_T pressure = pressureSensor.MeasurePressure();
   // Serial.println(pressure);
-
 }
