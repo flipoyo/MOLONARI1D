@@ -209,11 +209,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             layersList, nb_cells)
 
         ## zhan: ici H_init a causé un problème sous le cas stratifié
-        ##
+        
         array_moinslog10K = np.array([float(x.params.moinslog10K) for x in layersList])
         array_K = 10 ** (-array_moinslog10K)
         array_eps = np.zeros(len(layersList)) # eps de chaque couche
         array_eps[0] = layersList[0].zLow
+        
         for idx in range(1, len(layersList)):
             array_eps[idx] = layersList[idx].zLow - layersList[idx - 1].zLow
         array_Hinter = np.zeros(len(layersList) + 1) # charge hydraulique de chaque interface
@@ -278,10 +279,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         H_init = list_array_H[0]
         for idx in range(1, len(list_array_H)):
             H_init = np.concatenate((H_init, list_array_H[idx]))
-        ## zhan 
+        heigth = abs(self._real_z[-1] - self._real_z[0])
+        array_Ss = np.array([float(x.params.n) for x in layersList]) / heigth
+        ## zhan : end
 
         heigth = abs(self._real_z[-1] - self._real_z[0])
         Ss_list = n_list / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
+
 
         if verbose:
             print("--- Compute Solve Transi ---")
@@ -300,8 +304,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         for layer in layersList:
             list_zLow.append(layer.zLow)
         list_zLow.pop()
+        z_solve = self._z_solve.copy()
         H_res = compute_H_stratified(
-            list_zLow, self._z_solve, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            array_K, array_Ss, list_zLow, z_solve, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
 
         self._H_res = H_res  # stocke les résultats
         
