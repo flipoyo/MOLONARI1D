@@ -12,3 +12,4 @@ src/molonaviz/config.txt
 .pydevproject
 .cproject
 .settings
+.DS_Store

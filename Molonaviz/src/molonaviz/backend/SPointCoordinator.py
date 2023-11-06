@@ -82,6 +82,16 @@ class SPointCoordinator:
 
         return schemePath, noticePath, infosModel
 
+    def get_best_params_model(self, layer : float):
+        """
+        Given a layer (identified by its depth), return the associated best parameters.
+        """
+        select_params = self.build_best_params_query(layer)
+        select_params.exec()
+        self.paramsModel = QSqlQueryModel()
+        self.paramsModel.setQuery(select_params)
+        return self.paramsModel
+    
     def get_params_model(self, layer : float):
         """
         Given a layer (identified by its depth), return the associated best parameters.
@@ -412,7 +422,7 @@ class SPointCoordinator:
         """)
         return query
 
-    def build_params_query(self, depth : float):
+    def build_best_params_query(self, depth : float):
         """
         Build and return the parameters for the given depth.
         """
@@ -422,6 +432,21 @@ class SPointCoordinator:
             JOIN Layer ON BestParameters.Layer = Layer.ID
             JOIN Point
             ON BestParameters.PointKey = Point.ID
+            WHERE Point.ID = {self.pointID}
+            AND Layer.Depth = {depth}
+        """)
+        return query
+    
+    def build_params_query(self, depth : float):
+        """
+        Build and return the parameters for the given depth.
+        """
+        query = QSqlQuery(self.con)
+        query.prepare(f"""
+            SELECT Parameters.Permeability, Parameters.ThermConduct, Parameters.Porosity, Parameters.Capacity FROM Parameters
+            JOIN Layer ON Parameters.Layer = Layer.ID
+            JOIN Point
+            ON Parameters.PointKey = Point.ID
             WHERE Point.ID = {self.pointID}
             AND Layer.Depth = {depth}
         """)
