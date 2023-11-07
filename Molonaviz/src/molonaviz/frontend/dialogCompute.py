@@ -123,12 +123,13 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             thermconduct = []
             thermcap = []
 
-            for i in range (nb_layers  - 1):
-                log10permeability.append(float(self.tableWidget.item(i, 1).text())) #Apply -log10 to the permeability values
-                porosity.append(float(self.tableWidget.item(i, 2).text()))
-                thermconduct.append(float(self.tableWidget.item(i, 3).text()))
-                thermcap.append(float(self.tableWidget.item(i, 4).text()))
-                depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
+            for i in range (nb_layers):
+                if (self.tableWidget.item(i, 1) is not None) & (self.tableWidget.item(i, 2) is not None) & (self.tableWidget.item(i, 3) is not None) & (self.tableWidget.item(i, 4) is not None) :
+                    log10permeability.append(float(self.tableWidget.item(i, 1).text())) #Apply -log10 to the permeability values
+                    porosity.append(float(self.tableWidget.item(i, 2).text()))
+                    thermconduct.append(float(self.tableWidget.item(i, 3).text()))
+                    thermcap.append(float(self.tableWidget.item(i, 4).text()))
+                    depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
 
             layers = [f"Layer {i+1}" for i in range(nb_layers)]
             params =  list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap))
@@ -189,14 +190,15 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         if self.interaction_occurred == True:
                     #Clear the table
             self.tableWidget.setRowCount(nb_layers)
+            nb_col = len(self.input)
 
-            if len(self.input) < nb_layers:
+            if nb_col < nb_layers:
         
-                for _ in range(nb_layers - len(self.input)):
+                for _ in range(nb_layers - nb_col):
                     self.input.append([ 1e-5, 0.15, 3.4, 5e6])
-            elif len(self.input) > nb_layers:
+            elif nb_col > nb_layers:
         
-                for _ in range(len(self.input) - nb_layers):
+                for _ in range(nb_col - nb_layers):
                     self.input.pop()
 
 
@@ -209,7 +211,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
                 self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
-            self.tableWidget.setItem(nb_layers, 0, QTableWidgetItem(str(self.maxdepth))) #In cm
+            # self.tableWidget.setItem(nb_layers, 0, QTableWidgetItem(str(self.maxdepth))) #In cm
 
 
     def run(self):

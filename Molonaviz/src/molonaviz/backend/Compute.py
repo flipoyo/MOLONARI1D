@@ -182,6 +182,8 @@ class Compute(QtCore.QObject):
         """
         Query the database and save the direct model results.
         """
+        self.clear_tables() #Clear the tables before inserting new data.
+
         #Quantile 0
         insertquantiles = QSqlQuery(self.con)
         insertquantiles.prepare(f"INSERT INTO Quantile (Quantile, PointKey) VALUES (0,{self.pointID})")
@@ -310,6 +312,9 @@ class Compute(QtCore.QObject):
         """
         Query the database and save the MCMC results. This is essentially a copy of saveDirectResults, except for the function called to get the results.
         """
+
+        self.clear_tables() #Clear the tables before inserting new data.
+        
         #Quantiles for the MCMC
         quantiles = self.col.get_quantiles()
         depths = self.col.get_depths_mcmc() # Should be get_depths_solve?

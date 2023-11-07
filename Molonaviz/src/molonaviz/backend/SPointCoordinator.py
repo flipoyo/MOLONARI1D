@@ -427,14 +427,14 @@ class SPointCoordinator:
         Build and return the parameters for the given depth.
         """
         query = QSqlQuery(self.con)
-        query.prepare(f"""
-            SELECT BestParameters.Permeability, BestParameters.ThermConduct, BestParameters.Porosity, BestParameters.Capacity FROM BestParameters
+        query.prepare("""
+            SELECT BestParameters.Permeability, BestParameters.ThermConduct, BestParameters.Porosity, BestParameters.Capacity, Layer.Depth
+            FROM BestParameters
             JOIN Layer ON BestParameters.Layer = Layer.ID
-            JOIN Point
-            ON BestParameters.PointKey = Point.ID
-            WHERE Point.ID = {self.pointID}
-            AND Layer.Depth = {depth}
+            JOIN Point ON BestParameters.PointKey = Point.ID
+            WHERE Point.ID = :pointID
         """)
+        
         return query
     
     def build_params_query(self, depth : float):
