@@ -27,7 +27,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         for layer in self.layers:
             self.params.append(spointcoordinator.get_params_model(layer))
         self.input = []
-        print(self.params)
         num_rows = len(self.layers) 
         num_cols = 5
         self.compute = compute
@@ -74,7 +73,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         for i in range(len(self.input)):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(round(self.layers[i]*100))))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(self.layers[i]*100)))
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
@@ -205,13 +204,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             for i in range(len(self.input)):
                 self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}")) 
                 layerBottom = int((self.maxdepth/nb_layers))
-
                 self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom*(i+1)))) #In cm
                 self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
                 self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
-            # self.tableWidget.setItem(nb_layers, 0, QTableWidgetItem(str(self.maxdepth))) #In cm
 
 
     def run(self):

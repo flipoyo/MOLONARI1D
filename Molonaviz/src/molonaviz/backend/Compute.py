@@ -148,6 +148,7 @@ class Compute(QtCore.QObject):
         clear_params_query = QSqlQuery(self.con)
         clear_params_query.exec("DELETE FROM Parameters")
 
+
     def save_layers_and_params(self, data : list[list]):
         """
         Save the layers and the last parameters in the database.
@@ -182,7 +183,18 @@ class Compute(QtCore.QObject):
         """
         Query the database and save the direct model results.
         """
-        self.clear_tables() #Clear the tables before inserting new data.
+
+        clear_depth_query = QSqlQuery(self.con)
+        clear_depth_query.exec("DELETE FROM Depth")
+
+        clear_flow_query = QSqlQuery(self.con)
+        clear_flow_query.exec("DELETE FROM WaterFlow")
+
+        clear_thf_query = QSqlQuery(self.con)
+        clear_thf_query.exec("DELETE FROM TemperatureAndHeatFlows")
+
+        clear_RMSE_query = QSqlQuery(self.con)
+        clear_RMSE_query.exec("DELETE FROM RMSE")
 
         #Quantile 0
         insertquantiles = QSqlQuery(self.con)
@@ -312,8 +324,26 @@ class Compute(QtCore.QObject):
         """
         Query the database and save the MCMC results. This is essentially a copy of saveDirectResults, except for the function called to get the results.
         """
-
         self.clear_tables() #Clear the tables before inserting new data.
+
+        clear_depth_query = QSqlQuery(self.con)
+        clear_depth_query.exec("DELETE FROM Depth")
+
+        clear_flow_query = QSqlQuery(self.con)
+        clear_flow_query.exec("DELETE FROM WaterFlow")
+
+        clear_thf_query = QSqlQuery(self.con)
+        clear_thf_query.exec("DELETE FROM TemperatureAndHeatFlows")
+
+        clear_RMSE_query = QSqlQuery(self.con)
+        clear_RMSE_query.exec("DELETE FROM RMSE")
+
+        clear_Bparams_query = QSqlQuery(self.con)
+        clear_Bparams_query.exec("DELETE FROM BestParameters")
+        
+        clear_Pdistrib_query = QSqlQuery(self.con)
+        clear_Pdistrib_query.exec("DELETE FROM ParametersDistribution")
+        
         
         #Quantiles for the MCMC
         quantiles = self.col.get_quantiles()
@@ -428,6 +458,10 @@ class Compute(QtCore.QObject):
         insertparams.prepare(f"""INSERT INTO BestParameters (Permeability, ThermConduct, Porosity, Capacity, Layer, PointKey)
                            VALUES (:Permeability, :ThermConduct, :Porosity, :Capacity, :Layer, :PointKey)""")
         insertparams.bindValue(":PointKey", self.pointID)
+        insertparams2 = QSqlQuery(self.con)
+        insertparams2.prepare(f"""INSERT INTO Parameters (Permeability, ThermConduct, Porosity, Capacity, Layer, PointKey)
+                           VALUES (:Permeability, :ThermConduct, :Porosity, :Capacity, :Layer, :PointKey)""")
+        insertparams2.bindValue(":PointKey", self.pointID)
         insertdistribution = QSqlQuery(self.con)
         insertdistribution.prepare("""INSERT INTO ParametersDistribution (Permeability, ThermConduct, Porosity, HeatCapacity, Layer, PointKey)
                 VALUES (:Permeability, :ThermConduct,  :Porosity, :HeatCapacity, :Layer, :PointKey)""")
@@ -437,6 +471,8 @@ class Compute(QtCore.QObject):
         for elem in layers:
             name = elem.name
             zLow = elem.zLow
+            if elem == layers[-1]:
+                zLow = round(self.coordinator.max_depth())
             perm = elem.params.moinslog10K
             poro = elem.params.n
             lambda_s = elem.params.lambda_s
@@ -445,6 +481,7 @@ class Compute(QtCore.QObject):
             insertlayer.bindValue(":Name", name)
             insertlayer.bindValue(":Depth", zLow)
             insertlayer.exec()
+
             layerID = insertlayer.lastInsertId()
 
             insertparams.bindValue(":Permeability", perm)
@@ -453,6 +490,13 @@ class Compute(QtCore.QObject):
             insertparams.bindValue(":Capacity", rhos_cs)
             insertparams.bindValue(":Layer", layerID)
             insertparams.exec()
+
+            insertparams2.bindValue(":Permeability", round(perm,3))
+            insertparams2.bindValue(":ThermConduct", round(lambda_s,3))
+            insertparams2.bindValue(":Porosity", round(poro,3))
+            insertparams2.bindValue(":Capacity", round(rhos_cs,3))
+            insertparams2.bindValue(":Layer", round(layerID,3))
+            insertparams2.exec()
 
             all_params_layer = all_params[current_params_index]
             for params in all_params_layer:

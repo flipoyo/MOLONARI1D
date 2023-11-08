@@ -3,6 +3,7 @@ import numpy as np
 from PyQt5 import QtWidgets, QtCore, uic, QtGui
 from PyQt5.QtWidgets import QMainWindow, QTableView, QVBoxLayout, QWidget
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel
+from PyQt5.QtWidgets import QTableWidgetItem
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
@@ -463,18 +464,36 @@ class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
         self.setupUi(self)
 
         self.coordinator = spointCoordinator
-        layers = self.coordinator.layers_depths()
+        self.layers = self.coordinator.layers_depths()
         self.paraModels = []
 
-        self.tableViewParams = QTableView()
-        for layer in layers:
-            self.paraModels.append(self.coordinator.get_best_params_model(layer))
-        self.tableViewParams.setModel(self.paraModels)
-        #Resize the table view so it looks pretty
-        self.tableViewParams.resizeColumnsToContents()
+        self.params =[]
+        for layer in self.layers:
+            self.params.append(self.coordinator.get_best_params_model(layer))
+        self.input = []
+        num_rows = len(self.layers) 
+        num_cols = 5
+
+        if self.params:
+            for row in range(num_rows):
+                self.input.append([])
+                for col in range(num_cols):
+                    valeur = self.params[row].index(0, col).data()
+                    self.input[row].append(valeur)
+
+        self.tableWidget.setRowCount(len(self.input))
+        
+        for i in range(len(self.input)):
+            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(round(self.layers[i]*100))))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
+
 
         layout = QVBoxLayout()
-        layout.addWidget(self.tableViewParams)
+        layout.addWidget(self.tableWidget)
         self.setLayout(layout)
 
         self.tableViewParams.resizeColumnsToContents()
