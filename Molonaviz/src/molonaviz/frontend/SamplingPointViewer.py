@@ -226,7 +226,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         """
         Display in the table view the parameters corresponding to the given layer, and update histograms.
         """
-        self.paramsModel = self.coordinator.get_params_model(layer)
+        self.paramsModel = self.coordinator.get_best_params_model(layer)
         #Resize the table view so it looks pretty
         self.coordinator.refresh_params_distr(layer)
 
@@ -416,7 +416,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 self.handleComputationsButtons()
 
     def compute(self):
-        dlg = DialogCompute(self.coordinator.max_depth())
+        dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             self.coordinator.delete_computations()
@@ -464,13 +464,14 @@ class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
 
         self.coordinator = spointCoordinator
         layers = self.coordinator.layers_depths()
+        self.paraModels = []
 
         self.tableViewParams = QTableView()
-        self.paramsModel = self.coordinator.get_params_model(layers[0])
+        for layer in layers:
+            self.paramsModel.append(self.coordinator.get_best_params_model(layer))
         self.tableViewParams.setModel(self.paramsModel)
         #Resize the table view so it looks pretty
         self.tableViewParams.resizeColumnsToContents()
-        self.coordinator.refresh_params_distr(layers[0])
 
         layout = QVBoxLayout()
         layout.addWidget(self.tableViewParams)
