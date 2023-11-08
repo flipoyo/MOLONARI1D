@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import trange
 from scipy.interpolate import interp1d
+from joblib import Parallel, delayed
 
 from .lagrange import Lagrange
 from .params import Param, ParamsPriors, Prior, PARAM_LIST
@@ -767,7 +768,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
                     x_new[l] = check_range(
                         x_new[l], ranges[l]
-                    )  # vérifaication des bornes et réajustement si besoin
+                    )  # vérification des bornes et réajustement si besoin
 
                 # Calcul du profil de température associé aux nouveaux paramètres
                 self.compute_solve_transi(
@@ -1008,6 +1009,362 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 c,
                 cstar,
             )
+
+    def compute_dream_mcmc_para(
+        self,
+        nb_iter: int,
+        all_priors: Union[
+            AllPriors,
+            Sequence[
+                Union[
+                    LayerPriors,
+                    Sequence[Union[str, float, Sequence[Union[Prior, dict]]]],
+                ]
+            ],
+        ],
+        nb_cells: int,
+        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        verbose=False,
+        sigma2=1.0,
+        nb_chain=10,
+        delta=3,
+        ncr=3,
+        c=0.1,
+        c_star=1e-6,
+    ):
+        # vérification des types des arguments
+        if isinstance(quantile, Number):
+            quantile = [quantile]
+
+        if not isinstance(all_priors, AllPriors):
+            all_priors = AllPriors([LayerPriors(*conv(layer)) for layer in all_priors])
+
+        # définition des paramètres de la simulation
+        dz = self._real_z[-1] / nb_cells
+        _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
+        ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
+        # temp_ref = self._T_measures[:, :].T
+        temp_ref = self.get_temps_solve()[ind_ref]
+
+        # quantité des différents paramètres
+        nb_layer = len(all_priors)  # nombre de couches
+        nb_param = 4  # nombre de paramètres à estimer par couche
+        nb_accepted = 0  # nombre de propositions acceptées
+        nb_burn_in_iter = 0  # nombre d'itération de burn-in
+
+        # création des bornes des paramètres
+        ranges = np.empty((nb_layer, nb_param, 2))
+        for l in range(nb_layer):
+            for p in range(nb_param):
+                ranges[l, p] = all_priors[l][p].range
+
+        # propriétés des couches
+        name_layer = [all_priors.sample()[i].name for i in range(nb_layer)]
+        z_low = [all_priors.sample()[i].zLow for i in range(nb_layer)]
+
+        # stockage pour le burn-in, supprimé par la suite
+        _temp_burn_in = np.zeros(
+            (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
+        )
+        _energy_burn_in = np.zeros((nb_iter + 1, nb_chain))
+
+        # variables pour l'état courrant
+        temp_new = np.zeros((nb_cells, len(self._times)))
+        energy_new = 0
+        X = np.array([np.array(all_priors.sample()) for _ in range(nb_chain)])
+        X = np.array(
+            [
+                np.array([X[c][l].params for l in range(nb_layer)])
+                for c in range(nb_chain)
+            ]
+        )  # stockage des paramètres pour l'itération en cours
+
+        # stockage des résultats
+        self._states = list()  # stockage des états à chaque itération
+        self._acceptance = np.zeros(
+            (nb_iter, nb_chain)
+        )  # stockage des taux d'acceptation
+
+        _params = np.zeros(
+            (nb_iter + 1, nb_chain, nb_layer, nb_param)
+        )  # stockage des paramètrs
+        _params[0] = X  # initialisation des paramètres
+
+        # objets liés à DREAM
+        cr_vec = np.arange(1, ncr + 1) / ncr
+        n_id = np.zeros((nb_layer, ncr))
+        J = np.zeros((nb_layer, ncr))
+        pcr = np.ones((nb_layer, ncr)) / ncr
+
+        if verbose:
+            print(
+                "--- Compute DREAM MCMC ---",
+                "Priors :",
+                *(f"    {prior}" for prior in all_priors),
+                f"Number of cells : {nb_cells}",
+                f"Number of iterations : {nb_iter}",
+                f"Number of chains : {nb_chain}",
+                "--------------------",
+                sep="\n",
+            )
+
+        # initialisation des chaines
+        for i in range(nb_chain):
+            self.compute_solve_transi(
+                convert_to_layer(nb_layer, name_layer, z_low, X[i]),
+                nb_cells,
+                verbose=False,
+            )
+            _temp_burn_in[0][i] = self.get_temps_solve()
+            _energy_burn_in[0][i] = compute_energy(
+                _temp_burn_in[0][i][ind_ref, :], temp_ref, sigma2
+            )
+
+        if verbose:
+            print("--- Begin Burn in phase ---")
+        for i in trange(nb_iter):
+            # Initialisation pour les nouveaux paramètres
+            X_new = np.zeros((nb_chain, nb_layer, nb_param))
+            std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
+
+            def perturb_chain(chain):
+                x_new = np.zeros((nb_layer, nb_param))
+                dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
+                for l in range(nb_layer):
+                    # actualiation des paramètres DREAM pour la couche l
+                    id = np.random.choice(ncr, p=pcr[l])
+                    z = np.random.uniform(0, 1, nb_param)
+                    A = z <= cr_vec[id]
+                    d_star = np.sum(A)
+                    if d_star == 0:
+                        A[np.argmin(z)] = True
+                        d_star = 1
+                    lambd = np.random.uniform(-c, c, d_star)
+                    zeta = np.random.normal(0, c_star, d_star)
+                    choose = np.delete(np.arange(nb_chain), chain)
+                    a = np.random.choice(choose, delta, replace=False)
+                    choose = np.delete(choose, np.where(np.isin(choose, a)))
+                    b = np.random.choice(choose, delta, replace=False)
+
+                    gamma = 2.38 / np.sqrt(2 * d_star * delta)
+                    dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
+                        X[a, l][:, A] - X[b, l][:, A], axis=0
+                    )
+
+                    x_new[l] = (
+                        X[chain, l] + dX[l]
+                    )  # caclul du potentiel nouveau paramètre
+                    x_new[l] = check_range(
+                        x_new[l], ranges[l]
+                    )  # vérification des bornes et réajustement si besoin
+                # Calcul du profil de température associé aux nouveaux paramètres
+                self.compute_solve_transi(
+                    convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                    nb_cells,
+                    verbose=False,
+                )
+                temp_new = (
+                    self.get_temps_solve()
+                )  # récupération du profil de température
+                energy_new = compute_energy(
+                    temp_new[ind_ref, :], temp_ref, sigma2
+                )  # calcul de l'énergie
+
+                return id, dX, x_new, temp_new, energy_new
+
+            results = Parallel(n_jobs=5)(
+                delayed(perturb_chain)(j) for j in range(nb_chain)
+            )
+
+            for j in range(nb_chain):
+                id, dX, x_new, temp_new, energy_new = results[j]
+                # calcul de la probabilité d'accpetation
+                log_ratio_accept = compute_log_acceptance(
+                    energy_new, _energy_burn_in[i][j]
+                )
+
+                # Acceptation ou non des nouveaux paramètres
+                if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
+                    X_new[j] = x_new  # actualisation des paramètres pour la chaine j
+                    _temp_burn_in[i + 1][j] = temp_new
+                    _energy_burn_in[i + 1][j] = energy_new
+                else:
+                    dX = np.zeros((nb_layer, nb_param))
+                    X_new[j] = X[
+                        j
+                    ]  # conservation des anciens paramètres pour la chaine j
+                    _temp_burn_in[i + 1][j] = _temp_burn_in[i - 1][j]
+                    _energy_burn_in[i + 1][j] = _energy_burn_in[i - 1][j]
+
+                # Mise à jour des paramètres de la couche j pour DREAM
+                for l in range(nb_layer):
+                    J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
+                    n_id[l, id] += 1
+
+            # Mise à jour du pcr pour chaque couche pour DREAM
+            for l in range(nb_layer):
+                pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
+                pcr[l] = pcr[l] / np.sum(pcr[l])
+
+            # Actualisation des paramètres à la fin de l'itération
+            X = X_new
+            _params[i + 1] = X_new
+            # Fin d'une itération, on check si on peut sortir du burn-in
+            if gelman_rubin(i + 2, nb_param, nb_layer, _params[: i + 2]):
+                if verbose:
+                    print(f"Burn in finished after : {nb_burn_in_iter} iterations")
+                break  # on sort du burn-in
+            nb_burn_in_iter += 1  # incrémentation du numbre d'itération de burn-in
+
+        # Transition après le burn in
+        del _params  # la variable _params n'est plus utile, on stocke les itérations dans la classe State
+
+        _flows = np.zeros(
+            (nb_iter + 1, nb_chain, nb_cells, len(self._times))
+        )  # initisaliton du flow
+
+        _temp = np.zeros(
+            (nb_iter + 1, nb_chain, nb_cells, len(self._times)), np.float32
+        )  # réinitialisation des températures
+        _temp[0] = _temp_burn_in[
+            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+        ]  # initialisation des températures
+
+        _energy = np.zeros((nb_iter + 1, nb_chain))  # réinitialisation des énergies
+        _energy[0] = _energy_burn_in[
+            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+        ]  # initialisation des énergies
+
+        del _temp_burn_in  # suppression variable burn-in
+        del _energy_burn_in  # suppression variable burn-in
+
+        # initialisation des états
+        for c in range(nb_chain):
+            self._states.append(
+                State(
+                    layers=convert_to_layer(nb_layer, name_layer, z_low, X[c]),
+                    energy=_energy[0][c],
+                    ratio_accept=1,
+                    sigma2_temp=sigma2,
+                )
+            )
+
+        for i in trange(nb_iter, desc="DREAM MCMC Computation", file=sys.stdout):
+            # Initialisation pour les nouveaux paramètres
+            X_new = np.zeros((nb_chain, nb_layer, nb_param))
+            std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
+
+            def perturb_chain(chain):
+                x_new = np.zeros((nb_layer, nb_param))
+                dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
+                for l in range(nb_layer):
+                    # actualiation des paramètres DREAM pour la couche l
+                    id = np.random.choice(ncr, p=pcr[l])
+                    z = np.random.uniform(0, 1, nb_param)
+                    A = z <= cr_vec[id]
+                    d_star = np.sum(A)
+                    if d_star == 0:
+                        A[np.argmin(z)] = True
+                        d_star = 1
+                    lambd = np.random.uniform(-c, c, d_star)
+                    zeta = np.random.normal(0, c_star, d_star)
+                    choose = np.delete(np.arange(nb_chain), chain)
+                    a = np.random.choice(choose, delta, replace=False)
+                    choose = np.delete(choose, np.where(np.isin(choose, a)))
+                    b = np.random.choice(choose, delta, replace=False)
+
+                    gamma = 2.38 / np.sqrt(2 * d_star * delta)
+                    dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
+                        X[a, l][:, A] - X[b, l][:, A], axis=0
+                    )
+
+                    x_new[l] = (
+                        X[chain, l] + dX[l]
+                    )  # caclul du potentiel nouveau paramètre
+                    x_new[l] = check_range(
+                        x_new[l], ranges[l]
+                    )  # vérification des bornes et réajustement si besoin
+                # Calcul du profil de température associé aux nouveaux paramètres
+                self.compute_solve_transi(
+                    convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                    nb_cells,
+                    verbose=False,
+                )
+                temp_new = (
+                    self.get_temps_solve()
+                )  # récupération du profil de température
+                flows_new = self.get_flows_solve()
+                energy_new = compute_energy(
+                    temp_new[ind_ref, :], temp_ref, sigma2
+                )  # calcul de l'énergie
+
+                return id, dX, x_new, temp_new, flows_new, energy_new
+
+            results = Parallel(n_jobs=5)(
+                delayed(perturb_chain)(j) for j in range(nb_chain)
+            )
+
+            for j in range(nb_chain):
+                id, dX, x_new, temp_new, flows_new, energy_new = results[j]
+                # calcul de la probabilité d'accpetation
+                log_ratio_accept = compute_log_acceptance(energy_new, _energy[i][j])
+                # Acceptation ou non des nouveaux paramètres
+                if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
+                    X_new[j] = x_new
+                    _temp[i + 1][j] = temp_new
+                    _flows[i + 1][j] = self.get_flows_solve()
+                    _energy[i + 1][j] = energy_new
+                    nb_accepted += 1
+                    self._states.append(
+                        State(
+                            layers=convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                            energy=energy_new,
+                            ratio_accept=nb_accepted / (i * 10 + j + 1),
+                            sigma2_temp=sigma2,
+                        )
+                    )
+                else:
+                    dX = np.zeros((nb_layer, nb_param))
+                    X_new[j] = X[j]
+                    _temp[i + 1][j] = _temp[i - 1][j]
+                    _flows[i + 1][j] = _flows[i - 1][j]
+                    _energy[i + 1][j] = _energy[i - 1][j]
+                    self._states.append(
+                        State(
+                            layers=self._states[-nb_chain].layers,
+                            energy=self._states[-nb_chain].energy,
+                            ratio_accept=nb_accepted / (i * 10 + j + 1),
+                            sigma2_temp=sigma2,
+                        )
+                    )  # ajout de l'état à la liste des états
+                self._acceptance[i, j] = nb_accepted / (
+                    i * 10 + j + 1
+                )  # mise à jour des taux d'acceptation
+
+                # Mise à jour des paramètres de la couche j pour DREAM
+                for l in range(nb_layer):
+                    J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
+                    n_id[l, id] += 1
+
+            # Actualisation des paramètres à la fin de l'itération
+            X = X_new
+
+        # Calcul des quantiles pour la température
+        _temp = _temp.reshape((nb_iter + 1) * nb_chain, nb_cells, len(self._times))
+        _flows = _flows.reshape((nb_iter + 1) * nb_chain, nb_cells, len(self._times))
+
+        self._quantiles_temps = {
+            quant: res
+            for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
+        }
+
+        self._quantiles_flows = {
+            quant: res
+            for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
+        }
+
+        if verbose:
+            print("Quantiles computed")
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
