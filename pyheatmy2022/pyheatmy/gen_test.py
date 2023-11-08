@@ -14,7 +14,7 @@ class Time_series:  # on simule un tableau de mesures
         offset : float = CODE_scalar,
         depth_sensors: list = CODE_list_sensors,
         param_time_dates: list = [None,None,DEFAULT_time_step], # liste [date début, date fin, pas de temps (constant)], format des dates tuple datetime ou none
-        param_dH_signal: list = DEFAULT_dH, # liste [amplitude (m), période (s), offset (m)] pour un variation sinusoïdale
+        param_dH_signal: list = DEFAULT_dH, # liste [t_début (s), t_fin (s), valeur (m)] pour un variation échelon pentu
         param_T_riv_signal: list = DEFAULT_T_riv,  # liste [amplitude (°C), période (en seconde), offset (°C)] pour un variation sinusoïdale
         param_T_aq_signal: list = DEFAULT_T_aq,  # liste [amplitude (°C), période (en seconde), offset (°C)] pour un variation sinusoïdale
         sigma_meas_P: float = None,  # (m) écart type de l'incertitude sur les valeurs de pression capteur
@@ -76,7 +76,14 @@ class Time_series:  # on simule un tableau de mesures
     
     def _generate_dH_series(self):
         t_range = np.arange(len(self._dates))*self._param_dates[2]
-        self._dH = self._param_dH[0]*np.sin(2*np.pi*t_range/self._param_dH[1]) + self._param_dH[2]
+        coeff = 2 * self._param_dH[2] / (self._param_dH[1] - self._param_dH[0])
+        deb = self._param_dH[0]*len(t_range) / t_range[-1]
+        end = self._param_dH[1]*len(t_range) / t_range[-1]
+        self._dH = np.zeros(len(t_range))
+        self._dH[:int(deb)] = -self._param_dH[2]
+        self._dH[int(deb):int(end)] = coeff * (t_range[int(deb):int(end)] - self._param_dH[0]) - self._param_dH[2]
+        self._dH[int(end):] = self._param_dH[2]
+        # self._dH = self._param_dH[0]*np.sin(2*np.pi*t_range/self._param_dH[1]) + self._param_dH[2]
 
     def _generate_Temp_riv_series(self): # renvoie un signal sinusoïdal de temperature rivière
         if self._dates.any() == None :
