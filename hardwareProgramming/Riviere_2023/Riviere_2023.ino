@@ -10,34 +10,48 @@ Required hardware :
 Arduino MKR WAN 1310
 */
 
-#define MEASURE_T unsigned int
-#define toRealNumber toInt
+#define MEASURE_T unsigned short
+#define TO_MEASURE_T toInt
 
-#include "internals/Lora.cpp"
+#include "internals/Lora.hpp"
 #include "internals/Low_Power.cpp"
 #include "internals/Pressure_Sensor.hpp"
 #include "internals/Temp_Sensor.cpp"
 #include "internals/Time.cpp"
 #include "internals/Internal_Log_Initializer.cpp"
-#include "internals/Measure.h"
-#include "internals/Reader.h"
-#include "internals/Writer.h"
+#include "internals/Writer.hpp"
 
 const int CSpin = 6;
 
-Reader reader;
 Writer writer;
 PressureSensor pressureSensor(A6, 6);
 
 int i = 0;
 
 void setup() {
+  // Initialise Serial
   Serial.begin(9600);
+  while(!Serial) {}
 
-  while (!Serial){
-  }
-  
+  // Initialise LoRa
+  Serial.println("Initialising LoRa");
   InitialiseLora();
+  Serial.println("Done");
+
+  // Initialise SD Card
+  Serial.println("Initialising SD card");
+  bool success = InitialiseLog(CSpin);
+  if (success) {
+    Serial.println("Done successfully");
+  } else {
+    Serial.println("Failed to initialise SD");
+    noInterrupts();
+    while(true) {}
+  }
+
+  writer.EstablishConnection();
+
+  // Initialise RTC
   InitialiseRTC();
   bool connectionEstablished = InitialiseLog(CSpin);
 
@@ -50,6 +64,13 @@ void setup() {
     
     Serial.println("Start Writing...");
     
+    for (int i=0; i<100; i++){
+      Serial.println(i);
+
+      writer.LogData(41);
+
+      delay(1000);
+    }
     }
 
 
@@ -62,6 +83,15 @@ void setup() {
 void loop() {
   // PRESSURE_T pressure = pressureSensor.MeasurePressure();
   // Serial.println(pressure);
+
+  Serial.println("Logging data n°" + String(i));
+  i++;
+
+  noInterrupts();
+  writer.LogData(i, 1, 2, 3);
+  interrupts();
+
+  delay(1000);
   i++;
   Serial.println(i);
   writer.LogData(41);

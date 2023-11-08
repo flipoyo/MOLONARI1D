@@ -6,7 +6,6 @@
 
 
 #include "Lora.hpp"
-#include "Reader.hpp"
 
 
 // Debug methods to enable or disable logging
@@ -25,9 +24,11 @@
 // ----- Public functions -----
 
 // Initialise the lora module for the first time. Call before any other LoRa function
-void InitialiseLora(float frequency) {
-  LoRa.begin(frequency);
+void InitialiseLora(void (*_onGetMeasureCallback)(Measure), float frequency) {
+  onGetMeasureCallback = _onGetMeasureCallback;
 
+  LoRa.begin(frequency);
+  
   LoRa.enableCrc();
 
   LoRa.onReceive(OnLoraReceivePacket);
@@ -46,6 +47,16 @@ void WakeUpLora() {
   // TODO : test that this works
   LoRa.receive();
 }
+
+
+// Send a DT_REQ request on LoRa
+// Arguments :
+//  firstMissingId -> Id number of the first measure that this card does not know
+//  destinationId -> Address of the sensor that we want to request data from
+bool RequestMeasurement(uint32_t lastMeasurementId, unsigned int destinationId) {
+  return SendPacket(&lastMeasurementId, sizeof(lastMeasurementId), destinationId, DT_REQ);
+}
+
 
 
 // ----- Internal functions -----
@@ -92,9 +103,8 @@ void OnLoraReceivePacket(int packetSize) {
   // Get the request type
   RequestType requestId = (RequestType)LoRa.read();
 
-  if (requestId == DT_REQ) {
-    PRINT_LN("Data requested");
-    HandleDataRequest(senderId);
+  if (requestId == DT_RPL) {
+    HandleDataReplyPacket();
     return;
   }
 
@@ -106,21 +116,11 @@ void OnLoraReceivePacket(int packetSize) {
 }
 
 
-// Respond to an incoming data request
-void HandleDataRequest(unsigned int senderId) {
-  unsigned int requestedSampleId = ReadFromLoRa<uint32_t>();
-  PRINT_LN("Sample requested from : " + String(requestedSampleId));
+// Read an incoming data reply request
+void HandleDataReplyPacket() {
+  Measure measure = ReadFromLoRa<Measure>();
 
-  Reader reader = Reader();
-  reader.EstablishConnection();
-  reader.MoveCursor(requestedSampleId);
-
-  PRINT_LN("Sending samples ...");
-  while (reader.IsDataAvailable()) {
-    Measure measure = reader.ReadMeasure();
-    SendMeasurement(measure, senderId);
-  }
-  PRINT_LN("Done");
+  onGetMeasureCallback(measure);
 }
 
 
@@ -148,11 +148,13 @@ T ReadFromLoRa() {
 
 
 // Sends a data packet through LoRa
+//
 // Arguments :
-//  payload -> A pointer to the object to send (&obj)
-//  payloadSize -> The size of the object to send (sizeof(obj))
+//  payload -> A pointer to the object to send (ex : &obj)
+//  payloadSize -> The size of the object to send (ex : sizeof(obj))
 //  destinationId -> The address of the destination device of the message
 //  requestType -> The type of packet request to send
+//
 // Example :
 //  SendPacket(&data, sizeof(data), destId, DT_REQ)
 bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType) {
@@ -175,15 +177,6 @@ bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int dest
   sentPacketNumber++;
 
   return success;
-}
-
-
-// Sends a measurement (DT_RPL) via LoRa
-// Arguments :
-//  measure -> The measurement to send
-//  destinationId -> The address of the destination device of the message 
-bool SendMeasurement(Measure measure, unsigned int destinationId) {
-  return SendPacket(&measure, sizeof(measure), destinationId, DT_RPL);
 }
 
 
