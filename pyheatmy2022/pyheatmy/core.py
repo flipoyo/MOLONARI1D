@@ -685,13 +685,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ) # Conservation du dernier profil accepté
         _energy_burn_in = np.zeros((nb_iter + 1, nb_chain))
 
-        _temp_act = np.zeros(
-            (nb_chain, nb_cells, len(self._times)), np.float32
-        )
-        _temp_old = np.zeros(
-            (nb_chain, nb_cells, len(self._times)), np.float32
-        ) # Conservation du dernier profil accepté
-
         # variables pour l'état courant
         temp_new = np.zeros((nb_cells, len(self._times)))
         energy_new = 0
@@ -849,6 +842,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _flows = np.zeros(
             (nb_iter + 1, nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
         )  # initisaliton des flux
+
+        # _flows[0] = ...
+
         _flow_act = np.zeros((nb_cells, len(self._times)))
         _flow_old = np.zeros((nb_chain, nb_cells, len(self._times)))
 
@@ -925,12 +921,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 # Acceptation ou non des nouveaux paramètres
                 if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
                     X_new[j] = x_new
+
                     _temp_old[j] = _temp_act[j]
                     _temp_act[j] = temp_new
                     _temp[i + 1][j] = temp_new[::n_sous_ech_space, ::n_sous_ech_time]
+
                     _flow_old[j] = _flow_act
                     _flow_act = self.get_flows_solve()
                     _flows[i+1, j] = _flow_act[::n_sous_ech_space, ::n_sous_ech_time]
+
                     _energy[i + 1][j] = energy_new
                     nb_accepted += 1
                     self._states.append(
@@ -944,10 +943,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 else:
                     dX = np.zeros((nb_layer, nb_param))
                     X_new[j] = X[j]
+                    y = _temp_act[j] # Variable d'échange
                     _temp_act[j] = _temp_old[j]
+                    _temp_old[j] = y
                     _temp[i + 1][j] = _temp_old[j][::n_sous_ech_space, ::n_sous_ech_time]
+
+                    y = _flow_old[j] # Variable d'échange
                     _flow_act = _flow_old[j]
+                    _flow_old[j] = y
                     _flows[i+1, j] = _flow_act[::n_sous_ech_space, ::n_sous_ech_time]
+
                     _energy[i + 1][j] = _energy[i - 1][j]
                     self._states.append(
                         State(
