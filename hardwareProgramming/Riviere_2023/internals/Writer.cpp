@@ -1,12 +1,12 @@
-#include <SD.h>
-#include <SPI.h>
-#include <String.h>
-#include "Measure.h"
-#include "Writer.h"
 
+
+// Check that the file has not been imported before
 #ifndef WRITER_CLASS
 #define WRITER_CLASS
 
+#include "Writer.hpp"
+
+#include "Time.cpp"
 
 // Search for the number of lines in the csv file->
 // SHOULD BE CALLED ONLY ONCE.
@@ -25,11 +25,11 @@ unsigned int GetNextLine() {
   return number_of_lines;
 }
 
-// TODO : Get the current time from the RTC. (not necessarly here)
+
 void GetCurrentTime(Measure* measure) {
     // Not implemented yet.
-    strncpy(measure->time, "12:00:00", 9);
-    strncpy(measure->date, "01/01/2020", 11);
+    GetCurrentHour().toCharArray(measure->time, 9);
+    GetCurrentDate().toCharArray(measure->date, 11);
 }
 
 //Class methods
@@ -59,6 +59,11 @@ void Writer::ConvertToWriteableMeasure(Measure* measure, MEASURE_T mesure1, MEAS
     measure->mesure4 = mesure4;
 }
 
+void Writer::Reconnect() {
+    this->file.close();
+    this->file = SD.open(filename, FILE_WRITE);
+}
+
 void Writer::EstablishConnection() {
     this->next_id = GetNextLine();
     this->file = SD.open(filename, FILE_WRITE);
@@ -72,11 +77,17 @@ void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, ME
     GetCurrentTime(&data);
     data.id = this->next_id;
 
-    if (this->file){
-        WriteInNewLine(data);
+    if (!this->file){
+        this->Reconnect();
+        delay(10);
     }
-
+    
+    this->WriteInNewLine(data);
     this->next_id++;
+}
+
+void Writer::Dispose() {
+    this->file.close();
 }
 
 #endif

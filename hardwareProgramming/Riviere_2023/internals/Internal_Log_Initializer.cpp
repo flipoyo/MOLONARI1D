@@ -1,15 +1,15 @@
 // This file will contain all the code to log the data internally before they get transmitted.
 // It uses an internal memory of the MKR board : 2MByte of persistent flash memory.
 
-#include <SD.h>
-#include <SPI.h>
-#include <String.h>
-#include "Measure.h"
-
 
 // Check that the file has not been imported before
 #ifndef INTERNAL_LOG
 #define INTERNAL_LOG
+
+#include <SD.h>
+#include <SPI.h>
+#include <String.h>
+#include "Measure.hpp"
 
 
 // const char filename[] = "datalog.csv";

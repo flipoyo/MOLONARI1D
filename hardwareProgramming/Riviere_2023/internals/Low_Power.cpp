@@ -7,7 +7,7 @@
 
 #include <ArduinoLowPower.h>
 
-#include "Lora.cpp"
+#include "Lora.hpp"
 
 
 // Switch to low-power mode for a given amount of time (in milli-seconds)
