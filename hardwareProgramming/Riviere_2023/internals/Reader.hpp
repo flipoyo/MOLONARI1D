@@ -16,8 +16,6 @@ class Reader
         Measure StringToMeasure(String line);
 
     public:
-        Reader();
-
         // Establish a connection with the SD card.
         void EstablishConnection();
 
@@ -33,7 +31,7 @@ class Reader
         // Should be called before ReadMeasure().
         bool IsDataAvailable();
 
-        ~Reader();
+        void Dispose();
 };
 
 #include "Reader.cpp"

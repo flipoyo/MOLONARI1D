@@ -31,7 +31,6 @@ String UIntTo2DigitString(uint8_t x) {
 
 // Initialise the RTC module for the first time.
 void InitialiseRTC(/* Parameters */) {
-  // Todo
 }
 
 

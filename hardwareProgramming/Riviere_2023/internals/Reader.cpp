@@ -49,13 +49,10 @@ Measure Reader::StringToMeasure(String line){
   return measure;
 }
 
-Reader::Reader()
-{
-    this->line_cursor = 0;
-}
 
 void Reader::EstablishConnection()
 {
+    this->line_cursor = 0;
     this->file = SD.open(filename);
 }
 
@@ -77,7 +74,7 @@ bool Reader::IsDataAvailable() {
     return this->file.available();
 }
 
-Reader::~Reader()
+void Reader::Dispose()
 {
     this->file.close();
 }

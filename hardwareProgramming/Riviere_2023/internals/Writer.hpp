@@ -24,6 +24,9 @@ class Writer
 
         // Process and append raw data to the csv file.
         void LogData(MEASURE_T mesure1, MEASURE_T mesure2 = 0, MEASURE_T mesure3 = 0, MEASURE_T mesure4 = 0);
+
+        // Close the connection with the SD card.
+        void Dispose();
 };
 
 #include "Writer.cpp"
