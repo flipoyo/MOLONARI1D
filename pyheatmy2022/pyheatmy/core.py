@@ -328,9 +328,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
         K_list = 10 ** - moinslog10K_list
-        ## ???
-        K_list = K_list / Ss_list
-        ## ???
 
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
