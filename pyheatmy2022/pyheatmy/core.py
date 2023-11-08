@@ -983,7 +983,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             quant: res
             for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
         }
-        print("j'ai calculé les quantiles de température")
+        
         self._quantiles_flows = {
             quant: res
             for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
