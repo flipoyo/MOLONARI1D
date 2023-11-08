@@ -29,7 +29,7 @@ Reader reader;
 Writer writer;
 PressureSensor pressureSensor(A6, 6);
 
-
+int i = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -50,13 +50,6 @@ void setup() {
     
     Serial.println("Start Writing...");
     
-    for (int i=0; i<100; i++){
-      Serial.println(i);
-
-      writer.LogData(41);
-
-      delay(1000);
-    }
     }
 
 
@@ -69,4 +62,9 @@ void setup() {
 void loop() {
   // PRESSURE_T pressure = pressureSensor.MeasurePressure();
   // Serial.println(pressure);
+  i++;
+  Serial.println(i);
+  writer.LogData(41);
+
+  delay(5000);
 }

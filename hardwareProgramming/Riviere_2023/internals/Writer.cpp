@@ -60,6 +60,11 @@ void Writer::ConvertToWriteableMeasure(Measure* measure, MEASURE_T mesure1, MEAS
     measure->mesure4 = mesure4;
 }
 
+void Writer::Reconnect() {
+    this->file.close();
+    this->file = SD.open(filename, FILE_WRITE);
+}
+
 void Writer::EstablishConnection() {
     this->next_id = GetNextLine();
     this->file = SD.open(filename, FILE_WRITE);
@@ -73,10 +78,12 @@ void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, ME
     GetCurrentTime(&data);
     data.id = this->next_id;
 
-    if (this->file){
-        WriteInNewLine(data);
+    if (!this->file){
+        this->Reconnect();
+        delay(10);
     }
-
+    
+    this->WriteInNewLine(data);
     this->next_id++;
 }
 

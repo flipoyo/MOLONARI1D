@@ -16,6 +16,8 @@ class Writer
         // Convert the raw data into a Measure.
         void ConvertToWriteableMeasure(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4);
 
+        // Reconnect to the SD card.
+        void Reconnect();
     public:
         // Establish the connection with the SD card.
         void EstablishConnection();
