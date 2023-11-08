@@ -472,7 +472,7 @@ class Compute(QtCore.QObject):
             name = elem.name
             zLow = elem.zLow
             if elem == layers[-1]:
-                zLow = round(self.coordinator.max_depth())
+                zLow = int(self.coordinator.max_depth())
             perm = elem.params.moinslog10K
             poro = elem.params.n
             lambda_s = elem.params.lambda_s

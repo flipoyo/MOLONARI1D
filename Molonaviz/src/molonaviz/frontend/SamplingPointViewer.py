@@ -19,7 +19,7 @@ from .dialogsCleanup import DialogCleanup
 from .dialogCompute import DialogCompute
 from ..utils.get_files import get_ui_asset
 
-From_DisplayParameters = uic.loadUiType(get_ui_asset("DisplayParameters.ui"))[0]
+
 From_SamplingPointViewer = uic.loadUiType(get_ui_asset("SamplingPointViewer.ui"))[0]
 
 class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
@@ -80,7 +80,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
         # Link every button to their function
         self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams2)
-        self.displayparam.clicked.connect(self.changeDisplayedParams)
         self.radioButtonTherm1.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm2.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm3.clicked.connect(self.refreshTempDepthView)
@@ -391,12 +390,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.updateAllViews()
             self.handleComputationsButtons()
 
-    def changeDisplayedParams(self):
-        dlg = DisplayParameters(self.coordinator)
-        res = dlg.exec()
-        if res == QtWidgets.QDialog.Accepted:
-            None
-
+  
     def cleanup(self):
         dlg = DialogCleanup(self.coordinator,self.samplingPoint)
         res = dlg.exec()
@@ -457,45 +451,3 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         """
         self.fluxesSplitterHorizLeft.setSizes(self.fluxesSplitterHorizRight.sizes())
 
-class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
-     def __init__(self, spointCoordinator : SPointCoordinator):
-        super(DisplayParameters, self).__init__()
-        QtWidgets.QWidget.__init__(self)
-        self.setupUi(self)
-
-        self.coordinator = spointCoordinator
-        self.layers = self.coordinator.layers_depths()
-        self.paraModels = []
-
-        self.params =[]
-        for layer in self.layers:
-            self.params.append(self.coordinator.get_best_params_model(layer))
-        self.input = []
-        num_rows = len(self.layers) 
-        num_cols = 5
-
-        if self.params:
-            for row in range(num_rows):
-                self.input.append([])
-                for col in range(num_cols):
-                    valeur = self.params[row].index(0, col).data()
-                    self.input[row].append(valeur)
-
-        self.tableWidget.setRowCount(len(self.input))
-        
-        for i in range(len(self.input)):
-            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(round(self.layers[i]*100))))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
-            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
-
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.tableWidget)
-        self.setLayout(layout)
-
-        self.tableViewParams.resizeColumnsToContents()
-
-    

@@ -18,7 +18,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0">
      <property name="sizeConstraint">
       <enum>QLayout::SetNoConstraint</enum>
      </property>
@@ -98,16 +98,6 @@
        </property>
       </spacer>
      </item>
-     <item>
-      <widget class="QPushButton" name="displayparam">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Show MCMC best parameters</string>
-       </property>
-      </widget>
-     </item>
     </layout>
    </item>
    <item>
@@ -184,8 +174,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>1334</width>
-                 <height>612</height>
+                 <width>98</width>
+                 <height>32</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
