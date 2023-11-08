@@ -345,7 +345,7 @@ class Compute(QtCore.QObject):
 
         self.update_nb_cells(nb_cells)
 
-<<<<<<< HEAD
+
         self.set_column()  # Updates self.col
         self.mcmc_runner = ColumnMCMCRunner(
             self.col,
