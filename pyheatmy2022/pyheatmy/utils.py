@@ -269,7 +269,7 @@ def compute_H(moinslog10K, Ss, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, al
 
 @njit
 def compute_T_stratified(
-    moinslog10K_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA
+    Ss_list, moinslog10K_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA
 ):
     """ Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an heterogeneous column.
 
@@ -317,17 +317,6 @@ def compute_T_stratified(
 
     n_cell = len(T_init)
     n_times = len(all_dt) + 1
-
-    # First we need to compute the gradient of H(z, t)
-
-    nablaH = zeros((n_cell, n_times), float32)
-
-    nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
-
-    for i in range(1, n_cell - 1):
-        nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
-
-    nablaH[n_cell - 1, :] = 2*(H_aq - H_res[n_cell - 2, :])/(3*dz)
 
     # Now we can compute T(z, t)
 
@@ -399,8 +388,7 @@ def compute_T_stratified(
 
 
 @njit
-def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
-    
+def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
 
     Parameters
@@ -436,23 +424,10 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, moinslog10K_list
     H_res[:, 0] = H_init[:]
     K_list = 10.0 ** -moinslog10K_list
     KsurSs_list = K_list/Ss_list
-    inter_cara = zeros((len(list_zLow), 2), float32)
 
     # Check if dt is constant :
     if isdtconstant:  # dt is constant so A and B are constant
         dt = all_dt[0]
-
-        ## zhan: caractériser l'interface
-        for zlow_idx in range(len(list_zLow)):
-            for z_idx in range(len(z_solve) - 1):
-                if z_solve[z_idx] <= list_zLow[zlow_idx] and z_solve[z_idx + 1] > list_zLow[zlow_idx]:
-                    if abs(z_solve[z_idx] - list_zLow[zlow_idx]) < EPSILON:
-                        inter_cara[zlow_idx,0] = z_idx
-                    elif abs(z_solve[z_idx + 1] - list_zLow[zlow_idx]) < EPSILON:
-                        inter_cara[zlow_idx,0] = z_idx + 1
-                    else:
-                        inter_cara[zlow_idx,0] = z_idx
-                        inter_cara[zlow_idx,1] = z_idx + 1
 
         # Defining the 3 diagonals of B
         lower_diagonal_B = KsurSs_list[1:]*alpha/dz**2
@@ -492,7 +467,8 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, moinslog10K_list
                 
             else:
                 pos_idx = int(inter_cara[tup_idx][0])
-                keq = 1 / (1/k1/2 + 1/k2/2)
+                x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])
+                keq = 1 / (x/k1 + (1-x)/k2)
                 diagonal_B[pos_idx] = 1/dt - (k1 + keq) *alpha/dz**2
                 lower_diagonal_B[pos_idx - 1] = k1*alpha/dz**2
                 upper_diagonal_B[pos_idx] = keq*alpha/dz**2

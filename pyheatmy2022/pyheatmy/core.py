@@ -14,7 +14,7 @@ from .params import Param, ParamsPriors, Prior, PARAM_LIST
 from .state import State
 from .checker import checker
 
-from .utils import C_W, RHO_W, LAMBDA_W, compute_H, compute_T, compute_H_stratified, compute_T_stratified
+from .utils import C_W, RHO_W, LAMBDA_W, compute_H, compute_T, compute_H_stratified, compute_T_stratified, EPSILON
 from .layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
 
 
@@ -212,6 +212,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         
         array_moinslog10K = np.array([float(x.params.moinslog10K) for x in layersList])
         array_K = 10 ** (-array_moinslog10K)
+        heigth = abs(self._real_z[-1] - self._real_z[0])
+        array_Ss = np.array([float(x.params.n) for x in layersList]) / heigth
         array_eps = np.zeros(len(layersList)) # eps de chaque couche
         array_eps[0] = layersList[0].zLow
         
@@ -279,11 +281,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         H_init = list_array_H[0]
         for idx in range(1, len(list_array_H)):
             H_init = np.concatenate((H_init, list_array_H[idx]))
-        heigth = abs(self._real_z[-1] - self._real_z[0])
-        array_Ss = np.array([float(x.params.n) for x in layersList]) / heigth
+        
+        
         ## zhan : end
 
-        heigth = abs(self._real_z[-1] - self._real_z[0])
         Ss_list = n_list / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
 
 
@@ -305,39 +306,70 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             list_zLow.append(layer.zLow)
         list_zLow.pop()
         z_solve = self._z_solve.copy()
+
+        ## zhan Nov8: Classification according to Klist on symmetry of interfaces
+        inter_cara = np.zeros((len(list_zLow), 2))
+        for zlow_idx in range(len(list_zLow)):
+            for z_idx in range(len(z_solve) - 1):
+                if z_solve[z_idx] <= list_zLow[zlow_idx] and z_solve[z_idx + 1] > list_zLow[zlow_idx]:
+                    if abs(z_solve[z_idx] - list_zLow[zlow_idx]) < EPSILON:
+                        inter_cara[zlow_idx,0] = z_idx
+                    elif abs(z_solve[z_idx + 1] - list_zLow[zlow_idx]) < EPSILON:
+                        inter_cara[zlow_idx,0] = z_idx + 1
+                    else:
+                        inter_cara[zlow_idx,0] = z_idx
+                        inter_cara[zlow_idx,1] = z_idx + 1
+        ## end
         H_res = compute_H_stratified(
-            array_K, array_Ss, list_zLow, z_solve, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
 
         self._H_res = H_res  # stocke les résultats
         
 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
         K_list = 10 ** - moinslog10K_list
+        ## ???
+        K_list = K_list / Ss_list
+        ## ???
 
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
         nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
-
+        ## zhan Nov8: calculation de la derivation
         for i in range(1, nb_cells - 1):
-            if K_list[i] == K_list[i - 1] and K_list[i+1] != K_list[i]:
-                nablaH[i, :] = (H_res[i, :] - H_res[i-1, :]) / dz
-                
-            if K_list[i] != K_list[i - 1] and K_list[i+1] == K_list[i]:
-                nablaH[i, :] = (H_res[i+1, :] - H_res[i, :]) / dz
-            else: 
-                nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
-
-        nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
-
-        T_res = compute_T_stratified(moinslog10K_list, n_list, lambda_s_list,
-                                     rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
-
-        self._temps = T_res
-        
+            nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
         for i in range(nb_cells):
             flows[i, :] = - K_list[i]*nablaH[i, :]
+        if verbose:
+            plt.plot(z_solve, flows[:,0], linestyle = '--', label = "before derivation fix")
+        for elem_idx in range(len(inter_cara)):
+            if inter_cara[elem_idx][1] == 0:
+                nablaH[int(inter_cara[elem_idx][0]), :] = nablaH[int(inter_cara[elem_idx][0])+1, :]
+                flows[int(inter_cara[elem_idx][0]), :] = - K_list[int(inter_cara[elem_idx][0])]*nablaH[int(inter_cara[elem_idx][0]), :]
+            else:
+                nablaH[int(inter_cara[elem_idx][0]), :] = (H_res[int(inter_cara[elem_idx][0])+1, :] - H_res[int(inter_cara[elem_idx][0]), :])/ dz
+                nablaH[int(inter_cara[elem_idx][1]), :] = (H_res[int(inter_cara[elem_idx][1]), :] - H_res[int(inter_cara[elem_idx][1]) - 1, :])/ dz
+                x = (list_zLow[elem_idx] - z_solve[int(inter_cara[elem_idx][0])]) / (z_solve[int(inter_cara[elem_idx][1])] - z_solve[int(inter_cara[elem_idx][0])])
+                K_list[int(inter_cara[elem_idx][0])] = 1 / (x / K_list[int(inter_cara[elem_idx][0])] + (1-x) / K_list[int(inter_cara[elem_idx][0])+1])
+                flows[int(inter_cara[elem_idx][0]), :] = - K_list[int(inter_cara[elem_idx][0])]*nablaH[int(inter_cara[elem_idx][0]), :]
+                flows[int(inter_cara[elem_idx][1]), :] = - K_list[int(inter_cara[elem_idx][0])]*nablaH[int(inter_cara[elem_idx][1]), :]
+
+        if verbose:
+            plt.plot(z_solve, flows[:,0], label = "after derivation fix")
+            plt.legend()
+            plt.title("flow")
+            plt.show()
+        
+        ## zhan Nov8
+    
+        nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
+
+        T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list,
+                                     rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
+
+        self._temps = T_res
 
         self._flows = flows  # calcul du débit spécifique
         if verbose:
