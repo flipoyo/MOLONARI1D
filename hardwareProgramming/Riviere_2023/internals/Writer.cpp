@@ -1,13 +1,12 @@
-#include <SD.h>
-#include <SPI.h>
-#include <String.h>
-#include "Measure.h"
-#include "Writer.h"
-#include "Time.cpp"
 
+
+// Check that the file has not been imported before
 #ifndef WRITER_CLASS
 #define WRITER_CLASS
 
+#include "Writer.hpp"
+
+#include "Time.cpp"
 
 // Search for the number of lines in the csv file->
 // SHOULD BE CALLED ONLY ONCE.

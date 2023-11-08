@@ -11,9 +11,9 @@
 
 // Debug methods to enable or disable logging
 #ifdef LORA_DEBUG
-#define PRINT(msg) Serial.print(msg);
-#define PRINT_HEX(msg) Serial.print(msg, HEX);
-#define PRINT_LN(msg) Serial.println(msg);
+#define PRINT(msg) Serial.print(msg)
+#define PRINT_HEX(msg) Serial.print(msg, HEX)
+#define PRINT_LN(msg) Serial.println(msg)
 #else
 #define PRINT(msg)
 #define PRINT_HEX(msg)
@@ -118,6 +118,7 @@ void HandleDataRequest(unsigned int senderId) {
   PRINT_LN("Sending samples ...");
   while (reader.IsDataAvailable()) {
     Measure measure = reader.ReadMeasure();
+    PRINT_LN(measure.ToString());
     SendMeasurement(measure, senderId);
   }
   PRINT_LN("Done");

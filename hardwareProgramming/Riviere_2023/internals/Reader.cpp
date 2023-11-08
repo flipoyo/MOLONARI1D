@@ -1,13 +1,15 @@
-#include <SD.h>
-#include <SPI.h>
-#include <String.h>
-#include "Measure.h"
-#include "Reader.h"
 
+
+// Check that the file has not been imported before
 #ifndef READER_CLASS
 #define READER_CLASS
 
-// Convert a CSV line (Arduino String Type= into a Measure.
+#include <SD.h>
+
+#include "Measure.h"
+#include "Reader.h"
+
+// Convert a CSV line (Arduino String Type) into a Measure.
 Measure Reader::StringToMeasure(String line){
   Measure measure;
   String delimiter = ",";

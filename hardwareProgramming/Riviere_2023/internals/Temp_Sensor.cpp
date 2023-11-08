@@ -1,3 +1,8 @@
+
+// Check that the file has not been imported before
+#ifndef TEMP_SENSOR
+#define TEMP_SENSOR
+
 // This file will contain all the code relative to the measurement of temperature
 // The data type of a temperature measurement
 #define TEMP_T unsigned short
@@ -21,3 +26,5 @@ TEMP_T MeasureTemperature(int alimPin, int measurePin) {
   digitalWrite(alimPin, LOW);
   return temp;
 }
+
+#endif
