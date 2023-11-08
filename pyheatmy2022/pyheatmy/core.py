@@ -1012,7 +1012,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         c=0.1,
         cstar=1e-6,
         verbose=True,  # affiche texte explicatifs ou non
-        sigma2=None,
+        sigma2= 1,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
     ):
         if nb_chain < 2:
