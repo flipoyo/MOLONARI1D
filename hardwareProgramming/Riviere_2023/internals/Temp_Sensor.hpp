@@ -6,7 +6,7 @@
 #define TEMP_SENSOR_H
 
 // The data type of a temperature measurement
-#define TEMP_T unsigned short
+#define TEMP_T double
 
 
 class TemperatureSensor {

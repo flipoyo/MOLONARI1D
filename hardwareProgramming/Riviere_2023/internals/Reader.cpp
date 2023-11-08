@@ -6,8 +6,8 @@
 
 #include <SD.h>
 
-#include "Measure.h"
-#include "Reader.h"
+#include "Measure.hpp"
+#include "Reader.hpp"
 
 // Convert a CSV line (Arduino String Type) into a Measure.
 Measure Reader::StringToMeasure(String line){

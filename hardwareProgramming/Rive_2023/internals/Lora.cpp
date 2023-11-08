@@ -158,8 +158,14 @@ T ReadFromLoRa() {
 // Example :
 //  SendPacket(&data, sizeof(data), destId, DT_REQ)
 bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType) {
+  PRINT_LN("Sending packet to " + String(destinationId) + "(" + String(payloadSize) + " bytes)");
+  PRINT("Request type : ");
+  PRINT_HEX(requestType);
+  PRINT("\n");
+
   bool success = (bool)LoRa.beginPacket();
   if (!success) {
+    PRINT_LN("Aborting transmission : LoRa module busy");
     return false;
   }
 
@@ -170,6 +176,9 @@ bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int dest
   LoRa.write(reinterpret_cast<const uint8_t*>(payload), payloadSize);
 
   success = (bool)LoRa.endPacket();
+  if (!success) {
+    PRINT_LN("Transmission failed");
+  }
 
   // Set the module back to receive mode
   LoRa.receive();
