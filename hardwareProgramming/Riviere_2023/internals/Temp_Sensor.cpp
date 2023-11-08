@@ -3,27 +3,30 @@
 #ifndef TEMP_SENSOR
 #define TEMP_SENSOR
 
-// This file will contain all the code relative to the measurement of temperature
-// The data type of a temperature measurement
-#define TEMP_T unsigned short
+#include "Temp_Sensor.hpp"
 
 
 // Initialise the temperature sensor for the first time. 
-void InitialiseTempSensor(int alimPin, int measurePin) {
+TemperatureSensor::TemperatureSensor(int _dataPin, int _enablePin) : data_Pin(_dataPin), enablePin(_enablePin) {
   // Attribute a pin to the temperature measurement and the power
   pinMode(alimPin, OUTPUT);
   pinMode(measurePin, INPUT);
   
+  analogReadResolution(12);   // Set precision to 12 bit (maximum of this board)
 }
 
 // Measure the temperature
-TEMP_T MeasureTemperature(int alimPin, int measurePin) {
+TEMP_T TemperatureSensor::MeasureTemperature() {
   //Power the sensor only when we measure
+  digitalWrite(enablePin, HIGH);
+
+  delay(50);
+
   //Read the measured temperature on the defined pin
+  unsigned int temp = analogRead(data_Pin);
+
   //Unpower the sensor
-  digitalWrite(alimPin, HIGH);
-  unsigned int temp = analogRead(measurePin);
-  digitalWrite(alimPin, LOW);
+  digitalWrite(enablePin, LOW);
   return temp;
 }
 
