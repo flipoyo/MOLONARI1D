@@ -14,8 +14,6 @@ class Reader
         Measure StringToMeasure(String line);
 
     public:
-        Reader();
-
         // Establish a connection with the SD card.
         void EstablishConnection();
 

@@ -26,11 +26,11 @@ unsigned int GetNextLine() {
   return number_of_lines;
 }
 
-// TODO : Get the current time from the RTC. (not necessarly here)
+
 void GetCurrentTime(Measure* measure) {
     // Not implemented yet.
-    strncpy(measure->time, GetCurrentHour(), 9);
-    strncpy(measure->date, GetCurrentDate(), 11);
+    GetCurrentHour().toCharArray(measure->time, 9);
+    GetCurrentDate().toCharArray(measure->date, 11);
 }
 
 //Class methods
@@ -78,6 +78,10 @@ void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, ME
     }
 
     this->next_id++;
+}
+
+void Writer::Dispose() {
+    this->file.close();
 }
 
 #endif
