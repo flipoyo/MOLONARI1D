@@ -7,8 +7,6 @@
 #ifndef READER_CLASS
 #define READER_CLASS
 
-// const char filename[] = "datalog.csv";
-
 // Convert a CSV line (Arduino String Type= into a Measure.
 Measure Reader::StringToMeasure(String line){
   Measure measure;
@@ -22,7 +20,7 @@ Measure Reader::StringToMeasure(String line){
     switch (i)
     {
     case 0:
-      measure.id = token.toInt();
+      measure.id = token.toRealNumber();
       break;
     case 1:
       strncpy(measure.date, token.c_str(), 11);
@@ -31,16 +29,16 @@ Measure Reader::StringToMeasure(String line){
       strncpy(measure.time, token.c_str(), 9);
       break;
     case 3:
-      measure.mesure1 = token.toInt();
+      measure.mesure1 = token.toRealNumber();
       break;
     case 4:
-      measure.mesure2 = token.toInt();
+      measure.mesure2 = token.toRealNumber();
       break;
     case 5:
-      measure.mesure3 = token.toInt();
+      measure.mesure3 = token.toRealNumber();
       break;
     case 6:
-      measure.mesure4 = token.toInt();
+      measure.mesure4 = token.toRealNumber();
       break;
     default:
       break;

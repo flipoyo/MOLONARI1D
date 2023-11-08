@@ -17,14 +17,15 @@ const char header[] = "Id,Date,Time,Capteur1,Capteur2,Capteur3,Capteur4";
 
 
 bool AlreadyInitialised() {
-    File file =  SD.open(filename);
-    if (!file) {
+    if (SD.exists(filename) == false) {
       return false;
     }
     else{
-      return (file.available());
+      File file =  SD.open(filename);
+      int a = file.available();
+      file.close();
+      return (a > 0);
     }
-    file.close();
 }
 
 //Generate a CSV file with a header IF necessary.
