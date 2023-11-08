@@ -717,8 +717,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # objets liés à DREAM
         cr_vec = np.arange(1, ncr + 1) / ncr
-        n_id = np.zeros((nb_layer, ncr))
-        J = np.zeros((nb_layer, ncr))
+        n_id = np.zeros((nb_layer, ncr), np.float32)
+        J = np.zeros((nb_layer, ncr), np.float32)
         pcr = np.ones((nb_layer, ncr)) / ncr
 
         if verbose:
