@@ -214,8 +214,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
         nablaH[nb_cells - 1, :] = nablaH[nb_cells - 2, :]
         
-        K_list0 = 10 ** - moinslog10K_list
-        K_list = interface_transition(K_list0)
+        K_list = 10 ** - moinslog10K_list
         
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
