@@ -7,10 +7,10 @@
 
 
 // Initialise the temperature sensor for the first time. 
-TemperatureSensor::TemperatureSensor(int _dataPin, int _enablePin) : data_Pin(_dataPin), enablePin(_enablePin) {
+TemperatureSensor::TemperatureSensor(int _dataPin, int _enablePin) : dataPin(_dataPin), enablePin(_enablePin) {
   // Attribute a pin to the temperature measurement and the power
-  pinMode(alimPin, OUTPUT);
-  pinMode(measurePin, INPUT);
+  pinMode(enablePin, OUTPUT);
+  pinMode(dataPin, INPUT);
   
   analogReadResolution(12);   // Set precision to 12 bit (maximum of this board)
 }
@@ -23,7 +23,7 @@ TEMP_T TemperatureSensor::MeasureTemperature() {
   delay(50);
 
   //Read the measured temperature on the defined pin
-  unsigned int temp = analogRead(data_Pin);
+  unsigned int temp = analogRead(dataPin);
 
   //Unpower the sensor
   digitalWrite(enablePin, LOW);

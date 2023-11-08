@@ -1,4 +1,6 @@
 
+//#define LORA_DEBUG
+
 #include "internals/Lora.hpp"
 
 unsigned int firstMissingMeasurementId = 0;
@@ -34,8 +36,10 @@ void loop() {
 void OnGetMeasureCallback(Measure measure) {
   if (measure.id == firstMissingMeasurementId) {
     firstMissingMeasurementId++;
+  } else {
+    Serial.println("Wrong measure received : got n°" + String(measure.id) + " insted of n°" + String(firstMissingMeasurementId));
   }
 
-  Serial.println("Received measure : ");
+  Serial.print("Received measure : ");
   Serial.println(measure.ToString());
 }

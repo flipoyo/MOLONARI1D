@@ -13,6 +13,8 @@ Arduino MKR WAN 1310
 #define MEASURE_T unsigned short
 #define TO_MEASURE_T toInt
 
+//#define LORA_DEBUG
+
 #include "internals/Lora.hpp"
 #include "internals/Low_Power.cpp"
 #include "internals/Pressure_Sensor.hpp"
@@ -53,31 +55,6 @@ void setup() {
 
   // Initialise RTC
   InitialiseRTC();
-  bool connectionEstablished = InitialiseLog(CSpin);
-
-  if (connectionEstablished) {
-    Serial.println("SD card initialized");
-    // reader.EstablishConnection();
-    writer.EstablishConnection();
-    // TESTINGS
-
-    
-    Serial.println("Start Writing...");
-    
-    for (int i=0; i<100; i++){
-      Serial.println(i);
-
-      writer.LogData(41);
-
-      delay(1000);
-    }
-    }
-
-
-    else {
-      Serial.println("SD card failed to initialize");
-    }
-
 }
 
 void loop() {
@@ -90,11 +67,6 @@ void loop() {
   noInterrupts();
   writer.LogData(i, 1, 2, 3);
   interrupts();
-
-  delay(1000);
-  i++;
-  Serial.println(i);
-  writer.LogData(41);
 
   delay(5000);
 }

@@ -4,7 +4,7 @@
 #define WRITER_CLASS_H
 
 #include <SD.h>
-#include "Measure.h"
+#include "Measure.hpp"
 
 class Writer
 {
