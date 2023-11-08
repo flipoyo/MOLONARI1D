@@ -454,8 +454,10 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
         ## zhan Nov6
         for tup_idx in range(len(inter_cara)):
             array_KsurSs = array_K / array_Ss
-            k1 = array_KsurSs[tup_idx]
-            k2 = array_KsurSs[tup_idx + 1]
+            K1 = array_K[tup_idx]
+            K2 = array_K[tup_idx + 1]
+            k1 = array_K[tup_idx] / array_Ss[tup_idx]
+            k2 = array_K[tup_idx + 1]/ array_Ss[tup_idx+1]
             if inter_cara[tup_idx][1] == 0:
                 pos_idx = int(inter_cara[tup_idx][0])
                 diagonal_B[pos_idx] = 1/dt - (k1 + k2) *alpha/dz**2
@@ -468,7 +470,7 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
             else:
                 pos_idx = int(inter_cara[tup_idx][0])
                 x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])
-                keq = 1 / (x/k1 + (1-x)/k2)
+                keq = (1 / (x/K1 + (1-x)/K2)) / array_Ss[tup_idx]
                 diagonal_B[pos_idx] = 1/dt - (k1 + keq) *alpha/dz**2
                 lower_diagonal_B[pos_idx - 1] = k1*alpha/dz**2
                 upper_diagonal_B[pos_idx] = keq*alpha/dz**2
