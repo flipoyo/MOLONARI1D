@@ -362,8 +362,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         dlg.setWindowModality(QtCore.Qt.ApplicationModal)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
-            name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile = dlg.getSPointInfo()
-            self.currentStudy.importSPoint(name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile)
+            name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile, man_or_auto, infos = dlg.getSPointInfo()
+            self.currentStudy.importSPoint(name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile, man_or_auto, infos)
 
     def openSPointFromAction(self):
         """

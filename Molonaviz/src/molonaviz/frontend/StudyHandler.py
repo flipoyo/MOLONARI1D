@@ -41,14 +41,19 @@ class StudyHandler:
         """
         self.spointManager.refresh_spoints()
 
-    def importSPoint(self, name : str, psensor : str, shaft : str, infofile : str, noticefile : str, configfile : str, prawfile : str, trawfile : str):
+    def importSPoint(self, name : str, psensor : str, shaft : str, infofile : str, noticefile : str, configfile : str, prawfile : str, trawfile : str,man_or_auto : str,infos):
         """
         Import a new sampling point from given files.
         """
         #Cleanup the .csv files
-        infoDF = pd.read_csv(infofile, header=None)
-        infoDF[1][3] = pd.to_datetime(infoDF[1][3])
-        infoDF[1][4] = pd.to_datetime(infoDF[1][4]) #Convert dates to datetime (or here Timestamp) objects
+        if man_or_auto == 'auto':
+            infoDF = pd.read_csv(infofile, header=None)
+            infoDF[1][3] = pd.to_datetime(infoDF[1][3])
+            infoDF[1][4] = pd.to_datetime(infoDF[1][4]) #Convert dates to datetime (or here Timestamp) objects
+        else:
+            infoDF = pd.DataFrame(infos)
+            infoDF[1][3] = pd.to_datetime(infoDF[1][3])
+            infoDF[1][4] = pd.to_datetime(infoDF[1][4]) #Convert dates to datetime (or here Timestamp) objects
         #Readings csv
         dfpress = pd.read_csv(prawfile)
         dfpress.columns = ["Date", "Voltage", "Temp_Stream"]
