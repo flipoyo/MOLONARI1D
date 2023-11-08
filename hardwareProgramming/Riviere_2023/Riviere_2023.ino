@@ -21,32 +21,31 @@ Arduino MKR WAN 1310
 // #include "internals/InternalData.h" Deprecated
 
 
-PressureSensor pressureSensor(A6, 6);
-
 
 void setup() {
   Serial.begin(9600);
 
+  while(!Serial) {}
+
+
+  Serial.println("Initialising LoRa");
   InitialiseLora();
+  Serial.println("Done");
+
+  Serial.println("Initialising SD card");
+  bool success = InitialiseLog();
+  if (success) {
+    Serial.println("Done successfully");
+  } else {
+    Serial.println("Failed to initialise SD");
+    noInterrupts();
+    while(true) {}
+  }
+
   InitialiseRTC();
-  bool didIt = InitialiseLog();
-
-  if (didIt) {
-    Serial.println("SD card initialized");
-
-    // TESTINGS
-
-    unsigned int test1[4] = {sizeof("Id,Date,Time,Capteur1,Capteur2,Capteur3,Capteur4"),sizeof("\n"),sizeof(Measure),777};
-    LogData(test1);
-
-    unsigned int test2[4] = {1,9,0,456456};
-    LogData(test2);
-  }
-  else {
-    Serial.println("SD card failed to initialize");
-  }
-
 }
+
+unsigned int i = 0;
 
 void loop() {
   // Get immidiately the data stored in FlashMemory
@@ -54,4 +53,13 @@ void loop() {
   // PRESSURE_T pressure = pressureSensor.MeasurePressure();
   // Serial.println(pressure);
 
+  Serial.println("Logging data n°" + String(i));
+  i++;
+  unsigned int raw_measure[4] = {i, 1, 2, 3};
+
+  noInterrupts();
+  LogData(raw_measure);
+  interrupts();
+
+  delay(1000);
 }
