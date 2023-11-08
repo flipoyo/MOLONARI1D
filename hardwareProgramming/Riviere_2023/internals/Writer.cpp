@@ -3,6 +3,7 @@
 #include <String.h>
 #include "Measure.h"
 #include "Writer.h"
+#include "Time.cpp"
 
 #ifndef WRITER_CLASS
 #define WRITER_CLASS
@@ -28,8 +29,8 @@ unsigned int GetNextLine() {
 // TODO : Get the current time from the RTC. (not necessarly here)
 void GetCurrentTime(Measure* measure) {
     // Not implemented yet.
-    strncpy(measure->time, "12:00:00", 9);
-    strncpy(measure->date, "01/01/2020", 11);
+    strncpy(measure->time, GetCurrentHour(), 9);
+    strncpy(measure->date, GetCurrentDate(), 11);
 }
 
 //Class methods

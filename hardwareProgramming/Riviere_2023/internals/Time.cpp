@@ -15,7 +15,6 @@ RTCZero internalRtc;
 
 // Initialise the RTC module for the first time.
 void InitialiseRTC(/* Parameters */) {
-  // Todo
 }
 
 

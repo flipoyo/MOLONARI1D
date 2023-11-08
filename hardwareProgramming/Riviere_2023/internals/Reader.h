@@ -31,7 +31,7 @@ class Reader
         // Should be called before ReadMeasure().
         bool ThereIsDataNext();
 
-        ~Reader();
+        void Dispose();
 };
 
 #include "Reader.cpp"

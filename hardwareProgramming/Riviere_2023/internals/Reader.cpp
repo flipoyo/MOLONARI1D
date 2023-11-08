@@ -77,7 +77,7 @@ bool Reader::ThereIsDataNext() {
     return this->file.available();
 }
 
-Reader::~Reader()
+void Reader::Dispose()
 {
     this->file.close();
 }
