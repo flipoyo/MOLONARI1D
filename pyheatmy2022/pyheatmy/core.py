@@ -675,7 +675,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         name_layer = [all_priors.sample()[i].name for i in range(nb_layer)]
         z_low = [all_priors.sample()[i].zLow for i in range(nb_layer)]
 
-        # stockage pour le burn-in, supprimé par la suite
         _temp_act = np.zeros(
             (nb_chain, nb_cells, len(self._times)), np.float32
         )
@@ -823,15 +822,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 break  # on sort du burn-in
             nb_burn_in_iter += 1  # incrémentation du numbre d'itération de burn-in
 
+        self.nb_burn_in_iter = nb_burn_in_iter
+
         # Transition après le burn in
         _params = np.zeros(
             (nb_iter + 1, nb_chain, nb_layer, nb_param)
         )  # réinitialisation des paramètres
         _params[0] = X  # initialisation des paramètres
-
-        _flows = np.zeros(
-            (nb_iter + 1, nb_chain, nb_cells, len(self._times))
-        )  # initisaliton du flow
 
         # Préparation du sous-échantillonnage
         n_sous_ech_space = 4 # Une mesure conservée pour 2 cm
@@ -839,6 +836,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_cells_sous_ech = int( np.ceil(nb_cells / n_sous_ech_space) )
         nb_times_sous_ech = int( np.ceil(len(self._times) / n_sous_ech_time) )
 
+        # Flux sous-échantillonnés
+        _flows = np.zeros(
+            (nb_iter + 1, nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
+        )  # initisaliton des flux
+
+        # _flows[0] = ...
+
+        _flow_act = np.zeros((nb_cells, len(self._times)))
+        _flow_old = np.zeros((nb_chain, nb_cells, len(self._times)))
 
         _temp = np.zeros((nb_iter+1, nb_chain, nb_cells_sous_ech, nb_times_sous_ech), np.float32)
         _temp[0] = _temp_act[:, ::n_sous_ech_space, ::n_sous_ech_time]  # initialisation des températures sous-échantillonnées
@@ -913,10 +919,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 # Acceptation ou non des nouveaux paramètres
                 if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
                     X_new[j] = x_new
+
                     _temp_old[j] = _temp_act[j]
                     _temp_act[j] = temp_new
                     _temp[i + 1][j] = temp_new[::n_sous_ech_space, ::n_sous_ech_time]
-                    _flows[i + 1][j] = self.get_flows_solve()
+
+                    _flow_old[j] = _flow_act
+                    _flow_act = self.get_flows_solve()
+                    _flows[i+1, j] = _flow_act[::n_sous_ech_space, ::n_sous_ech_time]
+
                     _energy[i + 1][j] = energy_new
                     nb_accepted += 1
                     self._states.append(
@@ -930,9 +941,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 else:
                     dX = np.zeros((nb_layer, nb_param))
                     X_new[j] = X[j]
+                    y = _temp_act[j] # Variable d'échange
                     _temp_act[j] = _temp_old[j]
+                    _temp_old[j] = y
                     _temp[i + 1][j] = _temp_old[j][::n_sous_ech_space, ::n_sous_ech_time]
-                    _flows[i + 1][j] = _flows[i - 1][j]
+
+                    y = _flow_old[j] # Variable d'échange
+                    _flow_act = _flow_old[j]
+                    _flow_old[j] = y
+                    _flows[i+1, j] = _flow_act[::n_sous_ech_space, ::n_sous_ech_time]
+
                     _energy[i + 1][j] = _energy[i - 1][j]
                     self._states.append(
                         State(
@@ -957,13 +975,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # Calcul des quantiles pour la température
         _temp = _temp.reshape((nb_iter + 1) * nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
-        _flows = _flows.reshape((nb_iter + 1) * nb_chain, nb_cells, len(self._times))
+        _flows = _flows.reshape((nb_iter + 1) * nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
 
         self._quantiles_temps = {
             quant: res
             for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
         }
-
+        print("j'ai calculé les quantiles de température")
         self._quantiles_flows = {
             quant: res
             for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
