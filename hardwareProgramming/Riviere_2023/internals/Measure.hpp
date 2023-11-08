@@ -11,10 +11,10 @@ class Measure {
     unsigned int id;
     char date[11];
     char time[9];
-    unsigned short mesure1;
-    unsigned short mesure2;
-    unsigned short mesure3;
-    unsigned short mesure4;
+    MEASURE_T mesure1;
+    MEASURE_T mesure2;
+    MEASURE_T mesure3;
+    MEASURE_T mesure4;
 };
 
 #endif

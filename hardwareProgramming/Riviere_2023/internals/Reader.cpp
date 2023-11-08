@@ -20,7 +20,7 @@ Measure Reader::StringToMeasure(String line){
     switch (i)
     {
     case 0:
-      measure.id = token.toRealNumber();
+      measure.id = token.TO_MEASURE_T();
       break;
     case 1:
       strncpy(measure.date, token.c_str(), 11);
@@ -29,16 +29,16 @@ Measure Reader::StringToMeasure(String line){
       strncpy(measure.time, token.c_str(), 9);
       break;
     case 3:
-      measure.mesure1 = token.toRealNumber();
+      measure.mesure1 = token.TO_MEASURE_T();
       break;
     case 4:
-      measure.mesure2 = token.toRealNumber();
+      measure.mesure2 = token.TO_MEASURE_T();
       break;
     case 5:
-      measure.mesure3 = token.toRealNumber();
+      measure.mesure3 = token.TO_MEASURE_T();
       break;
     case 6:
-      measure.mesure4 = token.toRealNumber();
+      measure.mesure4 = token.TO_MEASURE_T();
       break;
     default:
       break;
@@ -73,7 +73,7 @@ Measure Reader::ReadMeasure() {
 
 }
 
-bool Reader::ThereIsDataNext() {
+bool Reader::IsDataAvailable() {
     return this->file.available();
 }
 

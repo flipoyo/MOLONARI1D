@@ -1,8 +1,10 @@
-#include "Measure.h"
 
 // Check that the file has not been imported before
 #ifndef WRITER_CLASS_H
 #define WRITER_CLASS_H
+
+#include <SD.h>
+#include "Measure.h"
 
 class Writer
 {

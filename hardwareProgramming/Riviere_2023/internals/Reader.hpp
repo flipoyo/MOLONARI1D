@@ -1,9 +1,11 @@
-#include <String.h>
-#include "Measure.h"
 
 // Check that the file has not been imported before
 #ifndef READER_CLASS_H
 #define READER_CLASS_H
+
+#include <SD.h>
+#include "Measure.hpp"
+
 
 class Reader
 {
@@ -29,7 +31,7 @@ class Reader
 
         // Check if there are still lines to read.
         // Should be called before ReadMeasure().
-        bool ThereIsDataNext();
+        bool IsDataAvailable();
 
         ~Reader();
 };
