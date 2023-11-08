@@ -59,3 +59,9 @@ class DialogOpenDatabase(QtWidgets.QDialog,From_DialogOpenDatabase):
             return createDir, True, newDirName
         else:
             return existingDir, False, ""
+        
+    def reject(self):
+        self.close()
+        
+    def closeEvent(self,event):
+        self.close()

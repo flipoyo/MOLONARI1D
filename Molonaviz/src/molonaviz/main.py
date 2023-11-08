@@ -27,12 +27,12 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
     """
     The main window of the Molonaviz application.
     """
-    def __init__(self,messagethread : QtCore.QThread):
+    def __init__(self):
         # Call constructor of parent classes
         super(MainWindow, self).__init__()
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
-        self.messagethread = messagethread
+        
 
         #Setup the views
         self.thermoView = ThermometerTreeView(None)
@@ -51,6 +51,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         #TODO: models for psensors and others.
         #Connect the actions to the appropriate slots
+        self.actionOpen_Database.triggered.connect(self.openDatabase)
         self.pushButtonClear.clicked.connect(self.clearText)
         self.actionImportLab.triggered.connect(self.importLab)
         self.actionAboutMolonaViz.triggered.connect(self.aboutUs)
@@ -67,7 +68,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitchToTabbedView.triggered.connect(self.switchToTabbedView)
         self.actionSwitchToSubWindowView.triggered.connect(self.switchToSubWindowView)
         self.actionSwitchToCascadeView.triggered.connect(self.switchToCascadeView)
-        self.actionChangeDatabase.triggered.connect(self.closeDatabase)
+        self.actionChangeDatabase.triggered.connect(self.changeDatabase)
 
         self.treeViewDataSPoints.doubleClicked.connect(self.openSPointFromDock)
 
@@ -80,36 +81,47 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         sys.stdout = InterceptOutput(self.messageQueue)
 
         self.con = None #Connection to the database
-        self.openDatabase()
+        
 
-        self.study_lab_manager = StudyAndLabManager(self.con)
+        '''self.study_lab_manager = StudyAndLabManager(self.con)
         self.currentStudy = None
-        self.currentLab = None
+        self.currentLab = None'''
 
-    def openDatabase(self):
+    def openDatabase(self,change : bool = False,result=None,dialog=None):
         """
         If the user has never opened the database of if the config file is not valid (as a reminder, config is a text document containing the path to the database), display a dialog so the user may choose th e database directory.
         Then, open the database in the directory.
         """
+        self.change = change
         databaseDir = None
         createNewDatabase = False
         newDatabaseName = ""
         remember = False
+        if result is not None :
+            self.result = result
+            self.dialog = dialog
         try:
             with open(os.path.join(os.path.dirname(__file__),'config.txt')) as f:
                 databaseDir = f.readline()
         except OSError:
             #The config file does not exist.
-            dlg = DialogOpenDatabase()
-            dlg.setWindowModality(QtCore.Qt.ApplicationModal)
-            res = dlg.exec()
-            if res == QtWidgets.QDialog.Accepted:
-                databaseDir, createNewDatabase, newDatabaseName = dlg.getDir()
-                remember = dlg.checkBoxRemember.isChecked()
-            else:
-                #If the user cancels or quits the dialog, quit Molonaviz.
-                #This is a bit brutal. Maybe there can be some other way to quit via Qt: the problem is that, at this point in the script, the app (QtWidgets.QApplication) has not been executed yet.
-                sys.exit()
+            if self.change == False :
+                dlg = DialogOpenDatabase()
+                dlg.setWindowModality(QtCore.Qt.ApplicationModal)
+                res = dlg.exec()
+                if res == QtWidgets.QDialog.Accepted:
+                    databaseDir, createNewDatabase, newDatabaseName = dlg.getDir()
+                    remember = dlg.checkBoxRemember.isChecked()
+                else:
+                    dlg.close()
+            else :
+                if self.result == QtWidgets.QDialog.Accepted:
+                    databaseDir, createNewDatabase, newDatabaseName = self.dialog.getDir()
+                    remember = self.dialog.checkBoxRemember.isChecked()
+                else :
+                    self.dialog.close()
+                    
+
 
         #Now create or check the integrity of the folder given by databaseDir
         if createNewDatabase:
@@ -119,7 +131,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 databaseDir = os.path.join(databaseDir, newDatabaseName)
             else:
                 displayCriticalMessage(f"Something went wrong when creating the directory and the database creation was aborted.\nPlease make sure a directory with the name {newDatabaseName} does not already exist at path {databaseDir}")
-                self.openDatabase()
+                self.openDatabase(self.change)
         else:
             #Check if the folder has the correct format
             if not checkDbFolderIntegrity(databaseDir):
@@ -128,7 +140,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 configPath = os.path.join(os.path.dirname(__file__),'config.txt')
                 if os.path.isfile(configPath):
                     os.remove(configPath)
-                self.openDatabase()
+                self.openDatabase(self.change)
 
         #Now, databaseDir is the path to a valid folder containing a database. Open it!
         databaseFile = os.path.join(databaseDir,"Molonari.sqlite")
@@ -142,6 +154,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             with open(os.path.join(os.path.dirname(__file__),'config.txt'), 'w') as f:
                 #Write (or overwrite) the path to the database file
                 f.write(databaseDir)
+        
+        self.study_lab_manager = StudyAndLabManager(self.con)
+        self.currentStudy = None
+        self.currentLab = None
 
     def showDatabaseName(self):
         """
@@ -194,6 +210,25 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.psensorView.subscribe_model(None)
         self.shaftView.subscribe_model(None)
         self.spointView.subscribe_model(None)
+    
+    def changeDatabase(self):
+        if self.con is not None:
+            ancient_con = self.con
+        dialog = DialogOpenDatabase()
+        dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+        dialog.open()
+        res = dialog.exec()
+        self.closeDatabase()
+        if res != QtWidgets.QDialog.Accepted :    
+            self.con = ancient_con
+            dialog.close()
+            self.showDatabaseName()
+        else :
+            self.openDatabase(True,result=res,dialog=dialog)
+
+
+
+
 
 
     def closeDatabase(self):
@@ -217,7 +252,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         if os.path.isfile(os.path.join(os.path.dirname(__file__),'config.txt')):
             os.remove(os.path.join(os.path.dirname(__file__),'config.txt'))
 
-        self.openDatabase()
 
     def importLab(self):
         """
@@ -450,9 +484,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         Close the database when user quits the app.
         """
         try:
-            if self.messagethread.isRunning():
-                self.messagethread.quit()
-                self.messagethread.wait()
             self.closeChildren()
             self.con.close()
             self.con = None
@@ -474,7 +505,7 @@ def main():
     # Create thread that will be used to display application messages.
     messageThread = QtCore.QThread()
 
-    mainWin = MainWindow(messageThread)
+    mainWin = MainWindow()
     mainWin.showMaximized()
 
     
