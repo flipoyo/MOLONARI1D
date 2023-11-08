@@ -688,9 +688,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temp_act = np.zeros(
             (nb_chain, nb_cells, len(self._times)), np.float32
         )
-        _temp_old = np.zeros(
-            (nb_chain, nb_cells, len(self._times)), np.float32
-        ) # Conservation du profil précédent
 
         _energy = np.zeros(nb_chain, np.float32)
 
@@ -747,6 +744,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             _energy[j] = compute_energy(
                 _temp_act[j][ind_ref, :], temp_ref, sigma2
             )
+        _temp_old = np.copy(_temp_act)
         _energy_old = np.copy(_energy) # Conservation du profil précédent
 
         print(f"Initialisation - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
@@ -863,19 +861,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_cells_sous_ech = int( np.ceil(nb_cells / n_sous_ech_space) )
         nb_times_sous_ech = int( np.ceil(len(self._times) / n_sous_ech_time) )
 
-        # Flux sous-échantillonnés
+        # Initialisation des flux
         _flows = np.zeros(
-            (nb_iter_sous_ech, nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
-        )  # initialisation des flux
-
-        # _flows[0] = ...
-
+            (nb_iter_sous_ech, nb_chain, nb_cells_sous_ech, nb_times_sous_ech), np.float32
+        ) # Flux sous-échantillonnés pour le calcul des quantiles
         _flow_act = np.zeros(
-            (nb_cells, len(self._times)), np.float32
-            )
-        _flow_old = np.zeros(
             (nb_chain, nb_cells, len(self._times)), np.float32
-            )
+            ) # Flux à l'itération MCMC actuelle
+        for j in range(nb_chain):
+            _flow_act[j] = self.get_flows_solve() # AJOUTER LES PARAMETRES QUAND LA FONCTION SERA IMPLEMENTEE !
+        _flow_old = np.copy(_flow_act) # Conservation du profil précédent
+        _flows[0] = _flow_act[:, ::n_sous_ech_space, ::n_sous_ech_time]
 
         _temp = np.zeros(
             (nb_iter_sous_ech, nb_chain, nb_cells_sous_ech, nb_times_sous_ech), np.float32
@@ -957,14 +953,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     _temp_old[j] = _temp_act[j]
                     _temp_act[j] = temp_new
 
-                    _flow_old[j] = _flow_act
-                    _flow_act = self.get_flows_solve()
+                    _flow_old[j] = _flow_act[j]
+                    _flow_act[j] = self.get_flows_solve()
 
                     if (i+1) % n_sous_ech_iter == 0: 
                         # Si i+1 est un multiple de n_sous_ech_iter, on stocke
                         k = (i+1) // n_sous_ech_iter
                         _temp[k, j] = temp_new[::n_sous_ech_space, ::n_sous_ech_time]
-                        _flows[k, j] = _flow_act[::n_sous_ech_space, ::n_sous_ech_time]
+                        _flows[k, j] = _flow_act[j, ::n_sous_ech_space, ::n_sous_ech_time]
 
                     _energy_old[j] = _energy[j]
                     _energy[j] = energy_new
@@ -982,19 +978,19 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         (nb_layer, nb_param), np.float32
                         )
                     X_new[j] = X[j]
-                    y = _temp_act[j] # Variable d'échange
+                    exchange_var = _temp_act[j] # Variable d'échange
                     _temp_act[j] = _temp_old[j]
-                    _temp_old[j] = y
+                    _temp_old[j] = exchange_var
 
-                    y = _flow_act[j] # Variable d'échange
-                    _flow_act = _flow_old[j]
-                    _flow_old[j] = y
+                    exchange_var = _flow_act[j] # Variable d'échange
+                    _flow_act[j] = _flow_old[j]
+                    _flow_old[j] = exchange_var
 
                     if (i+1) % n_sous_ech_iter == 0:
                         # Si i+1 est un multiple de n_sous_ech_iter, on stocke
                         k = (i+1) // n_sous_ech_iter
                         _temp[k, j] = _temp_act[j][::n_sous_ech_space, ::n_sous_ech_time]
-                        _flows[k, j] = _flow_act[::n_sous_ech_space, ::n_sous_ech_time]
+                        _flows[k, j] = _flow_act[j, ::n_sous_ech_space, ::n_sous_ech_time]
 
                     exchange_var = _energy[j]
                     _energy[j] = _energy_old[j]
