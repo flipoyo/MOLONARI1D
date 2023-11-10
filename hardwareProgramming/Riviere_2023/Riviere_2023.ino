@@ -22,6 +22,7 @@ Arduino MKR WAN 1310
 #include "internals/Time.cpp"
 #include "internals/Internal_Log_Initializer.cpp"
 #include "internals/Writer.hpp"
+// #include "internals/FreeMemory.cpp"
 
 const int CSPin = 6;
 Writer writer;
@@ -30,24 +31,26 @@ TemperatureSensor tempSensor2(A2, 2);
 TemperatureSensor tempSensor3(A3, 3);
 TemperatureSensor tempSensor4(A4, 4);
 
+int i =0;
+
 
 void setup() {
   // Initialise Serial
-  Serial.begin(9600);
-  while(!Serial) {}
+  // Serial.begin(9600);
+  // while(!Serial) {}
 
   // Initialise LoRa
-  Serial.println("Initialising LoRa");
+  // Serial.println("Initialising LoRa");
   InitialiseLora();
-  Serial.println("Done");
+  // Serial.println("Done");
 
   // Initialise SD Card
-  Serial.println("Initialising SD card");
+  // Serial.println("Initialising SD card");
   bool success = InitialiseLog(CSPin);
   if (success) {
-    Serial.println("Done successfully");
+    // Serial.println("Done successfully");
   } else {
-    Serial.println("Failed to initialise SD");
+    // Serial.println("Failed to initialise SD");
     noInterrupts();
     while(true) {}
   }
@@ -59,13 +62,15 @@ void setup() {
 }
 
 void loop() {
+  i++;
+  // Serial.println(i);
 
   TEMP_T temp1 = tempSensor1.MeasureTemperature();
   TEMP_T temp2 = tempSensor2.MeasureTemperature();
   TEMP_T temp3 = tempSensor3.MeasureTemperature();
   TEMP_T temp4 = tempSensor4.MeasureTemperature();
-  
-  Serial.println(String(temp1) + "   " + String(temp2) + "   " + String(temp3) + "   " + String(temp4) + "   ");  
+
+  // Serial.println(String(temp1) + "   " + String(temp2) + "   " + String(temp3) + "   " + String(temp4) + "   ");  
   noInterrupts();
   writer.LogData(temp1, temp2, temp3, temp4);
   interrupts();
