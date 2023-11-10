@@ -37,10 +37,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                 for col in range(num_cols):
                     valeur = self.params[row].index(0, col).data()
                     self.input[row].append(valeur)
-                
-
         
-
+        self.inputMCMC = spointcoordinator.get_params_MCMC_model()
+        
         #Prevent the user from writing something in the spin box.
         self.spinBoxNLayersDirect.lineEdit().setReadOnly(True)
         #Resize the table's headers
@@ -48,15 +47,25 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         self.spinBoxNLayersDirect.valueChanged.connect(self.updateNBLayers)
         self.pushButtonRestoreDefault.clicked.connect(self.setDefaultValues)
+        self.pushButtonRestoreDefault.clicked.connect(self.setDefaultValuesMCMC)
         self.pushButtonRun.clicked.connect(self.run)
         self.tableWidget.itemChanged.connect(self.SaveInput)
-
+        self.rejected.connect(self.save_input_MCMC)
+        self.accepted.connect(self.save_input_MCMC)
+        
         self.groupBoxMCMC.setChecked(False)
 
         if (self.input == []) or (self.input[0] == []) or (self.input[0][3] is None):
             self.setDefaultValues()
         else:
             self.InitValues()
+
+        if self.inputMCMC == []:
+            self.setDefaultValuesMCMC()
+        else:
+            self.InitValuesMCMC()
+
+        
 
         self.interaction_occurred = True
 
@@ -80,31 +89,34 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
 
 
-        self.lineEditChains.setText("10")
-        self.lineEditDelta.setText("3")
-        self.lineEditncr.setText("3")
-        self.lineEditc.setText("0.1")
-        self.lineEditcstar.setText("1e-6")
+    def InitValuesMCMC(self):
+
+        self.lineEditMaxIterMCMC.setText(str(self.inputMCMC[0]))
+
+        self.lineEditChains.setText(str(self.inputMCMC[1]))
+        self.lineEditDelta.setText(str(self.inputMCMC[2]))
+        self.lineEditncr.setText(str(self.inputMCMC[3]))
+        self.lineEditc.setText(str(self.inputMCMC[4]))
+        self.lineEditcstar.setText(str(self.inputMCMC[5]))
 
         #MCMC
-        self.lineEditMaxIterMCMC.setText("5000")
-        self.lineEditKMin.setText("4")
-        self.lineEditKMax.setText("9")
-        self.lineEditMoinsLog10KSigma.setText("0.01")
+        self.lineEditKMin.setText(str(self.inputMCMC[6]))
+        self.lineEditKMax.setText(str(self.inputMCMC[7]))
+        self.lineEditMoinsLog10KSigma.setText(str(self.inputMCMC[8]))
 
-        self.lineEditPorosityMin.setText("0.01")
-        self.lineEditPorosityMax.setText("0.25")
-        self.lineEditPorositySigma.setText("0.01")
+        self.lineEditPorosityMin.setText(str(self.inputMCMC[9]))
+        self.lineEditPorosityMax.setText(str(self.inputMCMC[10]))
+        self.lineEditPorositySigma.setText(str(self.inputMCMC[11]))
 
-        self.lineEditThermalConductivityMin.setText("1")
-        self.lineEditThermalConductivityMax.setText("5")
-        self.lineEditThermalConductivitySigma.setText("0.05")
+        self.lineEditThermalConductivityMin.setText(str(self.inputMCMC[12]))
+        self.lineEditThermalConductivityMax.setText(str(self.inputMCMC[13]))
+        self.lineEditThermalConductivitySigma.setText(str(self.inputMCMC[14]))
 
-        self.lineEditThermalCapacityMin.setText("1e6")
-        self.lineEditThermalCapacityMax.setText("1e7")
-        self.lineEditThermalCapacitySigma.setText("100")
+        self.lineEditThermalCapacityMin.setText(str(self.inputMCMC[15]))
+        self.lineEditThermalCapacityMax.setText(str(self.inputMCMC[16]))
+        self.lineEditThermalCapacitySigma.setText(str(self.inputMCMC[17]))
 
-        self.lineEditQuantiles.setText("0.05,0.5,0.95")
+        self.lineEditQuantiles.setText(str(self.inputMCMC[18]))
 
 
     def SaveInput(self):
@@ -153,7 +165,12 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setItem(0, 3, QTableWidgetItem(str(self.input[0][2])))
         self.tableWidget.setItem(0, 4, QTableWidgetItem(str('{:.2e}'.format(self.input[0][3]))))
 
-        #MCMC
+    def setDefaultValuesMCMC(self):
+        """
+        Set the default values in the tables for both the direct model and the MCMC
+        """
+
+     
         self.lineEditMaxIterMCMC.setText("5000")
 
         self.lineEditChains.setText("10")
@@ -179,8 +196,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditThermalCapacitySigma.setText("100")
 
         self.lineEditQuantiles.setText("0.05,0.5,0.95")
-
-        self.SaveInput()
 
     def updateNBLayers(self, nb_layers : int):
         """
@@ -251,6 +266,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         """
         Return the values entered by the user for MCMC computation.
         """
+        self.save_input_MCMC()
         nb_iter = int(self.lineEditMaxIterMCMC.text())
         nb_cells = self.spinBoxNCellsDirect.value()
 
@@ -299,3 +315,34 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = [float(quantile) for quantile in quantiles]
 
         return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar
+
+    def save_input_MCMC(self):
+        nb_iter = int(self.lineEditMaxIterMCMC.text())
+        nb_chains = int(self.lineEditChains.text())
+        delta = float(self.lineEditDelta.text())
+        ncr = float(self.lineEditncr.text())
+        c = float(self.lineEditc.text())
+        cstar = float(self.lineEditcstar.text())
+
+        #The user's input is not a permeability but a -log10(permeability)
+        moins10logKmin = float(self.lineEditKMin.text())
+        moins10logKmax = float(self.lineEditKMax.text())
+        moins10logKsigma = float(self.lineEditMoinsLog10KSigma.text())
+
+        nmin = float(self.lineEditPorosityMin.text())
+        nmax = float(self.lineEditPorosityMax.text())
+        nsigma = float(self.lineEditPorositySigma.text())
+
+        lambda_s_min = float(self.lineEditThermalConductivityMin.text())
+        lambda_s_max = float(self.lineEditThermalConductivityMax.text())
+        lambda_s_sigma = float(self.lineEditThermalConductivitySigma.text())
+
+        rhos_cs_min = float(self.lineEditThermalCapacityMin.text())
+        rhos_cs_max = float(self.lineEditThermalCapacityMax.text())
+        rhos_cs_sigma = float(self.lineEditThermalCapacitySigma.text())
+
+        quantiles = self.lineEditQuantiles.text()
+
+        params = [nb_iter, nb_chains, delta, ncr, c, cstar, moins10logKmin, moins10logKmax, moins10logKsigma, nmin, nmax, nsigma, lambda_s_min, lambda_s_max, lambda_s_sigma, rhos_cs_min, rhos_cs_max, rhos_cs_sigma, quantiles]
+
+        self.compute.save_params_MCMC(params)

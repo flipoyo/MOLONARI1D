@@ -102,6 +102,22 @@ class SPointCoordinator:
         self.paramsModel.setQuery(select_params)
         return self.paramsModel
 
+    def get_params_MCMC_model(self):
+        """
+        Return a list of parameters for MCMC.
+        """
+        select_params = self.build_params_MCMC_query()
+        select_params.exec()
+        
+        params = []
+
+        if select_params.next():  # Check if there is at least one row
+            for column_index in range(19):
+                params.append(select_params.value(column_index))
+
+        return params
+
+
     def get_table_model(self, raw_measures : bool):
         """
         Return a model with all direct information from the database.
@@ -449,6 +465,17 @@ class SPointCoordinator:
             ON Parameters.PointKey = Point.ID
             WHERE Point.ID = {self.pointID}
             AND Layer.Depth = {depth}
+        """)
+        return query
+    
+    def build_params_MCMC_query(self):
+        """
+        Build and return the parameters for MCMC.
+        """
+        query = QSqlQuery(self.con)
+        query.prepare("""
+            SELECT Niter, Delta, Nchains,NCR, C, Cstar, Kmin, Kmax, Ksigma,PorosityMin, PorosityMax, PorositySigma,
+       TcondMin, TcondMax, TcondSigma, TcapMin, TcapMax, TcapSigma, Quantiles FROM InputMCMC
         """)
         return query
 

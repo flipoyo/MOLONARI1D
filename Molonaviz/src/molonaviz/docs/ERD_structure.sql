@@ -4,8 +4,11 @@ BEGIN TRANSACTION;
 -- Table: BestParameters
 CREATE TABLE BestParameters (ID INTEGER PRIMARY KEY AUTOINCREMENT, Permeability REAL, Porosity REAL, ThermConduct REAL, Capacity REAL, Layer INTEGER REFERENCES Layer (ID), PointKey INTEGER REFERENCES Point (ID));
 
--- Table: BestParameters
+-- Table: Parameters
 CREATE TABLE Parameters (ID INTEGER PRIMARY KEY AUTOINCREMENT, Permeability REAL, Porosity REAL, ThermConduct REAL,  Capacity REAL, Layer INTEGER REFERENCES Layer (ID), PointKey INTEGER REFERENCES Point (ID));
+
+-- Table: InputParametersMCMC
+CREATE TABLE InputMCMC (ID INTEGER PRIMARY KEY AUTOINCREMENT, Niter INT, Delta INT, Nchains INT, NCR INT, C REAL, Cstar REAL, Kmin REAL, Kmax REAL, Ksigma REAL, PorosityMin REAL, PorosityMax REAL, PorositySigma REAL, TcondMin REAL, TcondMax REAL, TcondSigma REAL, TcapMin REAL, TcapMax REAL, TcapSigma REAL, Quantiles TEXT, PointKey INTEGER REFERENCES Point (ID));
 
 -- Table: CleanedMeasures
 CREATE TABLE CleanedMeasures (ID INTEGER PRIMARY KEY AUTOINCREMENT, Date INTEGER REFERENCES Date (ID), TempBed REAL NOT NULL, Temp1 REAL NOT NULL, Temp2 REAL NOT NULL, Temp3 REAL NOT NULL, Temp4 REAL NOT NULL, Pressure REAL NOT NULL, PointKey INTEGER REFERENCES Point (ID));

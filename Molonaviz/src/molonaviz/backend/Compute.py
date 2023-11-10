@@ -178,7 +178,46 @@ class Compute(QtCore.QObject):
             insertparams.bindValue(":Layer", insertlayer.lastInsertId())
             insertparams.exec()
         self.con.commit()
+    
+    def save_params_MCMC(self, data : list[list]):
+        """
+        Save the parameters distribution in the database.
 
+        """
+        clear_layer_query = QSqlQuery(self.con)
+        clear_layer_query.exec("DELETE FROM InputMCMC")
+
+        insertparams = QSqlQuery(self.con)
+        insertparams.prepare(f"""INSERT INTO InputMCMC (Niter , Delta , Nchains ,NCR, C , Cstar , Kmin , Kmax, Ksigma , PorosityMin , PorosityMax ,
+                              PorositySigma , TcondMin , TcondMax , TcondSigma , TcapMin , TcapMax , TcapSigma , Quantiles, PointKey)
+                           VALUES (:Niter , :Delta , :Nchains ,:NCR, :C , :Cstar , :Kmin , :Kmax, :Ksigma , 
+                             :PorosityMin , :PorosityMax , :PorositySigma , :TcondMin , :TcondMax ,
+                              :TcondSigma , :TcapMin , :TcapMax , :TcapSigma , :Quantiles , :PointKey)""")
+        insertparams.bindValue(":PointKey", self.pointID)
+
+        self.con.transaction()
+        insertparams.bindValue(":Niter", data[0])
+        insertparams.bindValue(":Delta", data[1])
+        insertparams.bindValue(":Nchains", data[2])
+        insertparams.bindValue(":NCR", data[3])
+        insertparams.bindValue(":C", data[4])
+        insertparams.bindValue(":Cstar", data[5])
+        insertparams.bindValue(":Kmin", data[6])
+        insertparams.bindValue(":Kmax", data[7])
+        insertparams.bindValue(":Ksigma", data[8])
+        insertparams.bindValue(":PorosityMin", data[9])
+        insertparams.bindValue(":PorosityMax", data[10])
+        insertparams.bindValue(":PorositySigma", data[11])
+        insertparams.bindValue(":TcondMin", data[12])
+        insertparams.bindValue(":TcondMax", data[13])
+        insertparams.bindValue(":TcondSigma", data[14])
+        insertparams.bindValue(":TcapMin", data[15])
+        insertparams.bindValue(":TcapMax", data[16])
+        insertparams.bindValue(":TcapSigma", data[17])
+        insertparams.bindValue(":Quantiles", data[18])
+        insertparams.exec()
+        self.con.commit()
+        
     def save_direct_model_results(self, save_dates = True):
         """
         Query the database and save the direct model results.
@@ -291,6 +330,7 @@ class Compute(QtCore.QObject):
         insertRMSE.bindValue(":RMSETotal", float(computedRMSE[3]))
         insertRMSE.exec()
         self.con.commit()
+
 
     def compute_MCMC(self, nb_iter: int, all_priors : list, nb_cells: str, quantiles: tuple, nb_chains: int, delta: float, ncr, c, cstar):
         """
