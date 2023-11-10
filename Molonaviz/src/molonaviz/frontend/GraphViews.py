@@ -352,7 +352,7 @@ class WaterFluxView(GraphView1D):
     """
     Concrete class for the water flux as a function of time.
     """
-    def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="", ylabel="Water flow  (m/s)", xlabel=""):
+    def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="Water flow (m/s)", ylabel="Water flow  (m/s)", xlabel=""):
         super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
 
     def retrieveData(self):
