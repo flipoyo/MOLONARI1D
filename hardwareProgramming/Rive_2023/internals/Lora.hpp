@@ -26,7 +26,7 @@ void (*onGetMeasureCallback)(Measure);
 // ----- Data type -----
 
 // Represents a type of LoRa request
-enum RequestType : char {
+enum RequestType : uint8_t {
   // Request data (ie measurements)
   DT_REQ = 0x01,
   // Reply data (ie send measurements)
