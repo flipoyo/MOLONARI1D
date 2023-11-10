@@ -26,6 +26,7 @@
 
 // Initialise the lora module for the first time. Call before any other LoRa function
 void InitialiseLora(float frequency) {
+  _frequency = frequency;
   LoRa.begin(frequency);
 
   LoRa.enableCrc();
@@ -37,14 +38,20 @@ void InitialiseLora(float frequency) {
 
 // Temporarily disable the LoRa module to save battery. It can be waken up with WakeUpLora
 void SleepLora() {
-  LoRa.sleep();
+  LoRa.end();
+
+  // Disable the LoRa module to save battery
+  // Note : this also resets all the settings of the module
+  pinMode(LORA_RESET, OUTPUT);
+  digitalWrite(LORA_RESET, LOW);
 }
 
 
 // Re-enable the LoRa module if it was asleep. I.E. Exit low-power mode for the LoRa module
 void WakeUpLora() {
   // TODO : test that this works
-  LoRa.receive();
+  // Re-initialise the LoRa module since it has been reset
+  InitialiseLora(_frequency);
 }
 
 
