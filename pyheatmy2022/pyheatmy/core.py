@@ -646,6 +646,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ncr=3,
         c=0.1,
         c_star=1e-6,
+        remanence=3600*24
     ):
         # vérification des types des arguments
         if isinstance(quantile, Number):
@@ -704,7 +705,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # stockage des résultats
         self._states = list()  # stockage des états à chaque itération
         self._acceptance = np.zeros(
-            (nb_iter, nb_chain)
+            (nb_chain,)
         )  # stockage des taux d'acceptation
 
         _params = np.zeros(
@@ -741,7 +742,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             _temp_act[i] = self.get_temps_solve()
             _energy_burn_in[0][i] = compute_energy(
-                _temp_act[i][ind_ref, :], temp_ref, sigma2
+                _temp_act[i][ind_ref], temp_ref, sigma2,remanence
             )
 
         if verbose:
@@ -789,7 +790,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     self.get_temps_solve()
                 )  # récupération du profil de température
                 energy_new = compute_energy(
-                    temp_new[ind_ref, :], temp_ref, sigma2
+                    temp_new[ind_ref], temp_ref, sigma2, remanence
                 )  # calcul de l'énergie
 
                 # calcul de la probabilité d'accpetation
@@ -923,7 +924,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     self.get_temps_solve()
                 )  # récupération du profil de température
                 energy_new = compute_energy(
-                    temp_new[ind_ref, :], temp_ref, sigma2
+                    temp_new[ind_ref], temp_ref, sigma2, remanence
                 )  # calcul de l'énergie
 
                 # calcul de la probabilité d'accpetation
@@ -943,6 +944,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                     _energy[i + 1][j] = energy_new
                     nb_accepted += 1
+                    self._acceptance[j] += 1
                     self._states.append(
                         State(
                             layers=convert_to_layer(nb_layer, name_layer, z_low, x_new),
@@ -973,9 +975,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                             sigma2_temp=sigma2,
                         )
                     )  # ajout de l'état à la liste des états
-                self._acceptance[i, j] = nb_accepted / (
-                    i * 10 + j + 1
-                )  # mise à jour des taux d'acceptation
+                # self._acceptance[i, j] = nb_accepted / (
+                #     i * 10 + j + 1
+                # )  # mise à jour des taux d'acceptation
 
                 # Mise à jour des paramètres de la couche j pour DREAM
                 for l in range(nb_layer):
@@ -999,6 +1001,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             quant: res
             for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
         }
+
+        self._acceptance = self._acceptance / nb_iter
 
         if verbose:
             print("Quantiles computed")
@@ -1027,6 +1031,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         verbose=True,  # affiche texte explicatifs ou non
         sigma2=1.0,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
+        remanence=3600*24
     ):
         if nb_chain < 2:
             if sigma2 is None:
@@ -1050,6 +1055,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 ncr,
                 c,
                 cstar,
+                remanence
             )
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
