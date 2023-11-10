@@ -16,7 +16,7 @@ Arduino MKR WAN 1310
 #define LORA_DEBUG
 
 #include "internals/Lora.hpp"
-#include "internals/Low_Power.cpp"
+#include "internals/Low_Power.hpp"
 #include "internals/Pressure_Sensor.hpp"
 #include "internals/Temp_Sensor.hpp"
 #include "internals/Time.cpp"
@@ -69,6 +69,9 @@ void loop() {
   writer.LogData(temp1, temp2, temp3, temp4);
   interrupts();
 
-  
   delay(1000);
+
+  // Decoment to use low-power mode
+  // Warning : Low-power mode is not tested yet
+  //MyLowPower.Sleep(1000);
 }

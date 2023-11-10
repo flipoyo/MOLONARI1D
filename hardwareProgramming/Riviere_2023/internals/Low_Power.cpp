@@ -10,16 +10,8 @@
 #include "Lora.hpp"
 
 
-int pinModes[NUM_DIGITAL_PINS];
-
-
-void DisableAllIOPins();
-void EnableAllIOPins();
-int GetPinMode(uint8_t pin);
-
-
 // Switch to low-power mode for a given amount of time (in milli-seconds)
-void Sleep(uint32_t millis) {
+void MyLowPowerClass::Sleep(uint32_t millis) {
   // Disable all power-consuming features
   SleepLora();
   DisableAllIOPins();
@@ -32,8 +24,9 @@ void Sleep(uint32_t millis) {
   WakeUpLora();
 }
 
+
 // Disable all IO pins to save battery
-void DisableAllIOPins() {
+void MyLowPowerClass::DisableAllIOPins() {
   for (uint8_t pin = 0; pin < NUM_DIGITAL_PINS; pin++)
   {
     // Skip the reset pin as it has to remain an output low.
@@ -46,8 +39,9 @@ void DisableAllIOPins() {
   }
 }
 
+
 // Re-enable all IO pins, and sets them to their original mode
-void EnableAllIOPins() {
+void MyLowPowerClass::EnableAllIOPins() {
   for (uint8_t pin = 0; pin < NUM_DIGITAL_PINS; pin++)
   {
     pinMode(pin, pinModes[pin]);
@@ -56,8 +50,9 @@ void EnableAllIOPins() {
   // TODO : Is the original output still the same ?
 }
 
+
 // Get the pinMode of a given pin
-int GetPinMode(uint8_t pin)
+int MyLowPowerClass::GetPinMode(uint8_t pin)
 {
   // Check that the pin is valid
   if (pin >= NUM_DIGITAL_PINS) return (-1);
