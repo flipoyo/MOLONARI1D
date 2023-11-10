@@ -1,0 +1,7 @@
+Les données obtenues pour ce point entre le 02 mars 2022 à 15h00 et le 13 avril à 10h
+
+Sur les données de températures, on peut observer que le capteur numéro 3 est déficient avec une conversation à effectuer, reste à savoir laquelle. 
+Les données sont en Fahrenheit, l'IHM ne gère pas vraiment ce problème, il faut donc les convertir en degrés Celcius au préalable.
+
+Il y a des colonnes en trop (mais pas autant que pour les mesures du point numéro 2).
+Il faut enlever quelques mesures aberrantes au début et à la fin. 
