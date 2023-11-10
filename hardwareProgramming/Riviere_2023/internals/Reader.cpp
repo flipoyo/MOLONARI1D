@@ -22,7 +22,7 @@ Measure Reader::StringToMeasure(String line){
     switch (i)
     {
     case 0:
-      measure.id = token.TO_MEASURE_T();
+      measure.id = token.toInt();
       break;
     case 1:
       strncpy(measure.date, token.c_str(), 11);

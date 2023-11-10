@@ -13,7 +13,7 @@ Arduino MKR WAN 1310
 #define MEASURE_T double
 #define TO_MEASURE_T toDouble
 
-//#define LORA_DEBUG
+#define LORA_DEBUG
 
 #include "internals/Lora.hpp"
 #include "internals/Low_Power.cpp"
@@ -59,7 +59,6 @@ void setup() {
 }
 
 void loop() {
-
   TEMP_T temp1 = tempSensor1.MeasureTemperature();
   TEMP_T temp2 = tempSensor2.MeasureTemperature();
   TEMP_T temp3 = tempSensor3.MeasureTemperature();
