@@ -14,7 +14,7 @@ from .dialogsCleanup import DialogCleanup
 from .dialogCompute import DialogCompute
 from ..utils.get_files import get_ui_asset
 
-
+From_DisplayParameters = uic.loadUiType(get_ui_asset("DisplayParameters.ui"))[0]
 From_SamplingPointViewer = uic.loadUiType(get_ui_asset("SamplingPointViewer.ui"))[0]
 
 class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):

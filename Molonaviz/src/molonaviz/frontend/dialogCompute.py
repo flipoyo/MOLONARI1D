@@ -254,15 +254,13 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         nb_iter = int(self.lineEditMaxIterMCMC.text())
         nb_cells = self.spinBoxNCellsDirect.value()
 
-<<<<<<< HEAD
+
         nb_chains = int(self.lineEditChains.text())
         delta = int(self.lineEditDelta.text())
         ncr = int(self.lineEditncr.text())
         c = float(self.lineEditc.text())
         cstar = float(self.lineEditcstar.text())
 
-=======
->>>>>>> b96ea9a7ad1a3bb4836a439749af74d1c6564c34
         #The user's input is not a permeability but a -log10(permeability)
         moins10logKmin = float(self.lineEditKMin.text())
         moins10logKmax = float(self.lineEditKMax.text())
