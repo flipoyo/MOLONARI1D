@@ -24,7 +24,7 @@ TEMP_T TemperatureSensor::MeasureTemperature() {
   delay(50);
   TEMP_T temp = analogRead(dataPin);
   digitalWrite(enablePin, LOW);
-  return (temp*3.3/1024-0.5)*100;
+  return (temp*3.3/4096-0.5)*100;
 }
 
 #endif
