@@ -143,7 +143,7 @@ class StudyAndLabManager:
             insertPsensor.bindValue(":ThermoModel",thermo_model)
             insertPsensor.bindValue(":Labo",labID)
             insertPsensor.exec()
-        print("The thermometers have been added to the database.") #TODO: Maybe a little check before asserting this?
+        print("The pressure sensors have been added to the database.") #TODO: Maybe a little check before asserting this?
 
         insertShaft = self.build_insert_shaft()
         for df in shaftsDF:
