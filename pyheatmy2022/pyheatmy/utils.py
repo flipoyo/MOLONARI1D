@@ -11,6 +11,8 @@ from numpy import (
     array,
     shape,
 )
+import numpy as np
+
 from numpy.linalg import solve
 from numba import njit
 
@@ -40,6 +42,15 @@ def conv(layer):
 def compute_energy(temp1, temp2, sigma2: float):
     norm2 = nansum((temp1 - temp2) ** 2)
     return 0.5 * norm2 / sigma2
+
+
+def compute_energy_with_distrib(temp1, temp2, sigma2, sigma2_distrib):
+    norm2 = np.nansum((temp1 - temp2) ** 2)
+    return (
+        0.5 * norm2 / sigma2
+        + np.size(temp2) * np.log(sigma2) / 2
+        - np.log(sigma2_distrib(sigma2))
+    )
 
 
 def compute_log_acceptance(current_energy: float, prev_energy: float):
@@ -312,10 +323,10 @@ def compute_H_stratified(
 
     K_list = 10.0**-moinslog10K_list
     KsurSs_list = K_list / Ss_list
-    
-    K_list = 10.0 ** - moinslog10K_list
-    
-    KsurSs_list = K_list/Ss_list
+
+    K_list = 10.0**-moinslog10K_list
+
+    KsurSs_list = K_list / Ss_list
 
     # Check if dt is constant :
     if isdtconstant:  # dt is constant so A and B are constant

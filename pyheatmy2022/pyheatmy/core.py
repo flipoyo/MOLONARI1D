@@ -23,6 +23,7 @@ from .utils import (
     compute_T_stratified,
     conv,
     compute_energy,
+    compute_energy_with_distrib,
     compute_log_acceptance,
     convert_to_layer,
     check_range,
@@ -401,17 +402,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         if isinstance(quantile, Number):
             quantile = [quantile]
 
-        def conv(layer):
-            name, prof, priors = layer
-            if isinstance(priors, dict):
-                return (
-                    name,
-                    prof,
-                    [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)],
-                )
-            else:
-                return layer
-
         if not isinstance(all_priors, AllPriors):
             all_priors = AllPriors([LayerPriors(*conv(layer)) for layer in all_priors])
 
@@ -419,13 +409,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
         temp_ref = self._T_measures[:, :].T
-
-        def compute_energy(temp: np.array):
-            norm2 = np.nansum((temp - temp_ref) ** 2)
-            return 0.5 * norm2 / sigma2
-
-        def compute_log_acceptance(actual_energy: float, prev_energy: float):
-            return prev_energy - actual_energy
 
         if verbose:
             print(
@@ -448,7 +431,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             self._states.append(
                 State(
                     layers=init_layers,
-                    energy=compute_energy(self.temps_solve[ind_ref, :]),
+                    energy=compute_energy(
+                        self.temps_solve[ind_ref, :], temp_ref, sigma2
+                    ),
                     ratio_accept=1,
                     sigma2_temp=sigma2,
                 )
@@ -466,7 +451,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         for i in trange(nb_iter, desc="Mcmc Computation ", file=sys.stdout):
             current_layers = all_priors.perturb(self._states[-1].layers)
             self.compute_solve_transi(current_layers, nb_cells, verbose=False)
-            energy = compute_energy(self.temps_solve[ind_ref, :])
+            energy = compute_energy(self.temps_solve[ind_ref, :], temp_ref, sigma2)
             log_ratio_accept = compute_log_acceptance(energy, self._states[-1].energy)
             if np.log(random()) < log_ratio_accept:
                 nb_accepted += 1
@@ -526,17 +511,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
         temp_ref = self._T_measures[:, :].T
 
-        def compute_energy(temp: np.array, sigma2, sigma2_distrib):
-            norm2 = np.nansum((temp - temp_ref) ** 2)
-            return (
-                0.5 * norm2 / sigma2
-                + np.size(self._T_measures) * np.log(sigma2) / 2
-                - np.log(sigma2_distrib(sigma2))
-            )
-
-        def compute_log_acceptance(actual_energy: float, prev_energy: float):
-            return prev_energy - actual_energy
-
         if verbose:
             print(
                 "--- Compute Mcmc ---",
@@ -559,8 +533,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             self._states.append(
                 State(
                     layers=init_layers,
-                    energy=compute_energy(
+                    energy=compute_energy_with_distrib(
                         self.temps_solve[ind_ref, :],
+                        temp_ref,
                         sigma2=init_sigma2_temp,
                         sigma2_distrib=sigma2_temp_prior.density,
                     ),
@@ -584,8 +559,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 self._states[-1].sigma2_temp
             )
             self.compute_solve_transi(current_layers, nb_cells, verbose=False)
-            energy = compute_energy(
+            energy = compute_energy_with_distrib(
                 self.temps_solve[ind_ref, :],
+                temp_ref,
                 sigma2=current_sigma2_temp,
                 sigma2_distrib=sigma2_temp_prior.density,
             )
@@ -653,8 +629,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._real_z[-1] / nb_cells
         _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-        # temp_ref = self._T_measures[:, :].T
-        temp_ref = self.get_temps_solve()[ind_ref]
+        temp_ref = self._T_measures[:, :].T
+        # temp_ref = self.get_temps_solve()[ind_ref]
 
         # quantité des différents paramètres
         nb_layer = len(all_priors)  # nombre de couches
@@ -959,7 +935,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     _flows[i + 1][j] = _flow_act[::n_sous_ech_space, ::n_sous_ech_time]
 
                     _energy[i + 1][j] = _energy[i][j]
-                    
+
                     self._states.append(
                         State(
                             layers=self._states[-nb_chain].layers,
@@ -1083,8 +1059,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._real_z[-1] / nb_cells
         _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
         ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-        # temp_ref = self._T_measures[:, :].T
-        temp_ref = self.get_temps_solve()[ind_ref]
+        temp_ref = self._T_measures[:, :].T
+        # emp_ref = self.get_temps_solve()[ind_ref]
 
         # quantité des différents paramètres
         nb_layer = len(all_priors)  # nombre de couches
@@ -1393,18 +1369,18 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temp = _temp.reshape((nb_iter + 1) * nb_chain, nb_cells, len(self._times))
         _flows = _flows.reshape((nb_iter + 1) * nb_chain, nb_cells, len(self._times))
 
-        self._quantiles_temps = {
-            quant: res
-            for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
-        }
+        # self._quantiles_temps = {
+        #     quant: res
+        #     for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
+        # }
 
-        self._quantiles_flows = {
-            quant: res
-            for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
-        }
+        # self._quantiles_flows = {
+        #     quant: res
+        #     for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
+        # }
 
-        if verbose:
-            print("Quantiles computed")
+        # if verbose:
+        #     print("Quantiles computed")
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
