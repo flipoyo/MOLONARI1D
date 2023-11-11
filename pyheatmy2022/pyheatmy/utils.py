@@ -39,7 +39,10 @@ def conv(layer):
         return layer
 
 
-def compute_energy(temp1, temp2, sigma2: float):
+def compute_energy(temp1, temp2, sigma2: float, remanence):
+    # len_total = shape(temp1)[1]
+    # temps_total = len_total*15*60
+    # ind = int(remanence/(15*60))
     norm2 = nansum((temp1 - temp2) ** 2)
     return 0.5 * norm2 / sigma2
 
