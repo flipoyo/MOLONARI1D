@@ -69,7 +69,13 @@ class DialogCleanup(QtWidgets.QDialog, From_DialogCleanup):
 
     Note: currently cleanedData is recomputed everytime we need it. If this becomes an issue, we should change it.
     """
-    def __init__(self, coordinator : SPointCoordinator, spoint : SamplingPoint, statusNightmode = False):# coordinator : SPointCoordinator, point : SamplingPoint):
+
+    def __init__(
+        self,
+        coordinator: SPointCoordinator,
+        spoint: SamplingPoint,
+        statusNightmode=False,
+    ):  # coordinator : SPointCoordinator, point : SamplingPoint):
         super(DialogCleanup, self).__init__()
         QtWidgets.QDialog.__init__(self)
 
@@ -137,8 +143,6 @@ class DialogCleanup(QtWidgets.QDialog, From_DialogCleanup):
         self.widgetRawData.addWidget(self.mplCanvas)
 
         self.refreshPlot()
-
-        
 
     def buildDF(self):
         """
@@ -479,16 +483,21 @@ class DialogCleanup(QtWidgets.QDialog, From_DialogCleanup):
             try:
                 cleanedData = self.importCleanedData(pathToCleaned)
             except Exception as e:
-                cleanedData = pd.DataFrame() #Empty Dataframe
-        return cleanedData
-    
-    def activerDesactiverModeSombre(self, state):
-        if state:
-            self.setStyleSheet("background-color: rgb(50, 50, 50); color: rgb(255, 255, 255);")
-        else:
-            self.setStyleSheet("")  # Utilisez la feuille de style par défaut de l'application
                 cleanedData = pd.DataFrame()  # Empty Dataframe
         return cleanedData
+
+    def activerDesactiverModeSombre(self, state):
+        if state:
+            self.setStyleSheet(
+                "background-color: rgb(50, 50, 50); color: rgb(255, 255, 255);"
+            )
+        else:
+            self.setStyleSheet(
+                ""
+            )  # Utilisez la feuille de style par défaut de l'application
+            cleanedData = pd.DataFrame()  # Empty Dataframe
+        return cleanedData
+
 
 def saveCleanedMeasures(self):
     cleanedDataSQL = self.coordinator.build_cleaned_measures(self, True)
