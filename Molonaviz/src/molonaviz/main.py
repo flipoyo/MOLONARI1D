@@ -70,6 +70,23 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.treeViewDataSPoints.doubleClicked.connect(self.openSPointFromDock)
 
+        #Mode sombre
+        # Créez un bouton à cocher pour le mode sombre
+        self.modeSombreCheckBox = QtWidgets.QCheckBox("Mode Sombre")
+        self.modeSombreCheckBox.setChecked(False)
+
+        # Créez une action pour le QCheckBox
+        self.modeSombreAction = QtWidgets.QWidgetAction(self)
+        self.modeSombreAction.setDefaultWidget(self.modeSombreCheckBox)
+        
+        # Ajoutez-le à votre barre de menus ou à l'endroit approprié
+        self.menuBar().addMenu("Mode Sombre").addAction(self.modeSombreAction)
+
+        # Connectez un gestionnaire de signal (slot) pour gérer les changements d'état
+        self.modeSombreCheckBox.stateChanged.connect(self.activerDesactiverModeSombre)
+
+        self.isNightMode = False
+
         #Some actions or menus should not be enabled: disable them
         self.actionCloseStudy.setEnabled(False)
         self.menuSPoint.setEnabled(False)
@@ -85,6 +102,30 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.currentStudy = None
         self.currentLab = None
 
+               
+    def activerDesactiverModeSombre(self, state):
+        if state == 2:  # État 2 signifie que la case est cochée
+            self.setStyleSheet("background-color: rgb(50, 50, 50); color: rgb(255, 255, 255);")
+            # Changer la couleur du texte et le fond des onglets actifs
+            self.tabWidget.setStyleSheet("QTabWidget::tab:selected { background-color: rgb(50, 50, 50); color: rgb(255, 255, 0); }")
+        
+            # Changer la couleur du texte et le fond des onglets inactifs
+            self.tabWidget.setStyleSheet("QTabWidget::tab:!selected { background-color: #232326; color: black; }")
+            
+            # Créez un style CSS pour les éléments de menu survolés, avec une écriture blanche sur fond gris foncé
+            menu_style = """
+            QMenu::item:selected {background-color: rgb(50, 50, 50); color: rgb(255, 255, 255);}
+            """
+
+            # Parcourez tous les menus de votre barre de menus
+            for menu in self.menuBar().findChildren(QtWidgets.QMenu):
+                menu.setStyleSheet(menu_style)
+
+            self.isNightMode = True
+        else:
+            self.setStyleSheet("")  # Utilisez la feuille de style par défaut de l'application
+
+        
     def openDatabase(self):
         """
         If the user has never opened the database of if the config file is not valid (as a reminder, config is a text document containing the path to the database), display a dialog so the user may choose th e database directory.
@@ -272,7 +313,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         """
         Given a VALID name of a study, open it.
         """
-        self.currentStudy = StudyHandler(self.con, studyName)
+        self.currentStudy = StudyHandler(self.con, studyName, self.isNightMode)
         #Open the laboratory associated with the study.
         if self.currentLab is not None:
             self.currentLab.close()
@@ -346,7 +387,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 spointName = dlg.selectedSPoint()
                 widgetviewer = self.currentStudy.openSPoint(spointName)
 
-                subwindow = SubWindow(widgetviewer, title = spointName)
+                subwindow = SubWindow(widgetviewer, title = spointName, modesombre = self.isNightMode)
                 self.mdiArea.addSubWindow(subwindow)
                 subwindow.show()
 
@@ -364,7 +405,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             spointName = self.treeViewDataSPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
 
         widgetviewer = self.currentStudy.openSPoint(spointName)
-        subwindow = SubWindow(widgetviewer, title = spointName)
+        subwindow = SubWindow(widgetviewer, title = spointName, modesombre = self.isNightMode)
         self.mdiArea.addSubWindow(subwindow)
         subwindow.show()
 

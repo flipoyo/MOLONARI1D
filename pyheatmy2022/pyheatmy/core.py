@@ -432,7 +432,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             _flows[i] = self.get_flows_solve()
             self._acceptance[i] = nb_accepted / (i+1)
 
-        # self.compute_solve_transi.reset()
+        
 
         self._quantiles_temps = {
             quant: res
@@ -444,6 +444,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         }
         if verbose:
             print("Quantiles Done.")
+        
+        #self.compute_solve_transi.reset()
 
     def compute_mcmc_with_sigma2(
         self,
@@ -550,7 +552,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             _flows[i] = self.get_flows_solve()
             self._acceptance[i] = nb_accepted / (i+1)
 
-        # self.compute_solve_transi.reset()
+  
 
         self._quantiles_temps = {
             quant: res
@@ -562,6 +564,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         }
         if verbose:
             print("Quantiles Done.")
+
+        #self.compute_solve_transi.reset()
 
     @checker
     def compute_mcmc(

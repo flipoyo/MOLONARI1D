@@ -6,11 +6,13 @@ class SubWindow(QtWidgets.QMdiSubWindow):
     """
     Concrete class for a clean implementation of a subwindow in the case multiple points are opened at the same time.
     """
-    def __init__(self, wdg : SamplingPointViewer, title = "Point Viewer"):
+    def __init__(self, wdg : SamplingPointViewer, title = "Point Viewer", modesombre = False):
         # Call constructor of parent classes
         super(SubWindow, self).__init__()
         QtWidgets.QMdiSubWindow.__init__(self)  
 
+        modesombre = modesombre
+        self.activerDesactiverModeSombre(modesombre)
         
         wdg.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)  # Fixe la taille du contenu
       
@@ -40,5 +42,11 @@ class SubWindow(QtWidgets.QMdiSubWindow):
         mdi.removeSubWindow(self)
         event.accept()
 
+    def activerDesactiverModeSombre(self, state):
+        if state:
+            self.setStyleSheet("background-color: rgb(50, 50, 50); color: rgb(255, 255, 255)")
+        
+        else:
+            self.setStyleSheet("")  # Utilisez la feuille de style par défaut de l'application
 
 

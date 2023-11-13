@@ -13,13 +13,14 @@ from .dialogConfirm import DialogConfirm
 from .dialogsCleanup import DialogCleanup
 from .dialogCompute import DialogCompute
 from ..utils.get_files import get_ui_asset
+from ..utils.general import displayCriticalMessage
 
 
 From_SamplingPointViewer = uic.loadUiType(get_ui_asset("SamplingPointViewer.ui"))[0]
 
 class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
-    def __init__(self, spointCoordinator : SPointCoordinator, samplingPoint: SamplingPoint):
+    def __init__(self, spointCoordinator : SPointCoordinator, samplingPoint: SamplingPoint, statusNightmode : bool = False):
         # Call constructor of parent classes
         super(SamplingPointViewer, self).__init__()
         QtWidgets.QWidget.__init__(self)
@@ -30,6 +31,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.computeEngine = Compute(self.coordinator)
         self.computeEngine.DirectModelFinished.connect(self.updateAllViews)
         self.computeEngine.MCMCFinished.connect(self.updateAllViews)
+    
+        self.statusNightmode = statusNightmode
 
         self.setupUi(self)
 
@@ -386,7 +389,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.handleComputationsButtons()
 
     def cleanup(self):
-        dlg = DialogCleanup(self.coordinator,self.samplingPoint)
+        dlg = DialogCleanup(self.coordinator,self.samplingPoint, self.statusNightmode)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             confirm = DialogConfirm("Cleaning up the measures will delete the previous cleanup, as well as any computations made for this point. Are you sure?")
@@ -404,15 +407,20 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 self.handleComputationsButtons()
 
     def compute(self):
-        dlg = DialogCompute(self.coordinator.max_depth())
+        dlg = DialogCompute(self.coordinator.max_depth(), self.statusNightmode)
         res = dlg.exec()
+        displayCriticalMessage('compute est appelée')
         if res == QtWidgets.QDialog.Accepted:
+            displayCriticalMessage('compute est acceptée')
             self.coordinator.delete_computations()
             if dlg.computationIsMCMC():
                 #MCMC
+                displayCriticalMessage('compute est MCMC')
                 nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar = dlg.getInputMCMC()
                 self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar)
+                
             else:
+                displayCriticalMessage('compute est direct')
                 #Direct Model
                 params, nb_cells = dlg.getInputDirectModel()
                 self.computeEngine.compute_direct_model(params, nb_cells)
