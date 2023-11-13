@@ -402,7 +402,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             confirmRes = confirm.exec()
             if confirmRes == QtWidgets.QDialog.Accepted:
                 #Clean the database first before putting new data
-                print("oui")
                 self.coordinator.delete_processed_data()
                 df_cleaned = dlg.getCleanedMeasures()
                 if not df_cleaned.empty:
