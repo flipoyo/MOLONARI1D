@@ -78,14 +78,19 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
             self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
 
-
+        #MCMC
         self.lineEditChains.setText("10")
         self.lineEditDelta.setText("3")
         self.lineEditncr.setText("3")
         self.lineEditc.setText("0.1")
         self.lineEditcstar.setText("1e-6")
+        self.lineEditPersi.setText("1")
+        self.lineEditThresh.setText("1.2")
 
-        #MCMC
+        self.lineEditIterStep.setText("10")
+        self.lineEditSpaceStep.setText("1")
+        self.lineEditTimeStep.setText("1")
+
         self.lineEditMaxIterMCMC.setText("5000")
         self.lineEditKMin.setText("4")
         self.lineEditKMax.setText("9")
@@ -157,6 +162,12 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditncr.setText("3")
         self.lineEditc.setText("0.1")
         self.lineEditcstar.setText("1e-6")
+        self.lineEditPersi.setText("1")
+        self.lineEditThresh.setText("1.2")
+
+        self.lineEditIterStep.setText("10")
+        self.lineEditSpaceStep.setText("1")
+        self.lineEditTimeStep.setText("1")
 
         self.lineEditKMin.setText("4")
         self.lineEditKMax.setText("9")
@@ -258,6 +269,12 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         ncr = int(self.lineEditncr.text())
         c = float(self.lineEditc.text())
         cstar = float(self.lineEditcstar.text())
+        remanence = float(self.lineEditPersi.text())
+        thresh = float(self.lineEditThresh.text())
+
+        nb_sous_ech_iter = int(self.lineEditIterStep.text())
+        nb_sous_ech_space = int(self.lineEditSpaceStep.text())
+        nb_sous_ech_time = int(self.lineEditTimeStep.text())
 
         #The user's input is not a permeability but a -log10(permeability)
         moins10logKmin = float(self.lineEditKMin.text())
@@ -297,4 +314,4 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = tuple(quantiles)
         quantiles = [float(quantile) for quantile in quantiles]
 
-        return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar
+        return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time
