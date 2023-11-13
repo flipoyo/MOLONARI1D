@@ -5,8 +5,10 @@
 #define WRITER_CLASS
 
 #include "Writer.hpp"
-
 #include "Time.cpp"
+#include <String.h>
+
+const String coma = String(',');
 
 // Search for the number of lines in the csv file->
 // SHOULD BE CALLED ONLY ONCE.
@@ -35,21 +37,11 @@ void GetCurrentTime(Measure* measure) {
 //Class methods
 
 void Writer::WriteInNewLine(Measure data){
-    this->file.print(data.id);
-    this->file.print(",");
-    this->file.print(data.date);
-    this->file.print(",");
-    this->file.print(data.time);
-    this->file.print(",");
-    this->file.print(data.mesure1);
-    this->file.print(",");
-    this->file.print(data.mesure2);
-    this->file.print(",");
-    this->file.print(data.mesure3);
-    this->file.print(",");
-    this->file.println(data.mesure4);
+    
+    this->file.println(String(data.id)+ coma + data.date + coma + data.time + coma + String(data.mesure1) + coma + String(data.mesure2) + coma + String(data.mesure3) + coma + String(data.mesure4));
 
     this->file.flush();
+    Serial.println("Data flushed.");
 }
 
 void Writer::ConvertToWriteableMeasure(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4) {
@@ -80,6 +72,11 @@ void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, ME
     if (!this->file){
         this->Reconnect();
         delay(10);
+        Serial.println("Connection lost.");
+    }
+    if (!this->file){
+        Serial.println("Connection could not be established.");
+        return;
     }
     
     this->WriteInNewLine(data);

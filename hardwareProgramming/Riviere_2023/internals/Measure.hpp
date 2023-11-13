@@ -4,7 +4,7 @@
 #ifndef MEASURE_CLASS
 #define MEASURE_CLASS
 
-const char filename[] = "datalog.csv";
+const char filename[] = "riviere.csv";
 
 class Measure {
   public:
