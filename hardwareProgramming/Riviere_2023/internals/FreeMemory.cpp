@@ -7,6 +7,7 @@ extern "C" char* sbrk(int incr);
 extern char *__brkval;
 #endif  // __arm__
 
+// Returns the number of bytes available on the RAM
 int freeMemory() {
   char top;
 #ifdef __arm__
