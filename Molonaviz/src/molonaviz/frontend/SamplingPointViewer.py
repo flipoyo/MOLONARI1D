@@ -54,9 +54,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.fluxesSplitterHorizRight.setSizes([QtGui.QGuiApplication.primaryScreen().virtualSize().width(),QtGui.QGuiApplication.primaryScreen().virtualSize().width()])
 
         #Create all view and link them to the correct models
-        tempDepthModel = self.coordinator.get_temp_model()
         self.graphpress = PressureView(self.coordinator.get_pressure_model())
-        self.graphtemp = TemperatureView(tempDepthModel)
+        self.graphtemp = TemperatureView(self.coordinator.get_temp_model())
         self.waterflux_view = WaterFluxView(self.coordinator.get_water_fluxes_model())
         fluxesModel = self.coordinator.get_heatfluxes_model()
         self.advective_view = AdvectiveFlowView(fluxesModel)
@@ -65,7 +64,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         tempMapModel = self.coordinator.get_temp_map_model()
         self.umbrella_view = UmbrellaView(tempMapModel)
         self.tempmap_view = TempMapView(tempMapModel)
-        self.depth_view = TempDepthView(tempDepthModel, tempMapModel, self.coordinator, loc='lower right')
+        self.depth_view = TempDepthView(self.coordinator.get_temp_model(), self.coordinator.get_temp_map_model(), self.coordinator)
         paramsDistrModel = self.coordinator.get_params_distr_model()
         self.logk_view = Log10KView(paramsDistrModel)
         self.conductivity_view = ConductivityView(paramsDistrModel)
