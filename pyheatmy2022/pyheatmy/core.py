@@ -280,7 +280,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             plt.show()
         H_init = list_array_H[0]
         for idx in range(1, len(list_array_H)):
-            H_init = np.concatenate((H_init, list_array_H[idx]))        
+            H_init = np.concatenate((H_init, list_array_H[idx]))
+      
         
         ## zhan : end
 
@@ -293,7 +294,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 print(layer)
             print('Hinter', array_Hinter)
         
-        H_riv = np.array([H_init[0] for _ in H_riv])
         # H_aq = np.array([H_init[-1] for _ in H_riv])
         if verbose:
             print("conditions aux limites")
@@ -319,7 +319,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         inter_cara[zlow_idx,0] = z_idx
                         inter_cara[zlow_idx,1] = z_idx + 1
         ## end
-        print("inter_cara", inter_cara)
+        if verbose:
+            print("inter_cara", inter_cara)
 
 
         H_res = compute_H_stratified(
@@ -337,6 +338,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ## zhan Nov8: calculation de la derivation
         for i in range(1, nb_cells - 1):
             nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
+        
+        nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
+        
         flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
         for i in range(nb_cells):
@@ -358,7 +362,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 K_list[int(inter_cara[elem_idx][0])] = 1 / (x / K_list[int(inter_cara[elem_idx][0])] + (1-x) / K_list[int(inter_cara[elem_idx][0])+1])
                 flows[int(inter_cara[elem_idx][0]), :] = - K_list[int(inter_cara[elem_idx][0])]*nablaH[int(inter_cara[elem_idx][0]), :]
                 flows[int(inter_cara[elem_idx][1]), :] = - K_list[int(inter_cara[elem_idx][0])]*nablaH[int(inter_cara[elem_idx][1]), :]
-        print("test K_list", K_list[21], K_list[22], K_list[23])
+        
         if verbose:
             plt.plot(z_solve, flows[:,0], label = "après réparation de dérivation")
             plt.legend()
@@ -368,8 +372,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             plt.show()
         
         ## zhan Nov8
-    
-        nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
 
         T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list,
                                      rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
