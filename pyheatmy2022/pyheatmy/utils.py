@@ -430,60 +430,60 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
         dt = all_dt[0]
 
         # Defining the 3 diagonals of B
-        lower_diagonal_B = KsurSs_list[1:]*alpha/dz**2
-        lower_diagonal_B[-1] = 4*KsurSs_list[n_cell - 1]*alpha/(3*dz**2)
+        lower_diagonal_B = K_list[1:]*alpha/dz**2
+        lower_diagonal_B[-1] = 4*K_list[n_cell - 1]*alpha/(3*dz**2)
 
-        diagonal_B =  1/dt - 2*KsurSs_list*alpha/dz**2
-        diagonal_B[0] =  1/dt - 4*KsurSs_list[0]*alpha/dz**2
-        diagonal_B[-1] =  1/dt - 4*KsurSs_list[n_cell - 1]*alpha/dz**2
+        diagonal_B =  Ss_list * 1/dt - 2*K_list*alpha/dz**2
+        diagonal_B[0] =  Ss_list[0] * 1/dt - 4*K_list[0]*alpha/dz**2
+        diagonal_B[-1] =  Ss_list[n_cell - 1] * 1/dt - 4*K_list[n_cell - 1]*alpha/dz**2
 
-        upper_diagonal_B = KsurSs_list[:-1]*alpha/dz**2
-        upper_diagonal_B[0] = 4*KsurSs_list[0]*alpha/(3*dz**2)
+        upper_diagonal_B = K_list[:-1]*alpha/dz**2
+        upper_diagonal_B[0] = 4*K_list[0]*alpha/(3*dz**2)
 
         # Defining the 3 diagonals of A
-        lower_diagonal_A = - KsurSs_list[1:]*(1-alpha)/dz**2
-        lower_diagonal_A[-1] = - 4*KsurSs_list[n_cell - 1]*(1-alpha)/(3*dz**2)
+        lower_diagonal_A = - K_list[1:]*(1-alpha)/dz**2
+        lower_diagonal_A[-1] = - 4*K_list[n_cell - 1]*(1-alpha)/(3*dz**2)
 
-        diagonal_A =  1/dt + 2*KsurSs_list*(1-alpha)/dz**2
-        diagonal_A[0] =  1/dt + 4*KsurSs_list[0]*(1-alpha)/dz**2
-        diagonal_A[-1] =  1/dt + 4*KsurSs_list[n_cell - 1]*(1-alpha)/dz**2
+        diagonal_A =  Ss_list * 1/dt + 2*K_list*(1-alpha)/dz**2
+        diagonal_A[0] =  Ss_list[0] * 1/dt + 4*K_list[0]*(1-alpha)/dz**2
+        diagonal_A[-1] =  Ss_list[n_cell - 1] * 1/dt + 4*K_list[n_cell - 1]*(1-alpha)/dz**2
 
-        upper_diagonal_A = - KsurSs_list[:-1]*(1-alpha)/dz**2
-        upper_diagonal_A[0] = - 4*KsurSs_list[0]*(1-alpha)/(3*dz**2)
+        upper_diagonal_A = - K_list[:-1]*(1-alpha)/dz**2
+        upper_diagonal_A[0] = - 4*K_list[0]*(1-alpha)/(3*dz**2)
 
         ## zhan Nov6
         for tup_idx in range(len(inter_cara)):
             array_KsurSs = array_K / array_Ss
             K1 = array_K[tup_idx]
             K2 = array_K[tup_idx + 1]
-            k1 = array_K[tup_idx] / array_Ss[tup_idx]
-            k2 = array_K[tup_idx + 1]/ array_Ss[tup_idx+1]
+            # k1 = array_K[tup_idx] / array_Ss[tup_idx]
+            # k2 = array_K[tup_idx + 1]/ array_Ss[tup_idx+1]
             if inter_cara[tup_idx][1] == 0:
                 pos_idx = int(inter_cara[tup_idx][0])
-                diagonal_B[pos_idx] = 1/dt - (k1 + k2) *alpha/dz**2
-                lower_diagonal_B[pos_idx - 1] = k1*alpha/dz**2
-                upper_diagonal_B[pos_idx] = k2*alpha/dz**2
-                diagonal_A[pos_idx] = 1/dt + (k1 + k2) *(1-alpha)/dz**2
-                lower_diagonal_A[pos_idx - 1] = - k1*(1-alpha)/dz**2
-                upper_diagonal_A[pos_idx] = - k2*(1-alpha)/dz**2
+                diagonal_B[pos_idx] = Ss_list[pos_idx] * 1/dt - (K1 + K2) *alpha/dz**2
+                lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
+                upper_diagonal_B[pos_idx] = K2*alpha/dz**2
+                diagonal_A[pos_idx] = Ss_list[pos_idx] * 1/dt + (K1 + K2) *(1-alpha)/dz**2
+                lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
+                upper_diagonal_A[pos_idx] = - K2*(1-alpha)/dz**2
                 
             else:
                 pos_idx = int(inter_cara[tup_idx][0])
                 x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])
-                keq = (1 / (x/K1 + (1-x)/K2)) / array_Ss[tup_idx]
-                diagonal_B[pos_idx] = 1/dt - (k1 + keq) *alpha/dz**2
-                lower_diagonal_B[pos_idx - 1] = k1*alpha/dz**2
-                upper_diagonal_B[pos_idx] = keq*alpha/dz**2
-                diagonal_A[pos_idx] = 1/dt + (k1 + keq) *(1-alpha)/dz**2
-                lower_diagonal_A[pos_idx - 1] = - k1*(1-alpha)/dz**2
-                upper_diagonal_A[pos_idx] = - keq*(1-alpha)/dz**2
+                Keq = (1 / (x/K1 + (1-x)/K2))
+                diagonal_B[pos_idx] = Ss_list[pos_idx]*1/dt - (K1 + Keq) *alpha/dz**2
+                lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
+                upper_diagonal_B[pos_idx] = Keq*alpha/dz**2
+                diagonal_A[pos_idx] = Ss_list[pos_idx]*1/dt + (K1 + Keq) *(1-alpha)/dz**2
+                lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
+                upper_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
 
-                diagonal_B[pos_idx + 1] = 1/dt - (k2 + keq) *alpha/dz**2
-                lower_diagonal_B[pos_idx] = keq*alpha/dz**2
-                upper_diagonal_B[pos_idx + 1] = k2*alpha/dz**2
-                diagonal_A[pos_idx + 1] = 1/dt + (k2 + keq) *(1-alpha)/dz**2
-                lower_diagonal_A[pos_idx] = - keq*(1-alpha)/dz**2
-                upper_diagonal_A[pos_idx + 1] = - k2*(1-alpha)/dz**2
+                diagonal_B[pos_idx + 1] = Ss_list[pos_idx]*1/dt - (K2 + Keq) *alpha/dz**2
+                lower_diagonal_B[pos_idx] = Keq*alpha/dz**2
+                upper_diagonal_B[pos_idx + 1] = K2*alpha/dz**2
+                diagonal_A[pos_idx + 1] = Ss_list[pos_idx]*1/dt + (K2 + Keq) *(1-alpha)/dz**2
+                lower_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
+                upper_diagonal_A[pos_idx + 1] = - K2*(1-alpha)/dz**2
 
 
 
@@ -523,9 +523,9 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
 
             # Defining c
             c = zeros(n_cell, float32)
-            c[0] = (8*KsurSs_list[0] / (3*dz**2)) * \
+            c[0] = (8*K_list[0] / (3*dz**2)) * \
                 ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
-            c[-1] = (8*KsurSs_list[n_cell - 1] / (3*dz**2)) * \
+            c[-1] = (8*K_list[n_cell - 1] / (3*dz**2)) * \
                 ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
 
             B_fois_H_plus_c = tri_product(
