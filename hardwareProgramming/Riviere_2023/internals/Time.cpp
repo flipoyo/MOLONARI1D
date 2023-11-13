@@ -37,7 +37,6 @@ void InitialiseRTC(/* Parameters */) {
 
 // Return the current date (JJ/MM/AAAA)
 String GetCurrentDate() {
-  // Todo
   return 
     UIntTo2DigitString(internalRtc.getDay()) +
     "/" +

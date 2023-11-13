@@ -5,20 +5,18 @@
 #include <LoRa.h>
 
 #include "Measure.hpp"
+#include "LoraPacket.hpp"
+#include "LoraClient.hpp"
 
 
 // ----- Variables -----
-
-// The id number of the next packet that will be received
-unsigned int receivedPacketNumber = 0;
-// The id number of the next packet that will be sent
-unsigned int sentPacketNumber = 0;
 
 // The nework ID of this device
 unsigned int networkId = 42;
 
 float _frequency = 868E6;
 
+LoraClient clients[CLIENT_COUNT];
 
 // ----- Data type -----
 
@@ -38,49 +36,46 @@ enum RequestType : uint8_t {
 
 // ----- Public functions -----
 
-// Initialise the lora module for the first time. Call before any other LoRa function
-void InitialiseLora(float frequency = 868E6);
+template<uint8_t CLIENT_COUNT>
+class LoraDeviceClass {
+  public :
+    // Constructor
+    LoraDeviceClass(unsigned int networkId);
 
-// Temporarily disable the LoRa module to save battery. It can be waken up with WakeUpLora
-void SleepLora();
+    void Initialise(float frequency = 868E6);
+    void Sleep();
+    void WakeUp();
 
-// Re-enable the LoRa module if it was asleep. I.E. Exit low-power mode for the LoRa module
-void WakeUpLora();
+    // Sends a data packet through LoRa
+    // Arguments :
+    //  payload -> A pointer to the object to send (&obj)
+    //  payloadSize -> The size of the object to send (sizeof(obj))
+    //  destinationId -> The address of the destination device of the message
+    //  requestType -> The type of packet request to send
+    // Example :
+    //  SendPacket(&data, sizeof(data), destId, DT_REQ)
+    bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, unsigned int sentPacketNumber, RequestType requestType)
+  
+  private :
+    float frequency;
+    const unsigned int networkId;
+    bool isActive = false;
+    LoraClient clients[CLIENT_COUNT];
 
+    template<uint16_t PAYLOAD_CAPACITY>
+    bool TryReadPacket(LoraPacket<PAYLOAD_CAPACITY>& packet, int packetSize);
 
-// ----- Internal functions -----
+    bool TryGetClient(LoraClient& client, unsigned int remoteId);
 
-// Callback function when the lora module receives a packet
-// Arguments :
-//  packetSize -> Size of the received packet
-void OnLoraReceivePacket(int packetSize);
+    // Callback function when the lora module receives a packet
+    // Arguments :
+    //  packetSize -> Size of the received packet
+    void OnReceivePacket(int packetSize);
+    
+    void ClearBytes(unsigned int length);
+};
 
-// Respond to an incoming data request
-void HandleDataRequest(unsigned int senderId);
-
-// Discards a given amount of data received by LoRa
-void ClearBytes(unsigned int length);
-
-// Reads an object in binary from LoRa
-template<typename T>
-T ReadFromLoRa();
-
-// Sends a data packet through LoRa
-// Arguments :
-//  payload -> A pointer to the object to send (&obj)
-//  payloadSize -> The size of the object to send (sizeof(obj))
-//  destinationId -> The address of the destination device of the message
-//  requestType -> The type of packet request to send
-// Example :
-//  SendPacket(&data, sizeof(data), destId, DT_REQ)
-bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType);
-
-// Sends a measurement (DT_RPL) via LoRa
-// Arguments :
-//  measure -> The measurement to send
-//  destinationId -> The address of the destination device of the message 
-bool SendMeasurement(Measure measure, unsigned int destinationId);
-
+extern LoraDeviceClass<1> LoraDevice;
 
 #include "Lora.cpp"
 
