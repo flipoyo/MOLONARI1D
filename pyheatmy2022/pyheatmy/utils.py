@@ -299,7 +299,7 @@ def compute_T_stratified(
             A[n_cell - 1, n_cell - 2] = lower_diagonal[n_cell - 2]
             T_res[:, j + 1] = solve(A, B_fois_T_plus_c)
 
-    return T_res
+    return T_res 
 
 
 @njit

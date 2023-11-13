@@ -423,7 +423,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             if dlg.computationIsMCMC():
                 #MCMC
                 nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time = dlg.getInputMCMC()
-                self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar)
+                self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, thresh)
                 self.displayparam.setEnabled(True)
             else:
                 #Direct Model

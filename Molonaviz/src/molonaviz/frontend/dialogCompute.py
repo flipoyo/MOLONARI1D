@@ -92,8 +92,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditTimeStep.setText("1")
 
         self.lineEditMaxIterMCMC.setText("5000")
-        self.lineEditKMin.setText("4")
-        self.lineEditKMax.setText("9")
+        self.lineEditKMin.setText("11")
+        self.lineEditKMax.setText("15")
         self.lineEditMoinsLog10KSigma.setText("0.01")
 
         self.lineEditPorosityMin.setText("0.01")
@@ -144,7 +144,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.spinBoxNLayersDirect.setValue(1)
         self.tableWidget.setRowCount(1)
 
-        self.input.append([1e-5, 0.15, 3.4, 5e6])
+        self.input.append([1e-12, 0.15, 3.4, 5e6])
 
         self.tableWidget.setVerticalHeaderItem(0, QTableWidgetItem(f"Layer {1}"))
         layerBottom = int((self.maxdepth))
@@ -169,8 +169,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditSpaceStep.setText("1")
         self.lineEditTimeStep.setText("1")
 
-        self.lineEditKMin.setText("4")
-        self.lineEditKMax.setText("9")
+        self.lineEditKMin.setText("11")
+        self.lineEditKMax.setText("15")
         self.lineEditMoinsLog10KSigma.setText("0.01")
 
         self.lineEditPorosityMin.setText("0.01")
@@ -197,7 +197,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         if len(self.input) < nb_layers:
     
             for _ in range(nb_layers - len(self.input)):
-                self.input.append([ 1e-5, 0.15, 3.4, 5e6])
+                self.input.append([ 1e-12, 0.15, 3.4, 5e6])
         elif len(self.input) > nb_layers:
     
             for _ in range(len(self.input) - nb_layers):

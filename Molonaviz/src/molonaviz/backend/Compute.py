@@ -26,6 +26,11 @@ class ColumnMCMCRunner(QtCore.QObject):
         ncr,
         c,
         cstar,
+        remanence,
+        n_sous_ech_iter,
+        n_sous_ech_time,
+        n_sous_ech_space,
+        threshold
     ):
         super(ColumnMCMCRunner, self).__init__()
 
@@ -40,6 +45,11 @@ class ColumnMCMCRunner(QtCore.QObject):
         self.ncr = ncr
         self.c = c
         self.cstar = cstar
+        self.remanence = remanence
+        self.n_sous_ech_iter = n_sous_ech_iter
+        self.n_sous_ech_time = n_sous_ech_time
+        self.n_sous_ech_space = n_sous_ech_space
+        self.threshold = threshold
 
     def run(self):
         print("Launching MCMC...")
@@ -53,6 +63,11 @@ class ColumnMCMCRunner(QtCore.QObject):
             self.ncr,
             self.c,
             self.cstar,
+            self.remanence,
+            self.n_sous_ech_iter,
+            self.n_sous_ech_time,
+            self.n_sous_ech_space,
+            self.threshold
         )
         self.finished.emit()
 
@@ -343,6 +358,11 @@ class Compute(QtCore.QObject):
         ncr,
         c,
         cstar,
+        remanence,
+        n_sous_ech_iter,
+        n_sous_ech_time,
+        n_sous_ech_space,
+        threshold
     ):
         """
         Launch the MCMC computation with given parameters.
@@ -365,6 +385,11 @@ class Compute(QtCore.QObject):
             ncr,
             c,
             cstar,
+            remanence,
+            n_sous_ech_iter,
+            n_sous_ech_time,
+            n_sous_ech_space,
+            threshold
         )
         self.mcmc_runner.finished.connect(self.end_MCMC)
         self.mcmc_runner.moveToThread(self.thread)
