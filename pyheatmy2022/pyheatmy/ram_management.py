@@ -3,6 +3,7 @@
 
 # imports
 import numpy as np
+import psutil
 
 def ram_estimation(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, nb_param=4, n_sous_ech_iter=10, n_sous_ech_space=1, n_sous_ech_time=1, nb_bytes=4):
     """
@@ -29,18 +30,18 @@ def ram_estimation(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, nb_param=4, 
     ram += 2*nb_iter_sous_ech*nb_chain*nb_cells_sous_ech*nb_times_sous_ech # _flows, _temp
     ram += 6*nb_cells_sous_ech*nb_times_sous_ech # quantiles_temps, quantiles_flows
 
-    ram *= 1.3 # Correction (le modèle peut être affiné)
+    ram *= 1.3 # Correction (the model can be improved)
 
     return ram*nb_bytes
 
 
-def propose_n_iter_sous_ech(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_space=1, n_sous_ech_time=1, nb_bytes=4):
+def propose_n_iter_sous_ech(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_space=1, n_sous_ech_time=1, nb_bytes=4, threshold = 2*1024**3):
     """
     Input : MCMC parameters
     Output : suggestion of value for n_iter_sous_ech
     """
     n_sous_ech_iter = 10
-    while ram_estimation(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_iter, n_sous_ech_space, n_sous_ech_time, nb_bytes) > 2e9:
+    while ram_estimation(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_iter, n_sous_ech_space, n_sous_ech_time, nb_bytes) > threshold:
         n_sous_ech_iter += 1
     print(f"You should use n_sous_ech_iter = ", n_sous_ech_iter)
     return n_sous_ech_iter
@@ -51,31 +52,54 @@ def warning_ram(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_iter
     Output : Bool - Do we compute MCMC ?
              Parameters - if bool, parameters used in the MCMC we are about to compute.
     """
-    ram_est = ram_estimation(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_iter, n_sous_ech_space, n_sous_ech_time, nb_bytes)
+    ram_est = ram_estimation(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_iter, n_sous_ech_space, n_sous_ech_time, nb_bytes) # estimation de la RAM utilisée par MCMC
+    ram_available = psutil.virtual_memory().available # available ram of the computer
+
+    # Output initialisation
+    b = True # Bool - Do we compute MCMC ?
+
     if ram_est > 2e9:
         while True:
-            user_input = input(f"// WARNING - The given parameters recquire {ram_est/1e9} > 2Go RAM for the MCMC inversions \\ \n Input 0 if you want to continue anyway \n Input 1 if you want the computer to automatically choose the parameters in order to be under 2Go RAM \n Input 2 if you want to stop the algorithm.")
+            user_input = input(f"// WARNING - The given parameters recquire {ram_est/(1024**3)} > 2Go RAM for the MCMC inversions \\ \n Input 0 if you want to continue anyway \n Input 1 if you want the computer to automatically choose the parameters in order to be under 2Go RAM \n Input 2 if you want to stop the algorithm.")
             print(f"// WARNING - The given parameters recquire {ram_est/1e9} > 2Go RAM for the MCMC inversions \n Input 0 if you want to continue anyway \n Input 1 if you want the computer to automatically choose the parameters in order to be under 2Go RAM \n Input 2 if you want to stop the algorithm.")
 
             # Check whether the input is valid
             if user_input in ('0', '1', '2'):
                 break
             else:
-                print("Entrée invalide. Veuillez entrer 0; 1 ou 2.")
+                print("Invalid. Please input 0; 1 ou 2.")
 
         if user_input == 0:
             # Continue anyway
-            return True, [nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_iter, n_sous_ech_space, n_sous_ech_time, nb_bytes]
-        
+            pass
         elif user_input == 1:
             # Compute parameters in order to use less than 2Go RAM for the MCMC inversions.
-            parameters = ...
-            return True, parameters
-        
+            n_sous_ech_iter = propose_n_iter_sous_ech(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_space, n_sous_ech_time, nb_bytes)        
         else:
             # Stop the algorithm
-            return False, []
+            b = False
         
-    else:
-        return True, [nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_iter, n_sous_ech_space, n_sous_ech_time, nb_bytes]
+    # Computer available RAM constraint
+    ram_est = ram_estimation(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_iter, n_sous_ech_space, n_sous_ech_time, nb_bytes) # estimation de la RAM utilisée par MCMC
+    if ram_est >= ram_available:
+        while True:
+            print(f"// WARNING - The new parameters recquire {ram_est/(1024**3)} Go while the available RAM is {ram_available/(1024**3)} Go.",
+                "Do you want me to compute a new value for n_iter_sous_ech ?",
+                sep="\n")
+            user_input = input("0 : Yes \n 1 : No")
+
+            # Check whether the input is valid
+            if user_input in ('0', '1'):
+                break
+            else:
+                print("Invalid. Please input 0 ou 1.")
+        
+        if user_input == 0:
+            # Compute parameters in order to use less than ram_available RAM for the MCMC inversions.
+            threshold = ram_available - ram_est - 100*1024**2 # Let 100 extra Mo in order not to break the computer.
+            n_sous_ech_iter = propose_n_iter_sous_ech(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_space, n_sous_ech_time, nb_bytes, threshold)
+        else:
+            # Stop the algorithm
+            b = False
     
+    return b, [nb_iter, nb_chain, nb_cells, nb_times, nb_layer, n_sous_ech_iter, n_sous_ech_space, n_sous_ech_time, nb_bytes]
