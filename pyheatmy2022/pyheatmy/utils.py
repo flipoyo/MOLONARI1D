@@ -26,7 +26,7 @@ C_W   = 4185
 ALPHA = 0.4
 G     = 9.81
 N_UPDATE_MU = 96
-
+EPSILON = 10**-9
 
 def conv(layer):
     name, prof, priors = layer

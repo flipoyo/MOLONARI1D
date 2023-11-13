@@ -26,7 +26,10 @@ from .utils import (
     convert_to_layer,
     check_range,
     gelman_rubin,
-    EPSILON
+    EPSILON,
+    ALPHA,
+    N_UPDATE_MU,
+    G
 )
 from .layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
 
@@ -168,7 +171,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         T_riv = self._T_riv
         T_aq = self._T_aq
 
-        moinslog10K_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
+        moinslog10k_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
             layersList, nb_cells
         )
 
@@ -287,14 +290,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             print("inter_cara", inter_cara)
 
 
-        H_res = compute_H_stratified(
-            array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+        H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10k_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA)
 
         self._H_res = H_res  # stocke les résultats
         
 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
-        K_list = 10 ** - moinslog10K_list
+        K_list = 10 ** - moinslog10k_list
 
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -337,8 +339,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         
         ## zhan Nov8
 
-        T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list,
-                                     rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
+        T_res = compute_T_stratified(Ss_list, moinslog10k_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu = N_UPDATE_MU)
 
         self._temps = T_res
 
