@@ -35,6 +35,7 @@ class Time_series:  # on simule un tableau de mesures
         self._time_array = np.array([None])
         # le tableau d'observation des charges utilisable dans colonne
         self._dH = np.array([None])
+        self._dH_er = np.array([None])
         self._dH_perturb = np.array([None]) # avec perturbation
         # récupère la liste de température observée de la rivière (au cours du temps)
         self._T_riv = np.array([None])
@@ -76,8 +77,16 @@ class Time_series:  # on simule un tableau de mesures
     
     def _generate_dH_series(self):
         t_range = np.arange(len(self._dates))*self._param_dates[2]
-        self._dH = self._param_dH[0]*np.sin(2*np.pi*t_range/self._param_dH[1]) + self._param_dH[2]
-
+        coeff = 2 * self._param_dH[2] / (self._param_dH[1] - self._param_dH[0])
+        deb = self._param_dH[0]*len(t_range) / t_range[-1]
+        end = self._param_dH[1]*len(t_range) / t_range[-1]
+        self._dH = np.zeros(len(t_range))
+        self._dH[:int(deb)] = -self._param_dH[2]
+        self._dH[int(deb):int(end)] = coeff * (t_range[int(deb):int(end)] - self._param_dH[0]) - self._param_dH[2]
+        self._dH[int(end):] = self._param_dH[2]
+    def _generate_dH_series_er(self):
+        self._dH_er = self._dH*6
+        print(self._dH_er-self._dH)
     def _generate_Temp_riv_series(self): # renvoie un signal sinusoïdal de temperature rivière
         if self._dates.any() == None :
             self._generate_dates_series()
@@ -103,6 +112,19 @@ class Time_series:  # on simule un tableau de mesures
             self._generate_Temp_riv_series()
 
         self._T_riv_dH_measures = list(zip(self._dates,list(zip(self._dH, self._T_riv))))
+
+    def _generate_T_riv_dH_series_er(self): # renvoie un signal sinusoïdal de différence de charge
+        if self._dates.any() == None :
+            self._generate_dates_series()
+            
+        if self._dH_er.any() == None :
+            self._generate_dH_series_er()
+
+        if self._T_riv.any() == None :
+            self._generate_Temp_riv_series()
+
+        self._T_riv_dH_measures_er = list(zip(self._dates,list(zip(self._dH_er, self._T_riv))))
+
 
     def _generate_Shaft_Temp_series(self): # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
         # initialisation
