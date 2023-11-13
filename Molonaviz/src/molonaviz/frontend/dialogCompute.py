@@ -172,6 +172,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setItem(0, 3, QTableWidgetItem(str(self.input[0][2])))
         self.tableWidget.setItem(0, 4, QTableWidgetItem(str('{:.2e}'.format(self.input[0][3]))))
 
+    def setDefaultValuesMCMC(self):
         #MCMC
         self.lineEditMaxIterMCMC.setText("50")
 
@@ -198,6 +199,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditThermalCapacitySigma.setText("100")
 
         self.lineEditQuantiles.setText("0.05,0.5,0.95")
+    
+   
 
     def updateNBLayers(self, nb_layers : int):
         """
