@@ -11,7 +11,7 @@ from ..backend.Compute import Compute
 From_DialogCompute = uic.loadUiType(get_ui_asset("dialogCompute.ui"))[0]
 
 class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
-    def __init__(self, maxdepth : int, spointcoordinator : SPointCoordinator, compute : Compute):
+    def __init__(self, maxdepth : int, spointcoordinator : SPointCoordinator, compute : Compute, statusNightMode : bool = False):
         """
         To create a DialogCompute instance, one must give the maximum depth of the river in meters. This can be obtained with the maxDepth function for the sampling point coordinator.
         """
@@ -21,6 +21,13 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.setupUi(self)
 
         self.interaction_occurred = False
+        # Get the status of the Night Mode in the MainWindow
+        self.statusNightMode = statusNightMode
+
+        # Set the Night Mode status for the DialogCompute
+        if self.statusNightMode:
+            self.activerDesactiverModeSombre(self.statusNightMode)
+
         self.maxdepth = maxdepth * 100
         self.layers = spointcoordinator.layers_depths()
         self.params =[]
@@ -87,7 +94,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditcstar.setText("1e-6")
 
         #MCMC
-        self.lineEditMaxIterMCMC.setText("5000")
+        self.lineEditMaxIterMCMC.setText("50")
         self.lineEditKMin.setText("4")
         self.lineEditKMax.setText("9")
         self.lineEditMoinsLog10KSigma.setText("0.01")
@@ -154,7 +161,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setItem(0, 4, QTableWidgetItem(str('{:.2e}'.format(self.input[0][3]))))
 
         #MCMC
-        self.lineEditMaxIterMCMC.setText("5000")
+        self.lineEditMaxIterMCMC.setText("50")
 
         self.lineEditChains.setText("10")
         self.lineEditDelta.setText("3")
@@ -217,6 +224,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         """
         self.interaction_occurred = True
         super().accept()
+        
 
 
     def computationIsMCMC(self):
@@ -299,3 +307,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = [float(quantile) for quantile in quantiles]
 
         return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar
+
+    def activerDesactiverModeSombre(self, state):
+        if state:
+            self.setStyleSheet("background-color: rgb(50, 50, 50); color: rgb(255, 255, 255)")
+            self.tableWidget.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: #232326; color: white; }")
+            self.tableWidget.verticalHeader().setStyleSheet("QHeaderView::section { background-color: #232326; color: white; }")
+        else:
+            self.setStyleSheet("")  # Utilisez la feuille de style par défaut de l'application

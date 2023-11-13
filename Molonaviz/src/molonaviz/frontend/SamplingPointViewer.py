@@ -18,13 +18,14 @@ from .dialogConfirm import DialogConfirm
 from .dialogsCleanup import DialogCleanup
 from .dialogCompute import DialogCompute
 from ..utils.get_files import get_ui_asset
+from ..utils.general import displayCriticalMessage
 
 
 From_SamplingPointViewer = uic.loadUiType(get_ui_asset("SamplingPointViewer.ui"))[0]
 
 class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
-    def __init__(self, spointCoordinator : SPointCoordinator, samplingPoint: SamplingPoint):
+    def __init__(self, spointCoordinator : SPointCoordinator, samplingPoint: SamplingPoint, statusNightmode : bool = False):
         # Call constructor of parent classes
         super(SamplingPointViewer, self).__init__()
         QtWidgets.QWidget.__init__(self)
@@ -35,6 +36,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.computeEngine = Compute(self.coordinator)
         self.computeEngine.DirectModelFinished.connect(self.updateAllViews)
         self.computeEngine.MCMCFinished.connect(self.updateAllViews)
+    
+        self.statusNightmode = statusNightmode
 
         self.setupUi(self)
 
@@ -392,7 +395,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
   
     def cleanup(self):
-        dlg = DialogCleanup(self.coordinator,self.samplingPoint)
+        dlg = DialogCleanup(self.coordinator,self.samplingPoint, self.statusNightmode)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             confirm = DialogConfirm("Cleaning up the measures will delete the previous cleanup, as well as any computations made for this point. Are you sure?")
@@ -411,8 +414,9 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 self.handleComputationsButtons()
 
     def compute(self):
-        dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine)
+        dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine, self.statusNightmode)
         res = dlg.exec()
+     
         if res == QtWidgets.QDialog.Accepted:
             self.coordinator.delete_computations()
             if dlg.computationIsMCMC():

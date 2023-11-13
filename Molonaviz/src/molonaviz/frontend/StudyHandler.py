@@ -15,13 +15,14 @@ class StudyHandler:
         -open subwindows showing the results and computations related to sampling points in this study.
     An instance of this class is always linked to a study.
     """
-    def __init__(self, con : QSqlDatabase, studyName : str):
+    def __init__(self, con : QSqlDatabase, studyName : str, statusNightmode : bool = False):
         self.con = con
         self.studyName = studyName
         self.spointManager = SamplingPointManager(self.con, studyName)
 
         self.spointCoordinator = None
         self.spointViewer = None
+        self.statusNightmode = statusNightmode
 
     def getSPointModel(self):
         """
@@ -71,7 +72,7 @@ class StudyHandler:
         """
         self.spointCoordinator = SPointCoordinator(self.con, self.studyName, spointName)
         samplingPoint = self.spointManager.get_spoint(spointName)
-        self.spointViewer = SamplingPointViewer(self.spointCoordinator, samplingPoint)
+        self.spointViewer = SamplingPointViewer(self.spointCoordinator, samplingPoint, self.statusNightmode)
         self.spointViewer.setWindowTitle(self.studyName)
         return self.spointViewer
 

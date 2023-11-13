@@ -32,6 +32,9 @@ class ColumnMCMCRunner(QtCore.QObject):
         print("Launching MCMC...")
         self.col.compute_mcmc(self.nb_iter, self.all_priors, self.nb_cells, self.quantiles)
         # self.col.compute_dream_mcmc(self.nb_iter, self.all_priors, self.nb_cells, self.quantiles, self.nb_chains, self.delta, self.ncr, self.c, self.cstar)
+
+        # # lancer calcul direct après avoir fait une mcmc
+        # self.col.compute_solve_transi.reset()
         self.finished.emit()
 
 class ColumnDirectModelRunner(QtCore.QObject):
@@ -315,7 +318,12 @@ class Compute(QtCore.QObject):
         """
         self.save_MCMC_results()
 
+        # direct après avoir fait une mcmc
+        self.col.compute_solve_transi.reset()
+
         self.thread.quit()
+
+        print('Reset MCMC configuration')
         print("MCMC finished.")
 
         self.MCMCFinished.emit()
