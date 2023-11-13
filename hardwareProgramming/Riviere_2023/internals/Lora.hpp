@@ -17,11 +17,13 @@ unsigned int sentPacketNumber = 0;
 // The nework ID of this device
 unsigned int networkId = 42;
 
+float _frequency = 868E6;
+
 
 // ----- Data type -----
 
 // Represents a type of LoRa request
-enum RequestType : char {
+enum RequestType : uint8_t {
   // Request data (ie measurements)
   DT_REQ = 0x01,
   // Reply data (ie send measurements)
