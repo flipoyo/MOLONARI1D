@@ -624,7 +624,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ncr=3,
         c=0.1,
         c_star=1e-12,
-        remanence=3600 * 24,
+        remanence=1,
     ):
         # vérification des types des arguments
         if isinstance(quantile, Number):
@@ -797,7 +797,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     print(f"Burn-in finished after : {nb_burn_in_iter} iterations")
                 break  # on sort du burn-in
             nb_burn_in_iter += 1  # incrémentation du numbre d'itération de burn-in
-
+        # print(pcr)
         self.nb_burn_in_iter = nb_burn_in_iter
 
         # Transition après le burn in
@@ -971,15 +971,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_cells: int,  # le nombre de cellules de la colonne
         # les quantiles pour l'affichage de stats sur les valeurs de température
         quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
-        nb_chain: int = 10,
+        nb_chain: int = 5,
         delta=2,
         ncr=3,
         c=0.1,
-        cstar=1e-6,
+        c_star=1e-6,
         verbose=True,  # affiche texte explicatifs ou non
         sigma2=1.0,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
-        remanence=3600 * 24,
+        remanence=1,
     ):
         if nb_chain < 2:
             if sigma2 is None:
@@ -1002,7 +1002,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 delta,
                 ncr,
                 c,
-                cstar,
+                c_star,
                 remanence,
             )
 
@@ -1208,7 +1208,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             X = X_new
             _params[i + 1] = X_new
             # Fin d'une itération, on check si on peut sortir du burn-in
-            if gelman_rubin(i + 2, nb_param, nb_layer, _params[: i + 2]):
+            if gelman_rubin(i + 2, nb_param, nb_layer, _params[: i + 2], threshold=1.2):
                 if verbose:
                     print(f"Burn in finished after : {nb_burn_in_iter} iterations")
                 break  # on sort du burn-in

@@ -25,6 +25,8 @@ LAMBDA_W = 0.6071
 RHO_W = 1000
 C_W = 4185
 ALPHA = 0.4
+G = 9.81
+N_UPDATE_MU = 96
 
 
 def conv(layer):
@@ -40,10 +42,11 @@ def conv(layer):
 
 
 def compute_energy(temp1, temp2, sigma2: float, remanence=1):
+    remanence_step = int(remanence * 24 * 60 / 15)
     # len_total = shape(temp1)[1]
     # temps_total = len_total*15*60
     # ind = int(remanence/(15*60))
-    norm2 = nansum((temp1 - temp2) ** 2)
+    norm2 = nansum((temp1[:, remanence_step:] - temp2[:, remanence_step:]) ** 2)
     return 0.5 * norm2 / sigma2
 
 
@@ -108,8 +111,22 @@ def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
 
 
 @njit
+def compute_Mu(T):
+    """ "
+    Paramètres : T : Température ou Tableau de températures
+    Résultat : mu : Viscosité à la température T selon l'approximation de ...
+    """
+    A = 1.856e-11 * 1e-3
+    B = 4209
+    C = 0.04527
+    D = -3.376e-5
+    mu = A * np.exp(B * 1.0 / T + C * T + D * (T**2))
+    return mu
+
+
+@njit
 def compute_T_stratified(
-    moinslog10K_list,
+    moinslog10k_list,
     n_list,
     lambda_s_list,
     rhos_cs_list,
@@ -122,12 +139,13 @@ def compute_T_stratified(
     T_riv,
     T_aq,
     alpha=ALPHA,
+    N_update_Mu=N_UPDATE_MU,
 ):
     """Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an heterogeneous column.
 
     Parameters
     ----------
-    moinslog10K_list : float array
+    moinslog10k_list : float array
         values of -log10(K) for each cell of the column, where K = permeability.
     n_list : float array
         porosity for each cell of the column.
@@ -146,7 +164,7 @@ def compute_T_stratified(
     H_aq : float array
         boundary condition H(z = z_aq, t).
     T_init : float array
-        boundary condition T(z, t=0).
+        initial condition T(z, t=0).
     T_riv : float array
         boundary condition T(z = z_riv, t).
     T_aq : float array
@@ -159,8 +177,10 @@ def compute_T_stratified(
     T_res : float array
         bidimensional array of T(z, t).
     """
+
+    mu_list = compute_Mu(T_init)
     rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
-    K_list = 10.0**-moinslog10K_list
+    K_list = (RHO_W * G * 10.0**-moinslog10k_list) * 1.0 / mu_list
     lambda_m_list = (
         n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
     ) ** 2
@@ -188,6 +208,10 @@ def compute_T_stratified(
     T_res[:, 0] = T_init
 
     for j, dt in enumerate(all_dt):
+        # Update of Mu(T) after N_update_Mu iterations:
+        if j % N_update_Mu == 1:
+            mu_list = compute_Mu(T_res[:, j - 1])
+
         # Compute T at time times[j+1]
 
         # Defining the 3 diagonals of B
@@ -280,7 +304,7 @@ def compute_T_stratified(
 
 @njit
 def compute_H_stratified(
-    moinslog10K_list,
+    moinslog10k_list,
     Ss_list,
     all_dt,
     isdtconstant,
@@ -294,7 +318,7 @@ def compute_H_stratified(
 
     Parameters
     ----------
-    moinslog10K_list : float array
+    moinslog10k_list : float array
         values of -log10(K) for each cell of the column, where K = permeability.
     Ss_list : float array
         specific emmagasinement for each cell of the column.
@@ -324,11 +348,7 @@ def compute_H_stratified(
     H_res = zeros((n_cell, n_times), float32)
     H_res[:, 0] = H_init
 
-    K_list = 10.0**-moinslog10K_list
-    KsurSs_list = K_list / Ss_list
-
-    K_list = 10.0**-moinslog10K_list
-
+    K_list = 10.0**-moinslog10k_list
     KsurSs_list = K_list / Ss_list
 
     # Check if dt is constant :
