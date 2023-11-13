@@ -6,54 +6,43 @@
 #define TIME
 
 
-#include <RTCZero.h>
+#include <RTClib.h>
 
 
 
-RTCZero internalRtc;
-
-
-
-String UIntTo2DigitString(uint8_t x) {
-  String str = String(x);
-
-  if (x < 10) {
-    str = "0" + str;
-  }
-
-  if (x >= 100) {
-    str.remove(2);
-  }
-
-  return str;
-}
+RTC_PCF8523 rtc;
 
 
 // Initialise the RTC module for the first time.
-void InitialiseRTC(/* Parameters */) {
-  internalRtc.begin();
+void InitialiseRTC() {
+
+    if (! rtc.begin()) {
+        Serial.println("Couldn't find RTC");
+        Serial.flush();
+        while (1) delay(10);
+    }
+
+
+    // When time needs to be set on a new device, or after a power loss, the
+    // following line sets the RTC to the date & time this sketch was compiled
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    
 }
 
-
-// Return the current date (JJ/MM/AAAA)
+//Return date in format YYYY-MM-DD
 String GetCurrentDate() {
-  // Todo
+    //Get the time and return the date
+  DateTime time = rtc.now();
   return 
-    UIntTo2DigitString(internalRtc.getDay()) +
-    "/" +
-    UIntTo2DigitString(internalRtc.getMonth()) +
-    "/" +
-    "20" + UIntTo2DigitString(internalRtc.getYear());
+    time.timestamp(DateTime::TIMESTAMP_DATE);
 }
 
 // Return the current hour (HH:MM:SS)
 String GetCurrentHour() {
+    //Get the time and return the hour
+    DateTime time = rtc.now();
   return 
-    UIntTo2DigitString(internalRtc.getHours()) +
-    ":" +
-    UIntTo2DigitString(internalRtc.getMinutes()) +
-    ":" +
-    UIntTo2DigitString(internalRtc.getSeconds());
+    time.timestamp(DateTime::TIMESTAMP_TIME);
 }
 
 #endif

@@ -21,7 +21,7 @@ TemperatureSensor::TemperatureSensor(int _dataPin, int _enablePin) : dataPin(_da
 TEMP_T TemperatureSensor::MeasureTemperature() {
   //Power the sensor only when we measure
   digitalWrite(enablePin, HIGH);
-  delay(50);
+  delay(200);
   TEMP_T temp = analogRead(dataPin);
   digitalWrite(enablePin, LOW);
   return (temp*3.3/4096-0.5)*100;
