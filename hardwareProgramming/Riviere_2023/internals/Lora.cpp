@@ -25,21 +25,19 @@
 // ----- Public functions -----
 
 // Initialise the lora module for the first time. Call before any other LoRa function
-template<uint8_t CLIENT_COUNT>
-void LoraDeviceClass<CLIENT_COUNT>::Initialise(float frequency) {
-  this->frequency = frequency;
+void InitialiseLora(float frequency) {
+  _frequency = frequency;
   LoRa.begin(frequency);
 
   LoRa.enableCrc();
 
-  LoRa.onReceive(this->OnReceivePacket);
+  LoRa.onReceive(OnLoraReceivePacket);
   LoRa.receive();
 }
 
 
 // Temporarily disable the LoRa module to save battery. It can be waken up with WakeUpLora
-template<uint8_t CLIENT_COUNT>
-void LoraDeviceClass<CLIENT_COUNT>::Sleep() {
+void SleepLora() {
   LoRa.end();
 
   // Disable the LoRa module to save battery
@@ -50,11 +48,10 @@ void LoraDeviceClass<CLIENT_COUNT>::Sleep() {
 
 
 // Re-enable the LoRa module if it was asleep. I.E. Exit low-power mode for the LoRa module
-template<uint8_t CLIENT_COUNT>
-void LoraDeviceClass<CLIENT_COUNT>::WakeUp() {
+void WakeUpLora() {
   // TODO : test that this works
   // Re-initialise the LoRa module since it has been reset
-  this->Initialise(frequency);
+  InitialiseLora(_frequency);
 }
 
 
@@ -63,43 +60,98 @@ void LoraDeviceClass<CLIENT_COUNT>::WakeUp() {
 // Callback function when the lora module receives a packet
 // Arguments :
 //  packetSize -> Size of the received packet
-template<uint8_t CLIENT_COUNT>
-void LoraDeviceClass<CLIENT_COUNT>::OnReceivePacket(int packetSize) {
+void OnLoraReceivePacket(int packetSize) {
   PRINT_LN("Receiving packet");
 
-  LoraPacket<256> packet;
-  bool success = TryReadPacket<256>(packet, packetSize);
-
-  if (!success) {
+  // If the header is incomplete, ignore the packet
+  if (packetSize < 13) {
+    PRINT_LN("Ignoring packet : wrong size");
+    ClearBytes(packetSize);
     return;
   }
 
-  if (packet.receiverId != networkId) {
-    PRINT_LN("Packet not for me");
+  // Get sender and destination
+  unsigned int senderId = ReadFromLoRa<unsigned int>();
+  unsigned int destinationId = ReadFromLoRa<unsigned int>();
+
+  PRINT_LN("Sender : " + String(senderId));
+  PRINT_LN("Destination : " + String(destinationId));
+
+  // If the packet is not for me, ignore it
+  if (destinationId != networkId) {
+    PRINT_LN("Ignoring packet : not destined to me");
+    ClearBytes(packetSize - 8);
     return;
   }
 
-  LoraClient client;
-  success = TryGetLoraClient(client, packet.senderId);
+  // Get the packet number
+  unsigned int thisPacketNumber = ReadFromLoRa<unsigned int>();
+  PRINT_LN("Packet number : " + String(thisPacketNumber));
 
-  if (!success) {
-    PRINT_LN("Unknown sender (n°" + String(packet.senderId) + ")");
+  // If the packet has already been received, ignore it
+  if (thisPacketNumber < receivedPacketNumber) {
+    PRINT_LN("Ignoring packet : packet already received");
+    ClearBytes(packetSize - 12);
+    return;
+  }
+  receivedPacketNumber = thisPacketNumber;
+
+  // Get the request type
+  RequestType requestId = (RequestType)LoRa.read();
+
+  if (requestId == DT_REQ) {
+    PRINT_LN("Data requested");
+    HandleDataRequest(senderId);
     return;
   }
 
-  if (packet.requestType == DT_REQ) {
-    client.HandleRequest(packet);
+  // If the request method is unknown, inore the packet
+  PRINT_LN("Ignoring packet : unknown request (0x");
+  PRINT_HEX(requestId);
+  PRINT_LN(")");
+  ClearBytes(packetSize - 13);
+}
+
+
+// Respond to an incoming data request
+void HandleDataRequest(unsigned int senderId) {
+  unsigned int requestedSampleId = ReadFromLoRa<uint32_t>();
+  PRINT_LN("Sample requested from : " + String(requestedSampleId));
+
+  Reader reader = Reader();
+  reader.EstablishConnection();
+  reader.MoveCursor(requestedSampleId);
+
+  PRINT_LN("Sending samples ...");
+  while (reader.IsDataAvailable()) {
+    Measure measure = reader.ReadMeasure();
+    PRINT_LN(measure.ToString());
+    SendMeasurement(measure, senderId);
   }
+  PRINT_LN("Done");
 }
 
 
 // Discards a given amount of data received by LoRa
-template<uint8_t CLIENT_COUNT>
-void LoraDeviceClass<CLIENT_COUNT>::ClearBytes(unsigned int length) {
+void ClearBytes(unsigned int length) {
   for (size_t i = 0; i < length; i++)
   {
     LoRa.read();
   }
+}
+
+
+// Reads an object in binary from LoRa
+template<typename T>
+T ReadFromLoRa() {
+  char bytes[sizeof(T)];
+
+  for (size_t i = 0; i < sizeof(T); i++)
+  {
+    bytes[i] = static_cast<char>(LoRa.read());
+  }
+  
+  return *reinterpret_cast<T*>(&bytes);
 }
 
 
@@ -111,8 +163,7 @@ void LoraDeviceClass<CLIENT_COUNT>::ClearBytes(unsigned int length) {
 //  requestType -> The type of packet request to send
 // Example :
 //  SendPacket(&data, sizeof(data), destId, DT_REQ)
-template<uint8_t CLIENT_COUNT>
-bool LoraDeviceClass<CLIENT_COUNT>::SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, unsigned int sentPacketNumber, RequestType requestType) {
+bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType) {
   PRINT_LN("Sending packet to " + String(destinationId) + "(" + String(payloadSize) + " bytes)");
   PRINT("Request type : ");
   PRINT_HEX(requestType);
@@ -128,7 +179,6 @@ bool LoraDeviceClass<CLIENT_COUNT>::SendPacket(const void* payload, unsigned int
   LoRa.write(reinterpret_cast<uint8_t*>(&destinationId), sizeof(destinationId));
   LoRa.write(reinterpret_cast<uint8_t*>(&sentPacketNumber), sizeof(sentPacketNumber));
   LoRa.write(reinterpret_cast<uint8_t*>(&requestType), sizeof(requestType));
-  LoRa.write(reinterpret_cast<uint8_t*>(&payloadSize), sizeof(payloadSize));
   LoRa.write(reinterpret_cast<const uint8_t*>(payload), payloadSize);
 
   success = (bool)LoRa.endPacket();
@@ -145,39 +195,13 @@ bool LoraDeviceClass<CLIENT_COUNT>::SendPacket(const void* payload, unsigned int
 }
 
 
-template<uint8_t CLIENT_COUNT>
-template<uint16_t PAYLOAD_CAPACITY>
-bool LoraDeviceClass<CLIENT_COUNT>::TryReadPacket(LoraPacket<PAYLOAD_CAPACITY>& packet, int packetSize) {
-    // Reject packets that are too small to have a valid header
-    if (packetSize < sizeof(LoraPacket<0>)) {
-      PRINT_LN("Ignoring packet : too small to have a valid header (size = " + String(packetSize) + ")");
-      ClearBytes(packetSize);
-      return false;
-    }
-
-    // Reject packets that are too big
-    if (packetSize > sizeof(LoraPacket<PAYLOAD_CAPACITY>)) {
-      PRINT_LN("Ignoring packet : too big to fit into allocated memory (size = " + String(packetSize) + ")");
-      ClearBytes(packetSize);
-      return false;
-    }
-
-    // Read the packet
-    LoRa.readBytes(reinterpret_cast<uint8_t*>(&packet), packetSize);
-    return true;
-}
-
-
-template<uint8_t CLIENT_COUNT>
-bool LoraDeviceClass<CLIENT_COUNT>::TryGetClient(LoraClient& client, unsigned int remoteId) {
-  for (int i = 0; i < CLIENT_COUNT; i++) {
-    if (this->clients[i].remoteId == remoteId) {
-      client = this->clients[i];
-      return true;
-    }
-  }
-
-  return false;
+// Sends a measurement (DT_RPL) via LoRa
+// Arguments :
+//  measure -> The measurement to send
+//  destinationId -> The address of the destination device of the message 
+bool SendMeasurement(Measure measure, unsigned int destinationId) {
+  PRINT_LN("Sending measurement n°" + String(measure.id));
+  return SendPacket(&measure, sizeof(measure), destinationId, DT_RPL);
 }
 
 
