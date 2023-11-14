@@ -246,10 +246,12 @@ class Compute(QtCore.QObject):
 
         insertparams = QSqlQuery(self.con)
         insertparams.prepare(f"""INSERT INTO InputMCMC (Niter , Delta , Nchains ,NCR, C , Cstar , Kmin , Kmax, Ksigma , PorosityMin , PorosityMax ,
-                              PorositySigma , TcondMin , TcondMax , TcondSigma , TcapMin , TcapMax , TcapSigma , Quantiles, PointKey)
+                              PorositySigma , TcondMin , TcondMax , TcondSigma , TcapMin , TcapMax , TcapSigma ,  Remanence , tresh , nb_sous_ech_iter ,
+                              nb_sous_ech_space , nb_sous_ech_time , Quantiles, PointKey)
                            VALUES (:Niter , :Delta , :Nchains ,:NCR, :C , :Cstar , :Kmin , :Kmax, :Ksigma , 
                              :PorosityMin , :PorosityMax , :PorositySigma , :TcondMin , :TcondMax ,
-                              :TcondSigma , :TcapMin , :TcapMax , :TcapSigma , :Quantiles , :PointKey)""")
+                              :TcondSigma , :TcapMin , :TcapMax , :TcapSigma ,  :Remanence , :tresh , :nb_sous_ech_iter ,
+                              :nb_sous_ech_space , :nb_sous_ech_time , :Quantiles , :PointKey)""")
         insertparams.bindValue(":PointKey", self.pointID)
 
         self.con.transaction()
@@ -271,7 +273,12 @@ class Compute(QtCore.QObject):
         insertparams.bindValue(":TcapMin", data[15])
         insertparams.bindValue(":TcapMax", data[16])
         insertparams.bindValue(":TcapSigma", data[17])
-        insertparams.bindValue(":Quantiles", data[18])
+        insertparams.bindValue(":Remanence", data[18])
+        insertparams.bindValue(":tresh", data[19])
+        insertparams.bindValue(":nb_sous_ech_iter", data[20])
+        insertparams.bindValue(":nb_sous_ech_space", data[21])
+        insertparams.bindValue(":nb_sous_ech_time", data[22])
+        insertparams.bindValue(":Quantiles", data[23])
         insertparams.exec()
         self.con.commit()
         

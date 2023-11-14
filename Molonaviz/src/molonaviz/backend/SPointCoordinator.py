@@ -112,7 +112,7 @@ class SPointCoordinator:
         params = []
 
         if select_params.next():  # Check if there is at least one row
-            for column_index in range(19):
+            for column_index in range(24):
                 params.append(select_params.value(column_index))
 
         return params
@@ -475,7 +475,8 @@ class SPointCoordinator:
         query = QSqlQuery(self.con)
         query.prepare("""
             SELECT Niter, Delta, Nchains,NCR, C, Cstar, Kmin, Kmax, Ksigma,PorosityMin, PorosityMax, PorositySigma,
-       TcondMin, TcondMax, TcondSigma, TcapMin, TcapMax, TcapSigma, Quantiles FROM InputMCMC
+       TcondMin, TcondMax, TcondSigma, TcapMin, TcapMax, TcapSigma, Remanence , tresh , nb_sous_ech_iter ,
+                              nb_sous_ech_space , nb_sous_ech_time ,  Quantiles FROM InputMCMC
         """)
         return query
 

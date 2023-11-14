@@ -123,7 +123,14 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditThermalCapacityMax.setText(str(self.inputMCMC[16]))
         self.lineEditThermalCapacitySigma.setText(str(self.inputMCMC[17]))
 
-        self.lineEditQuantiles.setText(str(self.inputMCMC[18]))
+        self.lineEditPersi.setText(str(self.inputMCMC[18]))
+        self.lineEditThresh.setText(str(self.inputMCMC[19]))
+
+        self.lineEditIterStep.setText(str(self.inputMCMC[20]))
+        self.lineEditSpaceStep.setText(str(self.inputMCMC[21]))
+        self.lineEditTimeStep.setText(str(self.inputMCMC[22]))
+
+        self.lineEditQuantiles.setText(str(self.inputMCMC[23]))
 
 
     def SaveInput(self):
@@ -221,11 +228,12 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             if nb_col < nb_layers:
         
                 for _ in range(nb_layers - nb_col):
-        elif len(self.input) > nb_layers:
+                    self.input.append([ 1e-12, 0.15, 3.4, 5e6])
+
+            elif len(self.input) > nb_layers:
     
-            for _ in range(len(self.input) - nb_layers):
-                self.input.pop()
-23mp2MLD2
+                for _ in range(len(self.input) - nb_layers):
+                    self.input.pop()
 
 
             for i in range(len(self.input)):
@@ -366,8 +374,15 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         rhos_cs_max = float(self.lineEditThermalCapacityMax.text())
         rhos_cs_sigma = float(self.lineEditThermalCapacitySigma.text())
 
+        remanence = float(self.lineEditPersi.text())
+        thresh = float(self.lineEditThresh.text())
+
+        nb_sous_ech_iter = int(self.lineEditIterStep.text())
+        nb_sous_ech_space = int(self.lineEditSpaceStep.text())
+        nb_sous_ech_time = int(self.lineEditTimeStep.text())
+
         quantiles = self.lineEditQuantiles.text()
 
-        params = [nb_iter, nb_chains, delta, ncr, c, cstar, moins10logKmin, moins10logKmax, moins10logKsigma, nmin, nmax, nsigma, lambda_s_min, lambda_s_max, lambda_s_sigma, rhos_cs_min, rhos_cs_max, rhos_cs_sigma, quantiles]
+        params = [nb_iter, nb_chains, delta, ncr, c, cstar, moins10logKmin, moins10logKmax, moins10logKsigma, nmin, nmax, nsigma, lambda_s_min, lambda_s_max, lambda_s_sigma, rhos_cs_min, rhos_cs_max, rhos_cs_sigma,remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, quantiles]
 
         self.compute.save_params_MCMC(params)
