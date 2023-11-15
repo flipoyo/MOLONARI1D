@@ -1,3 +1,8 @@
+
+#ifndef WAITER_HPP
+#define WAITER_HPP
+
+
 #include <ArduinoLowPower.h>
 #include "Low_Power.hpp"
 
@@ -26,3 +31,5 @@ public :
 private :
     unsigned long starting_time;
 };
+
+#endif // WAITER_HPP
