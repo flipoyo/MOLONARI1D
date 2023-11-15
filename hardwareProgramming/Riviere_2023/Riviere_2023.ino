@@ -13,7 +13,7 @@ Arduino MKR WAN 1310
 #define MEASURE_T double
 #define TO_MEASURE_T toDouble
 
-#define LORA_DEBUG
+//#define LORA_DEBUG
 
 #include "internals/Lora.hpp"
 #include "internals/Low_Power.hpp"
@@ -25,20 +25,30 @@ Arduino MKR WAN 1310
 #include "internals/Waiter.hpp"
 // #include "internals/FreeMemory.cpp"
 
-const int CSPin = 6;
-Writer writer;
+const int CSPin = 5;
+Writer logger;
 TemperatureSensor tempSensor1(A1, 1);
 TemperatureSensor tempSensor2(A2, 2);
 TemperatureSensor tempSensor3(A3, 3);
 TemperatureSensor tempSensor4(A4, 4);
 
-int i =0;
+int i = 0;
 
 
 void setup() {
+  // Enable the builtin LED during initialisation
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+
   // Initialise Serial
-  Serial.begin(9600);
-  while(!Serial) {}
+  Serial.begin(115200);
+
+  // Wait up to 5 seconds for serial to connect
+  unsigned long end_date = millis() + 5000; 
+  while (!Serial && millis() < end_date) {
+    // Do nothing
+  }
+
 
   // Initialise LoRa
   Serial.println("Initialising LoRa");
@@ -56,10 +66,14 @@ void setup() {
     while(true) {}
   }
 
-  writer.EstablishConnection();
+  // Initialise the SD logger
+  logger.EstablishConnection();
 
   // Initialise RTC
   InitialiseRTC();
+
+  // Disable the builtin LED
+  pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 }
 
 void loop() {
@@ -68,6 +82,7 @@ void loop() {
 
   i++;
   Serial.println(i);
+  // Perform measurements
   TEMP_T temp1 = tempSensor1.MeasureTemperature();
   TEMP_T temp2 = tempSensor2.MeasureTemperature();
   TEMP_T temp3 = tempSensor3.MeasureTemperature();
@@ -75,7 +90,7 @@ void loop() {
 
   // Serial.println(String(temp1) + "   " + String(temp2) + "   " + String(temp3) + "   " + String(temp4) + "   ");  
   noInterrupts();
-  writer.LogData(temp1, temp2, temp3, temp4);
+  logger.LogData(temp1, temp2, temp3, temp4);
   interrupts();
 
   waiter.delayUntil(1000);
