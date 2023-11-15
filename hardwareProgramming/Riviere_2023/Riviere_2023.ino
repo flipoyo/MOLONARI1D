@@ -10,7 +10,9 @@ Required hardware :
 Arduino MKR WAN 1310
 */
 
+// Define the data-type of a measurement
 #define MEASURE_T double
+// Define a function to parse a measurement (i.e. to convert a string to a MEASURE_T)
 #define TO_MEASURE_T toDouble
 
 // Uncomment this line to enable diagnostics log on serial for lora operations

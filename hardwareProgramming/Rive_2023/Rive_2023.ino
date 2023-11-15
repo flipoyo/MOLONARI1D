@@ -1,4 +1,9 @@
 
+
+// Define the data-type of a measurement
+#define MEASURE_T double
+
+
 // Uncomment htis line to enable dignostics log on serial about the main loop
 //#define DEBUG
 // Uncomment this line to enable diagnostics log on serial for lora operations
@@ -11,7 +16,6 @@
 #define LOG(x)
 #define LOG_LN(x)
 #endif
-
 
 #include "internals/Lora.hpp"
 
@@ -27,7 +31,10 @@ void setup() {
 
   Serial.begin(115200);
   
-  while (!Serial)
+  // Wait for connection to start
+  while (!Serial) {
+    // Do nothing
+  }
   LOG_LN("LoRa relay for Molonari system");
   LOG_LN("See : https://github.com/flipoyo/MOLONARI1D");
   LOG_LN("");
