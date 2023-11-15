@@ -18,6 +18,7 @@
 #endif
 
 #include "internals/Lora.hpp"
+#include "internals/Waiter.hpp"
 
 
 unsigned int firstMissingMeasurementId = 1;
@@ -25,10 +26,11 @@ unsigned int firstMissingMeasurementId = 1;
 
 
 void setup() {
-  // put your setup code here, to run once:
+  // Enable the builtin LED during initialisation
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
+  // Initialise serial
   Serial.begin(115200);
   
   // Wait for connection to start
@@ -39,16 +41,23 @@ void setup() {
   LOG_LN("See : https://github.com/flipoyo/MOLONARI1D");
   LOG_LN("");
 
+  // Initialise Lora
   LOG_LN("Initialising LoRa");
   InitialiseLora(OnGetMeasureCallback);
   LOG_LN("Done");
 
+  // Disable the builtin LED
   digitalWrite(LED_BUILTIN, LOW);
 }
 
+
+
 void loop() {
-  // put your main code here, to run repeatedly:
-  LOG_LN("Requesting measurements");
+  Waiter waiter;
+  waiter.startTimer();
+
+  // Request measurement
+  LOG_LN("Requesting measurements from n°" + String(firstMissingMeasurementId));
   bool success = RequestMeasurement(firstMissingMeasurementId, 42);
   if (success) {
     LOG_LN("Request sent successfully");
@@ -56,7 +65,8 @@ void loop() {
     LOG_LN("Failed to send request");
   }
 
-  delay(10000);
+  // Wait for 10 seconds
+  waiter.delayUntil(10000);
 }
 
 
