@@ -10,13 +10,13 @@
 
 // Debug methods to enable or disable logging
 #ifdef LORA_DEBUG
-#define LOG(msg) Serial.print(msg);
-#define LOG_HEX(msg) Serial.print(msg, HEX);
-#define LOG_LN(msg) Serial.println(msg);
+#define LORA_LOG(msg) Serial.print(msg);
+#define LORA_LOG_HEX(msg) Serial.print(msg, HEX);
+#define LORA_LOG_LN(msg) Serial.println(msg);
 #else
-#define LOG(msg)
-#define LOG_HEX(msg)
-#define LOG_LN(msg)
+#define LORA_LOG(msg)
+#define LORA_LOG_HEX(msg)
+#define LORA_LOG_LN(msg)
 #endif
 
 
@@ -66,11 +66,11 @@ bool RequestMeasurement(uint32_t lastMeasurementId, unsigned int destinationId) 
 // Arguments :
 //  packetSize -> Size of the received packet
 void OnLoraReceivePacket(int packetSize) {
-  LOG_LN("Receiving packet");
+  LORA_LOG_LN("Receiving packet");
 
   // If the header is incomplete, ignore the packet
   if (packetSize < 13) {
-    LOG_LN("Ignoring packet : wrong size");
+    LORA_LOG_LN("Ignoring packet : wrong size");
     ClearBytes(packetSize);
     return;
   }
@@ -79,23 +79,23 @@ void OnLoraReceivePacket(int packetSize) {
   unsigned int senderId = ReadFromLoRa<unsigned int>();
   unsigned int destinationId = ReadFromLoRa<unsigned int>();
 
-  LOG_LN("Sender : " + String(senderId));
-  LOG_LN("Destination : " + String(destinationId));
+  LORA_LOG_LN("Sender : " + String(senderId));
+  LORA_LOG_LN("Destination : " + String(destinationId));
 
   // If the packet is not for me, ignore it
   if (destinationId != networkId) {
-    LOG_LN("Ignoring packet : not destined to me");
+    LORA_LOG_LN("Ignoring packet : not destined to me");
     ClearBytes(packetSize - 8);
     return;
   }
 
   // Get the packet number
   unsigned int thisPacketNumber = ReadFromLoRa<unsigned int>();
-  LOG_LN("Packet number : " + String(thisPacketNumber));
+  LORA_LOG_LN("Packet number : " + String(thisPacketNumber));
 
   // If the packet has already been received, ignore it
   if (thisPacketNumber == receivedPacketNumber) {
-    LOG_LN("Ignoring packet : packet already received");
+    LORA_LOG_LN("Ignoring packet : packet already received");
     ClearBytes(packetSize - 12);
     return;
   }
@@ -110,9 +110,9 @@ void OnLoraReceivePacket(int packetSize) {
   }
 
   // If the request method is unknown, inore the packet
-  LOG_LN("Ignoring packet : unknown request (0x");
-  LOG_HEX(requestId);
-  LOG_LN(")");
+  LORA_LOG_LN("Ignoring packet : unknown request (0x");
+  LORA_LOG_HEX(requestId);
+  LORA_LOG_LN(")");
   ClearBytes(packetSize - 13);
 }
 
@@ -159,14 +159,14 @@ T ReadFromLoRa() {
 // Example :
 //  SendPacket(&data, sizeof(data), destId, DT_REQ)
 bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType) {
-  LOG_LN("Sending packet to " + String(destinationId) + "(" + String(payloadSize) + " bytes)");
-  LOG("Request type : ");
-  LOG_HEX(requestType);
-  LOG("\n");
+  LORA_LOG_LN("Sending packet to " + String(destinationId) + "(" + String(payloadSize) + " bytes)");
+  LORA_LOG("Request type : ");
+  LORA_LOG_HEX(requestType);
+  LORA_LOG("\n");
 
   bool success = (bool)LoRa.beginPacket();
   if (!success) {
-    LOG_LN("Aborting transmission : LoRa module busy");
+    LORA_LOG_LN("Aborting transmission : LoRa module busy");
     return false;
   }
 
@@ -178,7 +178,7 @@ bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int dest
 
   success = (bool)LoRa.endPacket();
   if (!success) {
-    LOG_LN("Transmission failed");
+    LORA_LOG_LN("Transmission failed");
   }
 
   // Set the module back to receive mode
