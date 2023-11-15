@@ -56,6 +56,10 @@ void loop() {
   Waiter waiter;
   waiter.startTimer();
 
+  // Re-enable Lora receiving
+  // I am not sure how but it seems to help
+  LoRa.receive();
+
   // Request measurement
   LOG_LN("Requesting measurements from n°" + String(firstMissingMeasurementId));
   bool success = RequestMeasurement(firstMissingMeasurementId, 42);
