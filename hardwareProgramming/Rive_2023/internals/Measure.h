@@ -23,6 +23,18 @@ class Measure {
       
       return str;
     }
+
+    String ToCSVEntry() {
+      String str = String(id) + ",";
+      str += String(date) + ",";
+      str += String(time) + ",";
+      str += String(mesure1) + ",";
+      str += String(mesure2) + ",";
+      str += String(mesure3) + ",";
+      str += String(mesure4);
+      
+      return str;
+    }
 };
 
 #endif
