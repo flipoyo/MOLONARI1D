@@ -16,7 +16,10 @@ Arduino MKR WAN 1310
 #define TO_MEASURE_T toDouble
 
 // Uncomment this line to enable diagnostics log on serial for lora operations
-//#define LORA_DEBUG
+#define LORA_DEBUG
+
+// Uncomment this line to enable diagnostics log on serial for SD operations
+#define SD_DEBUG
 
 #include "internals/Lora.hpp"
 #include "internals/Low_Power.hpp"

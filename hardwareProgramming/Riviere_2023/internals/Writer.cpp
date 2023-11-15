@@ -8,6 +8,14 @@
 #include "Time.cpp"
 #include <String.h>
 
+
+#ifdef SD_DEBUG
+#define SD_LOG_LN(msg) Serial.println(msg)
+#else
+#define SD_LOG_LN(msg)
+#endif
+
+
 const String coma = String(',');
 
 // Search for the number of lines in the csv file->
@@ -38,10 +46,13 @@ void GetCurrentTime(Measure* measure) {
 
 void Writer::WriteInNewLine(Measure data){
     
+    SD_LOG_LN("Writing data ...");
     this->file.println(String(data.id)+ coma + data.date + coma + data.time + coma + String(data.mesure1) + coma + String(data.mesure2) + coma + String(data.mesure3) + coma + String(data.mesure4));
+    SD_LOG_LN("Done");
 
+    SD_LOG_LN("Flushing ...");
     this->file.flush();
-    Serial.println("Data flushed.");
+    SD_LOG_LN("Done");
 }
 
 void Writer::ConvertToWriteableMeasure(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4) {
@@ -70,13 +81,16 @@ void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, ME
     data.id = this->next_id;
 
     if (!this->file){
+        SD_LOG_LN("SD connection lost.");
+        SD_LOG_LN("Trying to reconnect ...");
+
         this->Reconnect();
         delay(10);
-        Serial.println("Connection lost.");
-    }
-    if (!this->file){
-        Serial.println("Connection could not be established.");
-        return;
+
+        if (!this->file){
+            SD_LOG_LN("Connection could not be established back.");
+            return;
+        }
     }
     
     this->WriteInNewLine(data);
