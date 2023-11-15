@@ -451,14 +451,13 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
         upper_diagonal_A = - K_list[:-1]*(1-alpha)/dz**2
         upper_diagonal_A[0] = - 4*K_list[0]*(1-alpha)/(3*dz**2)
 
-        ## zhan Nov6
+        ## correction of numerical schema on the interface of different layers
         for tup_idx in range(len(inter_cara)):
             array_KsurSs = array_K / array_Ss
             K1 = array_K[tup_idx]
             K2 = array_K[tup_idx + 1]
-            # k1 = array_K[tup_idx] / array_Ss[tup_idx]
-            # k2 = array_K[tup_idx + 1]/ array_Ss[tup_idx+1]
-            if inter_cara[tup_idx][1] == 0:
+            
+            if inter_cara[tup_idx][1] == 0: # sampling point coincide with change of interface
                 pos_idx = int(inter_cara[tup_idx][0])
                 diagonal_B[pos_idx] = Ss_list[pos_idx] * 1/dt - (K1 + K2) *alpha/dz**2
                 lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
@@ -467,7 +466,7 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
                 lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
                 upper_diagonal_A[pos_idx] = - K2*(1-alpha)/dz**2
                 
-            else:
+            else: # sampling point are distributed on both sides of the interface with distance x*dz and (1-x)*dz
                 pos_idx = int(inter_cara[tup_idx][0])
                 x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])
                 Keq = (1 / (x/K1 + (1-x)/K2))
@@ -484,39 +483,6 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
                 diagonal_A[pos_idx + 1] = Ss_list[pos_idx]*1/dt + (K2 + Keq) *(1-alpha)/dz**2
                 lower_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
                 upper_diagonal_A[pos_idx + 1] = - K2*(1-alpha)/dz**2
-
-
-
-
-        ## end
-
-        # ## zhan: mod Nov 3 cas symetric
-        # diagonal_B[len(diagonal_B) // 2] = 1/dt - (KsurSs_list[0] + KsurSs_list[-1]) *alpha/dz**2
-        # lower_diagonal_B[len(diagonal_B) // 2 - 1] = KsurSs_list[0]*alpha/dz**2
-        # upper_diagonal_B[len(diagonal_B) // 2] = KsurSs_list[-1]*alpha/dz**2
-        # diagonal_A[len(diagonal_A) // 2] = 1/dt + (KsurSs_list[0] + KsurSs_list[-1]) *(1-alpha)/dz**2
-        # lower_diagonal_A[len(diagonal_A) // 2 - 1] = - KsurSs_list[0]*(1-alpha)/dz**2
-        # upper_diagonal_A[len(diagonal_A) // 2] = - KsurSs_list[-1]*(1-alpha)/dz**2
-        # ##
-
-        # ## zhan: mod Nov 6 cas asymetric
-        # k1 = KsurSs_list[0]
-        # k2 = KsurSs_list[-1]
-        # keq = 1 / (1/k1/2 + 1/k2/2)
-        # diagonal_B[len(diagonal_B) //  2 - 1] = 1/dt - (k1 + keq) *alpha/dz**2
-        # lower_diagonal_B[len(diagonal_B) //  2 - 1 - 1] = k1*alpha/dz**2
-        # upper_diagonal_B[len(diagonal_B) //  2 - 1] = keq*alpha/dz**2
-        # diagonal_A[len(diagonal_A) //  2 - 1] = 1/dt + (k1 + keq) *(1-alpha)/dz**2
-        # lower_diagonal_A[len(diagonal_A) //  2 - 1 - 1] = - k1*(1-alpha)/dz**2
-        # upper_diagonal_A[len(diagonal_A) //  2 - 1] = - keq*(1-alpha)/dz**2
-
-        # diagonal_B[len(diagonal_B) //  2] = 1/dt - (k2 + keq) *alpha/dz**2
-        # lower_diagonal_B[len(diagonal_B) //  2 - 1] = keq*alpha/dz**2
-        # upper_diagonal_B[len(diagonal_B) //  2] = k2*alpha/dz**2
-        # diagonal_A[len(diagonal_A) //  2] = 1/dt + (k2 + keq) *(1-alpha)/dz**2
-        # lower_diagonal_A[len(diagonal_A) //  2 - 1] = - keq*(1-alpha)/dz**2
-        # upper_diagonal_A[len(diagonal_A) //  2] = - k2*(1-alpha)/dz**2
-        # ##
 
         for j in range(n_times - 1):
             # Compute H at time times[j+1]
