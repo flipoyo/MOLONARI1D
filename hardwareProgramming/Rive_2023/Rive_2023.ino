@@ -20,7 +20,7 @@
 #include "internals/Lora.hpp"
 
 
-unsigned int firstMissingMeasurementId = 0;
+unsigned int firstMissingMeasurementId = 1;
 
 
 
