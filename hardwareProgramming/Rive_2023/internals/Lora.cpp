@@ -30,6 +30,7 @@ void InitialiseLora(void (*_onGetMeasureCallback)(Measure), float frequency) {
   LoRa.begin(frequency);
   
   LoRa.enableCrc();
+  sentPacketNumber = LoRa.random();
 
   LoRa.onReceive(OnLoraReceivePacket);
   LoRa.receive();
@@ -93,7 +94,7 @@ void OnLoraReceivePacket(int packetSize) {
   LOG_LN("Packet number : " + String(thisPacketNumber));
 
   // If the packet has already been received, ignore it
-  if (thisPacketNumber < receivedPacketNumber) {
+  if (thisPacketNumber == receivedPacketNumber) {
     LOG_LN("Ignoring packet : packet already received");
     ClearBytes(packetSize - 12);
     return;

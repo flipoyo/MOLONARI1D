@@ -1,8 +1,8 @@
 
+// Uncomment htis line to enable dignostics log on serial about the main loop
+//#define DEBUG
+// Uncomment this line to enable diagnostics log on serial for lora operations
 //#define LORA_DEBUG
-
-#include "internals/Lora.hpp"
-
 
 #ifdef DEBUG
 #define LOG(x) Serial.print(x)
@@ -11,6 +11,9 @@
 #define LOG(x)
 #define LOG_LN(x)
 #endif
+
+
+#include "internals/Lora.hpp"
 
 
 unsigned int firstMissingMeasurementId = 0;
@@ -26,7 +29,6 @@ void setup() {
   
   while (!Serial)
   LOG_LN("LoRa relay for Molonari system");
-  LOG_LN("15/11/2023");
   LOG_LN("See : https://github.com/flipoyo/MOLONARI1D");
   LOG_LN("");
 
