@@ -119,12 +119,17 @@ void HandleDataRequest(unsigned int senderId) {
   unsigned int requestedSampleId = ReadFromLoRa<uint32_t>();
   LORA_LOG_LN("Sample requested from : " + String(requestedSampleId));
 
+  // Initialise reading data from SD card
   Reader reader = Reader();
   reader.EstablishConnection();
   reader.MoveCursor(requestedSampleId);
 
+  // Send up to 50 samples
   LORA_LOG_LN("Sending samples ...");
-  while (reader.IsDataAvailable()) {
+  int nb_measurement_sent = 0;
+  while (reader.IsDataAvailable() && nb_measurement_sent < 50) {
+    nb_measurement_sent++;
+
     Measure measure = reader.ReadMeasure();
     LORA_LOG_LN(measure.ToString());
     SendMeasurement(measure, senderId);
