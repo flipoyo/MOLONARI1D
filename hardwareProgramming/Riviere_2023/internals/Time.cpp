@@ -2,8 +2,8 @@
 
 
 // Check that the file has not been imported before
-#ifndef TIME
-#define TIME
+#ifndef MY_TIME
+#define MY_TIME
 
 
 #include <RTCZero.h>

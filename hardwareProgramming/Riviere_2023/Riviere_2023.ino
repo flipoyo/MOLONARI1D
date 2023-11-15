@@ -22,6 +22,7 @@ Arduino MKR WAN 1310
 #include "internals/Time.cpp"
 #include "internals/Internal_Log_Initializer.cpp"
 #include "internals/Writer.hpp"
+#include "internals/Waiter.hpp"
 // #include "internals/FreeMemory.cpp"
 
 const int CSPin = 6;
@@ -62,6 +63,9 @@ void setup() {
 }
 
 void loop() {
+  Waiter waiter;
+  waiter.startTimer();
+
   i++;
   Serial.println(i);
   TEMP_T temp1 = tempSensor1.MeasureTemperature();
@@ -74,9 +78,9 @@ void loop() {
   writer.LogData(temp1, temp2, temp3, temp4);
   interrupts();
 
-  delay(1000);
+  waiter.delayUntil(1000);
 
   // Decoment to use low-power mode
-  // Warning : Low-power mode is not tested yet
-  //MyLowPower.Sleep(1000);
+  // Warning : Low-power mode has not been tested yet
+  //waiter.sleepUntil(1000);
 }
