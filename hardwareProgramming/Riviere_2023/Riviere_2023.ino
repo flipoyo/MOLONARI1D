@@ -73,7 +73,7 @@ void setup() {
   }
 
   // Initialise the SD logger
-  logger.EstablishConnection();
+  logger.EstablishConnection(CSPin);
 
   // Initialise RTC
   InitialiseRTC();
