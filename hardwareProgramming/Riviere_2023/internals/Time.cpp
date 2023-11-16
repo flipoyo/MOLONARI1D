@@ -41,7 +41,7 @@ void InitialiseRTC() {
     DateTime startingDate = externalRtc.now();
     uint8_t day = startingDate.day();
     uint8_t month = startingDate.month();
-    uint8_t year = startingDate.year();
+    uint8_t year = startingDate.year() % 100;
     uint8_t hour = startingDate.hour();
     uint8_t minute = startingDate.minute();
     uint8_t second = startingDate.second();
