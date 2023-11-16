@@ -18,7 +18,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,1">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0">
      <property name="sizeConstraint">
       <enum>QLayout::SetNoConstraint</enum>
      </property>
@@ -31,6 +31,9 @@
      </item>
      <item>
       <widget class="QLineEdit" name="lineEditPointName">
+       <property name="toolTip">
+        <string>This is your chosen point.</string>
+       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
@@ -45,6 +48,9 @@
      </item>
      <item>
       <widget class="QLineEdit" name="lineEditSensor">
+       <property name="toolTip">
+        <string>This is the chosen pressure sensor.</string>
+       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
@@ -59,6 +65,9 @@
      </item>
      <item>
       <widget class="QLineEdit" name="lineEditShaft">
+       <property name="toolTip">
+        <string>This is your chosen shaft.</string>
+       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
@@ -66,6 +75,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonReset">
+       <property name="toolTip">
+        <string>Reset your computation.</string>
+       </property>
        <property name="text">
         <string>Reset</string>
        </property>
@@ -73,6 +85,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonCleanUp">
+       <property name="toolTip">
+        <string>Click here to clean your measures up!</string>
+       </property>
        <property name="text">
         <string>Clean-up...</string>
        </property>
@@ -80,6 +95,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonCompute">
+       <property name="toolTip">
+        <string>Click here to launch a direct model or calculate the Bayesian inversion via MMC technique.</string>
+       </property>
        <property name="text">
         <string>Compute...</string>
        </property>
@@ -113,48 +131,30 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>The number of layers of your column.</string>
+       </property>
       </widget>
      </item>
      <item>
-      <widget class="QTableView" name="tableViewParams">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>60</height>
-        </size>
-       </property>
-       <property name="baseSize">
-        <size>
-         <width>200</width>
-         <height>60</height>
-        </size>
-       </property>
-       <property name="verticalScrollBarPolicy">
-        <enum>Qt::ScrollBarAlwaysOff</enum>
-       </property>
-       <property name="horizontalScrollBarPolicy">
-        <enum>Qt::ScrollBarAlwaysOff</enum>
-       </property>
-       <attribute name="horizontalHeaderCascadingSectionResizes">
+      <widget class="QPushButton" name="displayparam">
+       <property name="enabled">
         <bool>false</bool>
-       </attribute>
-       <attribute name="horizontalHeaderDefaultSectionSize">
-        <number>125</number>
-       </attribute>
+       </property>
+       <property name="text">
+        <string>Show MCMC best parameters</string>
+       </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
     <widget class="QTabWidget" name="tabWidget">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click here to see the computations you have made, check the column's temperature or pressure, or simply get information about your chosen point.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>4</number>
      </property>
      <widget class="QWidget" name="tabInfos">
       <attribute name="title">
@@ -225,8 +225,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>1314</width>
-                 <height>540</height>
+                 <width>1334</width>
+                 <height>612</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -584,6 +584,23 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Layer number:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBoxSelectLayer">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -600,8 +617,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1361</width>
-             <height>400</height>
+             <width>1369</width>
+             <height>428</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -650,8 +667,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1361</width>
-             <height>399</height>
+             <width>1369</width>
+             <height>427</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_9">
