@@ -59,7 +59,7 @@ void Reader::EstablishConnection()
 }
 
 void Reader::MoveCursor(unsigned int lineId) {
-      while (this->line_cursor < lineId) {
+      while ((this->line_cursor < lineId) && (this->file.available())) {
           this->file.readStringUntil('\n');
           this->line_cursor++;
       }
