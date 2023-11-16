@@ -5,6 +5,8 @@ from numpy import shape
 
 from ..utils.general import databaseDateToDatetime, datetimeToDatabaseDate
 from .SPointCoordinator import SPointCoordinator
+from ..utils.general import displayCriticalMessage
+
 
 class ColumnMCMCRunner(QtCore.QObject):
     """
@@ -35,6 +37,7 @@ class ColumnMCMCRunner(QtCore.QObject):
 
         # # lancer calcul direct après avoir fait une mcmc
         # self.col.compute_solve_transi.reset()
+
         self.finished.emit()
 
 class ColumnDirectModelRunner(QtCore.QObject):
@@ -50,9 +53,11 @@ class ColumnDirectModelRunner(QtCore.QObject):
         self.nb_cells = nb_cells
 
     def run(self):
+        print('on a run')
         print("Launching Direct Model...")
         layers = layersListCreator(self.params)
         self.col.compute_solve_transi(layers, self.nb_cells)
+        print('on a run et compute_solve_transi a été faite')
         self.finished.emit()
 
 class Compute(QtCore.QObject):
@@ -125,10 +130,13 @@ class Compute(QtCore.QObject):
         self.thread.started.connect(self.direct_runner.run)
         self.thread.start()
 
+        print('fin de compute_direct_model')
+
     def end_direct_model(self):
         """
         This is called when the DirectModel is over. Save the relevant information in the database
         """
+        print('on save les results du direct model')
         self.save_direct_model_results()
 
         self.thread.quit()
@@ -271,7 +279,7 @@ class Compute(QtCore.QObject):
         insertRMSE.exec()
         self.con.commit()
 
-    def compute_MCMC(self, nb_iter: int, all_priors : list, nb_cells: str, quantiles: tuple, nb_chains: int, delta: float, ncr, c, cstar):
+    def compute_MCMC_from_window(self, nb_iter: int, all_priors : list, nb_cells: str, quantiles: tuple, nb_chains: int, delta: float, ncr, c, cstar):
         """
         Launch the MCMC computation with given parameters.
         """
@@ -284,10 +292,11 @@ class Compute(QtCore.QObject):
         self.set_column() #Updates self.col
         self.mcmc_runner = ColumnMCMCRunner(self.col, nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar)
         self.mcmc_runner.finished.connect(self.end_MCMC)
+        # create a new thread
         self.mcmc_runner.moveToThread(self.thread)
         self.thread.started.connect(self.mcmc_runner.run)
         self.thread.start()
-
+        
     def end_MCMC(self):
         """
         This is called when the MCMC is over. Save the relevant information in the database.
@@ -295,8 +304,8 @@ class Compute(QtCore.QObject):
         self.save_MCMC_results()
 
         # direct après avoir fait une mcmc
-        self.col.compute_solve_transi.reset()
-
+        # self.col.compute_solve_transi.reset()
+        self.col.compute_mcmc.reset()
         self.thread.quit()
 
         print('Reset MCMC configuration')
