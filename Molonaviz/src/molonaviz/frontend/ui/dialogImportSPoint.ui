@@ -120,65 +120,7 @@
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEditInfo">
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>   Temperatures File (CSV) :</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="2">
-      <widget class="QPushButton" name="pushButtonBrowseConfig">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Browse</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QPushButton" name="pushButtonBrowseInfo">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Browse</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QRadioButton" name="radioButtonManual">
-       <property name="text">
-        <string>Manual entry :</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QLineEdit" name="lineEditTemperatures">
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QPushButton" name="pushButtonBrowsePressures">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Browse</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="2">
+     <item row="7" column="3">
       <widget class="QPushButton" name="pushButtonBrowseTemperatures">
        <property name="enabled">
         <bool>false</bool>
@@ -188,48 +130,31 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="label_6">
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>   Configuration File (PNG) :</string>
+        <string>Meas Date</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QLineEdit" name="lineEditPressures">
+     <item row="7" column="2">
+      <widget class="QLineEdit" name="lineEditTemperatures">
        <property name="readOnly">
         <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_8">
-       <property name="text">
-        <string>   Pressures File (CSV) :</string>
        </property>
       </widget>
      </item>
      <item row="5" column="0">
-      <widget class="QLabel" name="label_5">
+      <widget class="QLabel" name="label_12">
        <property name="text">
-        <string>   Notice File (TXT) :</string>
+        <string>Delta H</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
-      <widget class="QLineEdit" name="lineEditConfig">
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="2">
-      <widget class="QPushButton" name="pushButtonBrowseNotice">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_8">
        <property name="text">
-        <string>Browse</string>
+        <string>   Pressures File (CSV) :</string>
        </property>
       </widget>
      </item>
@@ -240,12 +165,127 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>   Temperatures File (CSV) :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="2">
       <widget class="QLineEdit" name="lineEditNotice">
        <property name="readOnly">
         <bool>true</bool>
        </property>
       </widget>
+     </item>
+     <item row="6" column="2">
+      <widget class="QLineEdit" name="lineEditPressures">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>River Bed</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="3">
+      <widget class="QPushButton" name="pushButtonBrowsePressures">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>   Configuration File (PNG) :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="3">
+      <widget class="QPushButton" name="pushButtonBrowseConfig">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>   Notice File (TXT) :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QPushButton" name="pushButtonBrowseInfo">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="2">
+      <widget class="QLineEdit" name="lineEditConfig">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLineEdit" name="lineEditInfo">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QRadioButton" name="radioButtonManual">
+       <property name="text">
+        <string>Manual entry :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="3">
+      <widget class="QPushButton" name="pushButtonBrowseNotice">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Implantation Date</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QLineEdit" name="lineEditImplantationDate"/>
+     </item>
+     <item row="3" column="2">
+      <widget class="QLineEdit" name="lineEditMeasDate"/>
+     </item>
+     <item row="4" column="2">
+      <widget class="QLineEdit" name="lineEditRiverBed"/>
+     </item>
+     <item row="5" column="2">
+      <widget class="QLineEdit" name="lineEditDeltaH"/>
      </item>
     </layout>
    </item>

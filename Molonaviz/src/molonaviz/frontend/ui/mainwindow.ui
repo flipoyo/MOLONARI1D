@@ -234,8 +234,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>623</width>
-     <height>26</height>
+     <width>1827</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -308,7 +308,9 @@
     <property name="title">
      <string>Database</string>
     </property>
+    <addaction name="actionOpen_Database"/>
     <addaction name="actionChangeDatabase"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuMolonaViz"/>
    <addaction name="menuDatabase"/>
@@ -447,6 +449,16 @@
   <action name="actionChangeDatabase">
    <property name="text">
     <string>Change Database</string>
+   </property>
+  </action>
+  <action name="actionOpen_Database">
+   <property name="text">
+    <string>Open Database</string>
+   </property>
+  </action>
+  <action name="actionAdd_element_to_laboratory">
+   <property name="text">
+    <string>Add element to laboratory</string>
    </property>
   </action>
  </widget>
