@@ -487,7 +487,7 @@ class DialogCleanup(QtWidgets.QDialog, From_DialogCleanup):
             self.setStyleSheet("background-color: rgb(50, 50, 50); color: rgb(255, 255, 255);")
         else:
             self.setStyleSheet("")  # Utilisez la feuille de style par défaut de l'application
-                cleanedData = pd.DataFrame()  # Empty Dataframe
+            cleanedData = pd.DataFrame()  # Empty Dataframe
         return cleanedData
 
 def saveCleanedMeasures(self):
