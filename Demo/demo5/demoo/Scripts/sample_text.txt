@@ -1,0 +1,84 @@
+####### DO NOT TOUCH #######
+# MODULES 
+import sys, os
+import numpy as np
+import pandas as pd
+from scipy import stats
+import matplotlib
+import matplotlib.dates as mdates
+from scipy.signal import savgol_filter
+
+# TEMPERATURE F TO C
+
+
+
+# PRESSION
+intercept = self.df_Calibration.loc[0,"Intercept"]
+dUdH = self.df_Calibration.loc[0,"dUdH"]
+dUdT = self.df_Calibration.loc[0,"dUdT"]
+df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
+df_Pressure.drop(labels="tension",axis=1,inplace=True)
+
+
+# TIMES - DATES
+
+df_loaded = df_Pressure.merge(df_ZH, how='outer', on="date").sort_values('date').reset_index().drop('index',axis=1)
+
+varList = list(df_loaded.columns)
+
+lower_limit = max(df_loaded[["t_stream"]].first_valid_index(),df_loaded[["charge_diff"]].first_valid_index(),df_loaded[["t4"]].first_valid_index())
+upper_limit = min(df_loaded[["t_stream"]].last_valid_index(),df_loaded[["charge_diff"]].last_valid_index(),df_loaded[["t4"]].last_valid_index())
+# df_cleaned = df_loaded.copy().loc[lower_limit:upper_limit,:]
+df_cleaned = df_loaded.copy().dropna()
+
+# METHODS
+# t_stream
+
+# charge_diff
+
+# t1
+
+# t2
+
+# t3
+
+# t4
+
+# MANUAL SELECTED POINTS
+try:
+    selected_df = pd.read_csv(os.path.join(self.scriptDir,f'selected_points_{self.point.name}.csv'))
+    for i in varList[1:]:
+        df_var = selected_df[["date",i]].dropna()
+        if not df_var.empty:
+            values = df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
+            df_cleaned.loc[:,i] = values
+except FileNotFoundError:
+    pass
+
+# YOU CAN TOUCH - USER DEFINED FUNCTION
+
+# SMOOTHING
+to_filter = {'t_stream': False, 'charge_diff': False, 't1': False, 't2': False, 't3': False, 't4': False}
+
+
+for var in to_filter:
+    if to_filter[var]:
+        df_cleaned.loc[df_cleaned[var].notnull(),var] = savgol_filter(df_cleaned.loc[df_cleaned[var].notnull(),var],20,2)
+
+# TEMPERATURE C TO K
+
+
+# DROP
+# This function allows to get the biggest DataFrame without NaN values in boundary conditions after cleaning up 
+def longest_stretch(var):
+        a = var.values  # Extract out relevant column from dataframe as array
+        m = np.concatenate(( [True], np.isnan(a), [True] ))  # Mask
+        ss = np.flatnonzero(m[1:] != m[:-1]).reshape(-1,2)   # Start-stop limits
+        start,stop = ss[(ss[:,1] - ss[:,0]).argmax()]  # Get max interval, interval limits
+        return start, stop-1
+limits = np.array([list(longest_stretch(df_cleaned["t_stream"])),list(longest_stretch(df_cleaned["charge_diff"])),list(longest_stretch(df_cleaned["t4"]))])
+lower = max(limits[:,0])
+upper = min(limits[:,1])
+df_cleaned = df_cleaned.loc[lower:upper, :]
+df_cleaned.reset_index(inplace=True)
+df_cleaned.drop('index',axis=1,inplace=True)

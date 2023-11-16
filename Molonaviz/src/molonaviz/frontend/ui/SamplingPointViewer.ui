@@ -94,6 +94,13 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="pushButtonExportMeasures">
+       <property name="text">
+        <string>Export cleaned measures</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="pushButtonCompute">
        <property name="toolTip">
         <string>Click here to launch a direct model or calculate the Bayesian inversion via MMC technique.</string>
@@ -154,7 +161,7 @@
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click here to see the computations you have made, check the column's temperature or pressure, or simply get information about your chosen point.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="currentIndex">
-      <number>4</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabInfos">
       <attribute name="title">
@@ -262,14 +269,7 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0">
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="0,0">
-           <item>
-            <widget class="QPushButton" name="pushButtonExportMeasures">
-             <property name="text">
-              <string>Export cleaned measures</string>
-             </property>
-            </widget>
-           </item>
+          <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="0">
            <item>
             <widget class="QCheckBox" name="checkBoxRawData">
              <property name="enabled">
