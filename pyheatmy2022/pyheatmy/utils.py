@@ -361,6 +361,7 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
         upper_diagonal_A[0] = - 4*K_list[0]*(1-alpha)/(3*dz**2)  
 
         # correction of numerical schema on the interface of different layers
+         
         for tup_idx in range(len(inter_cara)):
             K1 = array_K[tup_idx]
             K2 = array_K[tup_idx + 1]
@@ -439,11 +440,10 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
             upper_diagonal_A = - KsurSs_list[:-1]*(1-alpha)/dz**2
             upper_diagonal_A[0] = - 4*KsurSs_list[0]*(1-alpha)/(3*dz**2)
 
-
             for tup_idx in range(len(inter_cara)):
                 K1 = array_K[tup_idx]
                 K2 = array_K[tup_idx + 1]
-            
+        
                 if inter_cara[tup_idx][1] == 0: # sampling point coincide with change of interface
                     pos_idx = int(inter_cara[tup_idx][0])
                     diagonal_B[pos_idx] = Ss_list[pos_idx] * 1/dt - (K1 + K2) *alpha/dz**2
@@ -452,7 +452,7 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
                     diagonal_A[pos_idx] = Ss_list[pos_idx] * 1/dt + (K1 + K2) *(1-alpha)/dz**2
                     lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
                     upper_diagonal_A[pos_idx] = - K2*(1-alpha)/dz**2
-                
+            
                 else: # sampling point are distributed on both sides of the interface with distance x*dz and (1-x)*dz
                     pos_idx = int(inter_cara[tup_idx][0])
                     x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])

@@ -123,6 +123,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     def _compute_solve_transi_multiple_layers(self, layersList, nb_cells, verbose):
 
         if not (len(layersList) - 1): # case uni layer
+            uni_couche = True
             layer = layersList[0]
             dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule
             self._z_solve = dz/2 + np.array([k*dz for k in range(nb_cells)])
@@ -158,17 +159,19 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             heigth = abs(self._real_z[-1] - self._real_z[0])
             Ss = n / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
 
-            H_res = compute_H(moinslog10K, Ss, all_dt,
-                            isdtconstant, dz, H_init, H_riv, H_aq)  # calcule toutes les charges à tout temps et à toute profondeur
+            ## pour le cas uni-couche, on le simule dans compute_H_stratified avec deux couches de mêmes paramètres
+            array_moinslog10K = np.array([moinslog10K, moinslog10K])
+            array_K = 10 ** (-array_moinslog10K * 1.0)
+            array_Ss = np.array([Ss, Ss])
+            list_zLow = np.array([0.2])
+            inter_cara = np.array([[nb_cells // 2, 0]])
+            z_solve = self._z_solve.copy()
+            moinslog10K_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(layersList, nb_cells)
+            Ss_list = n_list / heigth
+            ##
 
-            T_res = compute_T(
-                moinslog10K, n, lambda_s, rhos_cs, all_dt, dz, H_res, H_riv, H_aq, T_init, T_riv, T_aq
-            )  # calcule toutes les températures à tout temps et à toute profondeur
-
-            self._temps = T_res
-            self._H_res = H_res  # stocke les résultats
-
-        # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
+            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
             nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
             nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
@@ -177,6 +180,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
 
             nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
+            
+            T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
+
+            # calcule toutes les températures à tout temps et à toute profondeur
+
+            self._temps = T_res
+            self._H_res = H_res  # stocke les résultats
+
+        
 
             K = 10 ** - moinslog10K
             self._flows = -K * nablaH  # calcul du débit spécifique
@@ -185,6 +197,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 print("Done.")
 
         else: # case multiple layers
+            uni_couche = False
 
             dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule
             self._z_solve = dz/2 + np.array([k*dz for k in range(nb_cells)])
@@ -328,10 +341,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                                 print("type cara asymetric")
         ## end
             #version zhan
-            H_res = compute_H_stratified(
-                array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
 
             self._H_res = H_res  # stocke les résultats
+
             # ###
             # H_res = compute_HTK_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
             # ###
