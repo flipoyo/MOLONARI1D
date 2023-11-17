@@ -19,6 +19,7 @@ from .dialogCompute import DialogCompute
 from ..utils.get_files import get_ui_asset
 from ..utils.general import displayCriticalMessage
 
+# we load the ui files
 From_DisplayParameters = uic.loadUiType(get_ui_asset("DisplayParameters.ui"))[0]
 From_SamplingPointViewer = uic.loadUiType(get_ui_asset("SamplingPointViewer.ui"))[0]
 
@@ -33,9 +34,12 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.coordinator = spointCoordinator
         
         self.computeEngine = Compute(self.coordinator)
+
+        # we connect the signals from the compute engine to the updateAllViews method
         self.computeEngine.DirectModelFinished.connect(self.updateAllViews)
         self.computeEngine.MCMCFinished.connect(self.updateAllViews)
-    
+
+        # get the status of the nightmode
         self.statusNightmode = statusNightmode
 
         self.setupUi(self)
@@ -171,6 +175,9 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.linkAllViewsLayouts()
 
     def refreshbins(self):
+        """
+        Refresh the number of bins in the histograms.
+        """
         bins = self.horizontalSliderBins.value()
         self.logk_view.updateBins(bins)
         self.logk_view.onUpdate()
@@ -185,15 +192,24 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.capacity_view.onUpdate()
 
     def labelUpdate(self):
+        '''
+        Update the label showing the number of bins.
+        '''
         self.labelBins.setText(str(self.horizontalSliderBins.value()))
 
     def setWidgetInfos(self):
+        """
+        Set the information about the sampling point in the info tab.
+        """
         self.setWindowTitle(self.samplingPoint.name)
         self.lineEditPointName.setText(self.samplingPoint.name)
         self.lineEditSensor.setText(self.samplingPoint.psensor)
         self.lineEditShaft.setText(self.samplingPoint.shaft)
 
     def setInfoTab(self):
+        """
+        Set the schema, the notice and the infos table.
+        """
         schemePath, noticePath, infosModel = self.coordinator.get_spoint_infos()
         self.labelSchema.setPixmap(QtGui.QPixmap(schemePath))
         self.labelSchema.setAlignment(QtCore.Qt.AlignHCenter)
@@ -303,7 +319,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         
     def refreshUmbrellaView(self):
         """
-        This method is called when the user changes the displayed layer in the temperature map.
+        This method is called when the user refresh all the views (when updateAllViews is called).
         """
         self.umbrella_view.onUpdate()
 
@@ -384,6 +400,9 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             layout.addWidget(toolbar)
 
     def reset(self):
+        """
+        Launch the confirmation dialog and, if the user confirms, delete the cleaned measures and all computations made for this point.
+        """
         dlg = DialogConfirm("Are you sure you want to delete the cleaned measures and all computations made for this point? This cannot be undone.")
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
@@ -393,6 +412,9 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
 
     def cleanup(self):
+        """
+        Launch the cleanup dialog and, if the user confirms, clean the measures and insert them in the database.
+        """
         dlg = DialogCleanup(self.coordinator,self.samplingPoint, self.statusNightmode)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
@@ -412,6 +434,10 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 self.handleComputationsButtons()
 
     def compute(self):
+        '''
+        Launch the computation of the direct model or the MCMC model, depending on the user's choice.
+        '''
+
         dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
