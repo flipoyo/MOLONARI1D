@@ -5,6 +5,7 @@
 
 #include <ArduinoLowPower.h>
 #include "Low_Power.hpp"
+#include "Lora.hpp"
 
 
 class Waiter {
@@ -24,8 +25,11 @@ public :
 
     // Put the arduino in delay mode for the desired time (in ms after the start of the timer)
     void delayUntil(unsigned long desired_waiting_time) {
-        unsigned long time_to_wait = (millis() - starting_time) + desired_waiting_time;
-        delay(time_to_wait);
+        unsigned long end_date = starting_time + desired_waiting_time;
+        while(millis() < end_date) {
+            ServeLora();
+            delay(1);
+        }
     }
 
 private :

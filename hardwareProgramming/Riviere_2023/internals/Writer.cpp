@@ -6,12 +6,15 @@
 
 #include "Writer.hpp"
 #include "Time.cpp"
+#include "Measure_Cache.cpp"
 #include <String.h>
 #include <SD.h>
 
 #ifdef SD_DEBUG
+#define SD_LOG(msg) Serial.print(msg)
 #define SD_LOG_LN(msg) Serial.println(msg)
 #else
+#define SD_LOG(msg)
 #define SD_LOG_LN(msg)
 #endif
 
@@ -46,13 +49,13 @@ void GetCurrentTime(Measure* measure) {
 
 void Writer::WriteInNewLine(Measure data){
     
-    SD_LOG_LN("Writing data ...");
+    SD_LOG("Writing data ...");
     this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.mesure1) + COMA + String(data.mesure2) + COMA + String(data.mesure3) + COMA + String(data.mesure4));
-    SD_LOG_LN("Done");
+    SD_LOG_LN(" Done");
 
-    SD_LOG_LN("Flushing ...");
+    SD_LOG("Flushing ...");
     this->file.flush();
-    SD_LOG_LN("Done");
+    SD_LOG_LN(" Done");
 }
 
 void Writer::ConvertToWriteableMeasure(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4) {
@@ -86,6 +89,8 @@ void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, ME
     GetCurrentTime(&data);
     data.id = this->next_id;
     bool is_connected = true;
+
+    MeasureCache.AddMeasure(data);
 
     // Check if the connection is still established
     if (!SD.begin(this->CSPin) || !this->file){

@@ -47,6 +47,8 @@ void SleepLora();
 // Re-enable the LoRa module if it was asleep. I.E. Exit low-power mode for the LoRa module
 void WakeUpLora();
 
+void ServeLora();
+
 
 // ----- Internal functions -----
 
