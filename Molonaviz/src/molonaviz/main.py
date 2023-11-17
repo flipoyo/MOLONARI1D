@@ -138,6 +138,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         createNewDatabase = False
         newDatabaseName = ""
         remember = False
+        self.actionChangeDatabase.setEnabled(True)
         if result is not None :
             self.result = result
             self.dialog = dialog
