@@ -91,7 +91,7 @@ class GraphView1D(GraphView):
         for index, (label, data) in enumerate(self.y.items()):
             if len(self.x) == len(data):
 
-                self.ax.plot(self.x, data, label=label)
+                self.ax.plot(self.x, np.float32(data), label=label)
         self.ax.legend(loc= self.loc)
         self.ax.set_ylabel(self.ylabel)
 
@@ -280,7 +280,7 @@ class UmbrellaView(GraphView1D):
         self.ax.legend(list_labels, loc='best')
         self.ax.set_ylabel(self.ylabel)
         self.ax.set_xlabel(self.xlabel)
-        self.ax.set_title('Umbrellas plot')
+        self.ax.set_title('Temperature (°C)')
         self.ax.grid(True)
                 
 
@@ -365,7 +365,7 @@ class TempMapView(GraphView2D):
     """
     Concrete class for the heat map.
     """
-    def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="Temperature (C)", xlabel="", ylabel="Depth (m)"):
+    def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="Temperature (°C)", xlabel="", ylabel="Depth (m)"):
         super().__init__(molomodel, time_dependent, title, xlabel, ylabel)
 
     def retrieveData(self):

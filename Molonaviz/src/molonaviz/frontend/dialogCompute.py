@@ -76,7 +76,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
+            # self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
 
         #MCMC
         self.lineEditChains.setText("10")

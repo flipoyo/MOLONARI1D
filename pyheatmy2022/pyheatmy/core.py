@@ -28,6 +28,7 @@ from .utils import (
     convert_to_layer,
     check_range,
     gelman_rubin,
+    EPSILON
 )
 from .layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
 
@@ -135,8 +136,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         if len(self._layersList) == 0:
             raise ValueError("Your list of layers is empty.")
 
-        if abs(self._layersList[-1].zLow - self._real_z[-1]) >= self.eps:
-            raise ValueError("Last layer does not match the end of the column.")
+        # if abs(self._layersList[-1].zLow - self._real_z[-1]) >= self.eps:
+        #     raise ValueError("Last layer does not match the end of the column.")
 
     def _compute_solve_transi_multiple_layers(self, layersList, nb_cells, verbose):
         dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule

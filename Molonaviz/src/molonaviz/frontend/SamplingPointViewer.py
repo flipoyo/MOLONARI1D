@@ -420,9 +420,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
     def compute(self):
         dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine)
         res = dlg.exec()
-        displayCriticalMessage('compute est appelée')
         if res == QtWidgets.QDialog.Accepted:
-            displayCriticalMessage('compute est acceptée')
             self.coordinator.delete_computations()
             if dlg.computationIsMCMC():
                 #MCMC
@@ -430,7 +428,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, thresh)
                 self.displayparam.setEnabled(True)
             else:
-                displayCriticalMessage('compute est direct')
                 #Direct Model
                 params, nb_cells = dlg.getInputDirectModel()
                 self.computeEngine.compute_direct_model(params, nb_cells)
@@ -473,7 +470,7 @@ class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
 
         self.tableViewParams = QTableView()
         for layer in layers:
-            self.paramsModel.append(self.coordinator.get_best_params_model(layer))
+            self.paraModels.append(self.coordinator.get_best_params_model(layer))
         self.tableViewParams.setModel(self.paramsModel)
         #Resize the table view so it looks pretty
         self.tableViewParams.resizeColumnsToContents()

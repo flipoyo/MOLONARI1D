@@ -27,6 +27,7 @@ C_W = 4185
 ALPHA = 0.4
 G = 9.81
 N_UPDATE_MU = 96
+EPSILON = 1e-10
 
 
 def conv(layer):
