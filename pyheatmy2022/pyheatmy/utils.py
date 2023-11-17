@@ -111,12 +111,82 @@ def compute_Mu(T):
     D = -3.376e-5
     mu = A*exp(B*1./T + C*T + D*(T**2))
     return mu
-
-
-
+@njit
+def compute_K_list(moinslog10k_list,mu_list):
+    return ( RHO_W * G * 10.0 ** -moinslog10k_list) * 1./mu_list
+@njit
+def compute_rho_mc_m_list(n_list, rhos_cs_list):
+    return n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
+@njit
+def compute_lambda_m_list(n_list,lambda_s_list):
+    return (n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5) ** 2
+@njit
+def fill_lower_diagonal_B_T(ke_list, alpha, dz, ae_list,nablaH, n_cell, step):
+    lower_diagonal = (ke_list[1:]*alpha/dz ** 2) - \
+        (alpha*ae_list[1:]/(2*dz)) * nablaH[1:, step]
+    lower_diagonal[-1] = 4*ke_list[n_cell - 1]*alpha / \
+        (3*dz**2) - (2*alpha*ae_list[n_cell -
+                                     1]/(3*dz)) * nablaH[n_cell - 1, step]
+    return lower_diagonal
+@njit
+def fill_diagonal_B_T(dt, ke_list, alpha, dz, n_cell):
+    diagonal = 1/dt - 2*ke_list*alpha/dz**2
+    diagonal[0] = 1/dt - 4*ke_list[0]*alpha/dz**2
+    diagonal[-1] = 1/dt - 4*ke_list[n_cell - 1]*alpha/dz**2
+    return diagonal
+@njit
+def fill_upper_diagonal_B_T(ke_list, alpha, dz, ae_list, nablaH, step):
+    upper_diagonal = (ke_list[:-1]*alpha/dz ** 2) + \
+        (alpha*ae_list[:-1]/(2*dz)) * nablaH[:-1, step]
+    upper_diagonal[0] = 4*ke_list[0]*alpha / \
+        (3*dz**2) + (2*alpha*ae_list[0]/(3*dz)) * nablaH[0, step]
+    return upper_diagonal
+@njit
+def fill_lower_diagonal_A_T(ke_list, alpha, dz, ae_list,nablaH, n_cell, step):
+    lower_diagonal = - (ke_list[1:]*(1-alpha)/dz ** 2) + \
+        ((1-alpha)*ae_list[1:]/(2*dz)) * nablaH[1:, step]
+    lower_diagonal[-1] = - 4*ke_list[n_cell - 1]*(1-alpha)/(3*dz**2) + \
+        (2*(1-alpha)*ae_list[n_cell - 1]/(3*dz)) * nablaH[n_cell - 1, step]
+    return lower_diagonal
+@njit
+def fill_diagonal_A_T(dt, ke_list, alpha, dz, n_cell):
+    diagonal = 1/dt + 2*ke_list*(1-alpha)/dz**2
+    diagonal[0] = 1/dt + 4*ke_list[0]*(1-alpha)/dz**2
+    diagonal[-1] = 1/dt + 4*ke_list[n_cell - 1]*(1-alpha)/dz**2
+    return diagonal
+@njit
+def fill_upper_diagonal_A_T(ke_list, alpha, dz, ae_list, nablaH, step):
+    upper_diagonal = - (ke_list[:-1]*(1-alpha)/dz ** 2) - \
+            ((1-alpha)*ae_list[:-1]/(2*dz)) * nablaH[:-1, step]
+    upper_diagonal[0] = - 4*ke_list[0]*(1-alpha)/(3*dz**2) - \
+            (2*(1-alpha)*ae_list[0]/(3*dz)) * nablaH[0, step]
+    return upper_diagonal
+@njit
+def fill_c_T(n_cell, ke_list, alpha, nablaH, ae_list, T_riv, T_aq, dz, step):
+    c = zeros(n_cell, float32)
+    c[0] = (8*ke_list[0]*(1-alpha) / (3*dz**2) - 2*(1-alpha)*ae_list[0]*nablaH[0, step]/(3*dz)) * \
+        T_riv[step+1] + (8*ke_list[0]*alpha / (3*dz**2) - 2*alpha *
+                          ae_list[0]*nablaH[0, step]/(3*dz)) * T_riv[step]
+    c[-1] = (8*ke_list[n_cell - 1]*(1-alpha) / (3*dz**2) + 2*(1-alpha)*ae_list[n_cell - 1]*nablaH[n_cell - 1, step]/(3*dz)) * \
+        T_aq[step+1] + (8*ke_list[n_cell - 1]*alpha / (3*dz**2) + 2*alpha *
+                     ae_list[n_cell - 1]*nablaH[n_cell - 1, step]/(3*dz)) * T_aq[step]
+    return c
+    
+@njit
+def fill_A_T(n_cell, diagonal, upper_diagonal, lower_diagonal):
+    A = zeros((n_cell, n_cell), float32)
+    A[0, 0] = diagonal[0]
+    A[0, 1] = upper_diagonal[0]
+    for i in range(1, n_cell - 1):
+        A[i, i-1] = lower_diagonal[i-1]
+        A[i, i] = diagonal[i]
+        A[i, i+1] = upper_diagonal[i]
+    A[n_cell - 1, n_cell - 1] = diagonal[n_cell - 1]
+    A[n_cell - 1, n_cell - 2] = lower_diagonal[n_cell - 2]
+    return A
 @njit
 def compute_T_stratified(
-    Ss_list, moinslog10k_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu = N_UPDATE_MU):
+     moinslog10k_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu = N_UPDATE_MU):
     """ Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an heterogeneous column.
 
     Parameters
@@ -155,10 +225,9 @@ def compute_T_stratified(
     """
 
     mu_list = compute_Mu(T_init)
-    rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
-    K_list = ( RHO_W * G * 10.0 ** -moinslog10k_list) * 1./mu_list
-    lambda_m_list = (n_list * (LAMBDA_W) ** 0.5 +
-                     (1.0 - n_list) * (lambda_s_list) ** 0.5) ** 2
+    rho_mc_m_list = compute_rho_mc_m_list(n_list, rhos_cs_list)
+    K_list = compute_K_list(moinslog10k_list,mu_list)
+    lambda_m_list = compute_lambda_m_list(n_list,lambda_s_list)
 
     ke_list = lambda_m_list / rho_mc_m_list
     ae_list = RHO_W * C_W * K_list / rho_mc_m_list
@@ -175,72 +244,43 @@ def compute_T_stratified(
         # Update of Mu(T) after N_update_Mu iterations:
         if j % N_update_Mu == 1:
             mu_list = compute_Mu(T_res[:,j-1])
+            K_list = compute_K_list(moinslog10k_list,mu_list)
+            ae_list = RHO_W * C_W * K_list / rho_mc_m_list
 
         # Compute T at time times[j+1]
 
         # Defining the 3 diagonals of B
-        lower_diagonal = (ke_list[1:]*alpha/dz ** 2) - \
-            (alpha*ae_list[1:]/(2*dz)) * nablaH[1:, j]
-        lower_diagonal[-1] = 4*ke_list[n_cell - 1]*alpha / \
-            (3*dz**2) - (2*alpha*ae_list[n_cell -
-                                         1]/(3*dz)) * nablaH[n_cell - 1, j]
+        lower_diagonal_B = fill_lower_diagonal_B_T(ke_list, alpha, dz, ae_list, nablaH, n_cell, j)
 
-        diagonal = 1/dt - 2*ke_list*alpha/dz**2
-        diagonal[0] = 1/dt - 4*ke_list[0]*alpha/dz**2
-        diagonal[-1] = 1/dt - 4*ke_list[n_cell - 1]*alpha/dz**2
+        diagonal_B = fill_diagonal_B_T(dt, ke_list, alpha, dz, n_cell)
 
-        upper_diagonal = (ke_list[:-1]*alpha/dz ** 2) + \
-            (alpha*ae_list[:-1]/(2*dz)) * nablaH[:-1, j]
-        upper_diagonal[0] = 4*ke_list[0]*alpha / \
-            (3*dz**2) + (2*alpha*ae_list[0]/(3*dz)) * nablaH[0, j]
+        upper_diagonal_B = fill_upper_diagonal_B_T(ke_list, alpha, dz, ae_list, nablaH, j)
 
         # Defining c
-        c = zeros(n_cell, float32)
-        c[0] = (8*ke_list[0]*(1-alpha) / (3*dz**2) - 2*(1-alpha)*ae_list[0]*nablaH[0, j]/(3*dz)) * \
-            T_riv[j+1] + (8*ke_list[0]*alpha / (3*dz**2) - 2*alpha *
-                          ae_list[0]*nablaH[0, j]/(3*dz)) * T_riv[j]
-        c[-1] = (8*ke_list[n_cell - 1]*(1-alpha) / (3*dz**2) + 2*(1-alpha)*ae_list[n_cell - 1]*nablaH[n_cell - 1, j]/(3*dz)) * \
-            T_aq[j+1] + (8*ke_list[n_cell - 1]*alpha / (3*dz**2) + 2*alpha *
-                         ae_list[n_cell - 1]*nablaH[n_cell - 1, j]/(3*dz)) * T_aq[j]
+        c = fill_c_T(n_cell, ke_list, alpha, nablaH, ae_list, T_riv, T_aq, dz, j)
 
         B_fois_T_plus_c = tri_product(
-            lower_diagonal, diagonal, upper_diagonal, T_res[:, j]) + c
+            lower_diagonal_B, diagonal_B, upper_diagonal_B, T_res[:, j]) + c
 
         # Defining the 3 diagonals of A
-        lower_diagonal = - (ke_list[1:]*(1-alpha)/dz ** 2) + \
-            ((1-alpha)*ae_list[1:]/(2*dz)) * nablaH[1:, j]
-        lower_diagonal[-1] = - 4*ke_list[n_cell - 1]*(1-alpha)/(3*dz**2) + \
-            (2*(1-alpha)*ae_list[n_cell - 1]/(3*dz)) * nablaH[n_cell - 1, j]
+        lower_diagonal_A = fill_lower_diagonal_A_T(ke_list, alpha, dz, ae_list,nablaH, n_cell, j)
 
-        diagonal = 1/dt + 2*ke_list*(1-alpha)/dz**2
-        diagonal[0] = 1/dt + 4*ke_list[0]*(1-alpha)/dz**2
-        diagonal[-1] = 1/dt + 4*ke_list[n_cell - 1]*(1-alpha)/dz**2
+        diagonal_A = fill_diagonal_A_T(dt, ke_list, alpha, dz, n_cell)
 
-        upper_diagonal = - (ke_list[:-1]*(1-alpha)/dz ** 2) - \
-            ((1-alpha)*ae_list[:-1]/(2*dz)) * nablaH[:-1, j]
-        upper_diagonal[0] = - 4*ke_list[0]*(1-alpha)/(3*dz**2) - \
-            (2*(1-alpha)*ae_list[0]/(3*dz)) * nablaH[0, j]
+        upper_diagonal_A = fill_upper_diagonal_A_T(ke_list, alpha, dz, ae_list, nablaH, j)
 
         try:
-            T_res[:, j+1] = solver(lower_diagonal, diagonal,
-                                   upper_diagonal, B_fois_T_plus_c)
+            T_res[:, j+1] = solver(lower_diagonal_A, diagonal_A,
+                                   upper_diagonal_A, B_fois_T_plus_c)
         except Exception:
-            A = zeros((n_cell, n_cell), float32)
-            A[0, 0] = diagonal[0]
-            A[0, 1] = upper_diagonal[0]
-            for i in range(1, n_cell - 1):
-                A[i, i-1] = lower_diagonal[i-1]
-                A[i, i] = diagonal[i]
-                A[i, i+1] = upper_diagonal[i]
-            A[n_cell - 1, n_cell - 1] = diagonal[n_cell - 1]
-            A[n_cell - 1, n_cell - 2] = lower_diagonal[n_cell - 2]
+            A = fill_A_T(n_cell, diagonal_A, upper_diagonal_A, lower_diagonal_A)
             T_res[:, j+1] = solve(A, B_fois_T_plus_c)
 
     return T_res
 
 
 @njit
-def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10k_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10k_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq,T_init, alpha=ALPHA):
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
 
     Parameters
@@ -274,14 +314,14 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
 
     H_res = zeros((n_cell, n_times), float32)
     H_res[:, 0] = H_init
+    mu_list = compute_Mu(T_init)
 
-    K_list = 10.0 ** -moinslog10k_list
+    K_list = compute_K_list(moinslog10k_list,mu_list)
     KsurSs_list = K_list/Ss_list
 
     # Check if dt is constant :
     if isdtconstant:  # dt is constant so A and B are constant
-        dt = all_dt[0]
-
+        dt =  all_dt[0]
         # Defining the 3 diagonals of B
         lower_diagonal_B = K_list[1:]*alpha/dz**2
         lower_diagonal_B[-1] = 4*K_list[n_cell - 1]*alpha/(3*dz**2)
@@ -429,3 +469,44 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
                                    upper_diagonal, B_fois_H_plus_c)
 
     return H_res
+
+"""def compute_HT_stratified(moinslog10k_list, n_list, lambda_s_list, rhos_cs_list,array_K, array_Ss, list_zLow, z_solve, inter_cara, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq,T_init, T_riv, T_aq, alpha=ALPHA,N_update_Mu = N_UPDATE_MU):
+    n_cell  = len(H_init)
+    n_times = len(all_dt) + 1
+    H_res = zeros((n_cell, n_times), float32)
+    T_res = zeros((n_cell, n_times), float32)
+    T_init_loop = T_init
+    H_init_loop = H_init
+    step = 0 
+    while step + N_update_Mu <= n_times:
+        all_dt_loop = zeros((N_update_Mu), float32)
+        all_dt_loop = all_dt[step : step + N_update_Mu]
+        H_res[:, step : step + N_update_Mu+1 ] = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10k_list, Ss_list, all_dt_loop, isdtconstant, dz, H_init_loop, H_riv, H_aq,T_init_loop, alpha=ALPHA)
+        nablaH = zeros((n_cell, n_times), float32)
+        nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
+        for i in range(1, n_cell - 1):
+            nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz)
+        nablaH[n_cell - 1, :] = 2*(H_aq - H_res[n_cell - 2, :])/(3*dz)
+        T_res[:, step : step + N_update_Mu + 1] = compute_T_stratified(moinslog10k_list, n_list, lambda_s_list, rhos_cs_list, all_dt_loop, dz, nablaH, T_init_loop, T_riv, T_aq, alpha=ALPHA)
+        T_init_loop = T_res[:, step + N_update_Mu  ] 
+        H_init_loop = H_res[:, step + N_update_Mu  ] 
+        step += N_update_Mu
+    if step == n_times: 
+        return H_res, T_res
+    else : 
+        extra_step = n_times - step
+        all_dt_final_loop = zeros((extra_step), float32)
+        all_dt_final_loop = all_dt[step : step +  extra_step]
+        H_res[:, step : step + extra_step  +1] = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10k_list, Ss_list, all_dt_final_loop, isdtconstant, dz, H_init_loop, H_riv, H_aq,T_init_loop, alpha=ALPHA)
+        nablaH = zeros((n_cell, n_times), float32)
+        nablaH[0, :] = 2*(H_res[1, :] - H_riv)/(3*dz)
+        for i in range(1, n_cell - 1):
+            nablaH[i, :] = (H_res[i+1, :] - H_res[i-1, :])/(2*dz) 
+        nablaH[n_cell - 1, :] = 2*(H_aq - H_res[n_cell - 2, :])/(3*dz)
+        T_res[:, step : step + extra_step +1] = compute_T_stratified(moinslog10k_list, n_list, lambda_s_list, rhos_cs_list, all_dt_final_loop, dz, nablaH, T_init_loop, T_riv, T_aq, alpha=ALPHA)
+        return H_res, T_res"""
+
+
+
+
+

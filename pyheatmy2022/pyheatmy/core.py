@@ -20,6 +20,7 @@ from .utils import (
     LAMBDA_W,
     compute_H_stratified,
     compute_T_stratified,
+    compute_HT_stratified,
     conv,
     compute_energy,
     compute_log_acceptance,
@@ -290,8 +291,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             print("inter_cara", inter_cara)
 
 
-        H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10k_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA)
-
+        #H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10k_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, T_init, alpha=ALPHA)
+        H_res, T_res = compute_HT_stratified(moinslog10k_list, n_list, lambda_s_list, rhos_cs_list,array_K, array_Ss, list_zLow, z_solve, inter_cara, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq,T_init, T_riv, T_aq, alpha=ALPHA,N_update_Mu = N_UPDATE_MU)
         self._H_res = H_res  # stocke les résultats
         
 
@@ -339,7 +340,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         
         ## zhan Nov8
 
-        T_res = compute_T_stratified(Ss_list, moinslog10k_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu = N_UPDATE_MU)
+        #T_res = compute_T_stratified( moinslog10k_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu = N_UPDATE_MU)
 
         self._temps = T_res
 
