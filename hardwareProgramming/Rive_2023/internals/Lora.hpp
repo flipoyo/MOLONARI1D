@@ -60,6 +60,9 @@ void WakeUpLora();
 bool RequestMeasurement(uint32_t firstMissingId, unsigned int destinationId);
 
 
+void ServeLora();
+
+
 
 // ----- Internal functions -----
 

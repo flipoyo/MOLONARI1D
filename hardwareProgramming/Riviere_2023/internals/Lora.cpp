@@ -7,17 +7,18 @@
 
 #include "Lora.hpp"
 #include "Reader.hpp"
+#include "Measure_Cache.cpp"
 
 
 // Debug methods to enable or disable logging
 #ifdef LORA_DEBUG
-#define PRINT(msg) Serial.print(msg)
-#define PRINT_HEX(msg) Serial.print(msg, HEX)
-#define PRINT_LN(msg) Serial.println(msg)
+#define LORA_LOG(msg) Serial.print(msg)
+#define LORA_LOG_HEX(msg) Serial.print(msg, HEX)
+#define LORA_LOG_LN(msg) Serial.println(msg)
 #else
-#define PRINT(msg)
-#define PRINT_HEX(msg)
-#define PRINT_LN(msg)
+#define LORA_LOG(msg)
+#define LORA_LOG_HEX(msg)
+#define LORA_LOG_LN(msg)
 #endif
 
 
@@ -30,8 +31,8 @@ void InitialiseLora(float frequency) {
   LoRa.begin(frequency);
 
   LoRa.enableCrc();
+  sentPacketNumber = LoRa.random();
 
-  LoRa.onReceive(OnLoraReceivePacket);
   LoRa.receive();
 }
 
@@ -55,17 +56,25 @@ void WakeUpLora() {
 }
 
 
+void ServeLora() {
+  int packetSize = LoRa.parsePacket();
+  if (packetSize != 0) {
+    OnLoraReceivePacket(packetSize);
+  }
+}
+
+
 // ----- Internal functions -----
 
 // Callback function when the lora module receives a packet
 // Arguments :
 //  packetSize -> Size of the received packet
 void OnLoraReceivePacket(int packetSize) {
-  PRINT_LN("Receiving packet");
+  LORA_LOG_LN("Receiving packet");
 
   // If the header is incomplete, ignore the packet
   if (packetSize < 13) {
-    PRINT_LN("Ignoring packet : wrong size");
+    LORA_LOG_LN("Ignoring packet : wrong size");
     ClearBytes(packetSize);
     return;
   }
@@ -74,23 +83,23 @@ void OnLoraReceivePacket(int packetSize) {
   unsigned int senderId = ReadFromLoRa<unsigned int>();
   unsigned int destinationId = ReadFromLoRa<unsigned int>();
 
-  PRINT_LN("Sender : " + String(senderId));
-  PRINT_LN("Destination : " + String(destinationId));
+  LORA_LOG_LN("Sender : " + String(senderId));
+  LORA_LOG_LN("Destination : " + String(destinationId));
 
   // If the packet is not for me, ignore it
   if (destinationId != networkId) {
-    PRINT_LN("Ignoring packet : not destined to me");
+    LORA_LOG_LN("Ignoring packet : not destined to me");
     ClearBytes(packetSize - 8);
     return;
   }
 
   // Get the packet number
   unsigned int thisPacketNumber = ReadFromLoRa<unsigned int>();
-  PRINT_LN("Packet number : " + String(thisPacketNumber));
+  LORA_LOG_LN("Packet number : " + String(thisPacketNumber));
 
   // If the packet has already been received, ignore it
-  if (thisPacketNumber < receivedPacketNumber) {
-    PRINT_LN("Ignoring packet : packet already received");
+  if (thisPacketNumber == receivedPacketNumber) {
+    LORA_LOG_LN("Ignoring packet : packet already received");
     ClearBytes(packetSize - 12);
     return;
   }
@@ -100,15 +109,15 @@ void OnLoraReceivePacket(int packetSize) {
   RequestType requestId = (RequestType)LoRa.read();
 
   if (requestId == DT_REQ) {
-    PRINT_LN("Data requested");
+    LORA_LOG_LN("Data requested");
     HandleDataRequest(senderId);
     return;
   }
 
   // If the request method is unknown, inore the packet
-  PRINT_LN("Ignoring packet : unknown request (0x");
-  PRINT_HEX(requestId);
-  PRINT_LN(")");
+  LORA_LOG_LN("Ignoring packet : unknown request (0x");
+  LORA_LOG_HEX(requestId);
+  LORA_LOG_LN(")");
   ClearBytes(packetSize - 13);
 }
 
@@ -116,19 +125,39 @@ void OnLoraReceivePacket(int packetSize) {
 // Respond to an incoming data request
 void HandleDataRequest(unsigned int senderId) {
   unsigned int requestedSampleId = ReadFromLoRa<uint32_t>();
-  PRINT_LN("Sample requested from : " + String(requestedSampleId));
+  LORA_LOG_LN("Sample requested from : " + String(requestedSampleId));
 
+  MeasureCache.DeleteMeasureFrom(requestedSampleId - 1);
+
+  // Initialise reading data from SD card
   Reader reader = Reader();
   reader.EstablishConnection();
   reader.MoveCursor(requestedSampleId);
 
-  PRINT_LN("Sending samples ...");
-  while (reader.IsDataAvailable()) {
+  // Send up to 10 samples
+  LORA_LOG_LN("Sending samples ...");
+  int nb_measurement_sent = 0;
+  while (reader.IsDataAvailable() && nb_measurement_sent < 10) {
     Measure measure = reader.ReadMeasure();
-    PRINT_LN(measure.ToString());
+    LORA_LOG_LN(measure.ToString());
     SendMeasurement(measure, senderId);
+
+    nb_measurement_sent++;
+    delay(10);
   }
-  PRINT_LN("Done");
+
+  // End sending sample using internal cache
+  while (MeasureCache.IsMeasureAvailable(requestedSampleId + nb_measurement_sent) && nb_measurement_sent < 10) {
+
+    Measure measure = MeasureCache.GetMeasure(requestedSampleId + nb_measurement_sent);
+    LORA_LOG_LN("From cache memory : " + measure.ToString());
+    SendMeasurement(measure, senderId);
+
+    nb_measurement_sent++;
+    delay(10);
+  }
+
+  LORA_LOG_LN("Done");
 }
 
 
@@ -164,14 +193,14 @@ T ReadFromLoRa() {
 // Example :
 //  SendPacket(&data, sizeof(data), destId, DT_REQ)
 bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType) {
-  PRINT_LN("Sending packet to " + String(destinationId) + "(" + String(payloadSize) + " bytes)");
-  PRINT("Request type : ");
-  PRINT_HEX(requestType);
-  PRINT("\n");
+  LORA_LOG_LN("Sending packet to " + String(destinationId) + "(" + String(payloadSize) + " bytes)");
+  LORA_LOG("Request type : ");
+  LORA_LOG_HEX(requestType);
+  LORA_LOG("\n");
 
   bool success = (bool)LoRa.beginPacket();
   if (!success) {
-    PRINT_LN("Aborting transmission : LoRa module busy");
+    LORA_LOG_LN("Aborting transmission : LoRa module busy");
     return false;
   }
 
@@ -183,7 +212,7 @@ bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int dest
 
   success = (bool)LoRa.endPacket();
   if (!success) {
-    PRINT_LN("Transmission failed");
+    LORA_LOG_LN("Transmission failed");
   }
 
   // Set the module back to receive mode
@@ -200,7 +229,7 @@ bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int dest
 //  measure -> The measurement to send
 //  destinationId -> The address of the destination device of the message 
 bool SendMeasurement(Measure measure, unsigned int destinationId) {
-  PRINT_LN("Sending measurement n°" + String(measure.id));
+  LORA_LOG_LN("Sending measurement n°" + String(measure.id));
   return SendPacket(&measure, sizeof(measure), destinationId, DT_RPL);
 }
 

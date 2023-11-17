@@ -9,6 +9,16 @@
 #include "Measure.hpp"
 #include "Reader.hpp"
 
+
+#ifdef SD_DEBUG
+#define SD_LOG(msg) Serial.print(msg)
+#define SD_LOG_LN(msg) Serial.println(msg)
+#else
+#define SD_LOG(msg)
+#define SD_LOG_LN(msg)
+#endif
+
+
 // Convert a CSV line (Arduino String Type) into a Measure.
 Measure Reader::StringToMeasure(String line){
   Measure measure;
@@ -54,22 +64,33 @@ Measure Reader::StringToMeasure(String line){
 
 void Reader::EstablishConnection()
 {
-    this->line_cursor = 0;
-    this->file = SD.open(filename);
+  SD_LOG("SD Reader : establishing connection ...");
+
+  this->line_cursor = 0;
+  this->file = SD.open(filename);
+
+  SD_LOG_LN(" Done");
 }
 
 void Reader::MoveCursor(unsigned int lineId) {
-      while (this->line_cursor < lineId) {
-          this->file.readStringUntil('\n');
-          this->line_cursor++;
-      }
-    }
+  SD_LOG("SD Reader : Moving cursor ...");
+
+  while ((this->line_cursor < lineId) && (this->file.available())) {
+      this->file.readStringUntil('\n');
+      this->line_cursor++;
+  }
+
+  SD_LOG_LN(" Done");
+}
 
 Measure Reader::ReadMeasure() {
-    String line = this->file.readStringUntil('\n');
-    this->line_cursor++;
-    return this->StringToMeasure(line);
+  SD_LOG("SD Reader : Reading measure n°" + String(this->line_cursor) + " ...");
 
+  String line = this->file.readStringUntil('\n');
+  this->line_cursor++;
+  return this->StringToMeasure(line);
+
+  SD_LOG_LN(" Done");
 }
 
 bool Reader::IsDataAvailable() {

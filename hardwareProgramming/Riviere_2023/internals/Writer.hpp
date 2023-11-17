@@ -11,6 +11,7 @@ class Writer
     private:
         File file; 
         unsigned int next_id;
+        int CSPin;
 
         // Append a Measure to the csv file.
         void WriteInNewLine(Measure data);
@@ -19,10 +20,10 @@ class Writer
         void ConvertToWriteableMeasure(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4);
 
         // Reconnect to the SD card.
-        void Reconnect();
+        bool Reconnect();
     public:
         // Establish the connection with the SD card.
-        void EstablishConnection();
+        void EstablishConnection(const int CSpin);
 
         // Process and append raw data to the csv file.
         void LogData(MEASURE_T mesure1, MEASURE_T mesure2 = 0, MEASURE_T mesure3 = 0, MEASURE_T mesure4 = 0);
