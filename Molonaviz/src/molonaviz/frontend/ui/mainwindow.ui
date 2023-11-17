@@ -39,7 +39,7 @@
           <item>
            <widget class="QLabel" name="fullDatabaseNameLabel">
             <property name="text">
-             <string>A long      text</string>
+             <string/>
             </property>
            </widget>
           </item>
@@ -234,7 +234,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1827</width>
+     <width>623</width>
      <height>22</height>
     </rect>
    </property>
