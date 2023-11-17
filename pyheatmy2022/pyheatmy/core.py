@@ -14,7 +14,7 @@ from .params import Param, ParamsPriors, Prior, PARAM_LIST
 from .state import State
 from .checker import checker
 
-from .utils import C_W, RHO_W, LAMBDA_W, compute_H, compute_T, compute_H_stratified, compute_T_stratified, EPSILON
+from .utils import C_W, RHO_W, LAMBDA_W, compute_H_stratified, compute_T_stratified, EPSILON
 from .layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
 
 
@@ -206,6 +206,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 T_init = np.array([self.lagr(z) for z in self._z_solve])
             elif self.inter_mode == 'linear': 
                 T_init = self.linear(self._z_solve)
+
             T_riv = self._T_riv
             T_aq = self._T_aq
 
@@ -326,11 +327,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                             if verbose:
                                 print("type cara asymetric")
         ## end
-
+            #version zhan
             H_res = compute_H_stratified(
                 array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
 
             self._H_res = H_res  # stocke les résultats
+            # ###
+            # H_res = compute_HTK_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            # ###
+
+            
+    
         
 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
@@ -375,8 +382,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 plt.ylabel("débit (m/s)")
                 plt.show()
         
-        ## zhan Nov8
-
+## zhan Nov8
             T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list,
                                      rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
 
@@ -385,6 +391,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             self._flows = flows  # calcul du débit spécifique
             if verbose:
                 print("Done.")
+            # if verbose:
+            #     plt.scatter(range(len(KT_list)), KT_list, s = 0.7)
+            #     plt.show()
+
 
     @checker
     def compute_solve_transi(self, layersList: Union[tuple, Sequence[Layer]], nb_cells: int, verbose=True):
