@@ -94,8 +94,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         #MCMC
         self.lineEditMaxIterMCMC.setText("50")
-        self.lineEditKMin.setText("4")
-        self.lineEditKMax.setText("9")
+        self.lineEditKMin.setText("11")
+        self.lineEditKMax.setText("15")
         self.lineEditMoinsLog10KSigma.setText("0.01")
 
         self.lineEditPorosityMin.setText("0.01")
@@ -224,8 +224,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         """
         self.interaction_occurred = True
         super().accept()
-        
-
+    
     
     def handleCloseEvent(self, event):
         # La fenêtre est en train de se fermer, sauvegardez les données

@@ -321,9 +321,6 @@ class TempDepthView(GraphView1D):
         self.options = options
         self.coordinator = spointcoordinator
         
-    
-        
-
     def updateOptions(self,options):
         self.options = options
         super().resetData() #Refresh the plots

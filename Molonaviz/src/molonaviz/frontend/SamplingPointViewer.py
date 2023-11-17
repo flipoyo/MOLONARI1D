@@ -471,7 +471,7 @@ class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
         self.tableViewParams = QTableView()
         for layer in layers:
             self.paraModels.append(self.coordinator.get_best_params_model(layer))
-        self.tableViewParams.setModel(self.paramsModel)
+        self.tableViewParams.setModel(self.paraModels)
         #Resize the table view so it looks pretty
         self.tableViewParams.resizeColumnsToContents()
 

@@ -911,6 +911,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 temp_new = (
                     self.get_temps_solve()
                 )  # récupération du profil de température
+
                 energy_new = compute_energy(
                     temp_new[ind_ref], temp_ref, sigma2, remanence
                 )  # calcul de l'énergie
