@@ -104,6 +104,7 @@ class Compute(QtCore.QObject):
         - with parameters inferred from MCMC : compute.compute_MCMC(nb_iter: int, priors: dict, nb_cells: str, sensorDir: str)
     """
 
+    # signals which will be connected to the updateAllViews function
     MCMCFinished = QtCore.pyqtSignal()
     DirectModelFinished = QtCore.pyqtSignal()
 
@@ -170,9 +171,15 @@ class Compute(QtCore.QObject):
 
         self.set_column()  # Updates self.col
         self.direct_runner = ColumnDirectModelRunner(self.col, params, nb_cells)
+
+        # we connect the signal which will be emitted by the runner when it's finished to the function which will be called (end_direct_model)
         self.direct_runner.finished.connect(self.end_direct_model)
         self.direct_runner.moveToThread(self.thread)
+
+        # we connect the signal which will be emitted by the thread when it's started to the function which will be called (run)
         self.thread.started.connect(self.direct_runner.run)
+
+        # we start the thread, so run is called
         self.thread.start()
 
     def end_direct_model(self):
@@ -402,7 +409,6 @@ class Compute(QtCore.QObject):
         """
         self.save_MCMC_results()
 
-        # direct après avoir fait une mcmc
         self.col.compute_solve_transi.reset()
 
         self.thread.quit()
