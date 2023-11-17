@@ -38,8 +38,6 @@ TemperatureSensor tempSensor2(A2, 2);
 TemperatureSensor tempSensor3(A3, 3);
 TemperatureSensor tempSensor4(A4, 4);
 
-int i = 0;
-
 
 void setup() {
   // Enable the builtin LED during initialisation
@@ -62,10 +60,10 @@ void setup() {
   Serial.println("Done");
 
   // Initialise SD Card
-  Serial.println("Initialising SD card");
+  Serial.print("Initialising SD card ...");
   bool success = InitialiseLog(CSPin);
   if (success) {
-    Serial.println("Done successfully");
+    Serial.println(" Done");
   } else {
     Serial.println("Failed to initialise SD");
     noInterrupts();
@@ -73,10 +71,17 @@ void setup() {
   }
 
   // Initialise the SD logger
+  Serial.print("Loading log file ...");
   logger.EstablishConnection(CSPin);
+  Serial.println(" Done");
 
   // Initialise RTC
+  Serial.print("Initialising RTC ...");
   InitialiseRTC();
+  Serial.println(" Done");
+
+  Serial.println("Initialisation complete !");
+  Serial.println();
 
   // Disable the builtin LED
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
@@ -86,22 +91,16 @@ void loop() {
   Waiter waiter;
   waiter.startTimer();
 
-  i++;
-  Serial.println(i);
   // Perform measurements
   TEMP_T temp1 = tempSensor1.MeasureTemperature();
   TEMP_T temp2 = tempSensor2.MeasureTemperature();
   TEMP_T temp3 = tempSensor3.MeasureTemperature();
   TEMP_T temp4 = tempSensor4.MeasureTemperature();
 
-  // Serial.println(String(temp1) + "   " + String(temp2) + "   " + String(temp3) + "   " + String(temp4) + "   ");  
-  noInterrupts();
   logger.LogData(temp1, temp2, temp3, temp4);
-  interrupts();
-
-  waiter.delayUntil(1000);
 
   // Decoment to use low-power mode
   // Warning : Low-power mode has not been tested yet
   //waiter.sleepUntil(1000);
+  waiter.delayUntil(5000);
 }
