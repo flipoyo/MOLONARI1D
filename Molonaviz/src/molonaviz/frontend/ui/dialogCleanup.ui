@@ -311,38 +311,6 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="tabImportCleanedData">
-        <attribute name="title">
-         <string>Export cleanead data</string>
-        </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QLabel" name="label_4">
-             <property name="text">
-              <string>Path to the cleaned data</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="lineEditBrowseCleaned">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButtonBrowse">
-             <property name="text">
-              <string>Browse</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
       </widget>
      </item>
      <item>
