@@ -17,11 +17,18 @@
 #define LOG_LN(x)
 #endif
 
+
+
+
 #include "internals/Lora.hpp"
 #include "internals/Waiter.hpp"
+#include "internals/Measure_Cache.cpp"
+
+#include <FlashStorage.h>
 
 
-unsigned int firstMissingMeasurementId = 1;
+uint32_t firstMissingMeasurementId = 1;
+FlashStorage(firstMissingMeasurementIdFlash, uint32_t);
 
 
 
@@ -41,6 +48,19 @@ void setup() {
   LOG_LN("See : https://github.com/flipoyo/MOLONARI1D");
   LOG_LN("");
 
+  // Initialising flash from flash
+  pinMode(0, INPUT_PULLDOWN);
+  if (digitalRead(0) == HIGH) {
+    LOG_LN("Resetting flash");
+    firstMissingMeasurementIdFlash.write(1);
+  } else {
+    LOG_LN("Reading settings from flash");
+    firstMissingMeasurementId = firstMissingMeasurementIdFlash.read();
+  }
+
+  // Input for compatibility mode with Arduino IDE plotter
+  pinMode(1, INPUT_PULLDOWN);
+
   // Initialise Lora
   LOG_LN("Initialising LoRa");
   InitialiseLora(OnGetMeasureCallback);
@@ -56,10 +76,6 @@ void loop() {
   Waiter waiter;
   waiter.startTimer();
 
-  // Re-enable Lora receiving
-  // I am not sure how but it seems to help
-  LoRa.receive();
-
   // Request measurement
   LOG_LN("Requesting measurements from n°" + String(firstMissingMeasurementId));
   bool success = RequestMeasurement(firstMissingMeasurementId, 42);
@@ -70,17 +86,25 @@ void loop() {
   }
 
   // Wait for 10 seconds
-  waiter.delayUntil(10000);
+  waiter.delayUntil(5000);
 }
 
 
 void OnGetMeasureCallback(Measure measure) {
-  if (measure.id == firstMissingMeasurementId) {
-    firstMissingMeasurementId++;
-  } else {
-    LOG_LN("Wrong measure received : got n°" + String(measure.id) + " insted of n°" + String(firstMissingMeasurementId));
-  }
+  LOG_LN("Received measure");
+  AddMeasure(measure);
 
-  LOG_LN("Received measure : ");
-  Serial.println(measure.ToCSVEntry());
+  while (IsMeasureAvailable()) {
+    firstMissingMeasurementId++;
+    firstMissingMeasurementIdFlash.write(firstMissingMeasurementId);
+    Measure measure = GetMeasure();
+
+    if (digitalRead(1) == HIGH) {
+      // Compatibility mode with Arduino IDE plotter
+      Serial.println("T1:" + String(measure.mesure1) + " T2:" + String(measure.mesure2) + " T3:" + String(measure.mesure3) + " T4:" + String(measure.mesure4));
+    } else {
+      // Default mode
+      Serial.println(measure.ToCSVEntry());
+    }
+  }
 }
