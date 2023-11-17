@@ -1,0 +1,15 @@
+[package]
+name = "function_conv"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "function_conv"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.19.0"
+numpy = "0.13"
+ndarray = "0.14"
+num = "0.4.0"
