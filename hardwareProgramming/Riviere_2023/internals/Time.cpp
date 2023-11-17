@@ -36,7 +36,9 @@ void InitialiseRTC() {
   if (externalRtc.begin()) {
     // When time needs to be set on a new device, or after a power loss, the
     // following line sets the RTC to the date & time this sketch was compiled
-    externalRtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    if (externalRtc.lostPower()) {
+      externalRtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    }
     
     DateTime startingDate = externalRtc.now();
     uint8_t day = startingDate.day();
