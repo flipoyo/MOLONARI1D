@@ -447,6 +447,9 @@
    </property>
   </action>
   <action name="actionChangeDatabase">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Change Database</string>
    </property>

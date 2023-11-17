@@ -81,7 +81,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
         # Link every button to their function
         self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams2)
-        self.displayparam.clicked.connect(self.changeDisplayedParams)
         self.radioButtonTherm1.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm2.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm3.clicked.connect(self.refreshTempDepthView)
@@ -392,11 +391,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.updateAllViews()
             self.handleComputationsButtons()
 
-    def changeDisplayedParams(self):
-        dlg = DisplayParameters(self.coordinator)
-        res = dlg.exec()
-        if res == QtWidgets.QDialog.Accepted:
-            None
 
     def cleanup(self):
         dlg = DialogCleanup(self.coordinator,self.samplingPoint, self.statusNightmode)
@@ -426,7 +420,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 #MCMC
                 nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time = dlg.getInputMCMC()
                 self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, thresh)
-                self.displayparam.setEnabled(True)
             else:
                 #Direct Model
                 params, nb_cells = dlg.getInputDirectModel()
@@ -457,28 +450,3 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         This is called when the right horizontal splitter in the fluxes tab is moved. Move the left one accordingly.
         """
         self.fluxesSplitterHorizLeft.setSizes(self.fluxesSplitterHorizRight.sizes())
-
-class DisplayParameters(QtWidgets.QDialog, From_DisplayParameters):
-     def __init__(self, spointCoordinator : SPointCoordinator):
-        super(DisplayParameters, self).__init__()
-        QtWidgets.QWidget.__init__(self)
-        self.setupUi(self)
-
-        self.coordinator = spointCoordinator
-        layers = self.coordinator.layers_depths()
-        self.paraModels = []
-
-        self.tableViewParams = QTableView()
-        for layer in layers:
-            self.paraModels.append(self.coordinator.get_best_params_model(layer))
-        self.tableViewParams.setModel(self.paraModels)
-        #Resize the table view so it looks pretty
-        self.tableViewParams.resizeColumnsToContents()
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.tableViewParams)
-        self.setLayout(layout)
-
-        self.tableViewParams.resizeColumnsToContents()
-
-    
