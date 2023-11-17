@@ -123,6 +123,36 @@
        </property>
       </spacer>
      </item>
+     <item>
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Layer number:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboBoxSelectLayer">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>The number of layers of your column.</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="displayparam">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Show MCMC best parameters</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
@@ -202,8 +232,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>1347</width>
-                 <height>600</height>
+                 <width>1334</width>
+                 <height>612</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">

@@ -93,7 +93,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(int(self.input[i][3]))))
 
 
     def InitValuesMCMC(self):
@@ -123,7 +123,14 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditThermalCapacityMax.setText(str(self.inputMCMC[16]))
         self.lineEditThermalCapacitySigma.setText(str(self.inputMCMC[17]))
 
-        self.lineEditQuantiles.setText(str(self.inputMCMC[18]))
+        self.lineEditPersi.setText(str(self.inputMCMC[18]))
+        self.lineEditThresh.setText(str(self.inputMCMC[19]))
+
+        self.lineEditIterStep.setText(str(self.inputMCMC[20]))
+        self.lineEditSpaceStep.setText(str(self.inputMCMC[21]))
+        self.lineEditTimeStep.setText(str(self.inputMCMC[22]))
+
+        self.lineEditQuantiles.setText(str(self.inputMCMC[23]))
 
 
     def SaveInput(self):
@@ -162,7 +169,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.spinBoxNLayersDirect.setValue(1)
         self.tableWidget.setRowCount(1)
 
-        self.input = [[1e-5, 0.15, 3.4, 5e6]]
+        self.input.append([1e-12, 0.15, 3.4, 5e6])
 
         self.tableWidget.setVerticalHeaderItem(0, QTableWidgetItem(f"Layer {1}"))
         layerBottom = int((self.maxdepth))
@@ -181,9 +188,15 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditncr.setText("3")
         self.lineEditc.setText("0.1")
         self.lineEditcstar.setText("1e-6")
+        self.lineEditPersi.setText("1")
+        self.lineEditThresh.setText("1.2")
 
-        self.lineEditKMin.setText("4")
-        self.lineEditKMax.setText("9")
+        self.lineEditIterStep.setText("10")
+        self.lineEditSpaceStep.setText("1")
+        self.lineEditTimeStep.setText("1")
+
+        self.lineEditKMin.setText("11")
+        self.lineEditKMax.setText("15")
         self.lineEditMoinsLog10KSigma.setText("0.01")
 
         self.lineEditPorosityMin.setText("0.01")
@@ -211,24 +224,26 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setRowCount(nb_layers)
             nb_col = len(self.input)
 
+
             if nb_col < nb_layers:
         
                 for _ in range(nb_layers - nb_col):
-                    self.input.append([ 1e-5, 0.15, 3.4, 5e6])
-            elif nb_col > nb_layers:
-        
-                for _ in range(nb_col - nb_layers):
+                    self.input.append([ 1e-12, 0.15, 3.4, 5e6])
+
+            elif len(self.input) > nb_layers:
+    
+                for _ in range(len(self.input) - nb_layers):
                     self.input.pop()
 
 
             for i in range(len(self.input)):
-                self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}")) 
                 layerBottom = int((self.maxdepth/nb_layers))
                 self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom*(i+1)))) #In cm
                 self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
                 self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
+            self.tableWidget.setItem(len(self.input) - 1, 0, QTableWidgetItem(str(self.maxdepth)))
 
 
     def run(self):
@@ -277,10 +292,16 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         nb_cells = self.spinBoxNCellsDirect.value()
 
         nb_chains = int(self.lineEditChains.text())
-        delta = float(self.lineEditDelta.text())
-        ncr = float(self.lineEditncr.text())
+        delta = int(self.lineEditDelta.text())
+        ncr = int(self.lineEditncr.text())
         c = float(self.lineEditc.text())
         cstar = float(self.lineEditcstar.text())
+        remanence = float(self.lineEditPersi.text())
+        thresh = float(self.lineEditThresh.text())
+
+        nb_sous_ech_iter = int(self.lineEditIterStep.text())
+        nb_sous_ech_space = int(self.lineEditSpaceStep.text())
+        nb_sous_ech_time = int(self.lineEditTimeStep.text())
 
         #The user's input is not a permeability but a -log10(permeability)
         moins10logKmin = float(self.lineEditKMin.text())
@@ -320,7 +341,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = tuple(quantiles)
         quantiles = [float(quantile) for quantile in quantiles]
 
-        return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar
+        return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time
 
     def activerDesactiverModeSombre(self, state):
         if state:
@@ -354,8 +375,15 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         rhos_cs_max = float(self.lineEditThermalCapacityMax.text())
         rhos_cs_sigma = float(self.lineEditThermalCapacitySigma.text())
 
+        remanence = float(self.lineEditPersi.text())
+        thresh = float(self.lineEditThresh.text())
+
+        nb_sous_ech_iter = int(self.lineEditIterStep.text())
+        nb_sous_ech_space = int(self.lineEditSpaceStep.text())
+        nb_sous_ech_time = int(self.lineEditTimeStep.text())
+
         quantiles = self.lineEditQuantiles.text()
 
-        params = [nb_iter, nb_chains, delta, ncr, c, cstar, moins10logKmin, moins10logKmax, moins10logKsigma, nmin, nmax, nsigma, lambda_s_min, lambda_s_max, lambda_s_sigma, rhos_cs_min, rhos_cs_max, rhos_cs_sigma, quantiles]
+        params = [nb_iter, nb_chains, delta, ncr, c, cstar, moins10logKmin, moins10logKmax, moins10logKsigma, nmin, nmax, nsigma, lambda_s_min, lambda_s_max, lambda_s_sigma, rhos_cs_min, rhos_cs_max, rhos_cs_sigma,remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, quantiles]
 
         self.compute.save_params_MCMC(params)
