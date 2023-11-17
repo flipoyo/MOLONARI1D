@@ -25,3 +25,21 @@ Sur Arduino IDE, il faut installer les librairies suivantes :
 - ``RTCLib`` (Gestion de l'horloge temps réel externe)
 - ``RTCZero`` (Gestion de l'horloge temps réel interne à la MKR WAN 1310)
 - ``SD`` (Communication carte SD)
+
+### 1.4 Mise en place
+
+Téléverser le code "Riviere_2023.ino" dans l'émetteur qui sera ensuite placé dans la boîte. Téléverser le code "Rive_2023.ino" dans le récepteur.
+
+####Côté émetteur :
+Passer les câbles de la sonde de température dans les passes-câbles (dévisser le capot, rentrer les câbles, revisser le capot pour l'étanchéité) voir la photo plus loin pour avoir une idée.
+
+Suivre les branchement du schéma électrique suivant :
+![Schéma électrique](schéma_branchement.png)
+
+Ça doit avoir cette tête :
+![Vue intérieure](MOLONARI_vue_intérieure.jpg)
+
+Remettre le toit et le visser (fort) pour l'étanchéité (attention sur la photo les vis ne sont pas vissées)
+![Vue extérieure](MOLONARI_vue_exterieure.jpg)
+
+####Côté récepteur:
