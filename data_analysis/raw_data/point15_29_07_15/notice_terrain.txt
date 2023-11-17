@@ -1,0 +1,17 @@
+-- Mise en place des capteurs
+
+installation des capteurs le 23 juillet 2015.
+
+- le scotch du tube de pression dépasse de 3 cm, il a donc été enfoncé à 52 au lieu de 55cm de profondeur.
+
+- du coup la tige de température est enfoncée de sorte que le dernier capteur de température soit à 52 cm.
+
+
+-- Recuperation des donnees
+
+Le 29 juillet 2015.
+
+Capteur de pression p506 dans hobo3.
+Capteur de température t504.
+
+ATTENTION. Le petit tube connectant le tuyau riviere au capteur de pression à l'intérieur de la boite a lâché. La boite a été inondée et les donnees ne sont pas récupérables. 

@@ -1,0 +1,14 @@
+-- Mise en place des capteurs
+
+installation des capteurs le 23 juillet 2015.
+
+Au niveau de la station LOMOS.
+
+Une tige PT100 de la barre de température est HS, on installe que 3 capteurs de température a 10 20 30 cm de profondeur. La pression est installée à 30cm de profondeur.
+
+
+-- Recuperation des donnees
+
+Le 29 juillet 2015.
+Sonde de température Hobo3 dans boite 503bas. Fiche 4 peut etre déconnectée? Hobo humide.
+Capteur de pression p507 dans boite p508.

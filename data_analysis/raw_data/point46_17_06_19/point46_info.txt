@@ -1,0 +1,7 @@
+Point_Name,Point46
+P_Sensor_Name,p508
+Implantation_Date,17_06_19
+Meas_date,2019-06-17 12:00:00
+River_Deb,
+Delta_h,
+Periode,27 days, 15:30:00

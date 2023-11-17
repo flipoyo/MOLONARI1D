@@ -1,0 +1,4 @@
+Shaft_Name,S004
+Datalogger,Rasberry Pi
+T_Sensor_Name,T001
+Sensors_Depth,"[0.1, 0.2, 0.3, 0.4]"

@@ -1,0 +1,7 @@
+P_Sensor_Name,P053
+Datalogger,Raspberry Pi
+Calibration_Date,2022/03/02  15:00:00
+Intercept,1.5370
+dU/dH,1.610
+dU/dT,-0.00380
+Sigma_Meas_P,0.01

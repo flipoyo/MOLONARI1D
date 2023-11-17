@@ -1,0 +1,7 @@
+P_Sensor_Name,P002
+Datalogger,Raspberry Pi
+Calibration_Date,2020/04/10  10:02:35
+Intercept,0.9875
+dU_dH,-5.2601
+dU_dT,0.0128
+Sigma_Meas_P,0.01

@@ -1,0 +1,6 @@
+#pressure_sensor
+p053
+#depth river bed - river tube [cm]
+
+#temperature_depths[cm]
+10;20;30;40
