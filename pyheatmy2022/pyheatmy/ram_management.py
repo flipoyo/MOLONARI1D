@@ -1,6 +1,11 @@
 # This file contains all the tools about intelligent
 # RAM management
 
+# They will be integrated in Molonari 2024.
+
+# You need to use these functions before computing MCMC
+# so as to resolve memory issues.
+
 # imports
 import numpy as np
 import psutil
