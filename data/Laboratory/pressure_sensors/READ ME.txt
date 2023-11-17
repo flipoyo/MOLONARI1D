@@ -1,0 +1,5 @@
+Pour le capteur 53 on a pas pu faire la calibration par témpérature à cause des contraintes de temps.
+
+Pour le capteur 52, les données du 3ème cycle de calibration par témpérature sont malhereusement perdues.
+
+Ceci, ne nous a pas permis de obtenir les paramètres dU/dH et dU/dT. 
