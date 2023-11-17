@@ -32,7 +32,7 @@ void InitialiseLora(void (*_onGetMeasureCallback)(Measure), float frequency) {
   LoRa.enableCrc();
   sentPacketNumber = LoRa.random();
 
-  LoRa.onReceive(OnLoraReceivePacket);
+  //LoRa.onReceive(OnLoraReceivePacket);
   LoRa.receive();
 }
 
@@ -56,6 +56,14 @@ void WakeUpLora() {
 //  destinationId -> Address of the sensor that we want to request data from
 bool RequestMeasurement(uint32_t lastMeasurementId, unsigned int destinationId) {
   return SendPacket(&lastMeasurementId, sizeof(lastMeasurementId), destinationId, DT_REQ);
+}
+
+
+void ServeLora() {
+  int packetSize = LoRa.parsePacket();
+  if (packetSize != 0) {
+    OnLoraReceivePacket(packetSize);
+  }
 }
 
 
