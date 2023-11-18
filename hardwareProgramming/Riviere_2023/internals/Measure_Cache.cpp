@@ -9,11 +9,9 @@
 #include "Measure.hpp"
 
 
-// The number of measures that can be stored in the cache
-#define MEASURE_CACHE_SIZE 96
-
 // The code is inside a class to tidy up which functions corresponds to which functionnality
 
+template <unsigned int MEASURE_CACHE_SIZE>
 class MeasureCacheClass {
     private :
     // The id of the first measure stored in the cache
@@ -89,7 +87,9 @@ class MeasureCacheClass {
 };
 
 // Create an instance of the class, so that the functions are accessible from outside the file
-MeasureCacheClass MeasureCache;
+
+// A storage of the last 96 measures on the RAM. Used in parallel to the storage inside the SD card, to enable for redundancy.
+MeasureCacheClass<96> MeasureCache;
 
 
 #endif // MEASURE_CACHE_HPP

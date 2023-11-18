@@ -9,6 +9,8 @@
 #include <SD.h>
 #include "Measure.hpp"
 
+// The name of the csv file
+extern const char filename[];
 
 // An object to read a serie of measurements from a CSV file.
 class Reader

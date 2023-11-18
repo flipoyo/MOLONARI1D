@@ -11,6 +11,9 @@ Required hardware :
  - Featherwing Adalogger
 */
 
+
+// ----- Configurations -----
+
 // Define the data-type of a measurement
 #define MEASURE_T double
 // Define a function to parse a measurement (i.e. to convert a string to a MEASURE_T)
@@ -22,23 +25,38 @@ Required hardware :
 // Uncomment this line to enable diagnostics log on serial for SD operations
 #define SD_DEBUG
 
+
+// ----- Imports -----
+
 #include "internals/Lora.hpp"
 #include "internals/Low_Power.hpp"
 #include "internals/Pressure_Sensor.hpp"
 #include "internals/Temp_Sensor.hpp"
 #include "internals/Time.cpp"
-#include "internals/Internal_Log_Initializer.cpp"
+#include "internals/SD_Initializer.cpp"
 #include "internals/Writer.hpp"
 #include "internals/Waiter.hpp"
 // #include "internals/FreeMemory.cpp"
 
+
+// ----- Main Variables -----
+
+// --- SD ---
+// The chip select pin of the SD card
 const int CSPin = 5;
+// The SD logger to write measurements into a csv file
 Writer logger;
+// The name of the csv file where the measurements will be saved
+const char filename[] = "RIVIERE.CSV";
+
+// --- Sensors ---
 TemperatureSensor tempSensor1(A1, 1);
 TemperatureSensor tempSensor2(A2, 2);
 TemperatureSensor tempSensor3(A3, 3);
 TemperatureSensor tempSensor4(A4, 4);
 
+
+// ----- Main Setup -----
 
 void setup() {
   // Enable the builtin LED during initialisation
@@ -87,6 +105,9 @@ void setup() {
   // Disable the builtin LED
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 }
+
+
+// ----- Main Loop -----
 
 void loop() {
   Waiter waiter;

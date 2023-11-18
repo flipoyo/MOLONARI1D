@@ -52,7 +52,7 @@ void ApplyCurrentTime(Measure* measure) {
 void Writer::WriteInNewLine(Measure data){
     
     SD_LOG("Writing data ...");
-    this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.mesure1) + COMA + String(data.mesure2) + COMA + String(data.mesure3) + COMA + String(data.mesure4));
+    this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.chanel1) + COMA + String(data.chanel2) + COMA + String(data.chanel3) + COMA + String(data.chanel4));
     SD_LOG_LN(" Done");
 
     SD_LOG("Flushing ...");
@@ -61,10 +61,10 @@ void Writer::WriteInNewLine(Measure data){
 }
 
 void Writer::ApplyContent(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4) {
-    measure->mesure1 = mesure1;
-    measure->mesure2 = mesure2;
-    measure->mesure3 = mesure3;
-    measure->mesure4 = mesure4;
+    measure->chanel1 = mesure1;
+    measure->chanel2 = mesure2;
+    measure->chanel3 = mesure3;
+    measure->chanel4 = mesure4;
 }
 
 bool Writer::Reconnect() {

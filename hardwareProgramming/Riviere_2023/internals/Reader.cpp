@@ -42,16 +42,16 @@ Measure Reader::StringToMeasure(String line){
       strncpy(measure.time, token.c_str(), 9);
       break;
     case 3:
-      measure.mesure1 = token.TO_MEASURE_T();
+      measure.chanel1 = token.TO_MEASURE_T();
       break;
     case 4:
-      measure.mesure2 = token.TO_MEASURE_T();
+      measure.chanel2 = token.TO_MEASURE_T();
       break;
     case 5:
-      measure.mesure3 = token.TO_MEASURE_T();
+      measure.chanel3 = token.TO_MEASURE_T();
       break;
     case 6:
-      measure.mesure4 = token.TO_MEASURE_T();
+      measure.chanel4 = token.TO_MEASURE_T();
       break;
     default:
       break;

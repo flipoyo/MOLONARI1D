@@ -11,7 +11,8 @@
 #include "Measure.hpp"
 
 
-// const char filename[] = "datalog.csv";
+// The name of the csv file
+extern const char filename[];
 
 // The first line of the CSV file
 const char header[] = "Id,Date,Time,Capteur1,Capteur2,Capteur3,Capteur4";

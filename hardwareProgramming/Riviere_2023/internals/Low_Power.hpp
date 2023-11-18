@@ -29,6 +29,8 @@ private :
 };
 
 // Create an instance of the class, so that the functions are accessible from outside the file
+
+// A collection of methods to put the Arduino into low-power mode.
 extern MyLowPowerClass MyLowPower;
 
 #include "Low_Power.cpp"

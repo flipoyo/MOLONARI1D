@@ -4,30 +4,28 @@
 #ifndef MEASURE_CLASS
 #define MEASURE_CLASS
 
-const char filename[] = "riviere.csv";
-
 class Measure {
   public:
-    // Numéro de la mesure
+    // Measure number
     unsigned int id;
-    // Date au format "dd/mm/yyyy"
+    // Date with the format "dd/mm/yyyy"
     char date[11];
-    // Heure au format "hh:mm:ss"
+    // Hour with the format "hh:mm:ss"
     char time[9];
 
-    // Valeurs des mesures
-    MEASURE_T mesure1;
-    MEASURE_T mesure2;
-    MEASURE_T mesure3;
-    MEASURE_T mesure4;
+    // Value read on each sensor
+    MEASURE_T chanel1;
+    MEASURE_T chanel2;
+    MEASURE_T chanel3;
+    MEASURE_T chanel4;
 
     String ToString() {
       String str = "Measure n°" + String(id);
       str += " (" + String(date) + " " + String(time) + ") : ";
-      str += String(mesure1) + ", " ;
-      str += String(mesure2) + ", " ;
-      str += String(mesure3) + ", " ;
-      str += String(mesure4);
+      str += String(chanel1) + ", " ;
+      str += String(chanel2) + ", " ;
+      str += String(chanel3) + ", " ;
+      str += String(chanel4);
       
       return str;
     }

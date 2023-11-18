@@ -1,10 +1,12 @@
 // Defines a class to wait in a way that allows each iteration of the main loop to take the same amount of time.
 
+// Check that the file has not been imported before
 #ifndef WAITER_HPP
 #define WAITER_HPP
 
 
 #include <ArduinoLowPower.h>
+
 #include "Low_Power.hpp"
 #include "Lora.hpp"
 

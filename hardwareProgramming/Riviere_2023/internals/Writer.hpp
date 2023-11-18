@@ -9,6 +9,10 @@
 #include <SD.h>
 #include "Measure.hpp"
 
+// The name of the csv file
+extern const char filename[];
+
+// An object to write a serie of measurements to a CSV file.
 class Writer
 {
     private:
@@ -24,7 +28,7 @@ class Writer
 
         // Reconnect to the SD card.
         bool Reconnect();
-        
+
     public:
         // Establish the connection with the SD card.
         void EstablishConnection(const int CSpin);
