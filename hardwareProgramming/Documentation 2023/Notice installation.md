@@ -58,7 +58,7 @@ Là, il y a 4 paires de pins à connecter pour assurer la communication:
   * (A) MOSI - MOSI (B)
   * (A) MISO - MISO (B)
 
-**<u>Remarque :</u>** Le pin CS sur (A) est au choix, il faut dans tous les cas qu'il coincide au "`const int CSPin`" apparaissant dans le fichier [Riviere_2023.ino](../Riviere_2023.ino) (Cf plus loin). Il ne faut PAS prendre le pin 6. La raison est toute bête : il est directement connecté à la LED built-in de la carte, et elle va s'allumer à chaque fois que vous allez communiquer avec le module SD, et ça va vider la batterie.
+**<u>Remarque :</u>** Le pin CS sur (A) est au choix, il faut dans tous les cas qu'il coincide au "`const int CSPin`" apparaissant dans le fichier [Riviere_2023.ino](../Riviere_2023/Riviere_2023.ino) (Cf plus loin). Il ne faut PAS prendre le pin 6. La raison est toute bête : il est directement connecté à la LED built-in de la carte, et elle va s'allumer à chaque fois que vous allez communiquer avec le module SD, et ça va vider la batterie.
 
 ### 2.3. La partie RTC
 
@@ -82,11 +82,11 @@ Pour économiser de l'énergie, on peut couper l'alimentation des capteurs lorsq
 ## 3 Le code à insérer dans les cartes.
 
 Il va falloir se munir d'un cable *USB - Micro USB* connecté avec un ordinateur muni d'Arduino IDE et du code à insérer.  
-**Très important :** il faut que le fichier principal du code (dans notre cas [Riviere_2023.ino](../Riviere_2023.ino)) soit dans un dossier qui porte **le même nom** (c'est comme ça c'est la vie).
+**Très important :** il faut que le fichier principal du code (dans notre cas [Riviere_2023.ino](../Riviere_2023/Riviere_2023.ino)) soit dans un dossier qui porte **le même nom** (c'est comme ça c'est la vie).
 
 ### 3.1. Code capteur (dans la rivière)
 
-Pour le capteur, c'est le code [Riviere_2023.ino](../Riviere_2023.ino) qui est à charger.
+Pour le capteur, c'est le code [Riviere_2023.ino](../Riviere_2023/Riviere_2023.ino) qui est à charger.
 
 Avant d'upload le code, il faut s'assurer que les pins (CSPin et les pins capteurs) coincident avec ce qu'il se passe en vrai, sinon il va vous arriver la pire chose qu'il peut arriver à quelqu'un qui fait ce genre de choses : le code compile et ça marche quand même pas...
 
@@ -94,7 +94,7 @@ Après c'est Upload (le bouton avec la flèche). Si l'Arduino n'apparaît pas qu
 
 ### 3.2. Code relais (sur la rive)
 
-C'est tout pareil, mais en prenant le bon code ([Rive_2023.ino](../../Rive_2023/Rive_2023.ino)). Simple non ?
+C'est tout pareil, mais en prenant le bon code ([Rive_2023.ino](../Rive_2023/Rive_2023.ino)). Simple non ?
 
 
 ## 4 Finaliser
@@ -133,7 +133,7 @@ Alors là... courage.
 
 * S'assurer des bons branchements (et des contacts avec un multimètre)
 * S'assurer que la LED des Arduino s'allument puis s'éteignent. Si elles ne s'allument pas c'est qu'elles n'ont pas de courant, si elles ne s'éteignent pas c'est que l'initialisation a raté. Si l'initialisation du capteur ne finit jamais, c'est la carte SD qui est responsable dans 99% des cas. Si ça arrive avec le relai, c'est qu'il n'est pas branché à un ordinateur, ou que l'ordinateur n'a aucun logiciel qui cherche à recevoir les données du port Serial.
-* Au début, il est conseillé de faire un max de test avec un ordi (qui alimente la carte en USB) avec une connection en Serial, qui permet d'afficher des trucs dans le terminal. C'est le pendant du print() en Python, et ça s'appelle `Serial.println()` (le `Serial.print()` fait la même chose mais sans retour à la ligne). Si vous voulez avoir une avalanche de commentaires dans la console pour comprendre ce qu'il se passe, on l'a prévu dans le code. Il suffit de dé-commenter la ligne `#define DEBUG` au début de [Riviere_2023.ino](../Riviere_2023.ino) et de [Rive_023.ino](../../Rive_2023/Rive_2023.ino), et de re-uploader le programme sur les Arduino.
+* Au début, il est conseillé de faire un max de test avec un ordi (qui alimente la carte en USB) avec une connection en Serial, qui permet d'afficher des trucs dans le terminal. C'est le pendant du print() en Python, et ça s'appelle `Serial.println()` (le `Serial.print()` fait la même chose mais sans retour à la ligne). Si vous voulez avoir une avalanche de commentaires dans la console pour comprendre ce qu'il se passe, on l'a prévu dans le code. Il suffit de dé-commenter la ligne `#define DEBUG` au début de [Riviere_2023.ino](../Riviere_2023/Riviere_2023.ino) et de [Rive_023.ino](../Rive_2023/Rive_2023.ino), et de re-uploader le programme sur les Arduino.
 * Il y a des chances que la carte SD vous pose des problèmes, il arrive souvent qu'elle arrête de marcher de manière aléatoire. Quelques pistes si ça arrive :
   - Réinitialiser l'Arduino avec le bouton reset
   - Enlever la carte SD, souffler dessus et la remettre

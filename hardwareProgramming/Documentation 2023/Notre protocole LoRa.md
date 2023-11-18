@@ -64,7 +64,7 @@ Les types de requête actuellement implantés :
  - **Envoi de mesures** : `DT_RPL` (*data reply*)  
     Réponse à `DT_REQ`. Le capteur envoie une mesure au relai. Ce paquet pourra être répété plusieurs fois pour envoyer plusieurs mesures d'un coup.  
     Données :
-    - Une mesure (de type `Measure` défini dans [internals/Measure.hpp](../internals/Measure.hpp))  
+    - Une mesure (de type `Measure` défini dans [internals/Measure.hpp](../Riviere_2023/internals/Measure.hpp))  
 
 NB : Le type `Measure` contient la tension sur les 4 canaux (par exmeple les 4 températures), la date et l'heure de la mesure, et le numéro de la mesure.  
 
@@ -74,5 +74,5 @@ On associe un numéro à chaque type de requête :
 | DT_REQ | 0x01 |
 | DT_RPL | 0x81 |
 
-Le type RequestType est implémenté dans [internals/Lora.hpp](../internals/Lora.hpp)  
+Le type RequestType est implémenté dans [internals/Lora.hpp](../Riviere_2023/internals/Lora.hpp)  
 
