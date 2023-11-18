@@ -10,7 +10,8 @@ Pour réaliser cette mise en place, il vous faudra un diplôme en physique nucl�
 
 - [Arduino MKR WAN 1310](https://docs.arduino.cc/hardware/mkr-wan-1310) (récupération des données + envoi par LoRa)
 - [Antenne Waterproof](https://store.arduino.cc/products/dipole-pentaband-waterproof-antenna) (à brancher sur la MKR WAN 1310)
-- [Module Adalogger Featherwing SD- RTC](https://www.adafruit.com/product/2922) (à brancher selon le schéma ci-après)
+- [Module Adalogger Featherwing SD- RTC](https://www.adafruit.com/product/2922) (à brancher selon la notice ci-après)
+- Des cables Micro USB - USB ou des bateries (pour alimenter les cartes). Remarque : la connection en USB permet l'alimentation et la communication avec l'ordinateur (pour le code, et le port Serial). Elle permet aussi de charger une batterie qui serait connectée à la MKR WAN
 
 ### 1.2. Logiciels
 
@@ -33,10 +34,10 @@ Pour les branchements, il est très fortement conseillé de le faire sur une bre
 
 Par *branchements* nous entendons les connections électriques entre la *MKR WAN 1310* (A) et l'*Adalogger Featherwing* (B) (SD + RTC), ainsi qu'avec les capteurs. Pour plus de clarté vous pouvez retrouver les *pinouts* (= cartographies des pins d'une carte) aux liens suivant :
 
-- [Pinout MKR WAN 1310](https://www.arduino.cc/hardare/mkr-wan-1310) → "Pinout +"
+- [Pinout MKR WAN 1310](https://docs.arduino.cc/hardware/mkr-wan-1310) → "Pinout +"
 - [Pinout Featherwing](https://learn.adafruit.com/adafruit-adalogger-featherwing/pinouts) 
 
-Il est intéressant de remarquer que les pins qui ne seront pas utilisés sur la Featherwing sont inutiles et surtout connectés à rien. Donc vous pouvez faire passer des cables sur les lignes de la breadboard associées à ces pins (qui n'en sont pas).
+Il est intéressant de remarquer que les pins qui ne seront pas utilisés sur la Featherwing sont inutiles et surtout **connectés à rien**. Donc vous pouvez faire passer des cables sur les lignes de la breadboard associées à ces pins (qui n'en sont pas).
 
 ### 2.1. La partie alimentation
 
