@@ -112,6 +112,11 @@ Par *branchements* nous entendons les connections électriques entre la *MKR WAN
 
 Il est intéressant de remarquer que les pins qui ne seront pas utilisés sur la Featherwing sont inutiles et surtout **connectés à rien**. Donc vous pouvez faire passer des cables sur les lignes de la breadboard associées à ces pins (qui n'en sont pas).
 
+Chaque étape est détaillée après, mais voici un schéma qui résume tout ça :
+
+<img src="schéma_branchement.png" alt="Schéma électrique" width="60%"/>
+
+
 ### 2.1. La partie alimentation
 
 Il faut s'assurer que l'alimentation de la batterie aille bien jusqu'à la *Featherwing*. Cela revient à connecter, comme indiqué sur le *schéma 1* :
@@ -147,19 +152,43 @@ Cette partie s'applique pour les capteurs de températures (tige avec 4 thermist
 * le cable blanc → pin de la board (on avait pris A1, A2, A3 et A4)
 
 
-## 3 Le code à insérer dans les cartes.
+## 3 Chargement du code
 
-Il va falloir se munir d'un cable *USB - Micro USB* connecté avec un ordinateur muni d'Arduino IDE et du code à insérer. **Très important :** il faut que le fichier principal du code (dans notre cas `Rivière.ino`) soit dans un dossier qui porte **le même nom** (c'est comme ça c'est la vie).
+Il va falloir se munir d'un cable *USB - Micro USB* connecté avec un ordinateur muni d'Arduino IDE et du code à insérer. **Très important :** il faut que le fichier principal du code soit dans un dossier qui porte **le même nom** (c'est comme ça c'est la vie).
 
 ### 3.1. Code capteur (dans la rivière)
 
+Pour le capteur, c'est le code `Riviere_2023.ino` qui est à charger.
+
 Avant d'upload le code, il faut s'assurer que les pins (CSPin et les pins capteurs) coincident avec ce qu'il se passe en vrai, sinon il va vous arriver la pire chose qu'il peut arriver à quelqu'un qui fait ce genre de choses : le code compile et ça marche quand même pas...
 
-Après c'est Upload (le bouton avec la flèche). Si il ne trouve pas le port COM alors que c'est branché, il faut appuyer deux fois sur les boutons resets des deux cartes (en même temps). Ensuite, il faut ressélectionner le port COM à droite du bouton upload. Si après ça, ça marche toujours pas : google et bon courage :)
+Après, c'est Upload (le bouton avec la flèche). Si il ne trouve pas le port COM alors que c'est branché, il faut appuyer deux fois sur les boutons resets des deux cartes (en même temps). Ensuite, il faut ressélectionner le port COM à droite du bouton upload. Si après ça, ça marche toujours pas : google et bon courage :)
 
 ### 3.2. Code relais (sur la rive)
 
-C'est tout pareil, mais en prenant le bon code. Simple non ?
+C'est tout pareil, mais en prenant `Rive_2023.ino`. Simple non ?
+
+## 4 Mise en place
+
+Cette partie est utile si vous souhaitez faire une démo de l'ensemble capteur - relais. Elle n'est pas nécessaire si vous voulez juste tester le capteur (le cas échéant il sera juste branché en USB à l'ordi).
+
+### 4.1. Côté émetteur
+
+Mettre le capteur sous tension avec une batterie. Passer les câbles de la sonde de température dans les passes-câbles (dévisser le capot, rentrer les câbles, revisser le capot pour l'étanchéité) voir la photo plus loin pour avoir une idée.
+
+**Attention :** L'étanchéité c'est primordial, donc veillez à bien serrer les vis des capots. MAIS, ne serrez pas trop fort les passes-câbles, au risque de déchirer le joint en silicone autour. 
+
+Ça doit avoir cette tête :
+
+<img src="MOLONARI_vue_intérieure.jpg" alt="Vue intérieure" width="40%" >
+
+Remettre le toit et le visser (fort) pour l'étanchéité (attention sur la photo les vis ne sont pas vissées)
+
+<img src="MOLONARI_vue_exterieure.jpg" alt="Vue extérieure" width="40%"/>
+
+### 4.2. Côté récepteur:
+
+Mettre le relais connecté avec un ordi pour pouvoir avoir une connection en Serial. Il faut ensuite ouvrir le moniteur série (l'icône en haut à droite de l'IDE Arduino). Sinon, on avait fait un petit programme qui permet de visualiser les données en temps réel.
 
 ## Heuuu pourquoi ça marche paaas ?
 
@@ -171,22 +200,3 @@ Alors là... courage.
 * Au début, il est conseillé de faire un max de test avec un ordi (qui alimente la carte en USB) avec une connection en Serial, qui permet d'afficher des trucs dans le terminal. C'est le pendant du print() en Python, et ça s'appelle `Serial.println()` (le `Serial.print()` fait la même chose mais sans retour à la ligne)
 * Si ça a avoir avec la carte SD, on vous avait prévenu dans `retour SD.md`...
 * Si même après avoir tout vérifié et exorcisé par un prêtre homologué ça ne marche toujours pas, il vous reste toujours la solution de l'envoûtement quantique...
-
-
-### 1.4 Mise en place
-
-Téléverser le code "Riviere_2023.ino" dans l'émetteur qui sera ensuite placé dans la boîte. Téléverser le code "Rive_2023.ino" dans le récepteur.
-
-####Côté émetteur :
-Passer les câbles de la sonde de température dans les passes-câbles (dévisser le capot, rentrer les câbles, revisser le capot pour l'étanchéité) voir la photo plus loin pour avoir une idée.
-
-Suivre les branchement du schéma électrique suivant :
-![Schéma électrique](schéma_branchement.png)
-
-Ça doit avoir cette tête :
-![Vue intérieure](MOLONARI_vue_intérieure.jpg)
-
-Remettre le toit et le visser (fort) pour l'étanchéité (attention sur la photo les vis ne sont pas vissées)
-![Vue extérieure](MOLONARI_vue_exterieure.jpg)
-
-####Côté récepteur:
