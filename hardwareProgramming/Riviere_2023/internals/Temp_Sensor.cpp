@@ -1,3 +1,5 @@
+// This file contains all the code relative to the measurement of pressure
+// See internals/Temp_Sensor.hpp for the definitions.
 
 // Check that the file has not been imported before
 #ifndef TEMP_SENSOR

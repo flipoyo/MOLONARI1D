@@ -1,4 +1,5 @@
 // This file is responsible of switching to low-power mode
+// See internals/Low_Power.hpp for the definitions.
 
 // Check that the file has not been imported before
 #ifndef MY_LOW_POWER

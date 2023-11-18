@@ -1,4 +1,5 @@
-// This file will contain all functions relative to LoRa communication
+// This file will contain all the functions relative to LoRa communication
+// See internals/Lora.hpp for the definitions.
 
 // Check that the file has not been imported before
 #ifndef MY_LORA

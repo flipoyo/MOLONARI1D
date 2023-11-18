@@ -1,3 +1,6 @@
+// This file defines the Writer class, which is used to write a serie of measurements to a CSV file.
+// See internals/Writer.cpp for the implementations.
+
 
 // Check that the file has not been imported before
 #ifndef WRITER_CLASS_H
@@ -17,10 +20,11 @@ class Writer
         void WriteInNewLine(Measure data);
 
         // Convert the raw data into a Measure.
-        void ConvertToWriteableMeasure(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4);
+        void ApplyContent(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4);
 
         // Reconnect to the SD card.
         bool Reconnect();
+        
     public:
         // Establish the connection with the SD card.
         void EstablishConnection(const int CSpin);

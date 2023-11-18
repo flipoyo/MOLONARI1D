@@ -1,4 +1,4 @@
-
+// This file defines the Measure class, which is used to store measurements. from all 4 sensors at a time.  
 
 // Check that the file has not been imported before
 #ifndef MEASURE_CLASS
@@ -8,9 +8,14 @@ const char filename[] = "riviere.csv";
 
 class Measure {
   public:
+    // Numéro de la mesure
     unsigned int id;
+    // Date au format "dd/mm/yyyy"
     char date[11];
+    // Heure au format "hh:mm:ss"
     char time[9];
+
+    // Valeurs des mesures
     MEASURE_T mesure1;
     MEASURE_T mesure2;
     MEASURE_T mesure3;
