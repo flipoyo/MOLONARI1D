@@ -1,4 +1,5 @@
-
+// This file defines the Reader class, which is used to read a serie of measurements from a CSV file.
+// See internals/Reader.hpp for the definitions.
 
 // Check that the file has not been imported before
 #ifndef READER_CLASS

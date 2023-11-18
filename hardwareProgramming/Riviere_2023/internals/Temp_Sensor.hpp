@@ -1,4 +1,5 @@
-// This file will contain all the code relative to the measurement of pressure
+// This file contains all the code relative to the measurement of pressure
+// See internals/Temp_Sensor.cpp for the implementation.
 
 
 // Check that the file has not been imported before

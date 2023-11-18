@@ -1,5 +1,4 @@
-// This file will contain all the code to log the data internally before they get transmitted.
-// It uses an internal memory of the MKR board : 2MByte of persistent flash memory.
+// This file will contain all the code to initialise the SD card and the CSV file.
 
 
 // Check that the file has not been imported before
@@ -13,22 +12,25 @@
 
 
 // const char filename[] = "datalog.csv";
+
+// The first line of the CSV file
 const char header[] = "Id,Date,Time,Capteur1,Capteur2,Capteur3,Capteur4";
 
-
+// Returns wheather the SD card wad already initialised or not.
 bool AlreadyInitialised() {
-    if (SD.exists(filename) == false) {
+    if (!SD.exists(filename)) {
       return false;
     }
-    else{
-      File file =  SD.open(filename);
+    else {
+      File file = SD.open(filename);
       int a = file.available();
       file.close();
       return (a > 0);
     }
 }
 
-//Generate a CSV file with a header IF necessary.
+// Generate a CSV file with a header IF necessary.
+// Rturns true if the initialisation was successful.
 bool InitialiseLog(const int CSpin) {
     if (!SD.begin(CSpin)) {
       return false;
@@ -36,10 +38,13 @@ bool InitialiseLog(const int CSpin) {
 
     else if (!AlreadyInitialised()) {
         File file = SD.open(filename, FILE_WRITE);
-        if (file) {
+        bool success = file;
+        if (success) {
             file.println(header);
         }
         file.close();
+
+        return success;
     }
 
     return true;

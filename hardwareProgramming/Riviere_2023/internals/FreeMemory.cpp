@@ -1,4 +1,5 @@
-//TEST FILE FOR DEBUGGING PURPOSES ONLY
+// Contains a function to measure the amount of RAM available on the Arduino
+// TEST FILE FOR DEBUGGING PURPOSES ONLY
 
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict

@@ -32,28 +32,31 @@ String UIntTo2DigitString(uint8_t x) {
 
 // Initialise the RTC module for the first time.
 void InitialiseRTC() {
+  // Start the internal RTC
   internalRtc.begin();
-  if (externalRtc.begin()) {
-    // When time needs to be set on a new device, or after a power loss, the
-    // following line sets the RTC to the date & time this sketch was compiled
-    if (externalRtc.lostPower()) {
-      externalRtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    }
-    
-    DateTime startingDate = externalRtc.now();
-    uint8_t day = startingDate.day();
-    uint8_t month = startingDate.month();
-    uint8_t year = startingDate.year() % 100;
-    uint8_t hour = startingDate.hour();
-    uint8_t minute = startingDate.minute();
-    uint8_t second = startingDate.second();
-    internalRtc.setDate(day, month, year);
-    internalRtc.setTime(hour, minute, second);
-    }
   
-
+  // Start communication with the external RTC
+  bool success = externalRtc.begin();
+  if (!success) {
+    return;
+  }
+  
+  // If the external RTC has lost power (even its battery), then set its time to the date at which the code was compiled.
+  if (externalRtc.lostPower()) {
+    externalRtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+  
+  // Set the time of the internal RTC to the time of the external one
+  DateTime startingDate = externalRtc.now();
+  uint8_t day = startingDate.day();
+  uint8_t month = startingDate.month();
+  uint8_t year = startingDate.year() % 100;
+  uint8_t hour = startingDate.hour();
+  uint8_t minute = startingDate.minute();
+  uint8_t second = startingDate.second();
+  internalRtc.setDate(day, month, year);
+  internalRtc.setTime(hour, minute, second);
 }
-
 
 // Return the current date (JJ/MM/AAAA)
 String GetCurrentDate() {

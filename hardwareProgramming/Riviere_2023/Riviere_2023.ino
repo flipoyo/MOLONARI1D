@@ -4,10 +4,11 @@ This firmware will be is meant for the arduino in the river bed of the Molonari 
 Functionalities :
   - Making measurements from the temperature and pressure sensors.
   - Sending the measurements via LoRa
-  - Saving the measurements in an internal memory
+  - Saving the measurements on an SD card
 
 Required hardware :
-Arduino MKR WAN 1310
+ - Arduino MKR WAN 1310
+ - Featherwing Adalogger
 */
 
 // Define the data-type of a measurement
@@ -65,7 +66,7 @@ void setup() {
   if (success) {
     Serial.println(" Done");
   } else {
-    Serial.println("Failed to initialise SD");
+    Serial.println(" Failed");
     noInterrupts();
     while(true) {}
   }
@@ -99,8 +100,8 @@ void loop() {
 
   logger.LogData(temp1, temp2, temp3, temp4);
 
-  // Decoment to use low-power mode
+  // Decoment this line to use low-power mode
   // Warning : Low-power mode has not been tested yet
-  //waiter.sleepUntil(1000);
+  //waiter.sleepUntil(5000);
   waiter.delayUntil(5000);
 }

@@ -1,4 +1,4 @@
-
+// This file defines the Measure class, which is used to store measurements. from all 4 sensors at a time.  
 
 // Check that the file has not been imported before
 #ifndef MEASURE_CLASS
