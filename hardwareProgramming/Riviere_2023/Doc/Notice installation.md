@@ -65,7 +65,7 @@ Pour la RTC, il y a 2 fils à tirer :
 *   (A) SDA - SDA (B)
 
 Pour résumer, à cette étape vous devriez avoir ce schéma électrique :
-![Schéma électrique](schéma_branchement.png)
+![Schéma électrique](Images/schéma_branchement.png)
 
 ### 2.4. Les capteurs
 
@@ -102,7 +102,7 @@ Passez les câbles de la sonde de température dans les passes-câbles (dévisse
 Mettez du lest au fond de la boite pour éviter qu'elle flotte. Prévoyez au moins 2~3 kg.
 
 Ça doit avoir cette tête :
-![Vue intérieure](MOLONARI_vue_intérieure.jpg)
+![Vue intérieure](Images/MOLONARI_vue_intérieure.jpg)
 
 Ensuite il faut **supprimer tous les fichiers de la carte SD** puis l'insérer dans l'Adalogger. Il ne reste plus qu'à brancher l'antenne et la batterie.  
 
@@ -111,7 +111,7 @@ NB : c'est normal que la LED verte ne s'allume pas quand l'Arduino est sur batte
 
 Remettez le toit et vissez le (fort) pour l'étanchéité (attention sur la photo les vis ne sont pas vissées)  
 *Je vous conseille de faire cette partie seulement dans un second temps, après avoir fait un essai de toute l'électronique.*
-![Vue extérieure](MOLONARI_vue_exterieure.jpg)
+![Vue extérieure](Images/MOLONARI_vue_exterieure.jpg)
 
 ### 4.2 Côté récepteur :
 

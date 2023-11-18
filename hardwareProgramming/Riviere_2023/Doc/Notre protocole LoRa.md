@@ -4,7 +4,7 @@
 
 On s'intéresse à la communication entre le capteur et le relai (la flèche en vert sur le schéma). Le principal objectif est de transmettre les mesures faites par le capteur. (Même si à terme on pourrait avoir d'autres flux d'infos)
 
-![Chaîne d'informations](Chaine_informations.jpg) 
+![Chaîne d'informations](Images/Chaine_informations.jpg) 
 
 On transmet les données par radio en utilisant la technologie LoRa. Elle permet une communication sans fil sur des longues distances, et ce avec peu de consommation d'énergie. C'est donc parfait pour notre cas.  
 
