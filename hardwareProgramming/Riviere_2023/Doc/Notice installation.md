@@ -174,6 +174,8 @@ C'est tout pareil, mais en prenant le bon code ([Rive_2023.ino](../../Rive_2023/
 
 ## 4 Finaliser
 
+*Remarque : Cette partie est utile seulement si vous voulez faire une démo. Pour des tests, vous pouvez vous contenter de brancher les cartes sur un ordinateur en USB, pour avoir une connection en Serial.*
+
 ### 4.1 Côté émetteur :
 Passez les câbles de la sonde de température dans les passes-câbles (dévissez le capot, rentrez les câbles, revissez le capot pour l'étanchéité). Voir la photo plus loin pour avoir une idée.  
 Mettez du lest au fond de la boite pour éviter qu'elle flotte. Prévoyez au moins 2~3 kg.
