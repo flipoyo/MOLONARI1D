@@ -1,4 +1,5 @@
-// This file will contain all functions relative to LoRa communication
+// This file will contain all the definitions relative to LoRa communication.
+// See internals/Lora.cpp for the implementation.
 
 // Check that the file has not been imported before
 #ifndef MY_LORA_H
@@ -6,7 +7,7 @@
 
 #include <LoRa.h>
 
-#include "Measure.h"
+#include "Measure.hpp"
 
 
 // ----- Variables -----

@@ -1,10 +1,25 @@
+/*
+This firmware will be is meant for the LoRa relay in the Molonari system.
 
+Functionalities :
+  - Request measurements from the sensors
+  - Print the measurements on the serial port
+
+In long term, this firmware will be able to :
+  - Send the measurements to the server
+
+Required hardware :
+ - Arduino MKR WAN 1310
+*/
+
+
+// ----- Settings -----
 
 // Define the data-type of a measurement
 #define MEASURE_T double
 
 
-// Uncomment htis line to enable dignostics log on serial about the main loop
+// Uncomment this line to enable dignostics log on serial about the main loop
 //#define DEBUG
 // Uncomment this line to enable diagnostics log on serial for lora operations
 //#define LORA_DEBUG
@@ -18,7 +33,7 @@
 #endif
 
 
-
+// ----- Dependencies -----
 
 #include "internals/Lora.hpp"
 #include "internals/Waiter.hpp"
@@ -27,10 +42,15 @@
 #include <FlashStorage.h>
 
 
+// ----- Main loop variables -----
+
+// Id of the first measurement that this card does not know
 uint32_t firstMissingMeasurementId = 1;
+// Flash storage for the firstMissingMeasurementId
 FlashStorage(firstMissingMeasurementIdFlash, uint32_t);
 
 
+// ----- Main Setup -----
 
 void setup() {
   // Enable the builtin LED during initialisation
@@ -48,17 +68,19 @@ void setup() {
   LOG_LN("See : https://github.com/flipoyo/MOLONARI1D");
   LOG_LN("");
 
-  // Initialising flash from flash
-  pinMode(0, INPUT_PULLDOWN);
-  if (digitalRead(0) == HIGH) {
+  // Initialising flash
+  pinMode(0, INPUT_PULLDOWN);   // INPUT_PULLDOWN -> The pin is defaulted to 0 even if it is not connected to anything. Otherwise, it could have a random value
+  if (digitalRead(0) == LOW || firstMissingMeasurementIdFlash.read() == 0) {
+    // Reset the variables stored into flash
     LOG_LN("Resetting flash");
     firstMissingMeasurementIdFlash.write(1);
   } else {
+    // Initialise firstMissingMeasurementId using flash
     LOG_LN("Reading settings from flash");
     firstMissingMeasurementId = firstMissingMeasurementIdFlash.read();
   }
 
-  // Input for compatibility mode with Arduino IDE plotter
+  // Setup pin 1 as input for compatibility mode with Arduino IDE plotter
   pinMode(1, INPUT_PULLDOWN);
 
   // Initialise Lora
@@ -71,6 +93,7 @@ void setup() {
 }
 
 
+// ----- Main loop -----
 
 void loop() {
   Waiter waiter;
@@ -90,18 +113,19 @@ void loop() {
 }
 
 
+// Function called when a measure is received
 void OnGetMeasureCallback(Measure measure) {
   LOG_LN("Received measure");
-  AddMeasure(measure);
+  MeasureQueue.Add(measure);
 
-  while (IsMeasureAvailable()) {
+  while (MeasureQueue.Available()) {
     firstMissingMeasurementId++;
     firstMissingMeasurementIdFlash.write(firstMissingMeasurementId);
-    Measure measure = GetMeasure();
+    Measure measure = MeasureQueue.Dequeue();
 
     if (digitalRead(1) == HIGH) {
       // Compatibility mode with Arduino IDE plotter
-      Serial.println("T1:" + String(measure.mesure1) + " T2:" + String(measure.mesure2) + " T3:" + String(measure.mesure3) + " T4:" + String(measure.mesure4));
+      Serial.println("T1:" + String(measure.chanel1) + " T2:" + String(measure.chanel2) + " T3:" + String(measure.chanel3) + " T4:" + String(measure.chanel4));
     } else {
       // Default mode
       Serial.println(measure.ToCSVEntry());
