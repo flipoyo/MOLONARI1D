@@ -523,10 +523,6 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_ca
                 ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
             c[-1] = (8*K_list[n_cell - 1] / (3*dz**2)) * \
                 ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
-            c = zeros(n_cell, float32)
-            c[0] = (8*K_list[0] / (3*dz**2)) * ((1-alpha)*H_riv[j+1] + alpha*H_riv[j]) + 8/3 * (dK_list[0] * (-1) / 2 / dz) * ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
-            c[-1] = (8*K_list[n_cell - 1] / (3*dz**2)) * ((1-alpha)*H_aq[j+1] + alpha*H_aq[j]) + 8/3 * (dK_list[n_cell - 1] * (-1) / 2 / dz) * ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
-
             B_fois_H_plus_c = tri_product(
                 lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j]) + c
 
