@@ -52,7 +52,7 @@ class GraphView1D(GraphView):
         self.loc = loc
 
     def onUpdate(self):
-        self.axes.clear()
+        self.ax.clear()
         self.resetData()
         self.retrieveData()
         self.setup_x()
@@ -66,9 +66,9 @@ class GraphView1D(GraphView):
         if self.time_dependent:
             self.x = dateToMdates(self.x)
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-            self.axes.xaxis.set_major_formatter(formatter)
-            self.axes.xaxis.set_major_locator(MaxNLocator(4))
-            plt.setp(self.axes.get_xticklabels(), rotation = 15)
+            self.ax.xaxis.set_major_formatter(formatter)
+            self.ax.xaxis.set_major_locator(MaxNLocator(4))
+            plt.setp(self.ax.get_xticklabels(), rotation = 15)
         else:
             pass
 
@@ -176,16 +176,16 @@ class GraphViewHisto(GraphView):
         self.bins = bins
 
     def onUpdate(self):
-        self.axes.clear()
+        self.ax.clear()
         self.resetData()
         self.retrieveData()
         self.plotData()
         self.draw()
 
     def plotData(self):
-        self.axes.hist(self.data, edgecolor='black', bins=self.bins, alpha=.3, density=True, color=self.color)
-        self.axes.set_title(self.title)
-        self.axes.set_xlabel(self.xlabel)
+        self.ax.hist(self.data, edgecolor='black', bins=self.bins, alpha=.3, density=True, color=self.color)
+        self.ax.set_title(self.title)
+        self.ax.set_xlabel(self.xlabel)
 
     def resetData(self):
         self.data = []
