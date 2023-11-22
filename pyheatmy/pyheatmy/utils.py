@@ -48,6 +48,13 @@ def compute_energy(temp1, temp2, sigma2: float, remanence):
     norm2 = nansum((temp1[:,remanence_step:] - temp2[:,remanence_step:]) ** 2)
     return 0.5 * norm2 / sigma2
 
+def compute_energy_with_distrib(temp1, temp2, sigma2, sigma2_distrib):
+    norm2 = nansum((temp1 - temp2) ** 2)
+    return (
+        0.5 * norm2 / sigma2
+        + size(temp2) * log(sigma2) / 2
+        - log(sigma2_distrib(sigma2))
+    )
 
 def compute_log_acceptance(current_energy: float, prev_energy: float):
     return prev_energy - current_energy
