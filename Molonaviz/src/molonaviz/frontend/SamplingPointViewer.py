@@ -1,5 +1,9 @@
 import csv
+import numpy as np
 from PyQt5 import QtWidgets, QtCore, uic, QtGui
+from PyQt5.QtWidgets import QMainWindow, QTableView, QVBoxLayout, QWidget
+from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel
+
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 from ..interactions.Containers import SamplingPoint
@@ -13,13 +17,15 @@ from .dialogConfirm import DialogConfirm
 from .dialogsCleanup import DialogCleanup
 from .dialogCompute import DialogCompute
 from ..utils.get_files import get_ui_asset
+from ..utils.general import displayCriticalMessage
 
-
+# we load the ui files
+From_DisplayParameters = uic.loadUiType(get_ui_asset("DisplayParameters.ui"))[0]
 From_SamplingPointViewer = uic.loadUiType(get_ui_asset("SamplingPointViewer.ui"))[0]
 
 class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
-    def __init__(self, spointCoordinator : SPointCoordinator, samplingPoint: SamplingPoint):
+    def __init__(self, spointCoordinator : SPointCoordinator, samplingPoint: SamplingPoint, statusNightmode : bool = False):
         # Call constructor of parent classes
         super(SamplingPointViewer, self).__init__()
         QtWidgets.QWidget.__init__(self)
@@ -28,8 +34,13 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.coordinator = spointCoordinator
         
         self.computeEngine = Compute(self.coordinator)
+
+        # we connect the signals from the compute engine to the updateAllViews method
         self.computeEngine.DirectModelFinished.connect(self.updateAllViews)
         self.computeEngine.MCMCFinished.connect(self.updateAllViews)
+
+        # get the status of the nightmode
+        self.statusNightmode = statusNightmode
 
         self.setupUi(self)
 
@@ -56,7 +67,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         tempMapModel = self.coordinator.get_temp_map_model()
         self.umbrella_view = UmbrellaView(tempMapModel)
         self.tempmap_view = TempMapView(tempMapModel)
-        self.depth_view = TempDepthView(self.coordinator.get_temp_model(), tempMapModel)
+        self.depth_view = TempDepthView(self.coordinator.get_temp_model(), self.coordinator.get_temp_map_model(), self.coordinator)
         paramsDistrModel = self.coordinator.get_params_distr_model()
         self.logk_view = Log10KView(paramsDistrModel)
         self.conductivity_view = ConductivityView(paramsDistrModel)
@@ -73,7 +84,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
 
         # Link every button to their function
-        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams)
+        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams2)
         self.radioButtonTherm1.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm2.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm3.clicked.connect(self.refreshTempDepthView)
@@ -164,6 +175,9 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.linkAllViewsLayouts()
 
     def refreshbins(self):
+        """
+        Refresh the number of bins in the histograms.
+        """
         bins = self.horizontalSliderBins.value()
         self.logk_view.updateBins(bins)
         self.logk_view.onUpdate()
@@ -178,15 +192,24 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.capacity_view.onUpdate()
 
     def labelUpdate(self):
+        '''
+        Update the label showing the number of bins.
+        '''
         self.labelBins.setText(str(self.horizontalSliderBins.value()))
 
     def setWidgetInfos(self):
+        """
+        Set the information about the sampling point in the info tab.
+        """
         self.setWindowTitle(self.samplingPoint.name)
         self.lineEditPointName.setText(self.samplingPoint.name)
         self.lineEditSensor.setText(self.samplingPoint.psensor)
         self.lineEditShaft.setText(self.samplingPoint.shaft)
 
     def setInfoTab(self):
+        """
+        Set the schema, the notice and the infos table.
+        """
         schemePath, noticePath, infosModel = self.coordinator.get_spoint_infos()
         self.labelSchema.setPixmap(QtGui.QPixmap(schemePath))
         self.labelSchema.setAlignment(QtCore.Qt.AlignHCenter)
@@ -214,17 +237,16 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.comboBoxSelectLayer.addItem(str(layer))
         if len(layers) > 0:
             # By default, show the parameters associated with the first layer.
-            self.changeDisplayedParams(layers[0])
+            self.changeDisplayedParams2(layers[0])
 
-    def changeDisplayedParams(self, layer : float):
+    def changeDisplayedParams2(self, layer : float):
         """
         Display in the table view the parameters corresponding to the given layer, and update histograms.
         """
-        self.paramsModel = self.coordinator.get_params_model(layer)
-        self.tableViewParams.setModel(self.paramsModel)
+        self.paramsModel = self.coordinator.get_best_params_model(layer)
         #Resize the table view so it looks pretty
-        self.tableViewParams.resizeColumnsToContents()
         self.coordinator.refresh_params_distr(layer)
+
 
     def setupCheckboxesQuantiles(self):
         """
@@ -297,7 +319,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         
     def refreshUmbrellaView(self):
         """
-        This method is called when the user changes the displayed layer in the temperature map.
+        This method is called when the user refresh all the views (when updateAllViews is called).
         """
         self.umbrella_view.onUpdate()
 
@@ -378,6 +400,9 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             layout.addWidget(toolbar)
 
     def reset(self):
+        """
+        Launch the confirmation dialog and, if the user confirms, delete the cleaned measures and all computations made for this point.
+        """
         dlg = DialogConfirm("Are you sure you want to delete the cleaned measures and all computations made for this point? This cannot be undone.")
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
@@ -385,14 +410,19 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.updateAllViews()
             self.handleComputationsButtons()
 
+
     def cleanup(self):
-        dlg = DialogCleanup(self.coordinator,self.samplingPoint)
+        """
+        Launch the cleanup dialog and, if the user confirms, clean the measures and insert them in the database.
+        """
+        dlg = DialogCleanup(self.coordinator,self.samplingPoint, self.statusNightmode)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             confirm = DialogConfirm("Cleaning up the measures will delete the previous cleanup, as well as any computations made for this point. Are you sure?")
             confirmRes = confirm.exec()
             if confirmRes == QtWidgets.QDialog.Accepted:
                 #Clean the database first before putting new data
+                print("oui")
                 self.coordinator.delete_processed_data()
                 df_cleaned = dlg.getCleanedMeasures()
                 if not df_cleaned.empty:
@@ -404,14 +434,18 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 self.handleComputationsButtons()
 
     def compute(self):
-        dlg = DialogCompute(self.coordinator.max_depth())
+        '''
+        Launch the computation of the direct model or the MCMC model, depending on the user's choice.
+        '''
+
+        dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             self.coordinator.delete_computations()
             if dlg.computationIsMCMC():
                 #MCMC
-                nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar = dlg.getInputMCMC()
-                self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar)
+                nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time = dlg.getInputMCMC()
+                self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, thresh)
             else:
                 #Direct Model
                 params, nb_cells = dlg.getInputDirectModel()

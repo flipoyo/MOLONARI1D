@@ -58,7 +58,10 @@ class DialogImportSPoint(QtWidgets.QDialog, From_DialogImportSPoint):
             displayCriticalMessage(f"There is no shaft with the name {self.lineEditShaftName.text()} in the database for this laboratory.")
             return
 
-        if not self.lineEditPressures.text() or not self.lineEditTemperatures.text() or not self.lineEditNotice.text() or not self.lineEditConfig.text():
+        if not self.lineEditPressures.text() or not self.lineEditTemperatures.text() or not self.lineEditNotice.text() or not self.lineEditConfig.text() :
+            displayCriticalMessage(f"All file paths must be completed.")
+            return
+        if not(self.radioButtonAuto.isChecked()) and (not self.lineEditImplantationDate.text() or not self.lineEditMeasDate.text() or not self.lineEditRiverBed.text() or not self.lineEditDeltaH.text()):
             displayCriticalMessage(f"All file paths must be completed.")
             return
         #All test have been passed: close the dialog.
@@ -159,7 +162,7 @@ class DialogImportSPoint(QtWidgets.QDialog, From_DialogImportSPoint):
 
     def browseTemperatures(self):
         """
-        Display a dialog so that the user may choose the file with the themperature readings: then, check if it has the correct structure.
+        Display a dialog so that the user may choose the file with the temperature readings: then, check if it has the correct structure.
         """
         filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Temperature Measures File","", "CSV files (*.csv)")[0]
         if filePath:
@@ -235,12 +238,31 @@ class DialogImportSPoint(QtWidgets.QDialog, From_DialogImportSPoint):
         """
         Retrieve all data from the dialog: the name of the point and the sensors, as well as the paths to the files.
         """
-        name = self.lineEditPointName.text()
-        psensor = self.lineEditPSensorName.text()
-        shaft = self.lineEditShaftName.text()
-        infofile = self.lineEditInfo.text()
-        prawfile = self.lineEditPressures.text()
-        trawfile = self.lineEditTemperatures.text()
-        noticefile = self.lineEditNotice.text()
-        configfile = self.lineEditConfig.text()
-        return name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile
+        if self.radioButtonAuto.isChecked():
+            name = self.lineEditPointName.text()
+            psensor = self.lineEditPSensorName.text()
+            shaft = self.lineEditShaftName.text()
+            infofile = self.lineEditInfo.text()
+            prawfile = self.lineEditPressures.text()
+            trawfile = self.lineEditTemperatures.text()
+            noticefile = self.lineEditNotice.text()
+            configfile = self.lineEditConfig.text()
+            return name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile, 'auto',None
+        else :
+            name = self.lineEditPointName.text()
+            psensor = self.lineEditPSensorName.text()
+            shaft = self.lineEditShaftName.text()
+            prawfile = self.lineEditPressures.text()
+            trawfile = self.lineEditTemperatures.text()
+            noticefile = self.lineEditNotice.text()
+            configfile = self.lineEditConfig.text()
+            infos = [['name', name],
+                     ['psensor', psensor],
+                     ['shaft', shaft],
+                     ['Implatation Date', self.lineEditImplantationDate.text()],
+                     ['Meas Date', self.lineEditMeasDate.text()],
+                     ['River Bed', self.lineEditRiverBed.text()],
+                     ['Delta H', self.lineEditDeltaH.text()]]
+            return name, psensor, shaft, None, noticefile, configfile, prawfile, trawfile, 'manual',infos
+
+            

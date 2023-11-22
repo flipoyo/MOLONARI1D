@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1827</width>
+    <width>623</width>
     <height>831</height>
    </rect>
   </property>
@@ -39,7 +39,7 @@
           <item>
            <widget class="QLabel" name="fullDatabaseNameLabel">
             <property name="text">
-             <string>A long      text</string>
+             <string/>
             </property>
            </widget>
           </item>
@@ -49,6 +49,9 @@
       </item>
       <item>
        <widget class="QDockWidget" name="dockDataSPoints">
+        <property name="toolTip">
+         <string>Your points.</string>
+        </property>
         <property name="features">
          <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
         </property>
@@ -76,6 +79,9 @@
       </item>
       <item>
        <widget class="QDockWidget" name="dockSensors">
+        <property name="toolTip">
+         <string>This is your current laboratory.</string>
+        </property>
         <property name="features">
          <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
         </property>
@@ -228,8 +234,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1827</width>
-     <height>26</height>
+     <width>623</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -302,7 +308,9 @@
     <property name="title">
      <string>Database</string>
     </property>
+    <addaction name="actionOpen_Database"/>
     <addaction name="actionChangeDatabase"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuMolonaViz"/>
    <addaction name="menuDatabase"/>
@@ -439,8 +447,21 @@
    </property>
   </action>
   <action name="actionChangeDatabase">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Change Database</string>
+   </property>
+  </action>
+  <action name="actionOpen_Database">
+   <property name="text">
+    <string>Open Database</string>
+   </property>
+  </action>
+  <action name="actionAdd_element_to_laboratory">
+   <property name="text">
+    <string>Add element to laboratory</string>
    </property>
   </action>
  </widget>

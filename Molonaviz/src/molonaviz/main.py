@@ -32,6 +32,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         super(MainWindow, self).__init__()
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
+        
 
         #Setup the views
         self.thermoView = ThermometerTreeView(None)
@@ -50,6 +51,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         #TODO: models for psensors and others.
         #Connect the actions to the appropriate slots
+        self.actionOpen_Database.triggered.connect(self.openDatabase)
         self.pushButtonClear.clicked.connect(self.clearText)
         self.actionImportLab.triggered.connect(self.importLab)
         self.actionAboutMolonaViz.triggered.connect(self.aboutUs)
@@ -66,9 +68,26 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitchToTabbedView.triggered.connect(self.switchToTabbedView)
         self.actionSwitchToSubWindowView.triggered.connect(self.switchToSubWindowView)
         self.actionSwitchToCascadeView.triggered.connect(self.switchToCascadeView)
-        self.actionChangeDatabase.triggered.connect(self.closeDatabase)
+        self.actionChangeDatabase.triggered.connect(self.changeDatabase)
 
         self.treeViewDataSPoints.doubleClicked.connect(self.openSPointFromDock)
+
+        #Mode sombre
+        # Créez un bouton à cocher pour le mode sombre
+        self.modeSombreCheckBox = QtWidgets.QCheckBox("Mode Sombre")
+        self.modeSombreCheckBox.setChecked(False)
+
+        # Créez une action pour le QCheckBox
+        self.modeSombreAction = QtWidgets.QWidgetAction(self)
+        self.modeSombreAction.setDefaultWidget(self.modeSombreCheckBox)
+        
+        # Ajoutez-le à votre barre de menus ou à l'endroit approprié
+        self.menuBar().addMenu("Mode Sombre").addAction(self.modeSombreAction)
+
+        # Connectez un gestionnaire de signal (slot) pour gérer les changements d'état
+        self.modeSombreCheckBox.stateChanged.connect(self.activerDesactiverModeSombre)
+
+        self.isNightMode = False
 
         #Some actions or menus should not be enabled: disable them
         self.actionCloseStudy.setEnabled(False)
@@ -79,36 +98,72 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         sys.stdout = InterceptOutput(self.messageQueue)
 
         self.con = None #Connection to the database
-        self.openDatabase()
+        
 
-        self.study_lab_manager = StudyAndLabManager(self.con)
+        '''self.study_lab_manager = StudyAndLabManager(self.con)
         self.currentStudy = None
-        self.currentLab = None
+        self.currentLab = None'''
 
-    def openDatabase(self):
+               
+    def activerDesactiverModeSombre(self, state):
+        if state == 2:  # État 2 signifie que la case est cochée
+            self.setStyleSheet("background-color: rgb(50, 50, 50); color: rgb(255, 255, 255);")
+            # Changer la couleur du texte et le fond des onglets actifs
+            self.tabWidget.setStyleSheet("QTabWidget::tab:selected { background-color: rgb(50, 50, 50); color: rgb(255, 255, 0); }")
+        
+            # Changer la couleur du texte et le fond des onglets inactifs
+            self.tabWidget.setStyleSheet("QTabWidget::tab:!selected { background-color: #232326; color: black; }")
+            
+            # Créez un style CSS pour les éléments de menu survolés, avec une écriture blanche sur fond gris foncé
+            menu_style = """
+            QMenu::item:selected {background-color: rgb(50, 50, 50); color: rgb(255, 255, 255);}
+            """
+
+            # Parcourez tous les menus de votre barre de menus
+            for menu in self.menuBar().findChildren(QtWidgets.QMenu):
+                menu.setStyleSheet(menu_style)
+
+            self.isNightMode = True
+        else:
+            self.setStyleSheet("")  # Utilisez la feuille de style par défaut de l'application
+
+        
+    def openDatabase(self,change : bool = False,result=None,dialog=None):
         """
         If the user has never opened the database of if the config file is not valid (as a reminder, config is a text document containing the path to the database), display a dialog so the user may choose th e database directory.
         Then, open the database in the directory.
         """
+        self.change = change
         databaseDir = None
         createNewDatabase = False
         newDatabaseName = ""
         remember = False
+        self.actionChangeDatabase.setEnabled(True)
+        if result is not None :
+            self.result = result
+            self.dialog = dialog
         try:
             with open(os.path.join(os.path.dirname(__file__),'config.txt')) as f:
                 databaseDir = f.readline()
         except OSError:
             #The config file does not exist.
-            dlg = DialogOpenDatabase()
-            dlg.setWindowModality(QtCore.Qt.ApplicationModal)
-            res = dlg.exec()
-            if res == QtWidgets.QDialog.Accepted:
-                databaseDir, createNewDatabase, newDatabaseName = dlg.getDir()
-                remember = dlg.checkBoxRemember.isChecked()
-            else:
-                #If the user cancels or quits the dialog, quit Molonaviz.
-                #This is a bit brutal. Maybe there can be some other way to quit via Qt: the problem is that, at this point in the script, the app (QtWidgets.QApplication) has not been executed yet.
-                sys.exit()
+            if self.change == False :
+                dlg = DialogOpenDatabase()
+                dlg.setWindowModality(QtCore.Qt.ApplicationModal)
+                res = dlg.exec()
+                if res == QtWidgets.QDialog.Accepted:
+                    databaseDir, createNewDatabase, newDatabaseName = dlg.getDir()
+                    remember = dlg.checkBoxRemember.isChecked()
+                else:
+                    dlg.close()
+            else :
+                if self.result == QtWidgets.QDialog.Accepted:
+                    databaseDir, createNewDatabase, newDatabaseName = self.dialog.getDir()
+                    remember = self.dialog.checkBoxRemember.isChecked()
+                else :
+                    self.dialog.close()
+                    
+
 
         #Now create or check the integrity of the folder given by databaseDir
         if createNewDatabase:
@@ -118,7 +173,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 databaseDir = os.path.join(databaseDir, newDatabaseName)
             else:
                 displayCriticalMessage(f"Something went wrong when creating the directory and the database creation was aborted.\nPlease make sure a directory with the name {newDatabaseName} does not already exist at path {databaseDir}")
-                self.openDatabase()
+                self.openDatabase(self.change)
         else:
             #Check if the folder has the correct format
             if not checkDbFolderIntegrity(databaseDir):
@@ -127,7 +182,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 configPath = os.path.join(os.path.dirname(__file__),'config.txt')
                 if os.path.isfile(configPath):
                     os.remove(configPath)
-                self.openDatabase()
+                self.openDatabase(self.change)
 
         #Now, databaseDir is the path to a valid folder containing a database. Open it!
         databaseFile = os.path.join(databaseDir,"Molonari.sqlite")
@@ -141,6 +196,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             with open(os.path.join(os.path.dirname(__file__),'config.txt'), 'w') as f:
                 #Write (or overwrite) the path to the database file
                 f.write(databaseDir)
+        
+        self.study_lab_manager = StudyAndLabManager(self.con)
+        self.currentStudy = None
+        self.currentLab = None
 
     def showDatabaseName(self):
         """
@@ -193,6 +252,25 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.psensorView.subscribe_model(None)
         self.shaftView.subscribe_model(None)
         self.spointView.subscribe_model(None)
+    
+    def changeDatabase(self):
+        if self.con is not None:
+            ancient_con = self.con
+        dialog = DialogOpenDatabase()
+        dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+        dialog.open()
+        res = dialog.exec()
+        self.closeDatabase()
+        if res != QtWidgets.QDialog.Accepted :    
+            self.con = ancient_con
+            dialog.close()
+            self.showDatabaseName()
+        else :
+            self.openDatabase(True,result=res,dialog=dialog)
+
+
+
+
 
 
     def closeDatabase(self):
@@ -200,7 +278,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         Close the database and revert Molonaviz to its initial state.
         """
         self.closeChildren()
-        self.con.close()
+        if self.con is not None :
+            self.con.close()
         self.con = None
 
         self.actionCreateStudy.setEnabled(True)
@@ -215,7 +294,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         if os.path.isfile(os.path.join(os.path.dirname(__file__),'config.txt')):
             os.remove(os.path.join(os.path.dirname(__file__),'config.txt'))
 
-        self.openDatabase()
 
     def importLab(self):
         """
@@ -272,7 +350,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         """
         Given a VALID name of a study, open it.
         """
-        self.currentStudy = StudyHandler(self.con, studyName)
+        self.currentStudy = StudyHandler(self.con, studyName, self.isNightMode)
         #Open the laboratory associated with the study.
         if self.currentLab is not None:
             self.currentLab.close()
@@ -326,8 +404,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         dlg.setWindowModality(QtCore.Qt.ApplicationModal)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
-            name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile = dlg.getSPointInfo()
-            self.currentStudy.importSPoint(name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile)
+            name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile, man_or_auto, infos = dlg.getSPointInfo()
+            self.currentStudy.importSPoint(name, psensor, shaft, infofile, noticefile, configfile, prawfile, trawfile, man_or_auto, infos)
 
     def openSPointFromAction(self):
         """
@@ -346,7 +424,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 spointName = dlg.selectedSPoint()
                 widgetviewer = self.currentStudy.openSPoint(spointName)
 
-                subwindow = SubWindow(widgetviewer)
+                subwindow = SubWindow(widgetviewer, title = spointName, modesombre = self.isNightMode)
                 self.mdiArea.addSubWindow(subwindow)
                 subwindow.show()
 
@@ -364,7 +442,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             spointName = self.treeViewDataSPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
 
         widgetviewer = self.currentStudy.openSPoint(spointName)
-        subwindow = SubWindow(widgetviewer)
+        subwindow = SubWindow(widgetviewer, title = spointName, modesombre = self.isNightMode)
         self.mdiArea.addSubWindow(subwindow)
         subwindow.show()
 
@@ -465,15 +543,26 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon(get_imgs("MolonavizIcon.png")))
-    mainWin = MainWindow()
-    mainWin.showMaximized()
 
     # Create thread that will be used to display application messages.
     messageThread = QtCore.QThread()
+
+    mainWin = MainWindow()
+    mainWin.showMaximized()
+
+    
     my_receiver = Receiver(mainWin.messageQueue)
     my_receiver.printMessage.connect(mainWin.printApplicationMessage)
     my_receiver.moveToThread(messageThread)
     messageThread.started.connect(my_receiver.run)
+
+    def on_thread_finished():
+        messageThread.quit()  # Properly stop the thread
+        messageThread.wait()  # Wait for the thread to finish
+        app.quit()  # Quit the application
+
+    messageThread.finished.connect(on_thread_finished)
+
     messageThread.start()
 
     sys.exit(app.exec())

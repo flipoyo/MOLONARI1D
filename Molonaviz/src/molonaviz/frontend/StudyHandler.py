@@ -15,13 +15,14 @@ class StudyHandler:
         -open subwindows showing the results and computations related to sampling points in this study.
     An instance of this class is always linked to a study.
     """
-    def __init__(self, con : QSqlDatabase, studyName : str):
+    def __init__(self, con : QSqlDatabase, studyName : str, statusNightmode : bool = False):
         self.con = con
         self.studyName = studyName
         self.spointManager = SamplingPointManager(self.con, studyName)
 
         self.spointCoordinator = None
         self.spointViewer = None
+        self.statusNightmode = statusNightmode
 
     def getSPointModel(self):
         """
@@ -41,14 +42,19 @@ class StudyHandler:
         """
         self.spointManager.refresh_spoints()
 
-    def importSPoint(self, name : str, psensor : str, shaft : str, infofile : str, noticefile : str, configfile : str, prawfile : str, trawfile : str):
+    def importSPoint(self, name : str, psensor : str, shaft : str, infofile : str, noticefile : str, configfile : str, prawfile : str, trawfile : str,man_or_auto : str,infos):
         """
         Import a new sampling point from given files.
         """
         #Cleanup the .csv files
-        infoDF = pd.read_csv(infofile, header=None)
-        infoDF[1][3] = pd.to_datetime(infoDF[1][3])
-        infoDF[1][4] = pd.to_datetime(infoDF[1][4]) #Convert dates to datetime (or here Timestamp) objects
+        if man_or_auto == 'auto':
+            infoDF = pd.read_csv(infofile, header=None)
+            infoDF[1][3] = pd.to_datetime(infoDF[1][3])
+            infoDF[1][4] = pd.to_datetime(infoDF[1][4]) #Convert dates to datetime (or here Timestamp) objects
+        else:
+            infoDF = pd.DataFrame(infos)
+            infoDF[1][3] = pd.to_datetime(infoDF[1][3])
+            infoDF[1][4] = pd.to_datetime(infoDF[1][4]) #Convert dates to datetime (or here Timestamp) objects
         #Readings csv
         dfpress = pd.read_csv(prawfile)
         dfpress.columns = ["Date", "Voltage", "Temp_Stream"]
@@ -71,7 +77,7 @@ class StudyHandler:
         """
         self.spointCoordinator = SPointCoordinator(self.con, self.studyName, spointName)
         samplingPoint = self.spointManager.get_spoint(spointName)
-        self.spointViewer = SamplingPointViewer(self.spointCoordinator, samplingPoint)
+        self.spointViewer = SamplingPointViewer(self.spointCoordinator, samplingPoint, self.statusNightmode)
         self.spointViewer.setWindowTitle(self.studyName)
         return self.spointViewer
 

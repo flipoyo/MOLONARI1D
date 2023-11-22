@@ -5,6 +5,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
+import matplotlib.ticker as ticker
+from matplotlib.ticker import MaxNLocator
 import matplotlib.dates as mdates
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.gridspec import GridSpec
@@ -17,7 +19,9 @@ import matplotlib.cm as cm
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 from molonaviz.interactions.MoloModel import MoloModel
+from ..backend.GraphsModels import TemperatureDataModel,SolvedTemperatureModel
 from molonaviz.interactions.MoloView import MoloView
+from ..backend.SPointCoordinator import SPointCoordinator
 from molonaviz.utils.general import dateToMdates
 from molonaviz.utils.general import displayCriticalMessage, displayWarningMessage, createDatabaseDirectory
 
@@ -45,7 +49,7 @@ class GraphView1D(GraphView):
         -self.x is a 1D array and will be displayed one the x-axis
         -self.y is a dictionnary of 1D array : the keys are the labels which should be displayed. This is useful to plot many graphs on the same view (quantiles for example).
     """
-    def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="", xlabel=""):
+    def __init__(self, molomodel: MoloModel | None, time_dependent=False, title="", ylabel="", xlabel="", loc='best'):
         super().__init__(molomodel)
         # Créez les axes et associez-les à self.ax
         self.ax = self.fig.add_subplot(111, sharex=self.ax, sharey=self.ax)
@@ -57,6 +61,7 @@ class GraphView1D(GraphView):
         self.title = title
         self.time_dependent = time_dependent
         self.colorbar = None
+        self.loc = loc
        
 
 
@@ -82,10 +87,12 @@ class GraphView1D(GraphView):
             pass
 
     def plotData(self):
+        self.ax.yaxis.set_major_locator(MaxNLocator(integer=True))
         for index, (label, data) in enumerate(self.y.items()):
             if len(self.x) == len(data):
-                self.ax.plot(self.x, data, label=label)
-        self.ax.legend(loc='best')
+
+                self.ax.plot(self.x, np.float32(data), label=label)
+        self.ax.legend(loc= self.loc)
         self.ax.set_ylabel(self.ylabel)
 
         self.ax.set_xlabel(self.xlabel)
@@ -147,7 +154,7 @@ class GraphView2D(GraphView):
             self.ax.xaxis.set_major_formatter(formatter)
             self.ax.xaxis.set_major_locator(MaxNLocator(4))
             plt.setp(self.ax.get_xticklabels(), rotation = 7.5)
-            self.ax.set_xlim(self.x[0], self.x[-1])
+            #self.ax.set_xlim(self.x[0], self.x[-1])
         else:
             pass
 
@@ -273,7 +280,7 @@ class UmbrellaView(GraphView1D):
         self.ax.legend(list_labels, loc='best')
         self.ax.set_ylabel(self.ylabel)
         self.ax.set_xlabel(self.xlabel)
-        self.ax.set_title('Umbrellas plot')
+        self.ax.set_title('Temperature (°C)')
         self.ax.grid(True)
                 
 
@@ -307,31 +314,37 @@ class TempDepthView(GraphView1D):
     The basis state is [None, []], as no quantile can be displayed, and the view can't know at which depth is the thermometer.
     options is NOT considered to be part of internal data, and will not be modified when calling resetData.
     """
-    def __init__(self, sensors:MoloModel | None, molomodel: MoloModel | None, time_dependent=True, title="", ylabel="Temperature (°C)", xlabel="",options=[None,[]]):
-        super().__init__(molomodel,time_dependent, title, ylabel, xlabel)
-        self.options = options
-        self.sensors = sensors
+    def __init__(self, sensorsdatas: TemperatureDataModel | None , molomodel: SolvedTemperatureModel | None, spointcoordinator : SPointCoordinator, time_dependent=True, title="", ylabel="Temperature (°C)", xlabel="",options=[None,[]], loc='best'):
+        super().__init__(molomodel,time_dependent, title, ylabel, xlabel, loc)
         self.molomodel = molomodel
-    
+        self.sensorsdatas = sensorsdatas
+        self.options = options
+        self.coordinator = spointcoordinator
         
-
     def updateOptions(self,options):
         self.options = options
         super().resetData() #Refresh the plots
 
     def retrieveData(self):
         if self.options[0] is not None: #A computation has been done.
+            select_temperatures = self.coordinator.build_cleaned_measures(field ="Temp")
+            self.sensorsdatas.new_queries([select_temperatures])
             depth_thermo = self.options[0]
+            sensor_index = None
+            for i in [1,2,3]:
+                if self.coordinator.thermo_depth(i) == depth_thermo:
+                    sensor_index = i
             self.x = self.molomodel.get_dates()
-            self.y  = {f"Sensor n°{i}":np.float64(temp) for i,temp in enumerate(self.sensors.get_temperatures())}
+            self.y[f"Sensor n°{sensor_index}"] = self.sensorsdatas.get_temperatures()[sensor_index]
             for quantile in self.options[1]:
                 self.y[f"Temperature at depth {depth_thermo:.3f} m - quantile {quantile}"] = self.molomodel.get_temp_by_date(depth_thermo, quantile)
+
 
 class WaterFluxView(GraphView1D):
     """
     Concrete class for the water flux as a function of time.
     """
-    def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="", ylabel="Water flow  (m/s)", xlabel=""):
+    def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="Water flow (m/s)", ylabel="Water flow  (m/s)", xlabel=""):
         super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
 
     def retrieveData(self):
@@ -349,7 +362,7 @@ class TempMapView(GraphView2D):
     """
     Concrete class for the heat map.
     """
-    def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="Temperature (C)", xlabel="", ylabel="Depth (m)"):
+    def __init__(self, molomodel: MoloModel | None, time_dependent=True, title="Temperature (°C)", xlabel="", ylabel="Depth (m)"):
         super().__init__(molomodel, time_dependent, title, xlabel, ylabel)
 
     def retrieveData(self):
