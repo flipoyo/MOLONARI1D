@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Sequence
 
-from .params import Param
-from .layers import Layer
+from pyheatmy.params import Param
+from pyheatmy.layers import Layer
 
 
 @dataclass

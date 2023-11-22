@@ -17,9 +17,9 @@ from numpy import (
 from numpy.linalg import solve
 from numba import njit
 
-from .layers import Layer
-from .solver import solver, tri_product
-from .params import Prior, PARAM_LIST
+from pyheatmy.layers import Layer
+from pyheatmy.solver import solver, tri_product
+from pyheatmy.params import Prior, PARAM_LIST
 
 # LAMBDA_W = 0 # test du cas purement advectif
 LAMBDA_W = 0.6071

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from .params import Param, ParamsPriors, Prior, PARAM_LIST
-from .checker import checker
-from .core import Column
+from pyheatmy.params import Param, ParamsPriors, Prior, PARAM_LIST
+from pyheatmy.checker import checker
+from pyheatmy.core import Column
 from pyheatmy import (
     DEFAULT_dH,
     DEFAULT_T_riv,

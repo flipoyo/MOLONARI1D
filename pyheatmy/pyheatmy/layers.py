@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Sequence
 
-from params import Param, Prior, ParamsPriors
+from pyheatmy.params import Param, Prior, ParamsPriors
 
 
 class Layer:

@@ -1,5 +1,9 @@
 import csv
+import numpy as np
 from PyQt5 import QtWidgets, QtCore, uic, QtGui
+from PyQt5.QtWidgets import QMainWindow, QTableView, QVBoxLayout, QWidget
+from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel
+
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 from ..interactions.Containers import SamplingPoint
@@ -28,6 +32,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
         self.samplingPoint = samplingPoint
         self.coordinator = spointCoordinator
+
         self.computeEngine = Compute(self.coordinator)
 
         # we connect the signals from the compute engine to the updateAllViews method
@@ -232,15 +237,14 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.comboBoxSelectLayer.addItem(str(layer))
         if len(layers) > 0:
             # By default, show the parameters associated with the first layer.
-            self.changeDisplayedParams(layers[0])
+            self.changeDisplayedParams2(layers[0])
 
-    def changeDisplayedParams(self, layer : float):
+    def changeDisplayedParams2(self, layer : float):
         """
         Display in the table view the parameters corresponding to the given layer, and update histograms.
         """
         self.paramsModel = self.coordinator.get_best_params_model(layer)
         #Resize the table view so it looks pretty
-        self.tableViewParams.resizeColumnsToContents()
         self.coordinator.refresh_params_distr(layer)
 
     def setupCheckboxesQuantiles(self):

@@ -1190,8 +1190,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temp = _temp.reshape(nb_iter_sous_ech * nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
         _flows = _flows.reshape(nb_iter_sous_ech * nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
 
-        print("Occupation mémoire des températures (en Mo) : ", _temp.nbytes/1e6)
-        print("Occupation mémoire des flux (en Mo) : ", _flows.nbytes/1e6)
+        # print("Occupation mémoire des températures (en Mo) : ", _temp.nbytes/1e6)
+        # print("Occupation mémoire des flux (en Mo) : ", _flows.nbytes/1e6)
 
         print(f"Fin itérations MCMC, avant le calcul des quantiles - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
 
