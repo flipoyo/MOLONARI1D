@@ -1,9 +1,5 @@
 import csv
-import numpy as np
 from PyQt5 import QtWidgets, QtCore, uic, QtGui
-from PyQt5.QtWidgets import QMainWindow, QTableView, QVBoxLayout, QWidget
-from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel
-
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 from ..interactions.Containers import SamplingPoint
@@ -32,7 +28,6 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
         self.samplingPoint = samplingPoint
         self.coordinator = spointCoordinator
-
         self.computeEngine = Compute(self.coordinator)
 
         # we connect the signals from the compute engine to the updateAllViews method

@@ -3,14 +3,6 @@ This file regroups different view inheriting from matplotlib's canvas. They are 
 """
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
-from matplotlib.cm import ScalarMappable
-import matplotlib.ticker as ticker
-from matplotlib.ticker import MaxNLocator
-import matplotlib.dates as mdates
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib.gridspec import GridSpec
-
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import matplotlib.dates as mdates
@@ -22,6 +14,7 @@ from ..interactions.MoloModel import MoloModel
 from ..backend.GraphsModels import TemperatureDataModel,SolvedTemperatureModel
 from ..interactions.MoloView import MoloView
 from ..backend.SPointCoordinator import SPointCoordinator
+from ..interactions.MoloView import MoloView
 from ..utils.general import dateToMdates
 
 class GraphView(MoloView, FigureCanvasQTAgg):
@@ -59,7 +52,7 @@ class GraphView1D(GraphView):
         self.loc = loc
 
     def onUpdate(self):
-        self.ax.clear()
+        self.axes.clear()
         self.resetData()
         self.retrieveData()
         self.setup_x()
@@ -73,14 +66,13 @@ class GraphView1D(GraphView):
         if self.time_dependent:
             self.x = dateToMdates(self.x)
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-            self.ax.xaxis.set_major_formatter(formatter)
-            self.ax.xaxis.set_major_locator(MaxNLocator(4))
-            plt.setp(self.ax.get_xticklabels(), rotation = 15)
+            self.axes.xaxis.set_major_formatter(formatter)
+            self.axes.xaxis.set_major_locator(MaxNLocator(4))
+            plt.setp(self.axes.get_xticklabels(), rotation = 15)
         else:
             pass
 
     def plotData(self):
-        self.ax.yaxis.set_major_locator(MaxNLocator(integer=True))
         for index, (label, data) in enumerate(self.y.items()):
             if len(self.x) == len(data):
                 self.ax.plot(self.x, np.float32(data), label=label)
@@ -115,6 +107,8 @@ class GraphView2D(GraphView):
         self.title = title
         self.ylabel = ylabel
         self.xlabel = xlabel
+        self.x = []
+        self.y = []
         self.cmap = []
 
         self.colorbar = None
@@ -182,16 +176,16 @@ class GraphViewHisto(GraphView):
         self.bins = bins
 
     def onUpdate(self):
-        self.ax.clear()
+        self.axes.clear()
         self.resetData()
         self.retrieveData()
         self.plotData()
         self.draw()
 
     def plotData(self):
-        self.ax.hist(self.data, edgecolor='black', bins=self.bins, alpha=.3, density=True, color=self.color)
-        self.ax.set_title(self.title)
-        self.ax.set_xlabel(self.xlabel)
+        self.axes.hist(self.data, edgecolor='black', bins=self.bins, alpha=.3, density=True, color=self.color)
+        self.axes.set_title(self.title)
+        self.axes.set_xlabel(self.xlabel)
 
     def resetData(self):
         self.data = []
@@ -302,15 +296,8 @@ class TempDepthView(GraphView1D):
 
     def retrieveData(self):
         if self.options[0] is not None: #A computation has been done.
-            select_temperatures = self.coordinator.build_cleaned_measures(field ="Temp")
-            self.sensorsdatas.new_queries([select_temperatures])
             depth_thermo = self.options[0]
-            sensor_index = None
-            for i in [1,2,3]:
-                if self.coordinator.thermo_depth(i) == depth_thermo:
-                    sensor_index = i
-            self.x = self.molomodel.get_dates()
-            self.y[f"Sensor n°{sensor_index}"] = self.sensorsdatas.get_temperatures()[sensor_index]
+            self.x = self.model.get_dates()
             for quantile in self.options[1]:
                 self.y[f"Temperature at depth {depth_thermo:.3f} m - quantile {quantile}"] = self.model.get_temp_by_date(depth_thermo, quantile)
 
