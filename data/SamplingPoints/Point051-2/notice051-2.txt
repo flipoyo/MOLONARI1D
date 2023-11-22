@@ -1,0 +1,5 @@
+Sur ce point : données collectées du 2 mars 2022 à 15h jusqu'au 14 avril 2022 à 9h30.
+
+Encore quelques problèmes d'hystérésis au début et à la fin, ne concerne que deux-trois points à chaque fois.
+
+Mais surtout, la mesure de différence de potentiel du capteur de pression permettant de remonter à la charge, ne fonctionne plus à partir du 14 mars à 10h30.

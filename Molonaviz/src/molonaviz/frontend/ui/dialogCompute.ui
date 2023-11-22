@@ -7,19 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>1204</width>
-    <height>816</height>
+    <height>995</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>1000</width>
-    <height>816</height>
+    <height>500</height>
    </size>
   </property>
   <property name="windowTitle">
    <string>Compute</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -43,9 +43,6 @@
      </item>
      <item>
       <widget class="QSpinBox" name="spinBoxNLayersDirect">
-       <property name="toolTip">
-        <string>Number of layers of your column.</string>
-       </property>
        <property name="readOnly">
         <bool>false</bool>
        </property>
@@ -209,9 +206,6 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBoxMCMC">
-     <property name="toolTip">
-      <string>Launch the Bayesian inversion.</string>
-     </property>
      <property name="title">
       <string>Execute inversion before</string>
      </property>
@@ -713,15 +707,15 @@
     </widget>
    </item>
    <item>
-    <layout class="QGridLayout" name="gridLayout_3">
-     <item row="0" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
       <widget class="QPushButton" name="pushButtonRestoreDefault">
        <property name="text">
         <string>Restore Default</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -734,20 +728,17 @@
        </property>
       </spacer>
      </item>
-     <item row="0" column="2">
+     <item>
       <widget class="QPushButton" name="pushButtonRun">
        <property name="enabled">
         <bool>true</bool>
-       </property>
-       <property name="toolTip">
-        <string>Run the direct model.</string>
        </property>
        <property name="text">
         <string>Run</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
+     <item>
       <widget class="QDialogButtonBox" name="buttonBox">
        <property name="standardButtons">
         <set>QDialogButtonBox::Cancel</set>

@@ -50,8 +50,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.pushButtonRun.clicked.connect(self.run)
         self.closeEvent = self.handleCloseEvent
 
-        self.tableWidget.itemChanged.connect(self.SaveInput)
-
         self.groupBoxMCMC.setChecked(False)
 
         if self.input == []:
@@ -183,7 +181,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditThermalConductivityMax.setText("5")
         self.lineEditThermalConductivitySigma.setText("0.05")
 
-        self.lineEditThermalCapacityMin.setText("1e6")
+        self.lineEditThermalCapacityMin.setText("1000")
         self.lineEditThermalCapacityMax.setText("1e7")
         self.lineEditThermalCapacitySigma.setText("100")
 
@@ -255,7 +253,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             thermconduct.append(float(self.tableWidget.item(i, 3).text()))
             thermcap.append(float(self.tableWidget.item(i, 4).text()))
             depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
-
         layers = [f"Layer {i+1}" for i in range(nb_layers)]
         return list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap)), nb_cells
 

@@ -1,0 +1,7 @@
+Point_Name,Point14
+P_Sensor_Name,p507
+Implantation_Date,29_07_15
+Meas_date,2015-07-23 19:45:00
+River_Deb,
+Delta_h,
+Periode,5 days, 14:30:00

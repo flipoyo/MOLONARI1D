@@ -268,11 +268,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         else :
             self.openDatabase(True,result=res,dialog=dialog)
 
-
-
-
-
-
     def closeDatabase(self):
         """
         Close the database and revert Molonaviz to its initial state.
@@ -424,7 +419,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 spointName = dlg.selectedSPoint()
                 widgetviewer = self.currentStudy.openSPoint(spointName)
 
-                subwindow = SubWindow(widgetviewer, title = spointName, modesombre = self.isNightMode)
+                subwindow = SubWindow(widgetviewer)
                 self.mdiArea.addSubWindow(subwindow)
                 subwindow.show()
 
@@ -442,7 +437,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             spointName = self.treeViewDataSPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
 
         widgetviewer = self.currentStudy.openSPoint(spointName)
-        subwindow = SubWindow(widgetviewer, title = spointName, modesombre = self.isNightMode)
+        subwindow = SubWindow(widgetviewer)
         self.mdiArea.addSubWindow(subwindow)
         subwindow.show()
 
@@ -562,7 +557,7 @@ def main():
         app.quit()  # Quit the application
 
     messageThread.finished.connect(on_thread_finished)
-
+    
     messageThread.start()
 
     sys.exit(app.exec())

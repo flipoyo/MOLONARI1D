@@ -1,0 +1,7 @@
+Point_Name,Point52
+P_Sensor_Name,p052
+Implantation_Date,13_10_23
+Meas_date,2023-10-15 11:15:00
+River_Deb,
+Delta_h,
+Periode,15 days, 19:45:00

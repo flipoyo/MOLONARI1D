@@ -1,0 +1,7 @@
+Sensor_Name,P505
+Datalogger,Rasberry PI
+Calibration_Date,2016/08/12 10:10:10
+Intercept,1.59324732652933
+dU/dH,-8.89963363336198
+dU/dT,-0.0136859629811579
+Sigma_Meas_P,0.01

@@ -1,6 +1,5 @@
 from PyQt5 import QtWidgets
 from .SamplingPointViewer import SamplingPointViewer #Only used for type hints
-from PyQt5 import QtCore
 
 class SubWindow(QtWidgets.QMdiSubWindow):
     """

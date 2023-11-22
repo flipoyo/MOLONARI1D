@@ -2,15 +2,12 @@
 <ui version="4.0">
  <class>WidgetPoint</class>
  <widget class="QWidget" name="WidgetPoint">
-  <property name="enabled">
-   <bool>true</bool>
-  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>1413</width>
-    <height>988</height>
+    <height>1000</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,1">
      <property name="sizeConstraint">
       <enum>QLayout::SetNoConstraint</enum>
      </property>
@@ -31,9 +28,6 @@
      </item>
      <item>
       <widget class="QLineEdit" name="lineEditPointName">
-       <property name="toolTip">
-        <string>This is your chosen point.</string>
-       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
@@ -48,9 +42,6 @@
      </item>
      <item>
       <widget class="QLineEdit" name="lineEditSensor">
-       <property name="toolTip">
-        <string>This is the chosen pressure sensor.</string>
-       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
@@ -65,9 +56,6 @@
      </item>
      <item>
       <widget class="QLineEdit" name="lineEditShaft">
-       <property name="toolTip">
-        <string>This is your chosen shaft.</string>
-       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
@@ -75,9 +63,6 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonReset">
-       <property name="toolTip">
-        <string>Reset your computation.</string>
-       </property>
        <property name="text">
         <string>Reset</string>
        </property>
@@ -85,9 +70,6 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonCleanUp">
-       <property name="toolTip">
-        <string>Click here to clean your measures up!</string>
-       </property>
        <property name="text">
         <string>Clean-up...</string>
        </property>
@@ -102,9 +84,6 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonCompute">
-       <property name="toolTip">
-        <string>Click here to launch a direct model or calculate the Bayesian inversion via MMC technique.</string>
-       </property>
        <property name="text">
         <string>Compute...</string>
        </property>
@@ -138,18 +117,12 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="toolTip">
-        <string>The number of layers of your column.</string>
-       </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
     <widget class="QTabWidget" name="tabWidget">
-     <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click here to see the computations you have made, check the column's temperature or pressure, or simply get information about your chosen point.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
      <property name="currentIndex">
       <number>1</number>
      </property>
@@ -177,7 +150,7 @@
            <item>
             <widget class="QGroupBox" name="groupBox_3">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -205,15 +178,6 @@
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QScrollArea" name="scrollArea">
-              <property name="mouseTracking">
-               <bool>false</bool>
-              </property>
-              <property name="verticalScrollBarPolicy">
-               <enum>Qt::ScrollBarAlwaysOn</enum>
-              </property>
-              <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarAlwaysOn</enum>
-              </property>
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
@@ -222,8 +186,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>1334</width>
-                 <height>612</height>
+                 <width>1333</width>
+                 <height>540</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -262,9 +226,6 @@
           <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="0">
            <item>
             <widget class="QCheckBox" name="checkBoxRawData">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
              <property name="layoutDirection">
               <enum>Qt::RightToLeft</enum>
              </property>
@@ -607,8 +568,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1369</width>
-             <height>428</height>
+             <width>1363</width>
+             <height>401</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -657,8 +618,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1369</width>
-             <height>427</height>
+             <width>1363</width>
+             <height>400</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_9">

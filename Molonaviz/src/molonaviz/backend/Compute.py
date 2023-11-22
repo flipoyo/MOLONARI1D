@@ -88,16 +88,14 @@ class ColumnDirectModelRunner(QtCore.QObject):
     def run(self):
         print("Launching Direct Model...")
         layers = layersListCreator(self.params)
-        
         self.col.compute_solve_transi(layers, self.nb_cells)
-        
         self.finished.emit()
 
 
 class Compute(QtCore.QObject):
     """
     How to use this class :
-    - Initialise the compute engine by giving it the database connection and ID of the current Point.
+    - Initialise the compute engine by giving it the  database connection and ID of the current Point.
     - When computations are needed, create an associated Column objected. This requires cleaned measures to be in the database for this point. This can be made by calling compute.set_column()
     - Launch the computation :
         - with given parameters : compute.compute_direct_model(params: tuple, nb_cells: int, sensorDir: str)
@@ -163,7 +161,7 @@ class Compute(QtCore.QObject):
         Launch the direct model with given parameters per layer.
         """
         if self.thread.isRunning():
-            print("Please wait for the previous computation to end")
+            print("Please wait while for the previous computation to end")
             return
 
         self.save_layers_and_params(params)

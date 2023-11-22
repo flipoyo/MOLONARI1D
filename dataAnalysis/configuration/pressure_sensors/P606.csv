@@ -1,0 +1,7 @@
+Sensor_Name,P606
+Datalogger,Rasberry PI
+Calibration_Date,2018/01/02 10:10:10
+Intercept,1.27109693909151
+dU/dH,1.01010102487901
+dU/dT,0.00220946701100414
+Sigma_Meas_P,0.0437474461778472

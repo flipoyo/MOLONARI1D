@@ -1,0 +1,14 @@
+-- Mise en place des capteurs
+
+Installation des capteurs temperature pression le 23 juillet 2015.
+
+Les capteurs de température ont été mis dans la riviere pendant quelques temps avant l'installation pour vérifier que les PT100 mesurent la meme temperature dans un milieu homogene (a verifier).
+
+Le point de mesure se situe dans une mouille, a 20 m apres le coude de la riviere ou se trouve la station LOMOS.
+
+-- Recuperation des donnees
+
+Le 29 juillet 2015.
+Sonde de température Hobo1 dans boite 503 haut. Fiche 4 peut etre déconnectée?
+Capteur de pression p505 par Hobo33.
+
