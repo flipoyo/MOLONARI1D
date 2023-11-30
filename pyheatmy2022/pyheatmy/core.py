@@ -314,16 +314,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     list_array_H.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - layersList[idx-1].zLow))
                 else:
                     list_array_H.append(array_Hinter[idx] - (array_Hinter[idx] - array_Hinter[idx + 1]) / array_eps[idx] * (list_array_L[idx] - 0))
-            if verbose:
-                print("charge hydraulique sur chaque interface", array_Hinter)
-                for idx in range(len(list_array_L)):
-                    plt.plot(list_array_H[idx], list_array_L[idx], label = 'couche ' + str(idx + 1))
-                plt.plot(H_init, self._z_solve, linestyle = '--', label = 'solution originale')
-                plt.legend()
-                plt.title("charge hydraulique stratifiée initialisé")
-                plt.xlabel('la charge hydraulique (m)')
-                plt.ylabel('le profondeur (m)')
-                plt.show()
+            # if verbose:
+            #     print("charge hydraulique sur chaque interface", array_Hinter)
+            #     for idx in range(len(list_array_L)):
+            #         plt.plot(list_array_H[idx], list_array_L[idx], label = 'couche ' + str(idx + 1))
+            #     plt.plot(H_init, self._z_solve, linestyle = '--', label = 'solution originale')
+            #     plt.legend()
+            #     plt.title("charge hydraulique stratifiée initialisé")
+            #     plt.xlabel('la charge hydraulique (m)')
+            #     plt.ylabel('le profondeur (m)')
+            #     plt.show()
             H_init = list_array_H[0]
             for idx in range(1, len(list_array_H)):
                 H_init = np.concatenate((H_init, list_array_H[idx]))
@@ -399,8 +399,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             for i in range(nb_cells):
                 flows[i, :] = - K_list[i]*nablaH[i, :]
-            if verbose:
-                plt.plot(z_solve, flows[:,0], linestyle = '--', label = "avant réparation de dérivation")
+            # if verbose:
+            #     plt.plot(z_solve, flows[:,0], linestyle = '--', label = "avant réparation de dérivation")
             for elem_idx in range(len(inter_cara)):
                 if inter_cara[elem_idx][1] == 0:
                     if K_list[int(inter_cara[elem_idx][0])] == K_list[int(inter_cara[elem_idx][0])+1]:
@@ -417,13 +417,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     flows[int(inter_cara[elem_idx][0]), :] = - K_list[int(inter_cara[elem_idx][0])]*nablaH[int(inter_cara[elem_idx][0]), :]
                     flows[int(inter_cara[elem_idx][1]), :] = - K_list[int(inter_cara[elem_idx][0])]*nablaH[int(inter_cara[elem_idx][1]), :]
         
-            if verbose:
-                plt.plot(z_solve, flows[:,0], label = "après réparation de dérivation")
-                plt.legend()
-                plt.title("flux")
-                plt.xlabel("le profondeur (m)")
-                plt.ylabel("débit (m/s)")
-                plt.show()
+            # if verbose:
+            #     plt.plot(z_solve, flows[:,0], label = "après réparation de dérivation")
+            #     plt.legend()
+            #     plt.title("flux")
+            #     plt.xlabel("le profondeur (m)")
+            #     plt.ylabel("débit (m/s)")
+            #     plt.show()
         
 ## zhan Nov8
             T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list,
