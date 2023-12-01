@@ -108,7 +108,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # teste que les données sont aux bons formats
         if np.shape(self._dH) != np.shape(self._T_aq) or (
             np.shape(self._dH) != np.shape(self._T_riv)
-            or (np.shape(self._T_measures[1]) != (3,))
+            #or (np.shape(self._T_measures[1]) != (3,))
         ):
             raise NameError("Problème dans la taille des donées")
 
