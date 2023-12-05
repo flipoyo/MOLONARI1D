@@ -2,6 +2,7 @@ import numpy as np
 
 def gelman_rubin(chains, threshold=1.1):
     """
+    author: Nicolas Matte
     Input : chains [3D np.array] - chaînes de Markov calculées en parallèle
             threshold [float] - seuil de l'indicateur de Gelman-Rubin, légèrement supérieur à 1
     

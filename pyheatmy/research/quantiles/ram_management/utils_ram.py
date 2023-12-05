@@ -1,3 +1,8 @@
+"""
+    author: Nicolas Matte
+    session: MOLONARI 2023
+"""
+
 from numpy import (
     float32,
     zeros,

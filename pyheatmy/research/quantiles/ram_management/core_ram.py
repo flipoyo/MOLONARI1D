@@ -1,3 +1,8 @@
+"""
+    author: Nicolas Matte
+    session: MOLONARI 2023
+"""
+
 from typing import List, Sequence, Union
 from random import random, choice
 from operator import attrgetter

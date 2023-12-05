@@ -1,3 +1,8 @@
+"""
+    author: Nicolas Matte
+    session: MOLONARI 2023
+"""
+
 # This file contains all the tools about intelligent
 # RAM management
 
