@@ -14,7 +14,7 @@ The other software **Molonaviz** is a GUI that allows for the management of the 
 ## Contributors
 MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021, under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors.
 
-- Nicolas Flipo supervises the MOLONARI 1D ecosystem
+- Nicolas Flipo supervises the development of the MOLONARI 1D ecosystem
 - Aurelien Baudin and Agnès Rivière supervise the **monitoring device development** and their **_in situ_ deployment**
 - Nicolas Flipo and Thomas Romary supervise the development of **PyHeatMy**
 - Fabien Ors contributed to the 2021 and 2022 editions by conceptualising **Molonaviz**
@@ -24,13 +24,16 @@ The MOLONARI1D project is integrated into the french project [EQUIPEX+ TERRA FOR
 The student contributors are, for **PyHeatMy**:
 - 2021 Mathis Bourdin & Youri Tchouboukoff
 - 2022 Guillaume de Rochefort, Loris Megy, Valentin Alleaume
+- 2023 Mattéo Leturcq-Daligaux, Nicolas Matte, Mathis Chevé, Zhan Jing, Dan Maurel
 
 for **Molonaviz**:
-- 2021 Sandra Clodion et Charlotte de Mailly Nesle
+- 2021 Sandra Clodion & Charlotte de Mailly Nesle
 - 2022 software restarted from scratch by Guillaume Vigne
+- 2023 Thibault Lambert
 
 for **hardwareProgramming**:
-- 2022 Wissam Karrou for the Arduino Uno programming
+- 2022 Wissam Karrou, Guillaume Rouy, Pierre Louisot 
+- 2023 François Bradesi, Aymeric Cardot, Léopold Gravier, Léo Roux
 
 ## Copyright
 
