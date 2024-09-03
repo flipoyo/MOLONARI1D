@@ -1,0 +1,12 @@
+Water level left tube (river side) de niveau tube;Water level right tube (aquifer side) de niveau tube;Right - Left;Voltages
+10;10;0;1,562
+10,5;10;0,5;1,575
+11;10;1;1,587
+11,5;10;1,5;1,597
+12;10;2;1,611
+12,5;10;2,5;1,621
+13;10;3;1,633
+13,5;10;3,5;1,641
+14;10;4;1,653
+14,5;10;4,5;1,662
+15;10;5;1,671
