@@ -8,7 +8,7 @@ The ecosystem is dedicated to the monitoring of water and heat exchanges in rive
 
 One software **PyHeatMy** is dedicated to the inference of water and energy fluxes from the data acquired by the monitoring systems. It implements an MCMC approach taht infers the physical properties of a 1D column of a riverbed forced by hydraulic head difference between the top and the bottom of the column, as well as the associated temperatures. The energy of each MCMC iteration is calculated based on the RMSE between simulated and monitored temperatures at three depths of the porous medium column. For more information, please see the associated folder in the current repository.
 
-The other software **Molonaviz** is a GUI that allows for the management of the monitoring devices as "labs", the monitoring data of "sampling points", as the interpretation of the data with **PyHeatMy**. It is designed in a frontend and backend programs that interacts with each other. The frontend uses the Qt library in python, and the backend handles a SQL database. **WARNING**: Molonaviz requires python 3.10 at least. You cannot use molonaviz with an older version of Python.
+The other software **Molonaviz** is a GUI that allows for the management of the monitoring devices as "labs", the monitoring data of "sampling points", as the interpretation of the data with **PyHeatMy**. It is designed in a frontend and backend programs that interacts with each other. The frontend uses the Qt library in python, and the backend handles a SQL database. **WARNING**: Molonaviz requires python 3.10 at least and works with 3.10.12. You cannot use molonaviz with an older version of Python. Also incompatibilities appear with versions higher than 3.11+. In that case use pyenv to install other python versions  and run a virtual env before launching your ide, such as code.
 
 
 ## Contributors
@@ -68,6 +68,70 @@ For more informations on the software, please check the folder
 
 
 You are now set to use the ecosystem. To launch it, you can simply run ```molonaviz``` in a terminal.
+
+## Virtual environments
+
+### 1. **Using `pyenv` to Manage Multiple Versions of Python**
+
+`pyenv` is a convenient tool for installing and managing multiple versions of Python on your Ubuntu system. Installing `pyenv`:
+
+1.1. **Install the necessary dependencies:**
+
+   ```bash
+   sudo apt update
+   sudo apt install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+   ```
+
+1.2. **Install `pyenv`:**
+
+   You can install `pyenv` using the official installation script:
+
+   ```bash
+   curl https://pyenv.run | bash
+   ```
+
+   Follow the on-screen instructions to add the following lines to your `~/.bashrc` file (or `~/.zshrc` if you use `zsh`):
+
+   ```bash
+   export PATH="$HOME/.pyenv/bin:$PATH"
+   eval "$(pyenv init --path)"
+   eval "$(pyenv init -)"
+   eval "$(pyenv virtualenv-init -)"
+   ```
+
+   Reload your shell configuration file with `source ~/.bashrc` or open a new terminal.
+
+1.3. **Install a specific version of Python:**
+
+   ```bash
+   pyenv install 3.10.12
+   ```
+
+   Replace `3.10.12` with the version of Python you want to install.
+
+1.4. **Set the global default Python version:**
+
+   ```bash
+   pyenv global 3.10.12
+   ```
+
+   To change the Python version for a specific project, navigate to the project directory and use:
+
+   ```bash
+   pyenv local 3.10.12
+   ```
+
+
+### 2. **Using Virtual Environments**
+
+To manage project-specific dependencies, you can create a virtual environment with `venv` or `virtualenv`:
+
+```bash
+python3 -m venv myenv
+source myenv/bin/activate
+```
+
+Then, you can install Python packages without affecting other projects.
 
  
 ![logo](Figures/schemaMOLONARI.png)
