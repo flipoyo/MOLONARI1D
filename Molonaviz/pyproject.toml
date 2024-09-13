@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "molonaviz"
+version = "1.0"
+description = "Graphical tool for the MOLONARI project."
+readme = "README.md"
+authors = [
+  {name = "Guillaume Vigne"},
+]
+dependencies = [
+    "pyqt5",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "setuptools",
+]
+
+[project.gui-scripts]
+molonaviz = "molonaviz.main:main"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.package-data]
+molonaviz = [
+    "docs/*.png",
+    "docs/*.pdf",
+    "docs/*.md",
+    "docs/*.sql",
+    "imgs/*.png",
+    "imgs/*.jpg*",
+    "imgs/*.jpeg*",
+    "frontend/ui/*.ui",
+    "interactions/*.txt"
+]
