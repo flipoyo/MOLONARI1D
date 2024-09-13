@@ -164,6 +164,8 @@ class Compute(QtCore.QObject):
             print("Please wait while for the previous computation to end")
             return
 
+        self.thread.terminate()
+        self.thread = QtCore.QThread()
         self.save_layers_and_params(params)
         self.update_nb_cells(nb_cells)
 
@@ -376,6 +378,8 @@ class Compute(QtCore.QObject):
             print("Please wait while for the previous computation to end")
             return
 
+        self.thread.terminate()
+        self.thread = QtCore.QThread()
         self.update_nb_cells(nb_cells)
 
         self.set_column()  # Updates self.col
