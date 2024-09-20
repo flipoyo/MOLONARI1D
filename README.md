@@ -56,16 +56,11 @@ Some bugs may also appear. We therefore do not guarantee any reliability on the 
 ## Installation
 
 Here is a step-by-step guide to install the ecosystem: 
-- First install **PyHeatMy**, from the __ad hoc__ folder, by running:
-```sh
-pip install -r requirements.txt
-pip install -e .
-```
-For more informations on the software, please check the folder
+- First install **PyHeatMy**, from the __ad hoc__ folder, by running ```pip install -e .```
+For more informations on the software, please check the folder.
 
 - Second install **Molonaviz**, from the __ad hoc__ folder, by running ```pip install -e .```
-For more informations on the software, please check the folder
-
+For more informations on the software, please check the folder.
 
 You are now set to use the ecosystem. To launch it, you can simply run ```molonaviz``` in a terminal.
 
