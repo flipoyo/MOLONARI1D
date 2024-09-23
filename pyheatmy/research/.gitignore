@@ -1,0 +1,15 @@
+/.ipynb_checkpoints/
+/*/.ipynb_checkpoints/
+*.pyc
+__pycache__/
+/pyheatmy.egg-info/
+/dev/
+fichier*
+demo2022.ipynb
+demo_cas_test.ipynb
+demo_gen_test.ipynb
+demo_val_direct.ipynb
+pyheatmy/__pycache__
+__pycache__
+DREAM_v0.ipynb
+DREAM_v1.ipynb
