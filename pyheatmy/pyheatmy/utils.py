@@ -20,16 +20,7 @@ from numba import njit
 from pyheatmy.layers import Layer
 from pyheatmy.solver import solver, tri_product
 from pyheatmy.params import Prior, PARAM_LIST
-
-# LAMBDA_W = 0 # test du cas purement advectif
-LAMBDA_W = 0.6071
-RHO_W = 1000
-C_W   = 4185
-ALPHA = 0.4
-G = 9.81
-N_UPDATE_MU = 96
-EPSILON = 1e-10
-MU = 1e-3
+from pyheatmy.config import *
 
 def conv(layer):
     name, prof, priors = layer
@@ -111,6 +102,7 @@ def compute_Mu(T):
     """ 
     Paramètres : T : Température ou Tableau de températures
     Résultat : mu : Viscosité à la température T selon l'approximation de ...
+    NF --> Retrouver les références et les unités SVP
     """
     A = 1.856e-11 * 1e-3
     B = 4209

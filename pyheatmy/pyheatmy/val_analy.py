@@ -4,7 +4,7 @@ from typing import Sequence
 from pyheatmy.core import Column
 from pyheatmy.gen_test import Time_series
 from pyheatmy.layers import Layer, layersListCreator
-from pyheatmy import LAMBDA_W, RHO_W, C_W
+from pyheatmy.config import *
 
 class Analy_Sol:
     "Compute the value of temperature based on the analytical solution."

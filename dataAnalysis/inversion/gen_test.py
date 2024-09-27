@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from params import Param, ParamsPriors, Prior, PARAM_LIST
 from checker import checker
 from core import Column
-from pyheatmy import DEFAULT_dH, DEFAULT_T_riv, DEFAULT_T_aq, DEFAULT_time_step, CODE_Temp, CODE_list_sensors, CODE_scalar
+from pyheatmy import DEFAULT_dH, DEFAULT_T_riv, DEFAULT_T_aq, DEFAULT_time_step, CODE_Temp, DEFAULT_sensor_depth, CODE_scalar
 from scipy.interpolate import interp1d #lagrange
 
 import numpy as np
@@ -12,7 +12,7 @@ class Time_series:  # on simule un tableau de mesures
     def __init__(
         self,
         offset : float = CODE_scalar,
-        depth_sensors: list = CODE_list_sensors,
+        depth_sensors: list = DEFAULT_sensor_depth,
         param_time_dates: list = [None,None,DEFAULT_time_step], # liste [date début, date fin, pas de temps (constant)], format des dates tuple datetime ou none
         param_dH_signal: list = DEFAULT_dH, # liste [amplitude (m), période (s), offset (m)] pour un variation sinusoïdale
         param_T_riv_signal: list = DEFAULT_T_riv,  # liste [amplitude (°C), période (en seconde), offset (°C)] pour un variation sinusoïdale

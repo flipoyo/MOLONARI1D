@@ -11,7 +11,7 @@ C_W = 4185
 
 # valeur absurdre par défaut
 CODE_Temp = 959595
-CODE_list_sensors = [.1,.2,.3,.4]
+DEFAULT_sensor_depth = [.1,.2,.3,.4]
 CODE_scalar = -9999
 
 from .core import Column

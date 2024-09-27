@@ -14,11 +14,9 @@ from pyheatmy.lagrange import Lagrange
 from pyheatmy.params import Param, ParamsPriors, Prior, PARAM_LIST
 from pyheatmy.state import State
 from pyheatmy.checker import checker
+from pyheatmy.config import *
 
 from pyheatmy.utils import (
-    C_W,
-    RHO_W,
-    LAMBDA_W,
     compute_H_stratified,
     compute_T_stratified,
     conv,
@@ -28,9 +26,6 @@ from pyheatmy.utils import (
     convert_to_layer,
     check_range,
     gelman_rubin,
-    EPSILON,
-    G,
-    MU,
     compute_Mu
 )
 from pyheatmy.layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
