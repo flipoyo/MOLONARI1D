@@ -1,5 +1,4 @@
 .DS_Store
-*.ipynb
 plot
 .ipynb_checkpoints/
 *.pyc
