@@ -543,7 +543,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     # erreur si pas déjà éxécuté compute_solve_transi, sinon l'attribut pas encore affecté à une valeur
     @compute_solve_transi.needed
     def get_advec_flows_solve(self):
-        return RHO_W * C_W * self._flows * (self.temps_solve - 273.15)
+        return RHO_W * C_W * self._flows * (self.temps_solve - ZERO_CELSIUS)
 
     advec_flows_solve = property(get_advec_flows_solve)
     # récupération des flux advectifs = masse volumnique*capacité calorifique*débit spécifique*température
@@ -1429,7 +1429,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 for j in range(len(self._times) - 1)
             ]
         )
-        K_offset = 273.15
+        K_offset = ZERO_CELSIUS
         nb_cells = len(self._z_solve)
         n_sens = len(self.depth_sensors) - 1
         dz = self._real_z[-1] / nb_cells
