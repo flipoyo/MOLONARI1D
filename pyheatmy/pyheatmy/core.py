@@ -1419,16 +1419,88 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         total_RMSE = np.sqrt(np.sum(list_RMSE**2) / nb_sensors)
 
         return np.append(list_RMSE, total_RMSE)
+      
+    def get_timelength(self):
+        return len(self._times)
+
+    def get_dt(self):
+        nt = self.get_timelength()
+        # print(f"number of time steps =  {nt}")
+        dt=(self._times[-1] - self._times[0]).total_seconds()
+        dt/=nt
+        # print(f"time step in seconds =  {dt}")
+        return dt
+
+    def get_dt_in_days(self):
+        dt = self.get_dt()
+        return dt/NSECINDAY
+
+    def create_time_in_day(self):
+        nd=self.get_dt_in_days()
+        return np.array([i*nd for i in range(self.get_timelength())])
+
+    def plot_it_Zt(self, plotIt,title="TBD",cbarUnits="TBD",distBot=1.,distLeft=0.5,fontsize=15):
+        zoomSize =  2
+        titleSize = fontsize+zoomSize
+        reducedSize = fontsize-2 * zoomSize
+        nd=self.get_dt_in_days()
+        temps_en_jours = self.create_time_in_day()
+        fig, ax = plt.subplots(figsize=(10, 5), facecolor = 'w')
+
+        
+        # """Changement de l'échelle de l'axe x"""
+
+        # def jour2dt(x):
+        #     return x * NSECINDAY/ NSECINMIN
+
+        # def jour(x):
+        #     return x 
+
+        """Plots des profils de température"""
+        dt_inmin = self.get_dt()/NSECINMIN
+        upperLabel = "n * {0:.1f}min".format(dt_inmin)
+
+        im = ax.imshow(
+            plotIt,
+            aspect = "auto",
+            extent = [temps_en_jours[0], temps_en_jours[-1], self.depths_solve[-1], self.depths_solve[0]],
+            cmap = "Spectral_r"
+        )
+
+        ax.set_xlabel("time in days", fontsize=fontsize)
+        ax.set_ylabel("depth in m", fontsize=fontsize)
+        ax.xaxis.tick_bottom()
+        ax.xaxis.set_label_position("bottom")
+        # ax.secax = ax.secondary_xaxis(
+        #     "top", functions=(jour, jour2dt)
+        # )
+        # ax.secax.set_xlabel(upperLabel, fontsize=reducedSize)
+        cbar = plt.colorbar(im, ax=ax, shrink=1, location="right")
+
+        cbarSize = ax.xaxis.get_ticklabels()[0].get_fontsize()  # Récupère la taille de police des ticks de l'axe
+        cbar.ax.tick_params(labelsize=cbarSize)  # Applique la même taille de police aux ticks de la colorbar
+        cbar.ax.xaxis.set_label_position('top')  # Positionne l'étiquette en haut
+        cbar.ax.xaxis.label.set_rotation(0)  # Garder l'étiquette horizontale (rotation 0°)
+        # Ajouter le titre de la colorbar manuellement, en utilisant text()
+        cbar.ax.text(
+            distLeft,distBot, cbarUnits, ha='center', va='bottom',
+            transform=cbar.ax.transAxes, fontsize=fontsize
+        )
+
+        
+        ax.set_title(title, fontsize=titleSize)
+        plt.show()
 
     def plot_CALC_results(self, fontsize=15):
         print(f"Plotting Température in column. time series have nrecords =  {len(self._times)}")
         nt=len(self._times)
-        time_array = np.array(
-            [
-                (self._times[j + 1] - self._times[j]).total_seconds()
-                for j in range(len(self._times) - 1)
-            ]
-        )
+        time_array = self.create_time_in_day()
+        # time_array = np.array(
+        #     [
+        #         (self._times[j + 1] - self._times[j]).total_seconds()
+        #         for j in range(len(self._times) - 1)
+        #     ]
+        # )
         K_offset = ZERO_CELSIUS
         nb_cells = len(self._z_solve)
         n_sens = len(self.depth_sensors) - 1
@@ -1437,10 +1509,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         """Changement de l'échelle de l'axe x"""
 
         def min2jour(x):
-            return x / (4 * 24)
+            return x * self.get_dt_in_days()
 
         def jour2min(x):
-            return x * (4 * 24)
+            return x / self.get_dt_in_days()
 
         """Plots des profils de température"""
 
@@ -1456,7 +1528,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ax[0, 0].legend(fontsize=fontsize)
         ax[0, 0].grid()
         ax[0, 0].xaxis.tick_top()
-        ax[0, 0].set_xlabel("t (15min)", fontsize=fontsize)
+        ax[0, 0].set_xlabel("n*dt (15min)", fontsize=fontsize)
         ax[0, 0].xaxis.set_label_position("top")
         ax[0, 0].set_ylabel("T (°C)", fontsize=fontsize)
         ax[0, 0].secax = ax[0, 0].secondary_xaxis(
@@ -1535,37 +1607,3 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         cbar3 = fig.colorbar(im3, ax=ax[1, 2], shrink=1, location="right")
         cbar3.set_label("Water flow (m/s)", fontsize=fontsize)
         ax[1, 2].set_title("Frise Flux d'eau MD", fontsize=fontsize, pad=20)
-        
-    def get_timelength(self):
-        return len(self._times)
-
-    def get_dt(self):
-        nt = self.get_timelength()
-        print(f"number of time steps =  {nt}")
-        dt=(self._times[-1] - self._times[0]).total_seconds()
-        dt/=nt
-        print(f"time step in seconds =  {dt}")
-        return dt
-    
-
-    def get_dt_in_days(self):
-        dt = self.get_dt()
-        return dt/NSECINDAY
-
-    
-    def plot_it_Zt(self, plotIt, fontsize=15):
-        nd=self.get_dt_in_days()
-        temps_en_jours = np.array([i*nd for i in range(self.get_timelength())])
-        fig, ax = plt.subplots(figsize=(10, 5), facecolor = 'w')
-        im = ax.imshow(
-            plotIt,
-            aspect = "auto",
-            extent = [temps_en_jours[0], temps_en_jours[-1], self.depths_solve[-1], self.depths_solve[0]],
-            cmap = "Spectral_r"
-        )
-        ax.set_xlabel("time in days")
-        ax.set_ylabel("depth in m")
-        ax.set_title("discharge in m/s")
-        plt.colorbar(im)
-        plt.show()
-
