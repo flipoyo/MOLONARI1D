@@ -1535,3 +1535,37 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         cbar3 = fig.colorbar(im3, ax=ax[1, 2], shrink=1, location="right")
         cbar3.set_label("Water flow (m/s)", fontsize=fontsize)
         ax[1, 2].set_title("Frise Flux d'eau MD", fontsize=fontsize, pad=20)
+        
+    def get_timelength(self):
+        return len(self._times)
+
+    def get_dt(self):
+        nt = self.get_timelength()
+        print(f"number of time steps =  {nt}")
+        dt=(self._times[-1] - self._times[0]).total_seconds()
+        dt/=nt
+        print(f"time step in seconds =  {dt}")
+        return dt
+    
+
+    def get_dt_in_days(self):
+        dt = self.get_dt()
+        return dt/NSECINDAY
+
+    
+    def plot_it_Zt(self, plotIt, fontsize=15):
+        nd=self.get_dt_in_days()
+        temps_en_jours = np.array([i*nd for i in range(self.get_timelength())])
+        fig, ax = plt.subplots(figsize=(10, 5), facecolor = 'w')
+        im = ax.imshow(
+            plotIt,
+            aspect = "auto",
+            extent = [temps_en_jours[0], temps_en_jours[-1], self.depths_solve[-1], self.depths_solve[0]],
+            cmap = "Spectral_r"
+        )
+        ax.set_xlabel("time in days")
+        ax.set_ylabel("depth in m")
+        ax.set_title("discharge in m/s")
+        plt.colorbar(im)
+        plt.show()
+
