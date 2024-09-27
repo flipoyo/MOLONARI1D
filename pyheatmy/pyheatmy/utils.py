@@ -1,3 +1,6 @@
+#
+# NF Ce fichier est un fichier 'poubelle', on ne comprend pas à quoi sont reliées les méthodes. Réorganiser dans les .py adhoc, éventuellement en créer de nouveaux 
+# 
 from numpy import (
     float32,
     zeros,

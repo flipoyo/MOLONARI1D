@@ -11,14 +11,25 @@ DEFAULT_sensor_depth = [0.1, 0.2, 0.3, 0.4]
 LAMBDA_W = 0.6071
 RHO_W = 1000
 C_W = 4185
-ZERO_CELSIUS = 273.15
 ALPHA = 0.4
 G = 9.81
-N_UPDATE_MU = 96
 EPSILON = 1e-10
+N_UPDATE_MU = 96 
 MU = 1e-3
+ZERO_CELSIUS = 273.15
 
-# valeur absurde par défaut
+# temporal values
+NSECINMIN = 60
+NSECINHOUR = 3600
+NSECINDAY = 86400
+NHOURINDAY = 24
+NDAYINYEAR = 365
+NDAYINMONTH = 30
+ZEROCELSIUS = 273.15
+
+
+
+# valeurs absurdes par défaut
 CODE_Temp = 959595
 CODE_scalar = -9999
 
