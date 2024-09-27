@@ -1396,7 +1396,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         return np.append(list_RMSE, total_RMSE)
 
-    def plot_CALC_results(self, nt=3000, fontsize=15):
+    def plot_CALC_results(self, fontsize=15):
         time_array = np.array(
             [
                 (self._times[j + 1] - self._times[j]).total_seconds()
