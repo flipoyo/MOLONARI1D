@@ -14,25 +14,25 @@ pip install -e .
 
 ## Tutorial :
 
-There is a jupyter notebook called ``demo2022.ipynb`` which can be used to check the installation and see how the package works.
+There is a jupyter notebook called ``demo2023.ipynb`` which can be used to check the installation and see how the package works.
 
 ## Please note :
 
-The notebooks are in the .gitignore file to avoid conflicts. 
+The folder 'research' contains projects that are not yet implemented in the src files of pyheatmy
 
-The ``simu_exp_&_validation`` folder has three notebooks. Two of them are tutorials :
+Among them, ``synthetic_cases_generator`` was issued in by the MOLONARI 2022 edition. It was implemented in pyheatmy in ``gen_test.py``, which contains the class ``Time_series``. The folder contaions three notebooks. Two of them are tutorials :
 - ``demo_gen_test.ipynb`` for ``gen_test.py`` experimental observation simulator
 - ``demo_val_direct.ipynb`` for ``val_analy.py`` analytical solution generator
 
 ``demo_cas_test.ipynb`` can generate multiple test cases and show the results.
 
-To ensure consistent results, a checker is added where the user cannot call results if he has not executed the corresponding methods.
+All the other projects are from the MOLONARI 2023 edition.
 
-***
 
 ## License
-
-MIT
+EPL v2.0
 
 2021 Mathis Bourdin & Youri Tchouboukoff
 2022 Amélie Impéror, Antoine Poirier, Guillaume de Rochefort, Loris Megy, Paul Bonin Ciosi, Valentin Alleaume, Xinbei Jiang
+2023 Mattéo Leturcq-Daligaux, Nicolas Matte, Mathis Chevé, Zhan Jing, Dan Maurel
+ 
