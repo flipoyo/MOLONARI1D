@@ -1448,15 +1448,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         temps_en_jours = self.create_time_in_day()
         fig, ax = plt.subplots(figsize=(10, 5), facecolor = 'w')
 
-        
-        # """Changement de l'échelle de l'axe x"""
-
-        # def jour2dt(x):
-        #     return x * NSECINDAY/ NSECINMIN
-
-        # def jour(x):
-        #     return x 
-
         """Plots des profils de température"""
         dt_inmin = self.get_dt()/NSECINMIN
         upperLabel = "n * {0:.1f}min".format(dt_inmin)
@@ -1492,16 +1483,48 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ax.set_title(title, fontsize=titleSize)
         plt.show()
 
+    def get_temperature_at_sensors(self): 
+        depths=self.get_depths_solve()  
+        ids = self.get_id_sensors()  
+        print(f"Nb capteurs :{len(ids)}\n")
+        temperatures = np.zeros((len(ids) + 2, self.get_timelength())) #adding the boundary conditions
+        temperatures[0] = self._T_riv
+        temperatures[len(ids)+1] = self._T_aq
+        print(f"sensors ids : {ids}ℕn")
+        for id in range(len(ids)) :
+            temperatures[id+1]=self.get_temps_solve()[ids[id]]
+            # print(f"printing extracted temperatures:{id+1}")
+            # print(temperatures[id+1])
+            # for j in range(len(temperatures[id+1])):
+            #    print(f"\tprinting extracted coordinate {id+1},{j}: {temperatures[id+1][j]}\n")                
+        return temperatures      
+    
+    def plot_temperature_at_sensors(self, title="Temperatures",fontsize=15):
+        zoomSize =  2
+        titleSize = fontsize+zoomSize
+      #   reducedSize = fontsize-2 * zoomSize
+        nd=self.get_dt_in_days()
+        temps_en_jours = self.create_time_in_day()
+        fig, ax = plt.subplots(figsize=(10, 5), facecolor = 'w')
+        ids = self.get_id_sensors()
+
+        temperatures = self.get_temperature_at_sensors()
+        for i in range(len(ids)+2):
+            print(f"Plotting Sensor {i}\n")
+            ax.plot(temps_en_jours,temperatures[i],label="T{}".format(i + 1))
+
+        ax.set_xlabel("time in days", fontsize=fontsize)
+        ax.set_ylabel("temperature", fontsize=fontsize)
+        ax.set_title(title, fontsize=titleSize)
+        ax.legend(fontsize=fontsize)
+      
+        plt.show()
+
+
     def plot_CALC_results(self, fontsize=15):
         print(f"Plotting Température in column. time series have nrecords =  {len(self._times)}")
         nt=len(self._times)
         time_array = self.create_time_in_day()
-        # time_array = np.array(
-        #     [
-        #         (self._times[j + 1] - self._times[j]).total_seconds()
-        #         for j in range(len(self._times) - 1)
-        #     ]
-        # )
         K_offset = ZERO_CELSIUS
         nb_cells = len(self._z_solve)
         n_sens = len(self.depth_sensors) - 1
@@ -1609,20 +1632,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         cbar3.set_label("Water flow (m/s)", fontsize=fontsize)
         ax[1, 2].set_title("Frise Flux d'eau MD", fontsize=fontsize, pad=20)
 
-    def get_temperature_at_sensors(self): 
-        depths=self.get_depths_solve()  
-        ids = self.get_id_sensors()  
-        print(f"Nb capteurs :{len(ids)}\n")
-        temperatures = np.zeros((len(ids) + 2, self.get_timelength())) #adding the boundary conditions
-        temperatures[0] = self._T_riv
-        temperatures[len(ids)+1] = self._T_aq
-        for id in range(len(ids)) :
-            temperatures[id+1]=self.get_temps_solve(ids[id])
-            print(f"printing extracted temperatures:{id+1}")
-            print(temperatures[id+1])
-            for j in range(len(temperatures[id+1])):
-               print(f"\tprinting extracted coordinate {id+1},{j}: {temperatures[id+1][j]}\n")                
-        return temperatures      
 
     def print_in_file_processed_MOLONARI_dataset(self,rac="~/OUTPUT_MOLONARI1D/generated_data"):
         ids = self.get_id_sensors()

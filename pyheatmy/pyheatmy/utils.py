@@ -15,10 +15,17 @@ from numpy import (
     shape,
     exp,
     size,
-    log
+    log,
+    arange,
+    pi,
+    sin,
+    full
 )
+
 from numpy.linalg import solve
+#import numpy as np
 from numba import njit
+from datetime import datetime, timedelta
 
 from pyheatmy.layers import Layer
 from pyheatmy.solver import solver, tri_product
@@ -709,3 +716,12 @@ def compute_HTK_stratified(lambda_s_list, rhos_cs_list, n_list, T_init, array_K,
             )
 
     return H_res
+
+
+def create_periodic_signal(dates,dt,params): #params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
+    t_range = arange(len(dates)) * dt
+    if params[1] != CODE_scalar :
+        signal = (params[0] * sin(2 * pi * t_range / params[1]) + params[2] )
+    else:
+        signal = full(len(dates), params[2])
+    return signal    

@@ -3,6 +3,7 @@ from pyheatmy.params import Param, ParamsPriors, Prior, PARAM_LIST
 from pyheatmy.checker import checker
 from pyheatmy.core import Column
 from pyheatmy.config import *
+from pyheatmy.utils import create_periodic_signal
 
 from scipy.interpolate import interp1d  # lagrange
 
@@ -61,7 +62,7 @@ class Time_series:  # on simule un tableau de mesures
     def from_dict(cls, time_series_dict):
         return cls(**time_series_dict)
 
-    def _generate_dates_series(self, n_len_times=2000, t_step=DEFAULT_time_step):
+    def _generate_dates_series(self, n_len_times=2000, t_step=DEFAULT_time_step):#generate_dates_seemsOK
         if self._param_dates[0] == None:
             self._dates = np.array(
                 [datetime.fromtimestamp(t_step * k) for k in range(n_len_times)]
@@ -72,7 +73,7 @@ class Time_series:  # on simule un tableau de mesures
                 datetime(*self._param_dates[0]),
                 datetime(*self._param_dates[1]),
                 timedelta(seconds=self._param_dates[2]),
-            )
+            )# dt is tini
             times_vir1 = []
             times_list = []
             S = 0
@@ -85,18 +86,19 @@ class Time_series:  # on simule un tableau de mesures
             self._time_array = np.array(times_list)
 
     def _generate_dH_series(self):
-        t_range = np.arange(len(self._dates)) * self._param_dates[2]
-        coeff = 2 * self._param_dH[2] / (self._param_dH[1] - self._param_dH[0])
-        deb = self._param_dH[0] * len(t_range) / t_range[-1]
-        end = self._param_dH[1] * len(t_range) / t_range[-1]
-        self._dH = np.zeros(len(t_range))
-        self._dH[: int(deb)] = -self._param_dH[2]
-        self._dH[int(deb) : int(end)] = (
-            coeff * (t_range[int(deb) : int(end)] - self._param_dH[0])
-            - self._param_dH[2]
-        )
-        self._dH[int(end) :] = self._param_dH[2]
-
+        # t_range = np.arange(len(self._dates)) * self._param_dates[2] #Why *self._param_dates[2]
+        # if self._param_dH[1] != CODE_scalar :
+        #     coeff = 2 * self._param_dH[2] / (self._param_dH[1] - self._param_dH[0])
+        #     deb = self._param_dH[0] * len(t_range) / t_range[-1]
+        #     end = self._param_dH[1] * len(t_range) / t_range[-1]
+        # self._dH = np.zeros(len(t_range))
+        # self._dH[: int(deb)] = -self._param_dH[2]
+        # self._dH[int(deb) : int(end)] = (
+        #     coeff * (t_range[int(deb) : int(end)] - self._param_dH[0])
+        #     - self._param_dH[2]
+        # )
+        # self._dH[int(end) :] = self._param_dH[2]
+        self._dH = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH)
         print(f"Big Bug Differential pressure : {self._dH}\n")
         # self._dH = self._param_dH[0]*np.sin(2*np.pi*t_range/self._param_dH[1]) + self._param_dH[2]
 
@@ -106,11 +108,13 @@ class Time_series:  # on simule un tableau de mesures
         if self._dates.any() == None:
             self._generate_dates_series()
 
-        t_range = np.arange(len(self._dates)) * self._param_dates[2]
-        self._T_riv = (
-            self._param_T_riv[0] * np.sin(2 * np.pi * t_range / self._param_T_riv[1])
-            + self._param_T_riv[2]
-        )
+        # t_range = np.arange(len(self._dates)) * self._param_dates[2]
+        # self._T_riv = (
+        #     self._param_T_riv[0] * np.sin(2 * np.pi * t_range / self._param_T_riv[1])
+        #     + self._param_T_riv[2]
+        # )
+
+        self._T_riv = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq)
 
     def _generate_Temp_aq_series(
         self,
@@ -118,11 +122,12 @@ class Time_series:  # on simule un tableau de mesures
         if self._dates.any() == None:
             self._generate_dates_series()
 
-        t_range = np.arange(len(self._dates)) * self._param_dates[2]
-        self._T_aq = (
-            self._param_T_aq[0] * np.sin(2 * np.pi * t_range / self._param_T_aq[1])
-            + self._param_T_aq[2]
-        )
+        # t_range = np.arange(len(self._dates)) * self._param_dates[2]
+        # self._T_aq = (
+        #     self._param_T_aq[0] * np.sin(2 * np.pi * t_range / self._param_T_aq[1])
+        #     + self._param_T_aq[2]
+        # )
+        self._T_aq = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq)
 
     def _generate_T_riv_dH_series(
         self,
