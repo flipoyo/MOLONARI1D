@@ -52,6 +52,12 @@ This version of MOLONARI1D is a development version. Some features are not yet i
 Some bugs may also appear. We therefore do not guarantee any reliability on the resulting values of the calculations, however the data format will remain constant during their full implementation. Think of this code as a template that will remain persistent when the features are reliable in their results.
 
 
+## Get the sources
+
+Due to the large history of commits, cloning the repositroy may need to be performed using "Shallow clone" option:
+
+`git clone --depth=1 https://github.com/flipoyo/MOLONARI1D.git`
+
 
 ## Installation
 
