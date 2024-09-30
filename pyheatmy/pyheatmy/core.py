@@ -3,6 +3,7 @@ from random import random, choice
 from operator import attrgetter
 from numbers import Number
 import sys
+import os
 import psutil
 
 import numpy as np
@@ -1607,3 +1608,49 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         cbar3 = fig.colorbar(im3, ax=ax[1, 2], shrink=1, location="right")
         cbar3.set_label("Water flow (m/s)", fontsize=fontsize)
         ax[1, 2].set_title("Frise Flux d'eau MD", fontsize=fontsize, pad=20)
+
+    def get_temperature_at_sensors(self): 
+        depths=self.get_depths_solve()  
+        ids = self.get_id_sensors()  
+        print(f"Nb capteurs :{len(ids)}\n")
+        temperatures = np.zeros((len(ids) + 2, self.get_timelength())) #adding the boundary conditions
+        temperatures[0] = self._T_riv
+        temperatures[len(ids)+1] = self._T_aq
+        for id in range(len(ids)) :
+            temperatures[id+1]=self.get_temps_solve(ids[id])
+            print(f"printing extracted temperatures:{id+1}")
+            print(temperatures[id+1])
+            for j in range(len(temperatures[id+1])):
+               print(f"\tprinting extracted coordinate {id+1},{j}: {temperatures[id+1][j]}\n")                
+        return temperatures      
+
+    def print_in_file_processed_MOLONARI_dataset(self,rac="~/OUTPUT_MOLONARI1D/generated_data"):
+        ids = self.get_id_sensors()
+        file_path = os.path.expanduser(rac)
+        # Create the folder and subfolder
+        os.makedirs(file_path, exist_ok=True)
+        temperatures=self.get_temperature_at_sensors()
+
+        with open(f"{file_path}/processed_pressures.txt", 'w') as fpressure, open(f"{file_path}/processed_temperatures.txt", 'w') as fthermal:
+            fpressure.write('“Date/heure”, “Temperature”, “Tprocessed pressure in m”\n')
+            fthermal.write('“time”,”T°capteur1”,”T°capteur2”,”T°capteur3”,”T°capteur4”\n')
+            # API format:
+            # dates de chaque relevé (1ère colonne), format 24h GMT+1 préférable: YYYY/MM/DD hh:mm:ss 
+            # températures (°C) du capteur (2ème colonne)
+            # tension (V)  du capteur (3ème colonne)
+            for i in range(len(self._times)):
+               fpressure.write(f"{self._times[i]},{temperatures[0][i]},{self._dH[i]}\n")
+               # Initialize a list to store the temperature values
+               temp_values = [f"{self._times[i]}"]
+               # Loop through each id in ids and append the corresponding temperature slice to the list
+               for id in range(len(ids)+1):
+                  temp_values.append(f"{temperatures[id+1][i]}")
+                    # Join the list elements into a single string separated by commas
+                  temp_string = ",".join(temp_values)
+                    # Write the formatted string to fthermal
+               fthermal.write(f"{temp_string}\n")# Initialize a list to store the temperature values				
+            
+        # with open('processed_temperatures.txt', 'w') as fthermal:
+        #     fthermal.write('Hello, World!')
+        #     for i in range(len(self._times)):
+        #         fthermal.write(f"{self._times[i]},{self._temps[i]}\n")

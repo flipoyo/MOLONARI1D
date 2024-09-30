@@ -96,6 +96,8 @@ class Time_series:  # on simule un tableau de mesures
             - self._param_dH[2]
         )
         self._dH[int(end) :] = self._param_dH[2]
+
+        print(f"Big Bug Differential pressure : {self._dH}\n")
         # self._dH = self._param_dH[0]*np.sin(2*np.pi*t_range/self._param_dH[1]) + self._param_dH[2]
 
     def _generate_Temp_riv_series(
