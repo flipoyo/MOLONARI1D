@@ -1,6 +1,6 @@
-#  MOLONARI1D ecosystem
+#  ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D ecosystem
 
-![logo](Figures/logo_MOLONARI_smll.png) 
+
 
 MOLONARI means MOnitoring LOcal des échanges NAppe-RIvière, which translates in english LOcal MOnitoring of Stream-aquifer exchanges (LOMOS)
 
@@ -43,7 +43,7 @@ for **hardwareProgramming**:
 
 *All rights reserved*. This software and the accompanying materials are made available under the terms of the Eclipse Public License (EPL) v2.0 which accompanies this distribution, and is available at http://www.eclipse.org/legal/epl-v20.html.
 
-**PyHeatMy** and **Molonaviz**  were first released under the MIT license.
+**PyHeatMy** and **Molonaviz**  were first released in 2021 under the MIT license.
 
 
 ## Warning on reliability
