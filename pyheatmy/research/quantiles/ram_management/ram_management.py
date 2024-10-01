@@ -38,7 +38,7 @@ def ram_estimation(nb_iter, nb_chain, nb_cells, nb_times, nb_layer, nb_param=4, 
     ram += (nb_iter+1)*nb_chain*nb_layer*nb_param # _params
     ram += (nb_chain+2)*nb_layer*nb_param #x_new, X_new et dX
     ram += 2*nb_iter_sous_ech*nb_chain*nb_cells_sous_ech*nb_times_sous_ech # _flows, _temp
-    ram += 6*nb_cells_sous_ech*nb_times_sous_ech # quantiles_temps, quantiles_flows
+    ram += 6*nb_cells_sous_ech*nb_times_sous_ech # quantiles_temperatures, quantiles_flows
 
     ram *= 1.3 # Correction (the model can be improved)
 

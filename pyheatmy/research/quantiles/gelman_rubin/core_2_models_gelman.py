@@ -47,21 +47,21 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         offset: float,  # correspond au décalage du capteur de température par rapport au lit de la rivière
         # liste contenant un tuple avec la date, la charge et la température au sommet de la colonne
         dH_measures: list,
-        T_measures: list,  # liste contenant un tuple avec la date et la température aux points de mesure de longueur le nombre de temps mesuré
+        T_measures: list,  # liste contenant un tuple avec la date et la température aux points de mesure de longueur le nombre de temperatures mesuré
         sigma_meas_P: float,  # écart type de l'incertitude sur les valeurs de pression capteur
         sigma_meas_T: float,  # écart type de l'incertitude sur les valeurs de température capteur
         # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         inter_mode: str = "linear",
     ):
-        # ! Pour l'instant on suppose que les temps matchent
+        # ! Pour l'instant on suppose que les temperatures matchent
         self._times = [t for t, _ in dH_measures]
-        # récupère la liste des charges de la riviière (au cours du temps)
+        # récupère la liste des charges de la riviière (au cours du temperatures)
         self._dH = np.array([d for _, (d, _) in dH_measures])
-        # récupère la liste de température de la rivière (au cours du temps)
+        # récupère la liste de température de la rivière (au cours du temperatures)
         self._T_riv = np.array([t for _, (_, t) in dH_measures])
-        # récupère la liste de température de l'aquifère (au cours du temps)
+        # récupère la liste de température de l'aquifère (au cours du temperatures)
         self._T_aq = np.array([t[-1] for _, t in T_measures])
-        # récupère la liste de températures des capteurs (au cours du temps)
+        # récupère la liste de températures des capteurs (au cours du temperatures)
         self._T_measures = np.array([t[:-1] for _, t in T_measures])
 
         # décale d'un offset les positions des capteurs de température (aussi riviere)
@@ -78,20 +78,20 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             None  # le tableau contenant la profondeur du milieu des cellules
         )
         self._id_sensors = None
-        # le tableau contenant les températures à tout temps et à toute profondeur (lignes : températures) (colonnes : temps)
-        self._temps = None
-        # le tableau contenant les charges à tout temps et à toute profondeur (lignes : charges) (colonnes : temps)
+        # le tableau contenant les températures à tout temperatures et à toute profondeur (lignes : températures) (colonnes : temperatures)
+        self._temperatures = None
+        # le tableau contenant les charges à tout temperatures et à toute profondeur (lignes : charges) (colonnes : temperatures)
         self._H_res = None
-        # le tableau contenant le débit spécifique à tout temps et à toute profondeur (lignes : débit) (colonnes : temps)
+        # le tableau contenant le débit spécifique à tout temperatures et à toute profondeur (lignes : débit) (colonnes : temperatures)
         self._flows = None
 
         # liste contenant des objets de classe état et de longueur le nombre d'états acceptés par la MCMC (<=nb_iter), passe à un moment par une longueur de 1000 pendant l'initialisation de MCMC
         self._states = None
         self._initial_energies = None
         self._acceptances = None
-        # dictionnaire indexé par les quantiles (0.05,0.5,0.95) à qui on a associe un array de deux dimensions : dimension 1 les profondeurs, dimension 2 : liste des valeurs de températures associées au quantile, de longueur les temps de mesure
-        self._quantiles_temps = None
-        # dictionnaire indexé par les quantiles (0.05,0.5,0.95) à qui on a associe un array de deux dimensions : dimension 1 les profondeurs, dimension 2 : liste des valeurs de débits spécifiques associés au quantile, de longueur les temps de mesure
+        # dictionnaire indexé par les quantiles (0.05,0.5,0.95) à qui on a associe un array de deux dimensions : dimension 1 les profondeurs, dimension 2 : liste des valeurs de températures associées au quantile, de longueur les temperatures de mesure
+        self._quantiles_temperatures = None
+        # dictionnaire indexé par les quantiles (0.05,0.5,0.95) à qui on a associe un array de deux dimensions : dimension 1 les profondeurs, dimension 2 : liste des valeurs de débits spécifiques associés au quantile, de longueur les temperatures de mesure
         self._quantiles_flows = None
         self.lagr = Lagrange(
             np.array(self._real_z),
@@ -157,15 +157,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 (self._times[j + 1] - self._times[j]).total_seconds()
                 for j in range(len(self._times) - 1)
             ]
-        )  # le tableau des pas de temps (dépend des données d'entrée)
+        )  # le tableau des pas de temperatures (dépend des données d'entrée)
         isdtconstant = np.all(all_dt == all_dt[0])
 
         H_init = self._dH[0] - self._dH[0] * self._z_solve / self._real_z[-1]
-        # fixe toutes les charges de l'aquifère à 0 (à tout temps)
+        # fixe toutes les charges de l'aquifère à 0 (à tout temperatures)
         H_aq = np.zeros(len(self._times))
         H_riv = (
             self._dH
-        )  # self.dH contient déjà les charges de la rivière à tout temps, stocke juste dans une variable locale
+        )  # self.dH contient déjà les charges de la rivière à tout temperatures, stocke juste dans une variable locale
         # crée les températures initiales (t=0) sur toutes les profondeurs (milieu des cellules)
 
         if self.inter_mode == "lagrange":
@@ -318,7 +318,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         self._H_res = H_res  # stocke les résultats
 
-        # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
+        # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temperatures
         K_list = 10 ** - moinslog10K_list
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -361,7 +361,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list,
                                      rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
 
-        self._temps = T_res
+        self._temperatures = T_res
 
         self._flows = flows  # calcul du débit spécifique
         if verbose:
@@ -427,10 +427,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         list_RMSE = np.array(
             [
                 np.sqrt(
-                    np.nansum((self.get_temps_solve()[id, :] - temps_obs) ** 2)
+                    np.nansum((self.get_temperatures_solve()[id, :] - temperatures_obs) ** 2)
                     / nb_times
                 )
-                for id, temps_obs in zip(self.get_id_sensors(), self._T_measures.T)
+                for id, temperatures_obs in zip(self.get_id_sensors(), self._T_measures.T)
             ]
         )
 
@@ -467,19 +467,19 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     # erreur si pas déjà éxécuté compute_solve_transi, sinon l'attribut pas encore affecté à une valeur
     @compute_solve_transi.needed
-    def get_temps_solve(self, z=None):
+    def get_temperatures_solve(self, z=None):
         if z is None:
-            return self._temps
+            return self._temperatures
         z_ind = np.argmin(np.abs(self.depths_solve - z))
-        return self._temps[z_ind, :]
+        return self._temperatures[z_ind, :]
 
-    temps_solve = property(get_temps_solve)
+    temperatures_solve = property(get_temperatures_solve)
     # récupération des températures au cours du temps à toutes les profondeurs (par défaut) ou bien à une profondeur donnée
 
     # erreur si pas déjà éxécuté compute_solve_transi, sinon l'attribut pas encore affecté à une valeur
     @compute_solve_transi.needed
     def get_advec_flows_solve(self):
-        return RHO_W * C_W * self._flows * (self.temps_solve - 273.15)
+        return RHO_W * C_W * self._flows * (self.temperatures_solve - 273.15)
 
     advec_flows_solve = property(get_advec_flows_solve)
     # récupération des flux advectifs = masse volumnique*capacité calorifique*débit spécifique*température
@@ -499,13 +499,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # création du gradient de température
         nablaT = np.zeros((nb_cells, len(self._times)), np.float32)
 
-        nablaT[0, :] = 2 * (self._temps[1, :] - self._T_riv) / (3 * dz)
+        nablaT[0, :] = 2 * (self._temperatures[1, :] - self._T_riv) / (3 * dz)
 
         for i in range(1, nb_cells - 1):
-            nablaT[i, :] = (self._temps[i + 1, :] - self._temps[i - 1, :]) / (2 * dz)
+            nablaT[i, :] = (self._temperatures[i + 1, :] - self._temperatures[i - 1, :]) / (2 * dz)
 
         nablaT[nb_cells - 1, :] = (
-            2 * (self._T_aq - self._temps[nb_cells - 2, :]) / (3 * dz)
+            2 * (self._T_aq - self._temperatures[nb_cells - 2, :]) / (3 * dz)
         )
 
         conduc_flows = np.zeros((nb_cells, len(self._times)), np.float32)
@@ -588,7 +588,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             )
 
         self._states = list()
-        _temps = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
+        _temperatures = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
         _flows = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
 
         for _ in trange(1000, desc="Init Mcmc ", file=sys.stdout):
@@ -597,7 +597,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             self._states.append(
                 State(
                     layers=init_layers,
-                    energy=compute_energy(self.temps_solve[ind_ref, :]),
+                    energy=compute_energy(self.temperatures_solve[ind_ref, :]),
                     ratio_accept=1,
                     sigma2_temp=sigma2,
                 )
@@ -607,7 +607,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self._states = [min(self._states, key=attrgetter("energy"))]
         self._acceptance = np.zeros(nb_iter)
 
-        _temps[0] = self.get_temps_solve()
+        _temperatures[0] = self.get_temperatures_solve()
         _flows[0] = self.get_flows_solve()
 
         nb_accepted = 0
@@ -615,7 +615,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         for i in trange(nb_iter, desc="Mcmc Computation ", file=sys.stdout):
             current_layers = all_priors.perturb(self._states[-1].layers)
             self.compute_solve_transi(current_layers, nb_cells, verbose=False)
-            energy = compute_energy(self.temps_solve[ind_ref, :])
+            energy = compute_energy(self.temperatures_solve[ind_ref, :])
             log_ratio_accept = compute_log_acceptance(energy, self._states[-1].energy)
             if np.log(random()) < log_ratio_accept:
                 nb_accepted += 1
@@ -630,15 +630,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             else:
                 self._states.append(self._states[-1])
 
-            _temps[i] = self.get_temps_solve()
+            _temperatures[i] = self.get_temperatures_solve()
             _flows[i] = self.get_flows_solve()
             self._acceptance[i] = nb_accepted / (i + 1)
 
         # self.compute_solve_transi.reset()
 
-        self._quantiles_temps = {
+        self._quantiles_temperatures = {
             quant: res
-            for quant, res in zip(quantile, np.quantile(_temps, quantile, axis=0))
+            for quant, res in zip(quantile, np.quantile(_temperatures, quantile, axis=0))
         }
         self._quantiles_flows = {
             quant: res
@@ -698,7 +698,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             )
 
         self._states = list()
-        _temps = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
+        _temperatures = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
         _flows = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
 
         for _ in trange(1000, desc="Init Mcmc ", file=sys.stdout):
@@ -709,7 +709,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 State(
                     layers=init_layers,
                     energy=compute_energy(
-                        self.temps_solve[ind_ref, :],
+                        self.temperatures_solve[ind_ref, :],
                         sigma2=init_sigma2_temp,
                         sigma2_distrib=sigma2_temp_prior.density,
                     ),
@@ -722,7 +722,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self._states = [min(self._states, key=attrgetter("energy"))]
         self._acceptance = np.zeros(nb_iter)
 
-        _temps[0] = self.get_temps_solve()
+        _temperatures[0] = self.get_temperatures_solve()
         _flows[0] = self.get_flows_solve()
 
         nb_accepted = 0
@@ -734,7 +734,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             )
             self.compute_solve_transi(current_layers, nb_cells, verbose=False)
             energy = compute_energy(
-                self.temps_solve[ind_ref, :],
+                self.temperatures_solve[ind_ref, :],
                 sigma2=current_sigma2_temp,
                 sigma2_distrib=sigma2_temp_prior.density,
             )
@@ -752,15 +752,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             else:
                 self._states.append(self._states[-1])
 
-            _temps[i] = self.get_temps_solve()
+            _temperatures[i] = self.get_temperatures_solve()
             _flows[i] = self.get_flows_solve()
             self._acceptance[i] = nb_accepted / (i + 1)
 
         # self.compute_solve_transi.reset()
 
-        self._quantiles_temps = {
+        self._quantiles_temperatures = {
             quant: res
-            for quant, res in zip(quantile, np.quantile(_temps, quantile, axis=0))
+            for quant, res in zip(quantile, np.quantile(_temperatures, quantile, axis=0))
         }
         self._quantiles_flows = {
             quant: res
@@ -889,7 +889,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 nb_cells,
                 verbose=False,
             )
-            _temp_act[j] = self.get_temps_solve()
+            _temp_act[j] = self.get_temperatures_solve()
             _energy[j] = compute_energy(
                 _temp_act[j][ind_ref, :], temp_ref, sigma2
             )
@@ -944,7 +944,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     verbose=False,
                 )
                 temp_new = (
-                    self.get_temps_solve()
+                    self.get_temperatures_solve()
                 )  # récupération du profil de température
                 energy_new = compute_energy(
                     temp_new[ind_ref, :], temp_ref, sigma2
@@ -1107,7 +1107,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     verbose=False,
                 )
                 temp_new = (
-                    self.get_temps_solve()
+                    self.get_temperatures_solve()
                 )  # récupération du profil de température
                 energy_new = compute_energy(
                     temp_new[ind_ref, :], temp_ref, sigma2
@@ -1196,7 +1196,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         print(f"Fin itérations MCMC, avant le calcul des quantiles - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
 
-        self._quantiles_temps = {
+        self._quantiles_temperatures = {
             quant: res
             for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
         }
@@ -1377,12 +1377,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     @compute_mcmc.needed
     def get_quantiles(self):
-        return self._quantiles_temps.keys()
+        return self._quantiles_temperatures.keys()
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
-    def get_temps_quantile(self, quantile):
-        return self._quantiles_temps[quantile]
+    def get_temperatures_quantile(self, quantile):
+        return self._quantiles_temperatures[quantile]
         # retourne les valeurs des températures en fonction du temps selon le quantile demandé
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
@@ -1403,11 +1403,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             [
                 np.sqrt(
                     np.nansum(
-                        (self.get_temps_quantile(quantile)[id, :] - temps_obs) ** 2
+                        (self.get_temperatures_quantile(quantile)[id, :] - temperatures_obs) ** 2
                     )
                     / nb_times
                 )
-                for id, temps_obs in zip(self.get_id_sensors(), self._T_measures.T)
+                for id, temperatures_obs in zip(self.get_id_sensors(), self._T_measures.T)
             ]
         )
 
@@ -1460,7 +1460,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ax[0, 0].set_title("Température mesurées", fontsize=fontsize, pad=20)
 
         for i in range(nt):
-            ax[0, 1].plot(self._temps[:nt, i] - K_offset, -self._z_solve)
+            ax[0, 1].plot(self._temperatures[:nt, i] - K_offset, -self._z_solve)
         ax[0, 1].set_ylabel("Depth (m)", fontsize=fontsize)
         ax[0, 1].set_xlabel("T (°C)", fontsize=fontsize)
         ax[0, 1].grid()
@@ -1471,7 +1471,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         """Plots des frises"""
 
         im0 = ax[0, 2].imshow(
-            self._temps[:, :nt] - K_offset, aspect="auto", cmap="Spectral_r"
+            self._temperatures[:, :nt] - K_offset, aspect="auto", cmap="Spectral_r"
         )
         ax[0, 2].set_xlabel("t (15min)", fontsize=fontsize)
         ax[0, 2].set_ylabel("z (m)", fontsize=fontsize)

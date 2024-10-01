@@ -25,6 +25,9 @@ DEFAULT_T_aq_offset = 12
 DEFAULT_T_riv_signal = [DEFAULT_T_amp, DEFAULT_T_period, DEFAULT_T_riv_offset]
 DEFAULT_T_aq_signal = [DEFAULT_T_amp, DEFAULT_steady, DEFAULT_T_aq_offset]
 
+DEFAULT_sigmaP = CODE_scalar
+DEFAULT_sigmaT = CODE_scalar
+
 DEFAULT_time_step = 15  # 15mn
 DEFAULT_period = 1  # 1j
 

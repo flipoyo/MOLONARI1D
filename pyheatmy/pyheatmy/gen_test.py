@@ -56,7 +56,7 @@ class Time_series:  # on simule un tableau de mesures
         self._T_riv_perturb = np.array([None])  # avec perturbation
         # le tableau d'observation de la pression et de la température rivière
         self._molonariP_data = None
-        self._molonariP_data_perturb = None
+        self._molonariP_data = None
         # récupère la liste de température observée de l'aquifère (au cours du temps)
         self._T_aq = np.array([None])
         self._T_aq_perturb = np.array([None])  # avec perturbation
@@ -65,7 +65,7 @@ class Time_series:  # on simule un tableau de mesures
         self._T_Shaft_perturb = np.array([None])  # avec perturbation
 
         self._T_Shaft_measures = None
-        self._T_Shaft_perturb_measures = None  # avec perturbation
+        self._molonariT_data = None  # avec perturbation
 
     @classmethod
     def from_dict(cls, time_series_dict):
@@ -97,46 +97,17 @@ class Time_series:  # on simule un tableau de mesures
     def _generate_dH_series(self):
         self._dH = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH,"Hydraulic head differential")
 
-    def _generate_Temp_riv_series(
-        self,
-    ):  # renvoie un signal sinusoïdal de temperature rivière
+    def _generate_Temp_riv_series(self):  # renvoie un signal sinusoïdal de temperature rivière
         if self._dates.any() == None:
             self._generate_dates_series()
         self._T_riv = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_riv,"T_riv")
 
-    def _generate_Temp_aq_series(
-        self,
-    ):  # renvoie un signal sinusoïdal de temperature aquifère
+    def _generate_Temp_aq_series(self):  # renvoie un signal sinusoïdal de temperature aquifère
         if self._dates.any() == None:
             self._generate_dates_series()
         self._T_aq = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq,"T_aq")
 
-    def _generate_all_series(
-        self,
-    ):
-
-        if self._dates.any() == None:
-            self._generate_dates_series()
-
-        if self._dH.any() == None:
-            self._generate_dH_series()
-
-        if self._T_riv.any() == None:
-            self._generate_Temp_riv_series()
-
-        if self._T_aq.any() == None:
-            self._generate_Temp_aq_series()
-
-        if self._T_Shaft.any() == None:
-            self._generate_Shaft_Temp_series()
-     
-        self._molonariP_data = list(
-             zip(self._dates, list(zip(self._dH, self._T_riv)))
-        ) #NF I don't see the need for that at this stage
-
-    def _generate_Shaft_Temp_series(
-        self,
-    ):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
+    def _generate_Shaft_Temp_series(self):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
         # initialisation
         n_sens_vir = len(self._depth_sensors)
         print(f"Generating Shaft with {n_sens_vir} sensors")
@@ -154,45 +125,55 @@ class Time_series:  # on simule un tableau de mesures
         # si T_shaft existe déjà (mais si maj) alors on maj seulement T_shaft_measure
         self._T_Shaft_measures = list(zip(self._dates, self._T_Shaft))
 
+    def _perturbate(self,ts, sigma):#perturbates the time series with a normal distrib of sigma
+        n_t=len(ts)
+        new_ts=ts
+        if sigma != None:
+            new_ts=ts+normal(0,sigma,n_t)
+        return new_ts
+    
     def _generate_perturb_Shaft_Temp_series(self):
-        n_sens_vir = len(self._depth_sensors)
-        if self._dates.any() == None:
-            self._generate_dates_series()
         n_t = len(self._dates)
-
-        if self._T_Shaft.any() == None:
-            self._generate_Shaft_Temp_series()
-
+        n_sens_vir = len(self._depth_sensors)
         self._T_Shaft_perturb = np.zeros((n_t, n_sens_vir))
-        self._T_Shaft_perturb = self._T_Shaft + normal(
-            0, self._sigma_T, (n_t, n_sens_vir)
-        )  # perturbe toutes les températures
-        self._T_Shaft_perturb_measures = list(
+        for i in range(n_t):
+            self._T_Shaft_perturb[i] = self._perturbate(self._T_Shaft[i], self._sigma_T)
+
+            self._molonariT_data = list(
             zip(self._dates, self._T_Shaft_perturb)
-        )  # peut renvoyer un format T_measure pour un objet colonne
+        )  #emulates what comes from a shaft of temperature sensors
 
     def _generate_perturb_T_riv_dH_series(self):
+        self._T_riv_perturb = self._perturbate(self._T_riv,self._sigma_T)
+        self._dH_perturb = self._perturbate(self._dH ,self._sigma_P)
+        self._molonariP_data = list(
+             zip(self._dates, list(zip(self._dH_perturb, self._T_riv_perturb)))
+        ) #emulates what comes from a pressure sensor
+
+    def _generate_all_series(self):
         if self._dates.any() == None:
             self._generate_dates_series()
-        n_t = len(self._dates)
+        if self._dH.any() == None:
+            self._generate_dH_series()
+        if self._T_riv.any() == None:
+            self._generate_Temp_riv_series()
+        if self._T_aq.any() == None:
+            self._generate_Temp_aq_series()
+        if self._T_Shaft.any() == None:
+            self._generate_Shaft_Temp_series()   
 
-        if self._T_riv.any() == None or self._dH.any() == None:
-            self._generate_all_series()
-        # perturbation des données générées
-        self._T_riv_perturb = self._T_riv + normal(0, self._sigma_T, n_t)
-        self._dH_perturb = self._dH + normal(0, self._sigma_P, n_t)
-
-        self._molonariP_data_perturb = list(
-            zip(self._dates, list(zip(self._dH_perturb, self._T_riv_perturb)))
-        )
+        #now generating perturbated measurments and emulating what comes from molonari devices
+        self._generate_perturb_T_riv_dH_series()
+        self._generate_perturb_Shaft_Temp_series()
 
     def _measures_column_one_layer(self, column, layer_list, nb_cell):
         column.compute_solve_transi(layer_list, nb_cell)
         id_sensors = column.get_id_sensors()
         for i in range(len(id_sensors)):
-            self._T_Shaft[1:, i] = column._temps[
+            self._T_Shaft[1:, i] = column._temperatures[
                 id_sensors[i], 1:
             ]  # maj les températures émulée des capteurs à partir de t>0 (ie t=1)
             if i < len(id_sensors):
-                column._T_measures[:, i] = column._temps[id_sensors[i], :]
+                column._T_measures[:, i] = column._temperatures[id_sensors[i], :]
         self._generate_Shaft_Temp_series()
+        self._generate_perturb_Shaft_Temp_series()

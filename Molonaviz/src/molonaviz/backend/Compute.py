@@ -121,12 +121,12 @@ class Compute(QtCore.QObject):
         Create the Column object associated to the current Point.
         """
         press = []
-        temps = []
+        temperatures = []
         cleaned_measures = self.coordinator.build_cleaned_measures(full_query=True)
         cleaned_measures.exec()
         while cleaned_measures.next():
             # Warning: temperatures are stored in °C. However, phyheatmy requires K to work!
-            temps.append(
+            temperatures.append(
                 [
                     databaseDateToDatetime(cleaned_measures.value(0)),
                     [cleaned_measures.value(i) + 273.15 for i in range(1, 5)],
@@ -148,7 +148,7 @@ class Compute(QtCore.QObject):
             "depth_sensors": [column_infos.value(i) for i in [1, 2, 3, 4]],
             "offset": column_infos.value(5),
             "dH_measures": press,
-            "T_measures": temps,
+            "T_measures": temperatures,
             "sigma_meas_P": column_infos.value(6),
             "sigma_meas_T": column_infos.value(7),
             "inter_mode": "linear",
@@ -271,42 +271,42 @@ class Compute(QtCore.QObject):
         )
         fetchDepth.bindValue(":PointKey", self.pointID)
 
-        solvedTemps = self.col.get_temps_solve()
+        solvedtemperatures = self.col.get_temperatures_solve()
         advecFlows = self.col.get_advec_flows_solve()
         conduFlows = self.col.get_conduc_flows_solve()
         times = self.col.get_times_solve()
 
-        insertTemps = QSqlQuery(self.con)
-        insertTemps.prepare(
+        inserttemperatures = QSqlQuery(self.con)
+        inserttemperatures.prepare(
             """INSERT INTO TemperatureAndHeatFlows (Date, Depth, Temperature, AdvectiveFlow, ConductiveFlow, TotalFlow, PointKey, Quantile)
             VALUES (:Date, :Depth, :Temperature, :AdvectiveFlow, :ConductiveFlow, :TotalFlow, :PointKey, :Quantile)"""
         )
-        insertTemps.bindValue(":PointKey", self.pointID)
-        insertTemps.bindValue(":Quantile", quantileID)
-        # We assume solvedTemps,advecFlows and conduFlows have the same shapes, and that the dates and depths are also identical, ie the first column of all three arrays corrresponds to the same fixed date.
+        inserttemperatures.bindValue(":PointKey", self.pointID)
+        inserttemperatures.bindValue(":Quantile", quantileID)
+        # We assume solvedtemperatures,advecFlows and conduFlows have the same shapes, and that the dates and depths are also identical, ie the first column of all three arrays corrresponds to the same fixed date.
 
-        nb_rows, nb_cols = shape(solvedTemps)
+        nb_rows, nb_cols = shape(solvedtemperatures)
         self.con.transaction()
         for j in range(nb_cols):
             fetchDate.bindValue(":Date", datetimeToDatabaseDate(times[j]))
             fetchDate.exec()
             fetchDate.next()
-            insertTemps.bindValue(":Date", fetchDate.value(0))
+            inserttemperatures.bindValue(":Date", fetchDate.value(0))
             for i in range(nb_rows):
                 fetchDepth.bindValue(":Depth", float(depths[i]))
                 fetchDepth.exec()
                 fetchDepth.next()
-                insertTemps.bindValue(":Depth", fetchDepth.value(0))
+                inserttemperatures.bindValue(":Depth", fetchDepth.value(0))
                 # We need to convert into float, as SQL doesn't undestand np.float32 !
-                insertTemps.bindValue(
-                    ":Temperature", float(solvedTemps[i, j]) - 273.15
+                inserttemperatures.bindValue(
+                    ":Temperature", float(solvedtemperatures[i, j]) - 273.15
                 )  # Also convert to °C (pyheatmy returns K)
-                insertTemps.bindValue(":AdvectiveFlow", float(advecFlows[i, j]))
-                insertTemps.bindValue(":ConductiveFlow", float(conduFlows[i, j]))
-                insertTemps.bindValue(
+                inserttemperatures.bindValue(":AdvectiveFlow", float(advecFlows[i, j]))
+                inserttemperatures.bindValue(":ConductiveFlow", float(conduFlows[i, j]))
+                inserttemperatures.bindValue(
                     ":TotalFlow", float(advecFlows[i, j] + conduFlows[i, j])
                 )
-                insertTemps.exec()
+                inserttemperatures.exec()
         self.con.commit()
 
         # Water flows
@@ -456,13 +456,13 @@ class Compute(QtCore.QObject):
             f"SELECT Depth.ID FROM Depth WHERE Depth.PointKey = :PointKey AND Depth.Depth = :Depth"
         )
         fetchDepth.bindValue(":PointKey", self.pointID)
-        insertTemps = QSqlQuery(self.con)
-        insertTemps.prepare(
+        inserttemperatures = QSqlQuery(self.con)
+        inserttemperatures.prepare(
             """INSERT INTO TemperatureAndHeatFlows (Date, Depth, Temperature, AdvectiveFlow, ConductiveFlow, TotalFlow, PointKey, Quantile)
             VALUES (:Date, :Depth, :Temperature, :AdvectiveFlow, :ConductiveFlow, :TotalFlow, :PointKey, :Quantile)"""
         )
         # Water Flows
-        insertTemps.bindValue(":PointKey", self.pointID)
+        inserttemperatures.bindValue(":PointKey", self.pointID)
         insertFlows = QSqlQuery(self.con)
         insertFlows.prepare(
             "INSERT INTO WaterFlow (WaterFlow, Date, PointKey, Quantile) VALUES (:WaterFlow,:Date, :PointKey, :Quantile)"
@@ -487,16 +487,16 @@ class Compute(QtCore.QObject):
             insertquantiles.exec()
             quantileID = insertquantiles.lastInsertId()
 
-            insertTemps.bindValue(":Quantile", quantileID)
-            # We assume solvedTemps,advecFlows and conduFlows have the same shapes, and that the dates and depths are also identical, ie the first column of all three arrays corrresponds to the same fixed date.
-            solvedTemps = self.col.get_temps_quantile(quantile)
-            nb_rows, nb_cols = shape(solvedTemps)  #!!!!!! A VOIR !!!!!!
+            inserttemperatures.bindValue(":Quantile", quantileID)
+            # We assume solvedtemperatures,advecFlows and conduFlows have the same shapes, and that the dates and depths are also identical, ie the first column of all three arrays corrresponds to the same fixed date.
+            solvedtemperatures = self.col.get_temperatures_quantile(quantile)
+            nb_rows, nb_cols = shape(solvedtemperatures)  #!!!!!! A VOIR !!!!!!
             self.con.transaction()
             for j in range(nb_cols):
                 fetchDate.bindValue(":Date", datetimeToDatabaseDate(times[j]))
                 fetchDate.exec()
                 fetchDate.next()
-                insertTemps.bindValue(":Date", fetchDate.value(0))
+                inserttemperatures.bindValue(":Date", fetchDate.value(0))
                 # Note: we leave out the AdvectiveFlow, ConductiveFlow and TotalFlow. Why?
                 # Well theses values are not computed per quantile: instead, there are computed for the direct model.
                 # There is no need to store these values as they don't represent anything. Hence, we leave them out and they will be empty.
@@ -505,11 +505,11 @@ class Compute(QtCore.QObject):
                     fetchDepth.bindValue(":Depth", float(depths[i]))
                     fetchDepth.exec()
                     fetchDepth.next()
-                    insertTemps.bindValue(":Depth", fetchDepth.value(0))
-                    insertTemps.bindValue(
-                        ":Temperature", float(solvedTemps[i, j]) - 273.15
+                    inserttemperatures.bindValue(":Depth", fetchDepth.value(0))
+                    inserttemperatures.bindValue(
+                        ":Temperature", float(solvedtemperatures[i, j]) - 273.15
                     )  # Need to convert into float, as SQL doesn't undestand np.float32 !
-                    insertTemps.exec()
+                    inserttemperatures.exec()
             self.con.commit()
 
             # Water flows
