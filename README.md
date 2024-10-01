@@ -51,6 +51,7 @@ for **hardwareProgramming**:
 This version of MOLONARI1D is a development version. Some features are not yet implemented or are incomplete.
 Some bugs may also appear. We therefore do not guarantee any reliability on the resulting values of the calculations, however the data format will remain constant during their full implementation. Think of this code as a template that will remain persistent when the features are reliable in their results.
 
+![MOLONARI1D](Figures/schemaMOLONARI.png)
 
 ## Get the sources
 
@@ -135,4 +136,4 @@ source myenv/bin/activate
 Then, you can install Python packages without affecting other projects.
 
  
-![logo](Figures/schemaMOLONARI.png)
+
