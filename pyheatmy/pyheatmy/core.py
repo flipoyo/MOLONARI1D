@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import trange
 from scipy.interpolate import interp1d
+from matplotlib.colors import LinearSegmentedColormap
 
 from pyheatmy.lagrange import Lagrange
 from pyheatmy.params import Param, ParamsPriors, Prior, PARAM_LIST
@@ -1538,6 +1539,42 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=fontsize-zoomSize)
 
       
+        plt.show()
+
+
+    def plot_temperatures_umbrella(self, dplot=1,K_offset=0,fontsize=15):
+        fig, ax = plt.subplots(figsize=(10, 5), facecolor = 'w')
+        nt = len(self._times)
+    
+        # # Generate greyscale colors from 25% grey to black
+        # greyscale_colors = [str(0.25 + 0.75 * i / (nt // dplot)) for i in range(nt // dplot)]  
+  
+        # Create a custom colormap from light orange to dark brown
+        colors = [(1, 0.8, 0.6), (0.4, 0.2, 0)]  # Light orange to dark brown
+        n_bins = nt // dplot  # Discretize the colormap
+        cmap_name = 'orange_brown'
+        colormap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
+        # Generate colors from the custom colormap
+        colors = [colormap(i / (nt // dplot)) for i in range(nt // dplot)]
+    
+        # Define line styles
+        line_styles = ['-', '--', '-.', ':', (0, (3, 1, 1, 1)), (0, (5, 10))]
+    
+        for idx, i in enumerate(range(0, nt, dplot)):
+            # color = greyscale_colors[idx % len(greyscale_colors)]
+            color = colors[idx % len(colors)]
+            linestyle = line_styles[idx % len(line_styles)]
+            ax.plot(self._temperatures[:nt, i] - K_offset, -self._z_solve, label=f'T@{i*self.get_dt_in_days():.3f}d', color=color, linestyle=linestyle)
+    
+        # Add legend with specified font size
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=fontsize)
+        #set labels and title
+        ax.set_ylabel("Depth (m)", fontsize=fontsize)
+        ax.set_xlabel("T (°C)", fontsize=fontsize)
+        ax.grid()
+        ax.set_title("Temperature profiles over time", fontsize=fontsize, pad=20)
+        # Display the plot
+        plt.tight_layout()
         plt.show()
 
 
