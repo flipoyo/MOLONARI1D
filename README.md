@@ -1,6 +1,6 @@
-#  MOLONARI1D ecosystem
+#  ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D ecosystem
 
-![logo](Figures/logo_MOLONARI_smll.png) 
+
 
 MOLONARI means MOnitoring LOcal des échanges NAppe-RIvière, which translates in english LOcal MOnitoring of Stream-aquifer exchanges (LOMOS)
 
