@@ -13,7 +13,7 @@ from scipy.interpolate import interp1d
 from matplotlib.colors import LinearSegmentedColormap
 
 from pyheatmy.lagrange import Lagrange
-from pyheatmy.params import Param, ParamsPriors, Prior, PARAM_LIST
+from pyheatmy.params import Param, ParamsPriors, Prior, PARAM_LIST, calc_K
 from pyheatmy.state import State
 from pyheatmy.checker import checker
 from pyheatmy.config import *
@@ -206,28 +206,28 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10K, n, lambda_s, rhos_cs = layer.params
+            moinslog10IntrinK, n, lambda_s, rhos_cs = layer.params
 
             if verbose:
                 print("--- Compute Solve Transi ---",
-                    f"One layer : moinslog10K = {moinslog10K}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}", sep="\n")
+                    f"One layer : moinslog10IntrinK = {moinslog10IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}", sep="\n")
 
             heigth = abs(self._real_z[-1] - self._real_z[0])
             Ss = n / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
 
             ## pour le cas uni-couche, on le simule dans compute_H_stratified avec deux couches de mêmes paramètres
-            array_moinslog10K = np.array([moinslog10K, moinslog10K])
-            # array_K = 10 ** (-array_moinslog10K * 1.0)
-            array_K = (RHO_W * G * 10.0**-array_moinslog10K) * 1.0 / MU
+            array_moinslog10IntrinK = np.array([moinslog10IntrinK, moinslog10IntrinK])
+            # array_K = 10 ** (-array_moinslog10IntrinK * 1.0)
+            array_K = (RHO_W * G * 10.0**-array_moinslog10IntrinK) * 1.0 / MU
             array_Ss = np.array([Ss, Ss])
             list_zLow = np.array([0.2])
             inter_cara = np.array([[nb_cells // 2, 0]])
             z_solve = self._z_solve.copy()
-            moinslog10K_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(layersList, nb_cells)
+            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(layersList, nb_cells)
             Ss_list = n_list / heigth
             ##
 
-            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
             # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
             nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -238,7 +238,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
             
-            T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
+            T_res = compute_T_stratified(Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
 
             # calcule toutes les températures à tout temps et à toute profondeur
 
@@ -247,7 +247,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         
 
-            K = 10 ** (- moinslog10K)
+            k = 10 ** (- moinslog10IntrinK) # NF This is wrong since we are now using the intrinsec permeability
+            K=calc_K(k) # NF it will need to be changed with the dependency to temperature
+            if verbose:
+                print(f"Solving the flow with intrinsec permeability {k}, and permeability {K}")
             self._flows = -K * nablaH  # calcul du débit spécifique
 
             if verbose:
@@ -279,12 +282,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10K_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
+            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
                 layersList, nb_cells)
         
-            array_moinslog10K = np.array([float(x.params.moinslog10K) for x in layersList])
-            # array_K = 10 ** (-array_moinslog10K)
-            array_K = (RHO_W * G * 10.0**-array_moinslog10K) * 1.0 / MU
+            array_moinslog10IntrinK = np.array([float(x.params.moinslog10IntrinK) for x in layersList])
+            array_k = 10 ** (-array_moinslog10IntrinK)
+            array_K = calc_K(array_k)
             heigth = abs(self._real_z[-1] - self._real_z[0])
             array_Ss = np.array([float(x.params.n) for x in layersList]) / heigth
             array_eps = np.zeros(len(layersList)) # eps de chaque couche
@@ -398,12 +401,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                                 print("type cara asymetric")
         ## end
             #version zhan
-            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
 
             self._H_res = H_res  # stocke les résultats
 
             # ###
-            # H_res = compute_HTK_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            # H_res = compute_HTK_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
             # ###
 
             
@@ -411,7 +414,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         
 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
-            K_list = 10 ** - moinslog10K_list
+        # conversion of intrinsec permeability to permeability missing
+            k_list = 10 ** - moinslog10IntrinK_list
+            # K_list = RHO_W * G * k_list * 1.0 / MU
+            K_list=calc_K(k_list)
+            print(f"calculating flow in multilayer with permeability {K_list}")
 
             nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -453,7 +460,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             #     plt.show()
         
 ## zhan Nov8
-            T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list,
+            T_res = compute_T_stratified(Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list,
                                      rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
 
             self._temperatures = T_res
@@ -1354,14 +1361,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
-    def get_all_moinslog10K(self):
-        # retourne toutes les valeurs de moinslog10K (K : perméabilité) par lesquels est passé la MCMC
+    def get_all_moinslog10IntrinK(self):
+        # retourne toutes les valeurs de moinslog10IntrinK (K : perméabilité) par lesquels est passé la MCMC
         return [
-            [layer.params.moinslog10K for layer in state.layers]
+            [layer.params.moinslog10IntrinK for layer in state.layers]
             for state in self._states
         ]
 
-    all_moinslog10K = property(get_all_moinslog10K)
+    all_moinslog10IntrinK = property(get_all_moinslog10IntrinK)
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed

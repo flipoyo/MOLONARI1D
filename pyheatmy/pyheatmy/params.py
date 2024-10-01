@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from random import uniform, gauss
 from numpy import inf
 from typing import Callable, Sequence
+from pyheatmy.config import *
 
-PARAM_LIST = ("moinslog10K", "n", "lambda_s", "rhos_cs")
+PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs")
 
 Param = namedtuple("Parametres", PARAM_LIST)
 
@@ -85,7 +86,7 @@ if __name__ == "__main__":
         return 1 / x
 
     priors = {
-        "moinslog10K": ((11, 15), 0.01),  # (intervalle, sigma)
+        "moinslog10IntrinK": ((11, 15), 0.01),  # (intervalle, sigma)
         "n": ((0.01, 0.25), 0.01),
         "lambda_s": ((1, 5), 0.1),
         "rhos_cs": ((1e6, 1e7), 1e5),
@@ -105,14 +106,14 @@ if __name__ == "__main__":
             self,
             name: str,
             zLow: float,
-            moinslog10K: float,
+            moinslog10IntrinK: float,
             n: float,
             lambda_s: float,
             rhos_cs: float,
         ):
             self.name = name
             self.zLow = zLow
-            self.params = Param(moinslog10K, n, lambda_s, rhos_cs)
+            self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs)
 
         # The repr() function returns a printable representational string of the given object.
         # def __repr__(self) -> str:
@@ -120,22 +121,11 @@ if __name__ == "__main__":
 
     def layersListCreator(layersListInput):
         layersList = list()
-        for name, zLow, moinslog10K, n, lambda_s, rhos_cs in layersListInput:
-            layersList.append(Layer(name, zLow, moinslog10K, n, lambda_s, rhos_cs))
+        for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs in layersListInput:
+            layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs))
         return layersList
 
-    # init_param = geom.sample()
-    # print(init_param)
-    # print(geom.perturb(init_param))
-    # print(
-    #     layersListCreator(
-    #         [
-    #             a + b
-    #             for a, b in zip(
-    #                 [("couche1", 10), ("couche2", 20)], geom.perturb(init_param)
-    #             )
-    #         ]
-    #     )
-    # )
-    # print(geom[0])
-    # print(Layer("couche", 1, *geom[0].sample()))
+def calc_K(k):
+    K=k*RHO_W*G
+    K/=MU_W
+    return K

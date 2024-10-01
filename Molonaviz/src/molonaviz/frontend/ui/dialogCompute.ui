@@ -388,7 +388,7 @@
           </widget>
          </item>
          <item row="0" column="7">
-          <widget class="QLineEdit" name="lineEditMoinsLog10KSigma">
+          <widget class="QLineEdit" name="lineEditmoinslog10IntrinKSigma">
            <property name="minimumSize">
             <size>
              <width>100</width>
@@ -457,7 +457,7 @@
           </widget>
          </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="labelMoinsLog10KMCMC">
+          <widget class="QLabel" name="labelmoinslog10IntrinKMCMC">
            <property name="text">
             <string>-log10(Permeability)</string>
            </property>

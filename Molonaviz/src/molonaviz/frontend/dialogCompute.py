@@ -94,7 +94,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditMaxIterMCMC.setText("50")
         self.lineEditKMin.setText("11")
         self.lineEditKMax.setText("15")
-        self.lineEditMoinsLog10KSigma.setText("0.01")
+        self.lineEditmoinslog10IntrinKSigma.setText("0.01")
 
         self.lineEditPorosityMin.setText("0.01")
         self.lineEditPorosityMax.setText("0.25")
@@ -171,7 +171,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
         self.lineEditKMin.setText("11")
         self.lineEditKMax.setText("15")
-        self.lineEditMoinsLog10KSigma.setText("0.01")
+        self.lineEditmoinslog10IntrinKSigma.setText("0.01")
 
         self.lineEditPorosityMin.setText("0.01")
         self.lineEditPorosityMax.setText("0.25")
@@ -278,7 +278,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         #The user's input is not a permeability but a -log10(permeability)
         moins10logKmin = float(self.lineEditKMin.text())
         moins10logKmax = float(self.lineEditKMax.text())
-        moins10logKsigma = float(self.lineEditMoinsLog10KSigma.text())
+        moins10logKsigma = float(self.lineEditmoinslog10IntrinKSigma.text())
 
         nmin = float(self.lineEditPorosityMin.text())
         nmax = float(self.lineEditPorosityMax.text())
@@ -293,7 +293,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         rhos_cs_sigma = float(self.lineEditThermalCapacitySigma.text())
 
         priors = {
-        "moinslog10K": ((moins10logKmin, moins10logKmax), moins10logKsigma),
+        "moinslog10IntrinK": ((moins10logKmin, moins10logKmax), moins10logKsigma),
         "n": ((nmin, nmax), nsigma),
         "lambda_s": ((lambda_s_min, lambda_s_max), lambda_s_sigma),
         "rhos_cs": ((rhos_cs_min, rhos_cs_max), rhos_cs_sigma) }

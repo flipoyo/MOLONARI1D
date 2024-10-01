@@ -200,12 +200,12 @@ def gelman_R_chap(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
 
 
 @njit
-def compute_H(moinslog10K, Ss, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+def compute_H(moinslog10IntrinK, Ss, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for  an homogeneous column.
 
     Parameters
     ----------
-    moinslog10K : float
+    moinslog10IntrinK : float
         value of -log10(K) where K = permeability.
     Ss : float
         specific emmagasinement.
@@ -235,7 +235,7 @@ def compute_H(moinslog10K, Ss, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, al
     H_res = zeros((n_cell, n_times), float32)
     H_res[:, 0] = H_init
 
-    K = 10.0 ** -moinslog10K
+    K = 10.0 ** -moinslog10IntrinK
     KsurSs = K/Ss
 
     # Check if dt is constant :
@@ -328,13 +328,13 @@ def compute_H(moinslog10K, Ss, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, al
 
 @njit
 def compute_T_stratified(
-    Ss_list, moinslog10K_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA
+    Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA
 ):
     """ Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an heterogeneous column.
 
     Parameters
     ----------
-    moinslog10K_list : float array
+    moinslog10IntrinK_list : float array
         values of -log10(K) for each cell of the column, where K = permeability.
     n_list : float array
         porosity for each cell of the column.
@@ -367,7 +367,7 @@ def compute_T_stratified(
         bidimensional array of T(z, t).
     """
     rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
-    K_list = 10.0 ** -moinslog10K_list
+    K_list = 10.0 ** -moinslog10IntrinK_list
     lambda_m_list = (n_list * (LAMBDA_W) ** 0.5 +
                      (1.0 - n_list) * (lambda_s_list) ** 0.5) ** 2
 
@@ -473,12 +473,12 @@ def interface_transition(stratified_data, transition_semilenght=3):
 
 
 @njit
-def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
 
     Parameters
     ----------
-    moinslog10K_list : float array
+    moinslog10IntrinK_list : float array
         values of -log10(K) for each cell of the column, where K = permeability.
     Ss_list : float array
         specific emmagasinement for each cell of the column.
@@ -507,7 +507,7 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moin
 
     H_res = zeros((n_cell, n_times), float32)
     H_res[:, 0] = H_init[:]
-    K_list = 10.0 ** -moinslog10K_list
+    K_list = 10.0 ** -moinslog10IntrinK_list
     KsurSs_list = K_list/Ss_list
 
     # Check if dt is constant :

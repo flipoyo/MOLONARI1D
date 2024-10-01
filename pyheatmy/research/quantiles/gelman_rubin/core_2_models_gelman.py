@@ -175,14 +175,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         T_riv = self._T_riv
         T_aq = self._T_aq
 
-        moinslog10K_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
+        moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
             layersList, nb_cells
         )
 
          ## zhan: ici H_init a causé un problème sous le cas stratifié
         
-        array_moinslog10K = np.array([float(x.params.moinslog10K) for x in layersList])
-        array_K = 10 ** (-array_moinslog10K)
+        array_moinslog10IntrinK = np.array([float(x.params.moinslog10IntrinK) for x in layersList])
+        array_K = 10 ** (-array_moinslog10IntrinK)
         heigth = abs(self._real_z[-1] - self._real_z[0])
         array_Ss = np.array([float(x.params.n) for x in layersList]) / heigth
         array_eps = np.zeros(len(layersList)) # eps de chaque couche
@@ -302,7 +302,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         print("list_zLow shape:", len(list_zLow))
         print("z_solve shape:", len(z_solve))
         print("inter_cara shape:", inter_cara.shape)
-        print("moinslog10K_list shape:", moinslog10K_list.shape)
+        print("moinslog10IntrinK_list shape:", moinslog10IntrinK_list.shape)
         print("Ss_list shape:", Ss_list.shape)
         print("all_dt shape:", all_dt.shape)
         print("dz shape:", dz.shape)
@@ -314,12 +314,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
 
         H_res = compute_H_stratified(
-            array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
 
         self._H_res = H_res  # stocke les résultats
 
         # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temperatures
-        K_list = 10 ** - moinslog10K_list
+        K_list = 10 ** - moinslog10IntrinK_list
         nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
         nablaH[0, :] = 2 * (H_res[1, :] - H_riv) / (3 * dz)
@@ -358,7 +358,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     
         nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
 
-        T_res = compute_T_stratified(Ss_list, moinslog10K_list, n_list, lambda_s_list,
+        T_res = compute_T_stratified(Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list,
                                      rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
 
         self._temperatures = T_res
@@ -1318,14 +1318,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
-    def get_all_moinslog10K(self):
-        # retourne toutes les valeurs de moinslog10K (K : perméabilité) par lesquels est passé la MCMC
+    def get_all_moinslog10IntrinK(self):
+        # retourne toutes les valeurs de moinslog10IntrinK (K : perméabilité) par lesquels est passé la MCMC
         return [
-            [layer.params.moinslog10K for layer in state.layers]
+            [layer.params.moinslog10IntrinK for layer in state.layers]
             for state in self._states
         ]
 
-    all_moinslog10K = property(get_all_moinslog10K)
+    all_moinslog10IntrinK = property(get_all_moinslog10IntrinK)
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed

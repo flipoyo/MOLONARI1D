@@ -9,14 +9,14 @@ class Layer:
         self,
         name: str,
         zLow: float,
-        moinslog10K: float,
+        moinslog10IntrinK: float,
         n: float,
         lambda_s: float,
         rhos_cs: float,
     ):
         self.name = name
         self.zLow = zLow
-        self.params = Param(moinslog10K, n, lambda_s, rhos_cs)
+        self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs)
 
     def __repr__(self) -> str:
         return self.name + f" : ends at {self.zLow} m. " + self.params.__repr__()
@@ -68,8 +68,8 @@ class AllPriors:
 
 def layersListCreator(layersListInput):
     layersList = list()
-    for name, zLow, moinslog10K, n, lambda_s, rhos_cs in layersListInput:
-        layersList.append(Layer(name, zLow, moinslog10K, n, lambda_s, rhos_cs))
+    for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs in layersListInput:
+        layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs))
     return layersList
 
 
@@ -88,7 +88,7 @@ def getListParameters(layersList, nbCells: int):
         while currentAltitude < layer.zLow:
             listParameters.append(
                 [
-                    layer.params.moinslog10K,
+                    layer.params.moinslog10IntrinK,
                     layer.params.n,
                     layer.params.lambda_s,
                     layer.params.rhos_cs,

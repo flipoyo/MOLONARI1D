@@ -42,6 +42,7 @@ G = 9.81
 EPSILON = 1e-10
 N_UPDATE_MU = 96 
 MU = 1e-3
+MU_W = 1e-3
 ZERO_CELSIUS = 273.15
 
 

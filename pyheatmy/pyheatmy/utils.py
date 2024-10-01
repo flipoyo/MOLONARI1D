@@ -123,11 +123,11 @@ def compute_Mu(T):
     return mu
 
 # @njit
-# def compute_HTK_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+# def compute_HTK_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
 #     dt = all_dt[0]
 #     # mu_list = compute_Mu(T_init)
 #     # rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
-#     # K_list = (RHO_W * G * 10.0 ** -moinslog10k_list) * 1./mu_list # ici k et K n'est pas le meme
+#     # K_list = (RHO_W * G * 10.0 ** -moinslog10IntrinK_list) * 1./mu_list # ici k et K n'est pas le meme
 #     # lambda_m_list = (n_list * (LAMBDA_W) ** 0.5 +(1.0 - n_list) * (lambda_s_list) ** 0.5) ** 2
 #     # ke_list = lambda_m_list / rho_mc_m_list
 #     # ae_list = RHO_W * C_W * K_list / rho_mc_m_list
@@ -136,7 +136,7 @@ def compute_Mu(T):
 #     # compute T0 -> K0 -> H1 -> T1 -> K1 ...
 #     H_res = zeros((n_cell, n_times), float32)
 #     H_res[:, 0] = H_init[:]
-#     K_list = 10.0 ** -moinslog10K_list
+#     K_list = 10.0 ** -moinslog10IntrinK_list
 #     dK_list = K_list
 #     dK_list[0] = (K_list[1] - K_list[0]) / dz
 #     dK_list[-1] = (K_list[-1] - K_list[-2]) / dz
@@ -181,13 +181,13 @@ def compute_Mu(T):
 
 @njit
 def compute_T_stratified(
-    Ss_list, moinslog10K_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu=N_UPDATE_MU
+    Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu=N_UPDATE_MU
 ):
     """Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an heterogeneous column.
 
     Parameters
     ----------
-    moinslog10k_list : float array
+    moinslog10IntrinK_list : float array
         values of -log10(K) for each cell of the column, where K = permeability.
     n_list : float array
         porosity for each cell of the column.
@@ -222,7 +222,7 @@ def compute_T_stratified(
 
     mu_list = compute_Mu(T_init)
     rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
-    K_list = (RHO_W * G * 10.0**-moinslog10K_list) * 1.0 / mu_list
+    K_list = (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / mu_list
     lambda_m_list = (
         n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
     ) ** 2
@@ -334,12 +334,12 @@ def compute_T_stratified(
 
 
 @njit
-def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
 
     Parameters
     ----------
-    moinslog10k_list : float array
+    moinslog10IntrinK_list : float array
         values of -log10(K) for each cell of the column, where K = permeability.
     Ss_list : float array
         specific emmagasinement for each cell of the column.
@@ -371,8 +371,8 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_ca
 
     ## case without div
     mu_list = compute_Mu(T_init)
-    K_list = (RHO_W * G * 10.0**-moinslog10K_list) * 1.0 / mu_list
-    # K_list = 10.0 ** -moinslog10K_list
+    K_list = (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / mu_list
+    # K_list = 10.0 ** -moinslog10IntrinK_list
     ## case without div
     KsurSs_list = K_list/Ss_list
     dK_list = zeros(n_cell, float32)
@@ -537,12 +537,12 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_ca
 
 
 @njit
-def compute_HTK_stratified(lambda_s_list, rhos_cs_list, n_list, T_init, array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10k_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+def compute_HTK_stratified(lambda_s_list, rhos_cs_list, n_list, T_init, array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
 
     Parameters
     ----------
-    moinslog10K_list : float array
+    moinslog10IntrinK_list : float array
         values of -log10(K) for each cell of the column, where K = permeability.
     Ss_list : float array
         specific emmagasinement for each cell of the column.
@@ -574,14 +574,14 @@ def compute_HTK_stratified(lambda_s_list, rhos_cs_list, n_list, T_init, array_K,
     ## case with div
     mu_list = compute_Mu(T_init)
     rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
-    K_list = (RHO_W * G * 10.0 ** -moinslog10k_list) * 1./mu_list # ici k et K n'est pas le meme
+    K_list = (RHO_W * G * 10.0 ** -moinslog10IntrinK_list) * 1./mu_list # ici k et K n'est pas le meme
     lambda_m_list = (n_list * (LAMBDA_W) ** 0.5 +(1.0 - n_list) * (lambda_s_list) ** 0.5) ** 2
     ke_list = lambda_m_list / rho_mc_m_list
     ae_list = RHO_W * C_W * K_list / rho_mc_m_list
     ## case with div
 
     ## case without div
-    # K_list = 10.0 ** -moinslog10K_list
+    # K_list = 10.0 ** -moinslog10IntrinK_list
     ## case without div
     KsurSs_list = K_list/Ss_list
     dK_list = zeros(n_cell, float32)

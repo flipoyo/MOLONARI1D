@@ -572,7 +572,7 @@ class Compute(QtCore.QObject):
         for elem in layers:
             name = elem.name
             zLow = elem.zLow
-            perm = elem.params.moinslog10K
+            perm = elem.params.moinslog10IntrinK
             poro = elem.params.n
             lambda_s = elem.params.lambda_s
             rhos_cs = elem.params.rhos_cs
