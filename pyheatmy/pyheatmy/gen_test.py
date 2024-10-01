@@ -5,6 +5,7 @@ from pyheatmy.core import Column
 from pyheatmy.config import *
 from pyheatmy.utils import create_periodic_signal
 
+
 from scipy.interpolate import interp1d  # lagrange
 
 import numpy as np
@@ -21,9 +22,9 @@ class Time_series:  # on simule un tableau de mesures
             None,
             DEFAULT_time_step,
         ],  # liste [date début, date fin, pas de temps (constant)], format des dates tuple datetime ou none
-        param_dH_signal: list = DEFAULT_dH,  # liste [t_début (s), t_fin (s), valeur (m)] pour un variation échelon pentu
-        param_T_riv_signal: list = DEFAULT_T_riv,  # liste [amplitude (°C), période (en seconde), offset (°C)] pour un variation sinusoïdale
-        param_T_aq_signal: list = DEFAULT_T_aq,  # liste [amplitude (°C), période (en seconde), offset (°C)] pour un variation sinusoïdale
+        param_dH_signal: list = DEFAULT_dH_signal,  # liste [t_début (s), t_fin (s), valeur (m)] pour un variation échelon pentu
+        param_T_riv_signal: list = DEFAULT_T_riv_signal,  # liste [amplitude (°C), période (en seconde), offset (°C)] pour un variation sinusoïdale
+        param_T_aq_signal: list = DEFAULT_T_aq_signal,  # liste [amplitude (°C), période (en seconde), offset (°C)] pour un variation sinusoïdale
         sigma_meas_P: float = None,  # (m) écart type de l'incertitude sur les valeurs de pression capteur
         sigma_meas_T: float = None,  # (°C) écart type de l'incertitude sur les valeurs de température capteur
     ):
@@ -34,6 +35,14 @@ class Time_series:  # on simule un tableau de mesures
         self._param_T_aq = param_T_aq_signal
         self._sigma_P = sigma_meas_P
         self._sigma_T = sigma_meas_T
+        print("Initializing time series")
+        print("param_time_dates:", self._param_dates)
+        print("param_dH_signal:", self._param_dH)
+        print("param_T_riv_signal:", self._param_T_riv)
+        print("param_T_aq_signal:", self._param_T_aq)
+        print("sigma_meas_P:", self._sigma_P)
+        print("sigma_meas_T:", self._sigma_T)
+
         self._depth_sensors = np.array(depth_sensors)
         self._real_z = np.array([0] + depth_sensors) + offset
 
@@ -46,8 +55,8 @@ class Time_series:  # on simule un tableau de mesures
         self._T_riv = np.array([None])
         self._T_riv_perturb = np.array([None])  # avec perturbation
         # le tableau d'observation de la pression et de la température rivière
-        self._T_riv_dH_measures = None
-        self._T_riv_dH_measures_perturb = None
+        self._molonariP_data = None
+        self._molonariP_data_perturb = None
         # récupère la liste de température observée de l'aquifère (au cours du temps)
         self._T_aq = np.array([None])
         self._T_aq_perturb = np.array([None])  # avec perturbation
@@ -86,52 +95,26 @@ class Time_series:  # on simule un tableau de mesures
             self._time_array = np.array(times_list)
 
     def _generate_dH_series(self):
-        # t_range = np.arange(len(self._dates)) * self._param_dates[2] #Why *self._param_dates[2]
-        # if self._param_dH[1] != CODE_scalar :
-        #     coeff = 2 * self._param_dH[2] / (self._param_dH[1] - self._param_dH[0])
-        #     deb = self._param_dH[0] * len(t_range) / t_range[-1]
-        #     end = self._param_dH[1] * len(t_range) / t_range[-1]
-        # self._dH = np.zeros(len(t_range))
-        # self._dH[: int(deb)] = -self._param_dH[2]
-        # self._dH[int(deb) : int(end)] = (
-        #     coeff * (t_range[int(deb) : int(end)] - self._param_dH[0])
-        #     - self._param_dH[2]
-        # )
-        # self._dH[int(end) :] = self._param_dH[2]
-        self._dH = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH)
-        print(f"Big Bug Differential pressure : {self._dH}\n")
-        # self._dH = self._param_dH[0]*np.sin(2*np.pi*t_range/self._param_dH[1]) + self._param_dH[2]
+        self._dH = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH,"Hydraulic head differential")
 
     def _generate_Temp_riv_series(
         self,
     ):  # renvoie un signal sinusoïdal de temperature rivière
         if self._dates.any() == None:
             self._generate_dates_series()
-
-        # t_range = np.arange(len(self._dates)) * self._param_dates[2]
-        # self._T_riv = (
-        #     self._param_T_riv[0] * np.sin(2 * np.pi * t_range / self._param_T_riv[1])
-        #     + self._param_T_riv[2]
-        # )
-
-        self._T_riv = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq)
+        self._T_riv = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_riv,"T_riv")
 
     def _generate_Temp_aq_series(
         self,
     ):  # renvoie un signal sinusoïdal de temperature aquifère
         if self._dates.any() == None:
             self._generate_dates_series()
+        self._T_aq = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq,"T_aq")
 
-        # t_range = np.arange(len(self._dates)) * self._param_dates[2]
-        # self._T_aq = (
-        #     self._param_T_aq[0] * np.sin(2 * np.pi * t_range / self._param_T_aq[1])
-        #     + self._param_T_aq[2]
-        # )
-        self._T_aq = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq)
-
-    def _generate_T_riv_dH_series(
+    def _generate_all_series(
         self,
-    ):  # renvoie un signal sinusoïdal de différence de charge
+    ):
+
         if self._dates.any() == None:
             self._generate_dates_series()
 
@@ -141,21 +124,22 @@ class Time_series:  # on simule un tableau de mesures
         if self._T_riv.any() == None:
             self._generate_Temp_riv_series()
 
-        self._T_riv_dH_measures = list(
-            zip(self._dates, list(zip(self._dH, self._T_riv)))
-        )
+        if self._T_aq.any() == None:
+            self._generate_Temp_aq_series()
+
+        if self._T_Shaft.any() == None:
+            self._generate_Shaft_Temp_series()
+     
+        self._molonariP_data = list(
+             zip(self._dates, list(zip(self._dH, self._T_riv)))
+        ) #NF I don't see the need for that at this stage
 
     def _generate_Shaft_Temp_series(
         self,
     ):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
         # initialisation
         n_sens_vir = len(self._depth_sensors)
-        if self._dates.any() == None:
-            self._generate_dates_series()
-
-        if self._T_aq.any() == None:
-            self._generate_Temp_aq_series()
-
+        print(f"Generating Shaft with {n_sens_vir} sensors")
         if self._T_Shaft.any() == None:
             self._T_Shaft = (
                 np.ones((len(self._dates), n_sens_vir)) * CODE_Temp
@@ -193,12 +177,12 @@ class Time_series:  # on simule un tableau de mesures
         n_t = len(self._dates)
 
         if self._T_riv.any() == None or self._dH.any() == None:
-            self._generate_T_riv_dH_series()
+            self._generate_all_series()
         # perturbation des données générées
         self._T_riv_perturb = self._T_riv + normal(0, self._sigma_T, n_t)
         self._dH_perturb = self._dH + normal(0, self._sigma_P, n_t)
 
-        self._T_riv_dH_measures_perturb = list(
+        self._molonariP_data_perturb = list(
             zip(self._dates, list(zip(self._dH_perturb, self._T_riv_perturb)))
         )
 

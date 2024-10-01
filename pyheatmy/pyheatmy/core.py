@@ -1510,13 +1510,22 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         temperatures = self.get_temperature_at_sensors()
         for i in range(len(ids)+2):
-            print(f"Plotting Sensor {i}\n")
-            ax.plot(temps_en_jours,temperatures[i],label="T{}".format(i + 1))
+            print(f"Plotting Sensor {i}\n") 
+            if i == 0:
+                label = "T_riv"
+            elif i == len(ids) + 1:
+                label = "T_aq"
+            else:
+                label = f"T{i}"
+    
+            ax.plot(temps_en_jours,temperatures[i],label=label)
 
         ax.set_xlabel("time in days", fontsize=fontsize)
         ax.set_ylabel("temperature", fontsize=fontsize)
         ax.set_title(title, fontsize=titleSize)
-        ax.legend(fontsize=fontsize)
+        # Add legend on the right side with the same font size as axis tick labels
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=fontsize-zoomSize)
+
       
         plt.show()
 

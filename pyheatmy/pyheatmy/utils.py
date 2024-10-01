@@ -26,6 +26,7 @@ from numpy.linalg import solve
 #import numpy as np
 from numba import njit
 from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
 
 from pyheatmy.layers import Layer
 from pyheatmy.solver import solver, tri_product
@@ -718,10 +719,28 @@ def compute_HTK_stratified(lambda_s_list, rhos_cs_list, n_list, T_init, array_K,
     return H_res
 
 
-def create_periodic_signal(dates,dt,params): #params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
+def create_periodic_signal(dates,dt,params : list,signal_name="TBD"): #params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
+    print(f"Entering {signal_name} generation with amplitude {params[0]}, period of {params[1]}, offset {params[2]}, dt {dt} --> ")
     t_range = arange(len(dates)) * dt
     if params[1] != CODE_scalar :
+        print(f"periodic signal\n")
         signal = (params[0] * sin(2 * pi * t_range / params[1]) + params[2] )
+        plt.figure(figsize=(10, 5))
+        plt.plot(dates, signal, label='Signal')
+
+        # Add labels and title
+        plt.xlabel('Dates')
+        plt.ylabel('Signal')
+        plt.title('Signal as a Function of Dates')
+        plt.legend()
+
+        # Rotate date labels for better readability
+        plt.xticks(rotation=45)
+
+        # Display the plot
+        plt.tight_layout()
+        plt.show()
     else:
+        print(f"constant signal\n")
         signal = full(len(dates), params[2])
     return signal    

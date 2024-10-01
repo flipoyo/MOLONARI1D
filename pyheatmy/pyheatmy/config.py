@@ -1,7 +1,30 @@
+# temporal values
+NSECINMIN = 60
+NSECINHOUR = 3600
+NSECINDAY = 86400
+NHOURINDAY = 24
+NDAYINYEAR = 365
+NDAYINMONTH = 30
+
+# valeurs absurdes par défaut
+CODE_Temp = 959595
+CODE_scalar = -9999
+
+
 # param par défaut dans gen_test.py
-DEFAULT_dH = [1, 24 * 3600, 10]
-DEFAULT_T_riv = [30, 24 * 3600, 20]
-DEFAULT_T_aq = [30, 24 * 3600, 12]
+DEFAULT_H_amp = 0.1
+DEFAULT_steady = CODE_scalar
+DEFAULT_H_offset = 0.05
+DEFAULT_dH_signal = [DEFAULT_H_amp, DEFAULT_steady, DEFAULT_H_offset]
+
+DEFAULT_T_amp = 5
+DEFAULT_T_period = NDAYINMONTH*NSECINDAY
+DEFAULT_T_riv_offset = 20
+DEFAULT_T_aq_offset = 12
+
+DEFAULT_T_riv_signal = [DEFAULT_T_amp, DEFAULT_T_period, DEFAULT_T_riv_offset]
+DEFAULT_T_aq_signal = [DEFAULT_T_amp, DEFAULT_steady, DEFAULT_T_aq_offset]
+
 DEFAULT_time_step = 15  # 15mn
 DEFAULT_period = 1  # 1j
 
@@ -18,18 +41,6 @@ N_UPDATE_MU = 96
 MU = 1e-3
 ZERO_CELSIUS = 273.15
 
-# temporal values
-NSECINMIN = 60
-NSECINHOUR = 3600
-NSECINDAY = 86400
-NHOURINDAY = 24
-NDAYINYEAR = 365
-NDAYINMONTH = 30
-ZEROCELSIUS = 273.15
 
 
-
-# valeurs absurdes par défaut
-CODE_Temp = 959595
-CODE_scalar = -9999
 
