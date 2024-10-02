@@ -32,7 +32,7 @@ from pyheatmy.utils import (
 )
 from pyheatmy.layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
 
-
+#Column is a monolithic class and pyheatmy is executable from there. Calculation, retrieval and plots are methods from the column class
 class Column:  # colonne de sédiments verticale entre le lit de la rivière et l'aquifère
     def __init__(
         self,
@@ -418,7 +418,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             k_list = 10 ** - moinslog10IntrinK_list
             # K_list = RHO_W * G * k_list * 1.0 / MU
             K_list=calc_K(k_list)
-            print(f"calculating flow in multilayer with permeability {K_list}")
+            # print(f"calculating flow in multilayer with permeability {K_list}")
 
             nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -541,6 +541,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         total_RMSE = np.sqrt(np.nansum(list_RMSE**2) / nb_sensors)
 
         return np.append(list_RMSE, total_RMSE)
+    
+    @compute_solve_transi.needed
+    def print_RMSE_at_sensor(self):
+        rmse=self.get_RMSE()
+        for i in range(len(rmse)-1):
+            print(f"RMSE at sensor {i} : {rmse[i]}")
+        print(f"Total RMSE : {rmse[-1]}")
 
     # erreur si pas déjà éxécuté compute_solve_transi, sinon l'attribut pas encore affecté à une valeur
     @compute_solve_transi.needed
@@ -1459,14 +1466,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         return np.append(list_RMSE, total_RMSE)
 
-    def get_temperature_at_sensors(self): 
+ 
+    @compute_solve_transi.needed
+    def get_temperature_at_sensors(self,verbose=False): 
         depths=self.get_depths_solve()  
         ids = self.get_id_sensors()  
-        print(f"Nb capteurs :{len(ids)}\n")
+        if verbose:
+            print(f"{len(ids)} Sensors\n")
         temperatures = np.zeros((len(ids) + 2, self.get_timelength())) #adding the boundary conditions
         temperatures[0] = self._T_riv
         temperatures[len(ids)+1] = self._T_aq
-        print(f"sensors ids : {ids}ℕn")
         for id in range(len(ids)) :
             temperatures[id+1]=self.get_temperatures_solve()[ids[id]]
             # print(f"printing extracted temperatures:{id+1}")
@@ -1475,6 +1484,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             #    print(f"\tprinting extracted coordinate {id+1},{j}: {temperatures[id+1][j]}\n")                
         return temperatures    
 
+ 
+    @compute_solve_transi.needed
     def plot_it_Zt(self, plotIt,title="TBD",cbarUnits="TBD",distBot=1.,distLeft=0.5,fontsize=15):
         zoomSize =  2
         titleSize = fontsize+zoomSize
@@ -1518,18 +1529,22 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ax.set_title(title, fontsize=titleSize)
         plt.show()
 
-    def plot_temperature_at_sensors(self, title="Temperatures",fontsize=15):
+ 
+    @compute_solve_transi.needed
+    def plot_temperature_at_sensors(self, title="Temperatures", verbose=False, fontsize=15):
         zoomSize =  2
         titleSize = fontsize+zoomSize
       #   reducedSize = fontsize-2 * zoomSize
+        fig, ax = plt.subplots(figsize=(10, 5), facecolor = 'w')
+
         nd=self.get_dt_in_days()
         temps_en_jours = self.create_time_in_day()
-        fig, ax = plt.subplots(figsize=(10, 5), facecolor = 'w')
         ids = self.get_id_sensors()
+        temperatures = self.get_temperature_at_sensors(verbose=verbose)
 
-        temperatures = self.get_temperature_at_sensors()
         for i in range(len(ids)+2):
-            print(f"Plotting Sensor {i}\n") 
+            if verbose: 
+                print(f"Plotting Sensor {i}\n") 
             if i == 0:
                 label = "T_riv"
             elif i == len(ids) + 1:
@@ -1548,7 +1563,50 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
       
         plt.show()
 
+ 
+    @compute_solve_transi.needed
+    def plot_compare_temperatures_sensors(self, tunits="K",fontsize=15):
+        zoomSize =  2
+        titleSize = fontsize+zoomSize
+        fig, axes = plt.subplots(1, 3, figsize = (20, 5), sharey=True)
+        nd=self.get_dt_in_days()
+        temps_en_jours = self.create_time_in_day()
+        ids = self.get_id_sensors()
+        temperatures = self.get_temperature_at_sensors()
 
+        axes[0].set_ylabel(f"Temperature in {tunits}")
+
+        for i in range(len(ids)):
+            axes[i].set_xlabel("time in days", fontsize=fontsize)
+            axes[i].plot(temps_en_jours, self._T_measures[:, i] - ZERO_CELSIUS, label="Measurement")
+            axes[i].plot(temps_en_jours, temperatures[i+1] - ZERO_CELSIUS, label="Simulated")
+            axes[i].legend()
+            axes[i].set_title(f"Sensor {i+1}")
+
+        plt.subplots_adjust(wspace=0.05)
+
+
+
+    @compute_mcmc.needed
+    def plot_quantile_temperatures_sensors(self, tunits="K",fontsize=15):
+        temps_en_jours = self.create_time_in_day()
+
+        fig, axes = plt.subplots(1, 3, figsize = (20, 5), sharey=True)
+
+        axes[0].set_ylabel(f"Temperature in {tunits}")
+
+        for i, id in enumerate(self.get_id_sensors()):
+            axes[i].set_xlabel("Time in days")
+            axes[i].plot(temps_en_jours, self._T_measures[:, i] - ZERO_CELSIUS, label="Measurement")
+            for q in self.get_quantiles():
+                axes[i].plot(temps_en_jours, self.get_temperatures_quantile(q)[id] - ZERO_CELSIUS, label=f"Quantile {q}")
+            axes[i].legend()
+            axes[i].set_title(f"Sensor {i+1}")
+
+        plt.subplots_adjust(wspace=0.05)
+
+
+    @compute_solve_transi.needed
     def plot_temperatures_umbrella(self, dplot=1,K_offset=0,fontsize=15):
         fig, ax = plt.subplots(figsize=(10, 5), facecolor = 'w')
         nt = len(self._times)
@@ -1584,7 +1642,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         plt.tight_layout()
         plt.show()
 
-
+ 
+    @compute_solve_transi.needed
     def plot_CALC_results(self, fontsize=15):
         print(f"Plotting Température in column. time series have nrecords =  {len(self._times)}")
         nt=len(self._times)
@@ -1696,7 +1755,79 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         cbar3.set_label("Water flow (m/s)", fontsize=fontsize)
         ax[1, 2].set_title("Frise Flux d'eau MD", fontsize=fontsize, pad=20)
 
+ 
+    @compute_solve_transi.needed
+    def plot_all_results(self):
+        self.print_RMSE_at_sensor()
+        self.plot_compare_temperatures_sensors()
+        self.plot_temperature_at_sensors()
 
+        nt = len(self._temperatures[0,:])
+        dplot=15
+        self.plot_temperatures_umbrella(round(nt/dplot))
+
+        flows = self.get_flows_solve()
+        unitLeg="m/s"
+        title="Darcy velocity"
+        self.plot_it_Zt(flows,title,unitLeg,1.04,2)
+
+        ### 2.3 Other plots
+        temperatures = self.get_temperatures_solve()
+        unitLeg="K"
+        title="Temperatures"
+        self.plot_it_Zt(temperatures,title,unitLeg)
+
+
+        flux_advectifs = self.get_advec_flows_solve()
+        unitLeg="W/m2"
+        title="Advective heat flux"
+        self.plot_it_Zt(flux_advectifs,title,unitLeg,1.04,2)
+
+        flux_conductifs = self.get_conduc_flows_solve()
+        unitLeg="W/m2"
+        title="Conductive heat flux"
+        self.plot_it_Zt(flux_conductifs,title,unitLeg,1.04,2)
+
+        self.plot_CALC_results()
+
+    @compute_mcmc.needed
+    def plot_all_param_pdf(self):
+        fig, axes = plt.subplots(2, 4, figsize=(30, 20))
+
+        for id_layer, layer_distribs in enumerate(self.get_all_params()):
+            axes[id_layer, 0].hist(layer_distribs[::, 0])
+            axes[id_layer, 0].set_title(f"Couche {id_layer + 1} : moinslog10IntrinK")
+            axes[id_layer, 1].hist(layer_distribs[::, 1])
+            axes[id_layer, 1].set_title(f"Couche {id_layer + 1} : n")
+            axes[id_layer, 2].hist(layer_distribs[::, 2])
+            axes[id_layer, 2].set_title(f"Couche {id_layer + 1} : lambda_s")
+            axes[id_layer, 3].hist(layer_distribs[::, 3])
+            axes[id_layer, 3].set_title(f"Couche {id_layer + 1} : rhos_cs")
+
+
+    @compute_mcmc.needed
+    def plot_darcy_flow_quantile(self):
+        temps_en_jours = self.create_time_in_day()
+
+        fig, axes = plt.subplots(1, 3, figsize=(20, 10), sharex='col', sharey='row', constrained_layout=True)
+        axes[0].set_ylabel("Débit en m/s")
+
+        # Store the image objects to use for the color bar
+        im_list = []
+        for i, q in enumerate(self.get_quantiles()):
+            im = axes[i].imshow(self.get_flows_quantile(q), aspect='auto', cmap='Spectral_r', extent=[0, temps_en_jours[-1], self._real_z[-1], self._real_z[0]])
+            axes[i].set_title(f"Darcy flow quantile : {100*q} %")
+            axes[i].set_xlabel("Time in days)")
+            im_list.append(im)
+
+        # Add a common color bar
+        cbar = fig.colorbar(im_list[0], ax=axes, orientation='vertical', fraction=0.02, pad=0.04)
+        cbar.set_label('Flow Rate (m/s)')
+
+        plt.show()
+    
+    
+    @compute_solve_transi.needed
     def print_in_file_processed_MOLONARI_dataset(self,rac="~/OUTPUT_MOLONARI1D/generated_data"):
         ids = self.get_id_sensors()
         file_path = os.path.expanduser(rac)

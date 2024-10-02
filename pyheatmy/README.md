@@ -1,9 +1,10 @@
 # PyHeatMy
 
-This version of pyheatmy is a development version. Some features are not yet implemented or are incomplete.
-Some bugs may also appear, do not hesitate if you have any problem.
+This version of `pyheatmy` is a development release. Some features are either not yet implemented or are incomplete. Bugs may also be present; please feel free to report any issues you encounter.
 
-We do not guarantee any reliability on the resulting values of the calculations, however the data format will remain constant during their full implementation. Think of this code as a template that will remain persistent when the features are reliable in their results.
+We do not guarantee the accuracy of the calculated results at this stage. However, the data format will remain consistent throughout the full implementation. Consider this code as a template that will be stabilized once the features produce reliable results.
+
+`pyheatmy` is built around the monolithic `Column` class in `core.py`. It can be executed from this class. Calculation, data retrieval, and plotting are methods provided by the `Column` class.
 
 ## Installation :
 
@@ -14,7 +15,7 @@ pip install -e .
 
 ## Tutorial :
 
-There is a jupyter notebook called ``demo2023.ipynb`` which can be used to check the installation and see how the package works.
+There is a jupyter notebook called ``demoPyheatmy.ipynb`` which can be used to check the installation and see how the package works. This notebook describe direct simulation, and inversion with a simple MCMC. The multiple chain inversion is described in `DREAM_VX.ipynb`.
 
 ## Please note :
 
@@ -35,4 +36,6 @@ EPL v2.0
 2021 Mathis Bourdin & Youri Tchouboukoff
 2022 Amélie Impéror, Antoine Poirier, Guillaume de Rochefort, Loris Megy, Paul Bonin Ciosi, Valentin Alleaume, Xinbei Jiang
 2023 Mattéo Leturcq-Daligaux, Nicolas Matte, Mathis Chevé, Zhan Jing, Dan Maurel
+
+Project manager : Nicolas Flipo
  

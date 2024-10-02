@@ -94,23 +94,24 @@ class Time_series:  # on simule un tableau de mesures
             self._dates = np.array(times_vir1)
             self._time_array = np.array(times_list)
 
-    def _generate_dH_series(self):
-        self._dH = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH,"Hydraulic head differential")
+    def _generate_dH_series(self,verbose=True):
+        self._dH = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH,"Hydraulic head differential",verbose=verbose)
 
-    def _generate_Temp_riv_series(self):  # renvoie un signal sinusoïdal de temperature rivière
+    def _generate_Temp_riv_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature rivière
         if self._dates.any() == None:
             self._generate_dates_series()
-        self._T_riv = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_riv,"T_riv")
+        self._T_riv = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_riv,"T_riv",verbose=verbose)
 
-    def _generate_Temp_aq_series(self):  # renvoie un signal sinusoïdal de temperature aquifère
+    def _generate_Temp_aq_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature aquifère
         if self._dates.any() == None:
             self._generate_dates_series()
-        self._T_aq = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq,"T_aq")
+        self._T_aq = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq,"T_aq",verbose=verbose)
 
-    def _generate_Shaft_Temp_series(self):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
+    def _generate_Shaft_Temp_series(self,verbose=True):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
         # initialisation
         n_sens_vir = len(self._depth_sensors)
-        print(f"Generating Shaft with {n_sens_vir} sensors")
+        if verbose:
+            print(f"Generating Shaft with {n_sens_vir} sensors")
         if self._T_Shaft.any() == None:
             self._T_Shaft = (
                 np.ones((len(self._dates), n_sens_vir)) * CODE_Temp
@@ -150,24 +151,24 @@ class Time_series:  # on simule un tableau de mesures
              zip(self._dates, list(zip(self._dH_perturb, self._T_riv_perturb)))
         ) #emulates what comes from a pressure sensor
 
-    def _generate_all_series(self):
+    def _generate_all_series(self,verbose=True):
         if self._dates.any() == None:
             self._generate_dates_series()
         if self._dH.any() == None:
-            self._generate_dH_series()
+            self._generate_dH_series(verbose=verbose)
         if self._T_riv.any() == None:
-            self._generate_Temp_riv_series()
+            self._generate_Temp_riv_series(verbose=verbose)
         if self._T_aq.any() == None:
-            self._generate_Temp_aq_series()
+            self._generate_Temp_aq_series(verbose=verbose)
         if self._T_Shaft.any() == None:
-            self._generate_Shaft_Temp_series()   
+            self._generate_Shaft_Temp_series(verbose=verbose)   
 
         #now generating perturbated measurments and emulating what comes from molonari devices
         self._generate_perturb_T_riv_dH_series()
         self._generate_perturb_Shaft_Temp_series()
 
-    def _measures_column_one_layer(self, column, layer_list, nb_cell):
-        column.compute_solve_transi(layer_list, nb_cell)
+    def _measures_column_one_layer(self, column, layer_list, nb_cell,verbose=True):
+        column.compute_solve_transi(layer_list, nb_cell,verbose=verbose)
         id_sensors = column.get_id_sensors()
         for i in range(len(id_sensors)):
             self._T_Shaft[1:, i] = column._temperatures[
