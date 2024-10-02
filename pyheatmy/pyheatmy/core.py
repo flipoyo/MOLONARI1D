@@ -1828,7 +1828,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     
     
     @compute_solve_transi.needed
-    def print_in_file_processed_MOLONARI_dataset(self,rac="~/OUTPUT_MOLONARI1D/generated_data"):
+    def print_in_file_processed_MOLONARI_dataset(self,zeroT= ZERO_CELSIUS,rac="~/OUTPUT_MOLONARI1D/generated_data"):
         ids = self.get_id_sensors()
         file_path = os.path.expanduser(rac)
         # Create the folder and subfolder
@@ -1843,12 +1843,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             # températures (°C) du capteur (2ème colonne)
             # tension (V)  du capteur (3ème colonne)
             for i in range(len(self._times)):
-               fpressure.write(f"{self._times[i]},{temperatures[0][i]},{self._dH[i]}\n")
+               fpressure.write(f"{self._times[i]},{temperatures[0][i]-zeroT},{self._dH[i]}\n")
                # Initialize a list to store the temperature values
                temp_values = [f"{self._times[i]}"]
                # Loop through each id in ids and append the corresponding temperature slice to the list
                for id in range(len(ids)+1):
-                  temp_values.append(f"{temperatures[id+1][i]}")
+                  temp_values.append(f"{temperatures[id+1][i]-zeroT}")
                     # Join the list elements into a single string separated by commas
                   temp_string = ",".join(temp_values)
                     # Write the formatted string to fthermal

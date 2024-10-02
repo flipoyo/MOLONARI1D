@@ -10,6 +10,7 @@ from scipy.interpolate import interp1d  # lagrange
 
 import numpy as np
 from numpy.random import normal
+import matplotlib.pyplot as plt
 
 
 class Time_series:  # on simule un tableau de mesures
@@ -113,18 +114,29 @@ class Time_series:  # on simule un tableau de mesures
         if verbose:
             print(f"Generating Shaft with {n_sens_vir} sensors")
         if self._T_Shaft.any() == None:
-            self._T_Shaft = (
-                np.ones((len(self._dates), n_sens_vir)) * CODE_Temp
-            )  # le tableau qui accueille des données de températures de forçage
-            self._T_Shaft[:, n_sens_vir - 1] = self._T_aq
+            self._T_Shaft = np.ones((len(self._dates), n_sens_vir)) * CODE_Temp  # le tableau qui accueille des données de températures de forçage
+            # self._T_Shaft[:, n_sens_vir - 1] = self._T_aq
 
-            f = interp1d(
-                [self._real_z[0], self._real_z[-1]], [self._T_riv[0], self._T_aq[0]]
-            )
-            self._T_Shaft[0] = f(self._depth_sensors)
-        # T_init*np.ones(n_sens_vir-1) # pour les conditions initiales au niveau des capteurs T1, T2, T3, ... avant Taq
-        # si T_shaft existe déjà (mais si maj) alors on maj seulement T_shaft_measure
+            # Loop through each date and perform interpolation
+            for i, date in enumerate(self._dates):
+                f = interp1d(
+                    [self._real_z[0], self._real_z[-1]], [self._T_riv[i], self._T_aq[i]]
+                )
+                self._T_Shaft[i, :] = f(self._depth_sensors)
+        
+            # Set the last column to _T_aq
+            self._T_Shaft[:, n_sens_vir - 1] = self._T_aq
+        #     self._T_Shaft[0] = f(self._depth_sensors)
+        # # T_init*np.ones(n_sens_vir-1) # pour les conditions initiales au niveau des capteurs T1, T2, T3, ... avant Taq
+        # # si T_shaft existe déjà (mais si maj) alors on maj seulement T_shaft_measure
+
+        if verbose:
+            print(f"{n_sens_vir} sensors in the shaft")
+            for i in range(n_sens_vir):
+                print(f"Temperature of Sensor {i} : {self._T_Shaft[:,i]}")
         self._T_Shaft_measures = list(zip(self._dates, self._T_Shaft))
+
+
 
     def _perturbate(self,ts, sigma):#perturbates the time series with a normal distrib of sigma
         n_t=len(ts)
@@ -167,14 +179,50 @@ class Time_series:  # on simule un tableau de mesures
         self._generate_perturb_T_riv_dH_series()
         self._generate_perturb_Shaft_Temp_series()
 
+    def _set_Shaft_Temp_series(self,temperatures,id_sensors,verbose=True):
+        for i in range(len(id_sensors)+1):
+            self._T_Shaft[:, i] = temperatures[i+1,:]
+        #self._generate_Shaft_Temp_series()
+        self._T_Shaft_measures = list(zip(self._dates, self._T_Shaft))
+
+
+    def _plot_molonariT_data(self): 
+        # Assuming self._molonariT_data is already populated
+        # Extract dates and temperature data
+        dates = [data[0] for data in self._molonariT_data]
+        temperatures = np.array([data[1:] for data in self._molonariT_data])  # Extract all temperature series
+
+        # Check if the dimensions match
+        if len(dates) != temperatures.shape[0]:
+            raise ValueError(f"Dates and temperatures must have the same length, but have shapes {len(dates)} and {temperatures.shape[0]}")
+
+        nts=len(temperatures[:,])
+        # Define a list of colors
+        colors = plt.cm.viridis(np.linspace(0, 1, nts))
+
+        # Plot each time series with a different color and label
+        plt.figure(figsize=(10, 6))
+        for i in range(nts):
+            print(i)
+            plt.plot(dates, temperatures[:, i], label=f'Shaft Sensor {i+1}', color=colors[i])
+
+        # Formatting the plot
+        plt.xlabel('Date')
+        plt.ylabel('Temperature')
+        plt.title('Temperature Perturbation Over Time')
+        plt.legend()
+        plt.grid(True)
+        plt.xticks(rotation=45)  # Rotate date labels for better readability
+
+        # Show the plot
+        plt.tight_layout()
+        plt.show()
+
+
     def _measures_column_one_layer(self, column, layer_list, nb_cell,verbose=True):
         column.compute_solve_transi(layer_list, nb_cell,verbose=verbose)
-        id_sensors = column.get_id_sensors()
-        for i in range(len(id_sensors)):
-            self._T_Shaft[1:, i] = column._temperatures[
-                id_sensors[i], 1:
-            ]  # maj les températures émulée des capteurs à partir de t>0 (ie t=1)
-            if i < len(id_sensors):
-                column._T_measures[:, i] = column._temperatures[id_sensors[i], :]
-        self._generate_Shaft_Temp_series()
+        self._set_Shaft_Temp_series(column.get_temperature_at_sensors(verbose=verbose),column.get_id_sensors(),verbose=verbose)        
         self._generate_perturb_Shaft_Temp_series()
+
+
+
