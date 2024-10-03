@@ -756,26 +756,18 @@ def create_dir(rac,verbose=True):
     return dir_print
 
 
-def open_printable_file(rac, dataType=None,classType=None ,verbose=True,fname=None,ext=".csv"):
+def open_printable_file(rac, dataType=None,classType=None ,verbose=True,fname=None,spname=None,ext=".csv"):
     dir_print = rac
     if dataType != None and classType != None:
-        if dataType == DeviceType.PRESSURE:
-            dataname = DeviceType.PRESSURE.name
-        else:
-            dataname = DeviceType.TEMPERATURE.name
-
-        if classType == ClassType.COLUMN:
-            origin= ClassType.COLUMN.name
-        else:
-            origin= ClassType.TIME_SERIES.name        
-
-        fname = f"{dir_print}/processed_{dataname}_{origin}{ext}"  
+        dataname = DEVICE_FILE_NAMES[dataType]
+        origin = CLASS_FILE_NAMES[classType]
+        fname = f"{dir_print}/{spname}_{dataname}_{origin}{ext}"  
         if verbose:
             print(f"Creating {fname}")
 
         fp = open(fname, 'w')
         if dataType == DeviceType.PRESSURE:   
-            fp.write('“Date/heure”, “Temperature in °C”, “Hydraulic head differential in m”\n')
+            fp.write('“Date/heure”, “Hydraulic head differential in m, “Temperature in °C””\n')
         else:
             fp.write('“time”,”T°C sensor 1”,”T°C sensor 2”,”T°C sensor 3”,”T°C sensor 4”\n')
     else:

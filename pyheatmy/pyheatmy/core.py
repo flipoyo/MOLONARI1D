@@ -1872,25 +1872,25 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ids = self.get_id_sensors()
         temperatures=self.get_temperature_at_sensors()
 
-        fpressure = open_printable_file(rac=pointDir, dataType=DeviceType.PRESSURE,classType=self._classType)
-        fthermal = open_printable_file(rac=pointDir, dataType=DeviceType.TEMPERATURE,classType=self._classType)
+        fpressure = open_printable_file(rac=pointDir, dataType=DeviceType.PRESSURE,classType=self._classType,spname=spname)
+        fthermal = open_printable_file(rac=pointDir, dataType=DeviceType.TEMPERATURE,classType=self._classType,spname=spname)
 
         for i in range(len(self._times)):
             # Format the datetime to the desired format
             formatted_time = self._times[i].strftime('%d/%m/%y %I:%M:%S %p')
 
-            fpressure.write(f"{formatted_time},{temperatures[0][i]-zeroT},{self._dH[i]}\n")
+            fpressure.write(f"{formatted_time},{self._dH[i]:.4f},{temperatures[0][i]-zeroT:.4f}\n")
             # Initialize a list to store the temperature values
             temp_values = [f"{formatted_time}"]
             # Loop through each id in ids and append the corresponding temperature slice to the list
             for id in range(len(ids)+1):
-                temp_values.append(f"{temperatures[id+1][i]-zeroT}")
+                temp_values.append(f"{temperatures[id+1][i]-zeroT:.4f}")
                 # Join the list elements into a single string separated by commas
                 temp_string = ",".join(temp_values)
                 # Write the formatted string to fthermal
             fthermal.write(f"{temp_string}\n")# Initialize a list to store the temperature values		
 
-        finfo = open_printable_file(rac=pointDir, fname='info')
+        finfo = open_printable_file(rac=pointDir, fname=f"{spname}_info")
         self.print_sampling_point_info(finfo,spname)
 
         close_printable_file(fpressure)

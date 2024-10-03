@@ -53,10 +53,23 @@ class DeviceType(Enum):
     PRESSURE = 1
     TEMPERATURE = 2
 
+# Dictionary mapping SensorType to file names
+DEVICE_FILE_NAMES = {
+    DeviceType.PRESSURE: 'P',
+    DeviceType.TEMPERATURE: 'T'
+}
+
 
 class ClassType(Enum):
     COLUMN = 1
     TIME_SERIES = 2
+
+# Dictionary mapping SensorType to file names
+CLASS_FILE_NAMES = {
+    ClassType.COLUMN: 'measures', #I would prefer "BY_COLUMN"
+    ClassType.TIME_SERIES: 'by_device', #I would prefer "BY_DEVICE"
+}
+
 
 class SensorType(Enum):
     pressure_sensors = 1
