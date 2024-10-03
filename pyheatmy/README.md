@@ -21,11 +21,9 @@ There is a jupyter notebook called ``demoPyheatmy.ipynb`` which can be used to c
 
 The folder 'research' contains projects that are not yet implemented in the src files of pyheatmy
 
-Among them, ``synthetic_cases_generator`` was issued in by the MOLONARI 2022 edition. It was implemented in pyheatmy in ``gen_test.py``, which contains the class ``Time_series``. The folder contaions three notebooks. Two of them are tutorials :
-- ``demo_gen_test.ipynb`` for ``gen_test.py`` experimental observation simulator
+Among them, ``synthetic_cases_generator`` was issued in by the MOLONARI 2022 edition. It was implemented in pyheatmy in ``time_series.py``, which contains the class ``Time_series``. The folder contaons two tutorial notebooks :
+- ``demo_genData.ipynb`` for ``time_series.py`` experimental observation simulator
 - ``demo_val_direct.ipynb`` for ``val_analy.py`` analytical solution generator
-
-``demo_cas_test.ipynb`` can generate multiple test cases and show the results.
 
 All the other projects are from the MOLONARI 2023 edition.
 

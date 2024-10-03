@@ -3,7 +3,6 @@ from random import random, choice
 from operator import attrgetter
 from numbers import Number
 import sys
-import os
 import psutil
 
 import numpy as np
@@ -18,18 +17,7 @@ from pyheatmy.state import State
 from pyheatmy.checker import checker
 from pyheatmy.config import *
 
-from pyheatmy.utils import (
-    compute_H_stratified,
-    compute_T_stratified,
-    conv,
-    compute_energy,
-    compute_energy_with_distrib,
-    compute_log_acceptance,
-    convert_to_layer,
-    check_range,
-    gelman_rubin,
-    compute_Mu
-)
+from pyheatmy.utils import *
 from pyheatmy.layers import Layer, getListParameters, sortLayersList, AllPriors, LayerPriors
 
 #Column is a monolithic class and pyheatmy is executable from there. Calculation, retrieval and plots are methods from the column class
@@ -48,7 +36,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         inter_mode: str = "linear",
         eps=10**-9,
+        rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default
     ):
+        
+        self._dir_print = create_dir(rac,verbose=True) #once validated verbose=False
+        
+        self._classType = ClassType.COLUMN
+
         # ! Pour l'instant on suppose que les temps matchent
         self._times = [t for t, _ in dH_measures]
         # récupère la liste des charges de la riviière (au cours du temps)
@@ -100,6 +94,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self.inter_mode = inter_mode
         self.eps = eps
         self.tests()  # teste que les conditions nécessaires à l'analyse sont remplies
+
+
+
 
     def tests(self):
         # teste que les données sont aux bons formats
@@ -1828,33 +1825,24 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     
     
     @compute_solve_transi.needed
-    def print_in_file_processed_MOLONARI_dataset(self,zeroT= ZERO_CELSIUS,rac="~/OUTPUT_MOLONARI1D/generated_data"):
+    def print_in_file_processed_MOLONARI_dataset(self,zeroT= ZERO_CELSIUS):
         ids = self.get_id_sensors()
-        file_path = os.path.expanduser(rac)
-        # Create the folder and subfolder
-        os.makedirs(file_path, exist_ok=True)
         temperatures=self.get_temperature_at_sensors()
 
-        with open(f"{file_path}/processed_pressures.txt", 'w') as fpressure, open(f"{file_path}/processed_temperatures.txt", 'w') as fthermal:
-            fpressure.write('“Date/heure”, “Temperature”, “Tprocessed pressure in m”\n')
-            fthermal.write('“time”,”T°capteur1”,”T°capteur2”,”T°capteur3”,”T°capteur4”\n')
-            # API format:
-            # dates de chaque relevé (1ère colonne), format 24h GMT+1 préférable: YYYY/MM/DD hh:mm:ss 
-            # températures (°C) du capteur (2ème colonne)
-            # tension (V)  du capteur (3ème colonne)
-            for i in range(len(self._times)):
-               fpressure.write(f"{self._times[i]},{temperatures[0][i]-zeroT},{self._dH[i]}\n")
-               # Initialize a list to store the temperature values
-               temp_values = [f"{self._times[i]}"]
-               # Loop through each id in ids and append the corresponding temperature slice to the list
-               for id in range(len(ids)+1):
-                  temp_values.append(f"{temperatures[id+1][i]-zeroT}")
-                    # Join the list elements into a single string separated by commas
-                  temp_string = ",".join(temp_values)
-                    # Write the formatted string to fthermal
-               fthermal.write(f"{temp_string}\n")# Initialize a list to store the temperature values				
-            
-        # with open('processed_temperatures.txt', 'w') as fthermal:
-        #     fthermal.write('Hello, World!')
-        #     for i in range(len(self._times)):
-        #         fthermal.write(f"{self._times[i]},{self._temperatures[i]}\n")
+        fpressure = open_printable_file(self._dir_print, DeviceType.PRESSURE,self._classType)
+        fthermal = open_printable_file(self._dir_print, DeviceType.TEMPERATURE,self._classType)
+
+        for i in range(len(self._times)):
+            fpressure.write(f"{self._times[i]},{temperatures[0][i]-zeroT},{self._dH[i]}\n")
+            # Initialize a list to store the temperature values
+            temp_values = [f"{self._times[i]}"]
+            # Loop through each id in ids and append the corresponding temperature slice to the list
+            for id in range(len(ids)+1):
+                temp_values.append(f"{temperatures[id+1][i]-zeroT}")
+                # Join the list elements into a single string separated by commas
+                temp_string = ",".join(temp_values)
+                # Write the formatted string to fthermal
+            fthermal.write(f"{temp_string}\n")# Initialize a list to store the temperature values				
+
+        close_printable_file(fpressure)
+        close_printable_file(fthermal)

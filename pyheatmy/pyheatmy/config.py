@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 # temporal values
 NSECINMIN = 60
 NSECINHOUR = 3600
@@ -11,7 +14,7 @@ CODE_Temp = 959595
 CODE_scalar = -9999
 
 
-# param par défaut dans gen_test.py
+# param par défaut dans time_series.py
 DEFAULT_H_amp = 0.1
 DEFAULT_steady = CODE_scalar
 DEFAULT_H_offset = 0.05
@@ -45,6 +48,11 @@ MU = 1e-3
 MU_W = 1e-3
 ZERO_CELSIUS = 273.15
 
+class DeviceType(Enum):
+    PRESSURE = 1
+    TEMPERATURE = 2
 
 
-
+class ClassType(Enum):
+    COLUMN = 1
+    TIME_SERIES = 2

@@ -29,6 +29,8 @@ class Time_series:  # on simule un tableau de mesures
         sigma_meas_P: float = None,  # (m) écart type de l'incertitude sur les valeurs de pression capteur
         sigma_meas_T: float = None,  # (°C) écart type de l'incertitude sur les valeurs de température capteur
     ):
+                
+        self._classType = ClassType.TIME_SERIES
         # on définit les attribut paramètres
         self._param_dates = param_time_dates
         self._param_dH = param_dH_signal
@@ -145,6 +147,7 @@ class Time_series:  # on simule un tableau de mesures
             new_ts=ts+normal(0,sigma,n_t)
         return new_ts
     
+    @checker
     def _generate_perturb_Shaft_Temp_series(self):
         n_t = len(self._dates)
         n_sens_vir = len(self._depth_sensors)
@@ -156,6 +159,7 @@ class Time_series:  # on simule un tableau de mesures
             zip(self._dates, self._T_Shaft_perturb)
         )  #emulates what comes from a shaft of temperature sensors
 
+    @checker
     def _generate_perturb_T_riv_dH_series(self):
         self._T_riv_perturb = self._perturbate(self._T_riv,self._sigma_T)
         self._dH_perturb = self._perturbate(self._dH ,self._sigma_P)
@@ -223,6 +227,24 @@ class Time_series:  # on simule un tableau de mesures
         column.compute_solve_transi(layer_list, nb_cell,verbose=verbose)
         self._set_Shaft_Temp_series(column.get_temperature_at_sensors(verbose=verbose),column.get_id_sensors(),verbose=verbose)        
         self._generate_perturb_Shaft_Temp_series()
+
+    @ _generate_perturb_Shaft_Temp_series.needed
+    def _print_molonariDevice(self, column, type,verbose=True):
+
+
+        if type == "molonariT":
+            if verbose:
+                print("MolonariT data")
+                print(self._molonariT_data)
+            self._plot_molonariT_data()
+        elif type == "molonariP":
+            if verbose:
+                print("MolonariP data")
+                print(self._molonariP_data)
+        else:
+            print("Type not recognized")
+
+
 
 
 

@@ -27,6 +27,7 @@ from numpy.linalg import solve
 from numba import njit
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
+import os
 
 from pyheatmy.layers import Layer
 from pyheatmy.solver import solver, tri_product
@@ -745,3 +746,46 @@ def create_periodic_signal(dates,dt,params : list,signal_name="TBD",verbose=True
             print(f"constant signal\n")
         signal = full(len(dates), params[2])
     return signal    
+
+
+def create_dir(rac,verbose=True):
+    # Directory path to print in
+    dir_print = os.path.expanduser(rac)
+    # Create the folder and subfolder
+    os.makedirs(dir_print, exist_ok=True)
+    return dir_print
+
+
+def open_printable_file(rac, dataType,classType ,verbose=True):
+    dir_print = rac
+
+    if dataType == DeviceType.PRESSURE:
+        dataname = DeviceType.PRESSURE.name
+    else:
+        dataname = DeviceType.TEMPERATURE.name
+
+    if classType == ClassType.COLUMN:
+        origin= ClassType.COLUMN.name
+    else:
+        origin= ClassType.TIME_SERIES.name        
+
+    fname = f"{dir_print}/processed_{dataname}_{origin}.txt"  
+    if verbose:
+        print(f"Creating {fname}")
+
+    fp = open(fname, 'w')
+    if dataType == DeviceType.PRESSURE:   
+        fp.write('“Date/heure”, “Temperature”, “Hydraulic head differential in m”\n')
+    else:
+        fp.write('“time”,”T° sensor 1”,”T° sensor 2”,”T° sensor 3”,”T° sensor 4”\n')
+
+    return fp
+
+def close_printable_file(fp, verbose=True):
+    if not fp.closed:
+        fp.close()
+        if verbose:
+            print(f"File {fp.name} closed successfully.")
+    else:
+        if verbose:
+            print(f"File {fp.name} is already closed.")
