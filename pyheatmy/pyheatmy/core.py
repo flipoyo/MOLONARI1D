@@ -1840,7 +1840,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             fp.write(f'Shaft_Name,{senName}\n')
             fp.write(f'Datalogger,Hobo\n')
             fp.write(f'T_Sensor_Name,{SENSOR_FILE_NAMES[SensorType.temperature_sensors]}\n')
-            fp.write(f'Sensors_Depth,{self.depth_sensors}\n')
+            fp.write(f'Sensors_Depth,\"{self.depth_sensors}\"\n')
+            
         else :
             fp.write(f'Cons_Name,Mines\n')
             fp.write(f'Cons_Ref,Corefge\n')
