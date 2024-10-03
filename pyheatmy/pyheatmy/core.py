@@ -1842,10 +1842,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             fp.write(f'T_Sensor_Name,{SENSOR_FILE_NAMES[SensorType.temperature_sensors]}\n')
             fp.write(f'Sensors_Depth,{self.depth_sensors}\n')
         else :
-            fp.write('Cons_Name,Mines\n')
-            fp.write('Cons_Ref,Corefge\n')
-            fp.write('T_Sensor_Name,{senName}\n')
-            fp.write('Sigma_Meas_T,0.03\n')
+            fp.write(f'Cons_Name,Mines\n')
+            fp.write(f'Cons_Ref,Corefge\n')
+            fp.write(f'T_Sensor_Name,{senName}\n')
+            fp.write(f'Sigma_Meas_T,0.03\n')
 
 
     def print_sampling_point_info(self,fp,spname="VirtualPoint",psenname="Pvirtual",shaftname="Svirtual",tname="Tvirtual"):
