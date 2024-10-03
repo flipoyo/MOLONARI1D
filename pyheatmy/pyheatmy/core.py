@@ -2,6 +2,7 @@ from typing import List, Sequence, Union
 from random import random, choice
 from operator import attrgetter
 from numbers import Number
+from datetime import datetime
 import sys
 import psutil
 
@@ -1875,9 +1876,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         fthermal = open_printable_file(rac=pointDir, dataType=DeviceType.TEMPERATURE,classType=self._classType)
 
         for i in range(len(self._times)):
-            fpressure.write(f"{self._times[i]},{temperatures[0][i]-zeroT},{self._dH[i]}\n")
+            # Format the datetime to the desired format
+            formatted_time = self._times[i].strftime('%d/%m/%y %I:%M:%S %p')
+
+            fpressure.write(f"{formatted_time},{temperatures[0][i]-zeroT},{self._dH[i]}\n")
             # Initialize a list to store the temperature values
-            temp_values = [f"{self._times[i]}"]
+            temp_values = [f"{formatted_time}"]
             # Loop through each id in ids and append the corresponding temperature slice to the list
             for id in range(len(ids)+1):
                 temp_values.append(f"{temperatures[id+1][i]-zeroT}")
