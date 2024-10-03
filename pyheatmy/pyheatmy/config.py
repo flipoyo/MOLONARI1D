@@ -8,6 +8,7 @@ NSECINDAY = 86400
 NHOURINDAY = 24
 NDAYINYEAR = 365
 NDAYINMONTH = 30
+ABSURD_DATE = "1999/09/09  09:09:09"
 
 # valeurs absurdes par défaut
 CODE_Temp = 959595
@@ -56,3 +57,16 @@ class DeviceType(Enum):
 class ClassType(Enum):
     COLUMN = 1
     TIME_SERIES = 2
+
+class SensorType(Enum):
+    pressure_sensors = 1
+    shafts = 2
+    temperature_sensors = 3
+
+
+# Dictionary mapping SensorType to file names
+SENSOR_FILE_NAMES = {
+    SensorType.pressure_sensors: 'Pvirtual',
+    SensorType.shafts: 'Svirtual',
+    SensorType.temperature_sensors: 'Tvirtual'
+}

@@ -756,28 +756,36 @@ def create_dir(rac,verbose=True):
     return dir_print
 
 
-def open_printable_file(rac, dataType,classType ,verbose=True):
+def open_printable_file(rac, dataType=None,classType=None ,verbose=True,fname=None,ext=".csv"):
     dir_print = rac
+    if dataType != None and classType != None:
+        if dataType == DeviceType.PRESSURE:
+            dataname = DeviceType.PRESSURE.name
+        else:
+            dataname = DeviceType.TEMPERATURE.name
 
-    if dataType == DeviceType.PRESSURE:
-        dataname = DeviceType.PRESSURE.name
+        if classType == ClassType.COLUMN:
+            origin= ClassType.COLUMN.name
+        else:
+            origin= ClassType.TIME_SERIES.name        
+
+        fname = f"{dir_print}/processed_{dataname}_{origin}{ext}"  
+        if verbose:
+            print(f"Creating {fname}")
+
+        fp = open(fname, 'w')
+        if dataType == DeviceType.PRESSURE:   
+            fp.write('“Date/heure”, “Temperature in °C”, “Hydraulic head differential in m”\n')
+        else:
+            fp.write('“time”,”T°C sensor 1”,”T°C sensor 2”,”T°C sensor 3”,”T°C sensor 4”\n')
     else:
-        dataname = DeviceType.TEMPERATURE.name
-
-    if classType == ClassType.COLUMN:
-        origin= ClassType.COLUMN.name
-    else:
-        origin= ClassType.TIME_SERIES.name        
-
-    fname = f"{dir_print}/processed_{dataname}_{origin}.txt"  
-    if verbose:
-        print(f"Creating {fname}")
-
-    fp = open(fname, 'w')
-    if dataType == DeviceType.PRESSURE:   
-        fp.write('“Date/heure”, “Temperature”, “Hydraulic head differential in m”\n')
-    else:
-        fp.write('“time”,”T° sensor 1”,”T° sensor 2”,”T° sensor 3”,”T° sensor 4”\n')
+        if fname!= None:
+            fname=f"{dir_print}/{fname}{ext}"
+        else:
+            fname = f"{dir_print}/pyheatmy_default{ext}"
+        if verbose:
+            print(f"Creating {fname}")
+        fp = open(fname, 'w')
 
     return fp
 

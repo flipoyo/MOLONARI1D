@@ -24,7 +24,7 @@ from pyheatmy.layers import Layer, getListParameters, sortLayersList, AllPriors,
 class Column:  # colonne de sédiments verticale entre le lit de la rivière et l'aquifère
     def __init__(
         self,
-        river_bed: float,  # profondeur de la colonne en mètres
+        river_bed: float ,  # profondeur de la colonne en mètres
         # profondeur des capteurs de températures en mètres
         depth_sensors: Sequence[float],
         offset: float,  # correspond au décalage du capteur de température par rapport au lit de la rivière
@@ -61,6 +61,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         self.depth_sensors = depth_sensors
         self.offset = offset
+
+        self.zbed = river_bed  # profondeur du lit de la rivière
 
         self._layersList = None
 
@@ -1823,14 +1825,53 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         plt.show()
     
+    def print_sensor_file(self,fp,senType,senName):
+        print(f"Printing Sensor file {senType}")
+        if senType == SensorType.pressure_sensors.value:
+            fp.write(f'P_Sensor_Name,{senName}\n')
+            fp.write(f'Datalogger,MOLONARI1D_by_arduino\n')
+            fp.write(f'Calibration_Date,{ABSURD_DATE}\n')
+            fp.write(f'Intercept,0.\n')
+            fp.write(f'dU_dH,1\n')
+            fp.write(f'dU_dT,0.0\n')
+            fp.write(f'Sigma_Meas_P,0.01\n')
+            fp.write(f'Thermometer name,{SENSOR_FILE_NAMES[SensorType.temperature_sensors]}\n')
+        elif senType == SensorType.shafts.value:
+            fp.write(f'Shaft_Name,{senName}\n')
+            fp.write(f'Datalogger,Hobo\n')
+            fp.write(f'T_Sensor_Name,{SENSOR_FILE_NAMES[SensorType.temperature_sensors]}\n')
+            fp.write(f'Sensors_Depth,{self.depth_sensors}\n')
+        else :
+            fp.write('Cons_Name,Mines\n')
+            fp.write('Cons_Ref,Corefge\n')
+            fp.write('T_Sensor_Name,{senName}\n')
+            fp.write('Sigma_Meas_T,0.03\n')
+
+
+    def print_sampling_point_info(self,fp,spname="VirtualPoint",psenname="Pvirtual",shaftname="Svirtual",tname="Tvirtual"):
+        fp.write(f'Point_Name,{spname}\n')
+        fp.write(f'P_Sensor_Name,{psenname}\n')
+        fp.write(f'Shaft_Name,{shaftname}\n')
+        fp.write(f'Implantation_Date,{self._times[0]}\n')
+        fp.write(f'Meas_Date,{self._times[-1]}\n')
+        fp.write(f'River_Bed,{self.zbed}\n')
+        fp.write(f'Delta_h,{self.offset}\n')
+
     
     @compute_solve_transi.needed
-    def print_in_file_processed_MOLONARI_dataset(self,zeroT= ZERO_CELSIUS):
+    def print_in_file_processed_MOLONARI_dataset(self,zeroT= ZERO_CELSIUS,spname="VirtualPoint",lname="VirtualLabo"):
+        
+        spDirName=f'{self._dir_print}/{spname}'
+        pointDir = create_dir(spDirName)
+
+        labDirName=f'{self._dir_print}/{lname}'
+        labDir = create_dir(labDirName)
+
         ids = self.get_id_sensors()
         temperatures=self.get_temperature_at_sensors()
 
-        fpressure = open_printable_file(self._dir_print, DeviceType.PRESSURE,self._classType)
-        fthermal = open_printable_file(self._dir_print, DeviceType.TEMPERATURE,self._classType)
+        fpressure = open_printable_file(rac=pointDir, dataType=DeviceType.PRESSURE,classType=self._classType)
+        fthermal = open_printable_file(rac=pointDir, dataType=DeviceType.TEMPERATURE,classType=self._classType)
 
         for i in range(len(self._times)):
             fpressure.write(f"{self._times[i]},{temperatures[0][i]-zeroT},{self._dH[i]}\n")
@@ -1842,7 +1883,20 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 # Join the list elements into a single string separated by commas
                 temp_string = ",".join(temp_values)
                 # Write the formatted string to fthermal
-            fthermal.write(f"{temp_string}\n")# Initialize a list to store the temperature values				
+            fthermal.write(f"{temp_string}\n")# Initialize a list to store the temperature values		
+
+        finfo = open_printable_file(rac=pointDir, fname='info')
+        self.print_sampling_point_info(finfo,spname)
 
         close_printable_file(fpressure)
         close_printable_file(fthermal)
+        close_printable_file(finfo)
+        
+        for sensor in SensorType:
+            senDir = create_dir(f'{labDir}/{sensor.name}')
+            fname = SENSOR_FILE_NAMES[sensor]
+            fp = open_printable_file(rac=senDir, fname=fname)
+            self.print_sensor_file(fp,sensor.value,SENSOR_FILE_NAMES[sensor])
+            close_printable_file(fp)
+
+
