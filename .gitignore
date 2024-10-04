@@ -5,3 +5,4 @@ plot
 __pycache__/
 *.egg-info/
 build/
+.vscode

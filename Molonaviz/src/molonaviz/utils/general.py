@@ -155,19 +155,29 @@ def convertDates(df : pd.DataFrame, timesIndex = 0):
     For datetime conversion performance, see:
     See https://stackoverflow.com/questions/40881876/python-pandas-convert-datetime-to-timestamp-effectively-through-dt-accessor
     """
-    formats = ("%m/%d/%y %H:%M:%S", "%m/%d/%y %I:%M:%S %p",
-               "%d/%m/%y %H:%M",    "%d/%m/%y %I:%M %p",
-               "%m/%d/%Y %H:%M:%S", "%m/%d/%Y %I:%M:%S %p",
-               "%d/%m/%Y %H:%M",    "%d/%m/%Y %I:%M %p",
-               "%y/%m/%d %H:%M:%S", "%y/%m/%d %I:%M:%S %p",
-               "%y/%m/%d %H:%M",    "%y/%m/%d %I:%M %p",
-               "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %I:%M:%S %p",
-               "%Y/%m/%d %H:%M",    "%Y/%m/%d %I:%M %p",
-               "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %I:%M:%S %p",
-               "%Y:%m:%d %H:%M:%S", "%Y:%m:%d %I:%M:%S %p",
-               "%m:%d:%Y %H:%M:%S", "%m:%d:%Y %I:%M:%S %p",None)
+    formats = ("%m/%d/%y %H:%M:%S", "%m/%d/%y %I:%M:%S %p", "%m/%d/%Y %H:%M:%S", "%m/%d/%Y %I:%M:%S %p",
+               "%m/%d/%y %H:%M",    "%m/%d/%y %I:%M %p",    "%m/%d/%Y %H:%M",    "%m/%d/%Y %I:%M %p",
+               "%d/%m/%y %H:%M:%S", "%d/%m/%y %I:%M:%S %p", "%d/%m/%Y %H:%M:%S", "%d/%m/%Y %I:%M:%S %p",
+               "%d/%m/%y %H:%M",    "%d/%m/%y %I:%M %p",    "%d/%m/%Y %H:%M",    "%d/%m/%Y %I:%M %p",
+               "%y/%m/%d %H:%M:%S", "%y/%m/%d %I:%M:%S %p", "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %I:%M:%S %p",
+               "%y/%m/%d %H:%M",    "%y/%m/%d %I:%M %p",    "%Y/%m/%d %H:%M",    "%Y/%m/%d %I:%M %p",
+               "%m-%d-%y %H:%M:%S", "%m-%d-%y %I:%M:%S %p", "%m-%d-%Y %H:%M:%S", "%m-%d-%Y %I:%M:%S %p",
+               "%m-%d-%y %H:%M",    "%m-%d-%y %I:%M %p",    "%m-%d-%Y %H:%M",    "%m-%d-%Y %I:%M %p",
+               "%d-%m-%y %H:%M:%S", "%d-%m-%y %I:%M:%S %p", "%d-%m-%Y %H:%M:%S", "%d-%m-%Y %I:%M:%S %p",
+               "%d-%m-%y %H:%M",    "%d-%m-%y %I:%M %p",    "%d-%m-%Y %H:%M",    "%d-%m-%Y %I:%M %p",
+               "%y-%m-%d %H:%M:%S", "%y-%m-%d %I:%M:%S %p", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %I:%M:%S %p",
+               "%y-%m-%d %H:%M",    "%y-%m-%d %I:%M %p",    "%Y-%m-%d %H:%M",    "%Y-%m-%d %I:%M %p",
+               "%m:%d:%y %H:%M:%S", "%m:%d:%y %I:%M:%S %p", "%m:%d:%Y %H:%M:%S", "%m:%d:%Y %I:%M:%S %p",
+               "%m:%d:%y %H:%M",    "%m:%d:%y %I:%M %p",    "%m:%d:%Y %H:%M",    "%m:%d:%Y %I:%M %p",
+               "%d:%m:%y %H:%M:%S", "%d:%m:%y %I:%M:%S %p", "%d:%m:%Y %H:%M:%S", "%d:%m:%Y %I:%M:%S %p",
+               "%d:%m:%y %H:%M",    "%d:%m:%y %I:%M %p",    "%d:%m:%Y %H:%M",    "%d:%m:%Y %I:%M %p",
+               "%y:%m:%d %H:%M:%S", "%y:%m:%d %I:%M:%S %p", "%Y:%m:%d %H:%M:%S", "%Y:%m:%d %I:%M:%S %p",
+               "%y:%m:%d %H:%M",    "%y:%m:%d %I:%M %p",    "%Y:%m:%d %H:%M",    "%Y:%m:%d %I:%M %p",
+               None)
 
     times = df[df.columns[timesIndex]]
+    #print(pd.__version__)
+    #print("Type:", type(times[0]), "Value:", times[0])
     for f in formats:
         try:
             # Convert strings to datetime objects
@@ -180,12 +190,12 @@ def convertDates(df : pd.DataFrame, timesIndex = 0):
                 #print("Order is not the same")
                 raise ValueError()
             # Else, the conversion is a success
-            #print("Found format ", f)
+            print("Found date format ", f) # TODO : Why always None ?
             df[df.columns[0]] = new_times
             return
 
-        except ValueError:
-            #print("Format ", f, " not valid")
+        except ValueError as e:
+            #print("Format ", f, " not valid:", str(e))
             continue
 
     # None of the known format are valid
