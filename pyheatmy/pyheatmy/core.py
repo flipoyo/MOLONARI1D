@@ -37,10 +37,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         inter_mode: str = "linear",
         eps=10**-9,
-        rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default
+        rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default,
+        verbose=False
     ):
         
-        self._dir_print = create_dir(rac,verbose=True) #once validated verbose=False
+        self._dir_print = create_dir(rac,verbose=verbose) #once validated verbose=False
         
         self._classType = ClassType.COLUMN
 
@@ -97,6 +98,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self.inter_mode = inter_mode
         self.eps = eps
         self.tests()  # teste que les conditions nécessaires à l'analyse sont remplies
+        if verbose:
+            print("Column created with success")
+            print(f"Number of time steps: {self.get_timelength()}")
+            print(f"Time step in days: {self.get_dt_in_days()}")
+            print(f"T_riv: {self._T_riv}")
+            print(f"T_aq: {self._T_aq}")
+            print(f"dH : {self._dH}")
+            print(f"list of dates   : {self._times}")
 
 
 
@@ -120,11 +129,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             raise NameError("Donnée(s) manquante(s) pour la pression")
 
     @classmethod
-    def from_dict(cls, col_dict):
+    def from_dict(cls, col_dict,verbose=False):
         """
         Class method to create an instance of Column from a dictionnary.
         """
-        return cls(**col_dict)
+        return cls(**col_dict,verbose=verbose)
 
     def _check_layers(self, layersList):
         """
@@ -498,8 +507,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         else:
             # Checking the layers are well defined
             self._check_layers(layersList)
-            self._compute_solve_transi_multiple_layers(
-                    self._layersList, nb_cells, verbose)
+            self._compute_solve_transi_multiple_layers(self._layersList, nb_cells, verbose)
 
     @ compute_solve_transi.needed
     def get_id_sensors(self):

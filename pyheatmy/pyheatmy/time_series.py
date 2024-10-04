@@ -3,7 +3,7 @@ from pyheatmy.params import Param, ParamsPriors, Prior, PARAM_LIST
 from pyheatmy.checker import checker
 from pyheatmy.core import Column
 from pyheatmy.config import *
-from pyheatmy.utils import create_periodic_signal
+from pyheatmy.utils import create_periodic_signal, convert_to_timestamp, convert_list_to_timestamp
 
 
 from scipy.interpolate import interp1d  # lagrange
@@ -11,6 +11,7 @@ from scipy.interpolate import interp1d  # lagrange
 import numpy as np
 from numpy.random import normal
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 class Time_series:  # on simule un tableau de mesures
@@ -97,18 +98,34 @@ class Time_series:  # on simule un tableau de mesures
             self._dates = np.array(times_vir1)
             self._time_array = np.array(times_list)
 
+        # self._dates = pd.to_datetime(self._dates)
+        # print(f"initial dates : \n\t{self._dates}\n and time array : \n\t{self._time_array}")
+        # data = self._dates
+        # transformed_data = [(pd.Timestamp(dt), values) for dt, values in data]
+        # self._dates = transformed_data
+        # print(f"after conversion to timestamps dates : \n\t{self._dates}\n and time array : \n\t{self._time_array}")
+
     def _generate_dH_series(self,verbose=True):
-        self._dH = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH,"Hydraulic head differential",verbose=verbose)
+        # if self._dates.any() == None:
+        #     self._generate_dates_series()
+        ts = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH,"Hydraulic head differential",verbose=verbose)
+        # self._dH = convert_list_to_timestamp(ts,self)
+        self._dH = ts
 
     def _generate_Temp_riv_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature rivière
-        if self._dates.any() == None:
-            self._generate_dates_series()
-        self._T_riv = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_riv,"T_riv",verbose=verbose)
+        # if self._dates.any() == None:
+        #     self._generate_dates_series()
+        ts = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_riv,"T_riv",verbose=verbose)
+        # self._T_riv = convert_list_to_timestamp(ts,self)
+        self._T_riv = ts
 
     def _generate_Temp_aq_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature aquifère
-        if self._dates.any() == None:
-            self._generate_dates_series()
-        self._T_aq = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq,"T_aq",verbose=verbose)
+        # if self._dates.any() == None:
+        #     self._generate_dates_series()
+        ts = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq,"T_aq",verbose=verbose)
+        # self._T_aq = [(pd.Timestamp(dt), values) for dt, values in ts]
+        # self._T_aq = convert_list_to_timestamp(ts,self)
+        self._T_aq = ts
 
     def _generate_Shaft_Temp_series(self,verbose=True):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
         # initialisation
@@ -135,7 +152,8 @@ class Time_series:  # on simule un tableau de mesures
         if verbose:
             print(f"{n_sens_vir} sensors in the shaft")
             for i in range(n_sens_vir):
-                print(f"Temperature of Sensor {i} : {self._T_Shaft[:,i]}")
+                 print(f"Temperature of Sensor {i} : {self._T_Shaft[:,i]}")
+        # self._T_Shaft_measures = list(zip(convert_to_timestamp(self._dates,self), self._T_Shaft))
         self._T_Shaft_measures = list(zip(self._dates, self._T_Shaft))
 
 
@@ -155,18 +173,17 @@ class Time_series:  # on simule un tableau de mesures
         for i in range(n_t):
             self._T_Shaft_perturb[i] = self._perturbate(self._T_Shaft[i], self._sigma_T)
 
-            self._molonariT_data = list(
-            zip(self._dates, self._T_Shaft_perturb)
-        )  #emulates what comes from a shaft of temperature sensors
+            # self._molonariT_data = list(zip(convert_to_timestamp(self._dates,self), self._T_Shaft_perturb)) 
+            self._molonariT_data = list(zip(self._dates, self._T_Shaft_perturb)) 
+             #emulates what comes from a shaft of temperature sensors
 
     @checker
     def _generate_perturb_T_riv_dH_series(self):
         self._T_riv_perturb = self._perturbate(self._T_riv,self._sigma_T)
         self._dH_perturb = self._perturbate(self._dH ,self._sigma_P)
-        self._molonariP_data = list(
-             zip(self._dates, list(zip(self._dH_perturb, self._T_riv_perturb)))
-        ) #emulates what comes from a pressure sensor
+        self._molonariP_data = list(zip(self._dates, list(zip(self._dH_perturb, self._T_riv_perturb)))) #emulates what comes from a pressure sensor
 
+        # self._molonariP_data = list(zip(convert_to_timestamp(self._dates,self), list(zip(self._dH_perturb, self._T_riv_perturb)))) #emulates what comes from a pressure sensor
     def _generate_all_series(self,verbose=True):
         if self._dates.any() == None:
             self._generate_dates_series()

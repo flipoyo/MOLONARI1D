@@ -28,6 +28,8 @@ from numba import njit
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import os
+import pandas as pd
+
 
 from pyheatmy.layers import Layer
 from pyheatmy.solver import solver, tri_product
@@ -789,3 +791,19 @@ def close_printable_file(fp, verbose=True):
     else:
         if verbose:
             print(f"File {fp.name} is already closed.")
+
+# # Conversion function
+def convert_to_timestamp(ts,tbt):
+    if isinstance(ts[0], tuple):
+        cts = [(pd.Timestamp(dt)) for dt in ts]
+    else:
+        cts = [(pd.Timestamp(ts[i])) for i in range(len(ts))]
+    return cts
+
+# # Conversion function
+def convert_list_to_timestamp(ts,tbt):
+    if isinstance(ts[0], tuple):
+        cts = [(pd.Timestamp(dt), values) for dt, values in ts]
+    else:
+        cts = [(pd.Timestamp(tbt._dates[i]), value) for i, value in enumerate(ts)]
+    return cts
