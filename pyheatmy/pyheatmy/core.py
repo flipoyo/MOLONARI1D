@@ -1877,7 +1877,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         for i in range(len(self._times)):
             # Format the datetime to the desired format
-            formatted_time = self._times[i].strftime('%d/%m/%y %I:%M:%S %p')
+            formatted_time = self._times[i].strftime('%m/%d/%y %I:%M:%S %p')
 
             fpressure.write(f"{formatted_time},{self._dH[i]:.4f},{temperatures[0][i]-zeroT:.4f}\n")
             # Initialize a list to store the temperature values
