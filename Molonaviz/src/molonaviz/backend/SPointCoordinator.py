@@ -428,7 +428,7 @@ class SPointCoordinator:
         """
         query = QSqlQuery(self.con)
         query.prepare(f"""
-            SELECT BestParameters.Permeability, BestParameters.ThermConduct, BestParameters.Porosity, BestParameters.Capacity FROM BestParameters
+            SELECT BestParameters.Permeability, BestParameters.Porosity, BestParameters.ThermConduct, BestParameters.Capacity FROM BestParameters
             JOIN Layer ON BestParameters.Layer = Layer.ID
             JOIN Point
             ON BestParameters.PointKey = Point.ID
@@ -443,7 +443,7 @@ class SPointCoordinator:
         """
         query = QSqlQuery(self.con)
         query.prepare(f"""
-            SELECT Parameters.Permeability, Parameters.ThermConduct, Parameters.Porosity, Parameters.Capacity FROM Parameters
+            SELECT Parameters.Permeability, Parameters.Porosity, Parameters.ThermConduct, Parameters.Capacity FROM Parameters
             JOIN Layer ON Parameters.Layer = Layer.ID
             JOIN Point
             ON Parameters.PointKey = Point.ID
@@ -458,7 +458,7 @@ class SPointCoordinator:
         """
         query = QSqlQuery(self.con)
         query.prepare(f"""
-            SELECT Permeability, ThermConduct, Porosity, HeatCapacity FROM ParametersDistribution
+            SELECT Permeability, Porosity, ThermConduct, HeatCapacity FROM ParametersDistribution
             JOIN Point
             ON ParametersDistribution.PointKey = Point.ID
             JOIN Layer

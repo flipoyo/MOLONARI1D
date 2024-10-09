@@ -25,20 +25,18 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.layers = spointcoordinator.layers_depths()
         self.params =[] 
         for layer in self.layers:
-            self.params = spointcoordinator.get_params_model(layer)
+            self.params.append(spointcoordinator.get_params_model(layer))
         self.input = []
         num_rows = len(self.layers)
-        num_cols = 5
+        num_cols = 5 # Layer depth + 4 parameters
         self.compute = compute
 
-        for row in range(num_rows -1):
-            self.input.append([])
-            for col in range(num_cols):
-                valeur = self.params.index(row, col).data()
-                self.input[row].append(valeur)
-                
-
-        
+        if self.params:
+            for row in range(num_rows):
+                self.input.append([])
+                for col in range(num_cols):
+                    valeur = self.params[row].index(0, col).data()
+                    self.input[row].append(valeur)
 
         #Prevent the user from writing something in the spin box.
         self.spinBoxNLayersDirect.lineEdit().setReadOnly(True)

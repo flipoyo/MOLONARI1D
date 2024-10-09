@@ -214,8 +214,8 @@ class Compute(QtCore.QObject):
         insertlayer.bindValue(":PointKey", self.pointID)
 
         insertparams = QSqlQuery(self.con)
-        insertparams.prepare(f"""INSERT INTO Parameters (Permeability, ThermConduct, Porosity, Capacity, Layer, PointKey)
-                           VALUES (:Permeability, :ThermConduct, :Porosity, :Capacity, :Layer, :PointKey)""")
+        insertparams.prepare(f"""INSERT INTO Parameters (Permeability, Porosity, ThermConduct, Capacity, Layer, PointKey)
+                           VALUES (:Permeability, :Porosity, :ThermConduct, :Capacity, :Layer, :PointKey)""")
         insertparams.bindValue(":PointKey", self.pointID)
 
         self.con.transaction()
@@ -225,8 +225,8 @@ class Compute(QtCore.QObject):
             insertlayer.exec()
 
             insertparams.bindValue(":Permeability", perm)
-            insertparams.bindValue(":ThermConduct", lamb)
             insertparams.bindValue(":Porosity", n)
+            insertparams.bindValue(":ThermConduct", lamb)
             insertparams.bindValue(":Capacity", rho)
             insertparams.bindValue(":Layer", insertlayer.lastInsertId())
             insertparams.exec()
@@ -557,14 +557,14 @@ class Compute(QtCore.QObject):
         insertlayer.bindValue(":PointKey", self.pointID)
         insertparams = QSqlQuery(self.con)
         insertparams.prepare(
-            f"""INSERT INTO BestParameters (Permeability, ThermConduct, Porosity, Capacity, Layer, PointKey)
-                           VALUES (:Permeability, :ThermConduct, :Porosity, :Capacity, :Layer, :PointKey)"""
+            f"""INSERT INTO BestParameters (Permeability, Porosity, ThermConduct, Capacity, Layer, PointKey)
+                           VALUES (:Permeability, :Porosity, :ThermConduct, :Capacity, :Layer, :PointKey)"""
         )
         insertparams.bindValue(":PointKey", self.pointID)
         insertdistribution = QSqlQuery(self.con)
         insertdistribution.prepare(
-            """INSERT INTO ParametersDistribution (Permeability, ThermConduct, Porosity, HeatCapacity, Layer, PointKey)
-                VALUES (:Permeability, :ThermConduct,  :Porosity, :HeatCapacity, :Layer, :PointKey)"""
+            """INSERT INTO ParametersDistribution (Permeability, Porosity, ThermConduct, HeatCapacity, Layer, PointKey)
+                VALUES (:Permeability, :Porosity, :ThermConduct, :HeatCapacity, :Layer, :PointKey)"""
         )
         insertdistribution.bindValue(":PointKey", self.pointID)
 
@@ -583,8 +583,8 @@ class Compute(QtCore.QObject):
             layerID = insertlayer.lastInsertId()
 
             insertparams.bindValue(":Permeability", perm)
-            insertparams.bindValue(":ThermConduct", lambda_s)
             insertparams.bindValue(":Porosity", poro)
+            insertparams.bindValue(":ThermConduct", lambda_s)
             insertparams.bindValue(":Capacity", rhos_cs)
             insertparams.bindValue(":Layer", layerID)
             insertparams.exec()
@@ -593,8 +593,8 @@ class Compute(QtCore.QObject):
             for params in all_params_layer:
                 # Convert everything to float as the parameters are of type np.float
                 insertdistribution.bindValue(":Permeability", float(params[0]))
-                insertdistribution.bindValue(":ThermConduct", float(params[2]))
                 insertdistribution.bindValue(":Porosity", float(params[1]))
+                insertdistribution.bindValue(":ThermConduct", float(params[2]))
                 insertdistribution.bindValue(":HeatCapacity", float(params[3]))
                 insertdistribution.bindValue(":Layer", layerID)
                 insertdistribution.exec()

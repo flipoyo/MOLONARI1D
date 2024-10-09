@@ -7,7 +7,7 @@ from ..interactions.InnerMessages import ComputationsState
 from ..backend.SPointCoordinator import SPointCoordinator
 from ..backend.Compute import Compute
 
-from .GraphViews import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, ConductivityView, PorosityView, CapacityView
+from .GraphViews import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, PorosityView, ConductivityView, CapacityView
 from .dialogExportCleanedMeasures import DialogExportCleanedMeasures
 from .dialogConfirm import DialogConfirm
 from .dialogsCleanup import DialogCleanup
@@ -65,8 +65,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.depth_view = TempDepthView(self.coordinator.get_temp_model(), self.coordinator.get_temp_map_model(), self.coordinator)
         paramsDistrModel = self.coordinator.get_params_distr_model()
         self.logk_view = Log10KView(paramsDistrModel)
-        self.conductivity_view = ConductivityView(paramsDistrModel)
         self.porosity_view = PorosityView(paramsDistrModel)
+        self.conductivity_view = ConductivityView(paramsDistrModel)
         self.capacity_view = CapacityView(paramsDistrModel)
 
         self.layoutsRules = self.initialiseLayoutsRules()
@@ -120,8 +120,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                             self.botLeftVLayout : (self.umbrella_view, default_message),
                             self.botRightVLayout : (self.tempmap_view, default_message),
                             self.log10KVBox : (self.logk_view, default_message),
-                            self.conductivityVBox : (self.conductivity_view, default_message),
                             self.porosityVBox : (self.porosity_view, default_message),
+                            self.conductivityVBox : (self.conductivity_view, default_message),
                             self.capacityVBox : (self.capacity_view, default_message)}
         return layoutsRules
 
@@ -177,11 +177,11 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.logk_view.updateBins(bins)
         self.logk_view.onUpdate()
 
-        self.conductivity_view.updateBins(bins)
-        self.conductivity_view.onUpdate()
-
         self.porosity_view.updateBins(bins)
         self.porosity_view.onUpdate()
+
+        self.conductivity_view.updateBins(bins)
+        self.conductivity_view.onUpdate()
 
         self.capacity_view.updateBins(bins)
         self.capacity_view.onUpdate()
@@ -355,7 +355,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
         This function takes into account checkBoxRawData's status and the computation type given by the backend
         """
-        MCMC_layouts = [self.log10KVBox, self.conductivityVBox, self.porosityVBox, self.capacityVBox]
+        MCMC_layouts = [self.log10KVBox, self.porosityVBox, self.conductivityVBox, self.capacityVBox]
         direct_model_layouts = [self.waterFluxVBox, self.advectiveFluxVBox, self.totalFluxVBox, self.conductiveFluxVBox, self.topRightVLayout, self.botLeftVLayout, self.botRightVLayout]
         cleaned_measures_layouts = [self.pressVBox, self.tempVBox]
         all_layouts =  cleaned_measures_layouts + direct_model_layouts + MCMC_layouts
