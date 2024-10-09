@@ -166,8 +166,6 @@ class Compute(QtCore.QObject):
 
         self.thread.terminate()
         self.thread = QtCore.QThread()
-        self.save_layers_and_params(params)
-        self.update_nb_cells(nb_cells)
 
         self.set_column()  # Updates self.col
         self.direct_runner = ColumnDirectModelRunner(self.col, params, nb_cells)
@@ -203,10 +201,12 @@ class Compute(QtCore.QObject):
         )
         updatePoint.exec()
 
-    def save_layers_and_params(self, data: list[list]):
+    def save_layers_and_params(self, data: list[list], nb_cells : int):
         """
         Save the layers and the last parameters in the database.
         """
+        self.update_nb_cells(nb_cells)
+
         insertlayer = QSqlQuery(self.con)
         insertlayer.prepare(
             "INSERT INTO Layer (Name, Depth, PointKey) VALUES (:Name, :Depth, :PointKey)"
@@ -230,8 +230,52 @@ class Compute(QtCore.QObject):
             insertparams.bindValue(":Capacity", rho)
             insertparams.bindValue(":Layer", insertlayer.lastInsertId())
             insertparams.exec()
+
         self.con.commit()
 
+    def save_params_MCMC(self, data : list[list], nb_cells : int):
+        """
+        Save the parameters distribution in the database.
+        """
+        self.update_nb_cells(nb_cells)
+        insertparams = QSqlQuery(self.con)
+        insertparams.prepare(f"""INSERT INTO InputMCMC (Niter , Delta , Nchains ,NCR, C , Cstar , Kmin , Kmax, Ksigma , PorosityMin , PorosityMax ,
+                              PorositySigma , TcondMin , TcondMax , TcondSigma , TcapMin , TcapMax , TcapSigma ,  Remanence , tresh , nb_sous_ech_iter ,
+                              nb_sous_ech_space , nb_sous_ech_time , Quantiles, PointKey)
+                           VALUES (:Niter , :Delta , :Nchains ,:NCR, :C , :Cstar , :Kmin , :Kmax, :Ksigma , 
+                             :PorosityMin , :PorosityMax , :PorositySigma , :TcondMin , :TcondMax ,
+                              :TcondSigma , :TcapMin , :TcapMax , :TcapSigma ,  :Remanence , :tresh , :nb_sous_ech_iter ,
+                              :nb_sous_ech_space , :nb_sous_ech_time , :Quantiles , :PointKey)""")
+        insertparams.bindValue(":PointKey", self.pointID)
+
+        self.con.transaction()
+        insertparams.bindValue(":Niter", data[0])
+        insertparams.bindValue(":Delta", data[1])
+        insertparams.bindValue(":Nchains", data[2])
+        insertparams.bindValue(":NCR", data[3])
+        insertparams.bindValue(":C", data[4])
+        insertparams.bindValue(":Cstar", data[5])
+        insertparams.bindValue(":Kmin", data[6])
+        insertparams.bindValue(":Kmax", data[7])
+        insertparams.bindValue(":Ksigma", data[8])
+        insertparams.bindValue(":PorosityMin", data[9])
+        insertparams.bindValue(":PorosityMax", data[10])
+        insertparams.bindValue(":PorositySigma", data[11])
+        insertparams.bindValue(":TcondMin", data[12])
+        insertparams.bindValue(":TcondMax", data[13])
+        insertparams.bindValue(":TcondSigma", data[14])
+        insertparams.bindValue(":TcapMin", data[15])
+        insertparams.bindValue(":TcapMax", data[16])
+        insertparams.bindValue(":TcapSigma", data[17])
+        insertparams.bindValue(":Remanence", data[18])
+        insertparams.bindValue(":tresh", data[19])
+        insertparams.bindValue(":nb_sous_ech_iter", data[20])
+        insertparams.bindValue(":nb_sous_ech_space", data[21])
+        insertparams.bindValue(":nb_sous_ech_time", data[22])
+        insertparams.bindValue(":Quantiles", data[23])
+        insertparams.exec()
+        self.con.commit()
+        
     def save_direct_model_results(self, save_dates=True):
         """
         Query the database and save the direct model results.
@@ -380,7 +424,6 @@ class Compute(QtCore.QObject):
 
         self.thread.terminate()
         self.thread = QtCore.QThread()
-        self.update_nb_cells(nb_cells)
 
         self.set_column()  # Updates self.col
         self.mcmc_runner = ColumnMCMCRunner(

@@ -431,12 +431,15 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             self.coordinator.delete_computations()
+            
             if dlg.computationIsMCMC():
                 #MCMC
+                dlg.save_input_MCMC()
                 nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time = dlg.getInputMCMC()
                 self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, thresh)
             else:
                 #Direct Model
+                dlg.SaveInput()
                 params, nb_cells = dlg.getInputDirectModel()
                 self.computeEngine.compute_direct_model(params, nb_cells)
 

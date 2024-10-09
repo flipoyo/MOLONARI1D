@@ -103,6 +103,15 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         '''self.study_lab_manager = StudyAndLabManager(self.con)
         self.currentStudy = None
         self.currentLab = None'''
+        
+        # TODO to be deleted!
+        self.openDatabase()
+        self.openStudy("study2024a")
+        widgetviewer = self.currentStudy.openSPoint("Point035")
+        subwindow = SubWindow(widgetviewer)
+        self.mdiArea.addSubWindow(subwindow)
+        subwindow.show()
+        self.switchToSubWindowView()
 
                
     def activerDesactiverModeSombre(self, state):

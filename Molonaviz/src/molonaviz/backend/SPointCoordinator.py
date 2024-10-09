@@ -102,6 +102,21 @@ class SPointCoordinator:
         self.paramsModel.setQuery(select_params)
         return self.paramsModel
 
+    def get_params_MCMC_model(self):
+        """
+        Return a list of parameters for MCMC.
+        """
+        select_params = self.build_params_MCMC_query()
+        select_params.exec()
+        
+        params = []
+
+        if select_params.next():  # Check if there is at least one row
+            for column_index in range(24):
+                params.append(select_params.value(column_index))
+
+        return params
+
     def get_table_model(self, raw_measures : bool):
         """
         Return a model with all direct information from the database.
@@ -317,7 +332,7 @@ class SPointCoordinator:
         Delete every computations made for this point. This function builds and execute the DELETE queries. Be careful, calling it will clear the database for this point!
         """
         deleteTableQuery = QSqlQuery(self.con)
-        #Careful: should have joins as WaterFlow.PointKey !=Samplingpoint.name
+        #Careful: should have joins as WaterFlow.PointKey != Samplingpoint.name
         deleteTableQuery.exec(f'DELETE FROM WaterFlow WHERE WaterFlow.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID ={self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM RMSE WHERE PointKey=(SELECT Point.ID FROM Point WHERE Point.ID ={self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM TemperatureAndHeatFlows WHERE PointKey=(SELECT Point.ID FROM Point WHERE Point.ID  = {self.pointID})')
@@ -326,6 +341,8 @@ class SPointCoordinator:
         deleteTableQuery.exec(f'DELETE FROM Quantiles WHERE Quantiles.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM Depth WHERE Depth.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM Layer WHERE Layer.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
+        deleteTableQuery.exec(f'DELETE FROM Parameters WHERE Parameters.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
+        deleteTableQuery.exec(f'DELETE FROM InputMCMC WHERE Parameters.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM Quantile WHERE Quantile.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f"""UPDATE Point
                         SET IncertK = NULL,
@@ -428,7 +445,7 @@ class SPointCoordinator:
         """
         query = QSqlQuery(self.con)
         query.prepare(f"""
-            SELECT BestParameters.Permeability, BestParameters.ThermConduct, BestParameters.Porosity, BestParameters.Capacity FROM BestParameters
+            SELECT BestParameters.Permeability, BestParameters.Porosity, BestParameters.ThermConduct, BestParameters.Capacity FROM BestParameters
             JOIN Layer ON BestParameters.Layer = Layer.ID
             JOIN Point
             ON BestParameters.PointKey = Point.ID
@@ -443,12 +460,24 @@ class SPointCoordinator:
         """
         query = QSqlQuery(self.con)
         query.prepare(f"""
-            SELECT Parameters.Permeability, Parameters.ThermConduct, Parameters.Porosity, Parameters.Capacity FROM Parameters
+            SELECT Parameters.Permeability, Parameters.Porosity, Parameters.ThermConduct, Parameters.Capacity FROM Parameters
             JOIN Layer ON Parameters.Layer = Layer.ID
             JOIN Point
             ON Parameters.PointKey = Point.ID
             WHERE Point.ID = {self.pointID}
             AND Layer.Depth = {depth}
+        """)
+        return query
+
+    def build_params_MCMC_query(self):
+        """
+        Build and return the parameters for MCMC.
+        """
+        query = QSqlQuery(self.con)
+        query.prepare("""
+            SELECT Niter, Delta, Nchains,NCR, C, Cstar, Kmin, Kmax, Ksigma,PorosityMin, PorosityMax, PorositySigma,
+       TcondMin, TcondMax, TcondSigma, TcapMin, TcapMax, TcapSigma, Remanence , tresh , nb_sous_ech_iter ,
+                              nb_sous_ech_space , nb_sous_ech_time ,  Quantiles FROM InputMCMC
         """)
         return query
 
