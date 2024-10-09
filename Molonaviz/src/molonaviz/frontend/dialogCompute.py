@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic
-from math import log10
+import numpy as np
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtSql import QSqlQuery
 
@@ -20,6 +20,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
 
+        self.defaultParamValues = [12.0, 0.15, 3.4, 5000000.0]
         self.interaction_occurred = False
         self.maxdepth = maxdepth
         self.layers = spointcoordinator.layers_depths()
@@ -136,13 +137,13 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         """
         Set the default values in the tables for both the direct model and the MCMC
         """
-        #Direct model
+        #Direct model (1 layer)
         self.spinBoxNLayersDirect.setValue(1)
         self.tableWidget.setRowCount(1)
 
-        self.input.append([12, 0.15, 3.4, 5000000])
+        self.input = [self.defaultParamValues]
 
-        self.tableWidget.setVerticalHeaderItem(0, QTableWidgetItem(f"Layer {1}"))
+        self.tableWidget.setVerticalHeaderItem(0, QTableWidgetItem(f"Layer 1"))
         layerBottom = self.maxdepth
         self.tableWidget.setItem(0, 0, QTableWidgetItem(str(layerBottom)))
         self.tableWidget.setItem(0, 1, QTableWidgetItem(str(self.input[0][0])))
@@ -193,19 +194,17 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         if len(self.input) < nb_layers:
     
             for _ in range(nb_layers - len(self.input)):
-                self.input.append([12, 0.15, 3.4, 5000000]) #TODO : factorize default values
+                self.input.append(self.defaultParamValues)
 
         elif len(self.input) > nb_layers:
     
             for _ in range(len(self.input) - nb_layers):
                 self.input.pop()
 
-
+        layerBottoms = np.linspace(0, self.maxdepth, nb_layers+1)[1:nb_layers+1]
         for i in range(nb_layers):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}")) 
-            layerBottom = int((self.maxdepth/nb_layers))
-
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom*(i+1))))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(round(layerBottoms[i],3)))) # Round to 1 mm
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))

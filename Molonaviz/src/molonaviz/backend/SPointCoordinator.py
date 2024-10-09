@@ -322,6 +322,7 @@ class SPointCoordinator:
         deleteTableQuery.exec(f'DELETE FROM RMSE WHERE PointKey=(SELECT Point.ID FROM Point WHERE Point.ID ={self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM TemperatureAndHeatFlows WHERE PointKey=(SELECT Point.ID FROM Point WHERE Point.ID  = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM ParametersDistribution WHERE ParametersDistribution.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
+        deleteTableQuery.exec(f'DELETE FROM Parameters WHERE Parameters.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM BestParameters WHERE BestParameters.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM Quantiles WHERE Quantiles.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM Depth WHERE Depth.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
