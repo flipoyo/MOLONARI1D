@@ -71,7 +71,7 @@ For more informations on the software, please check the folder.
 
 You are now set to use the ecosystem. To launch it, you can simply run ```molonaviz``` in a terminal.
 
-## Virtual environments
+## Virtual environments for linux
 
 ### 1. **Using `pyenv` to Manage Multiple Versions of Python**
 
@@ -134,6 +134,45 @@ source myenv/bin/activate
 ```
 
 Then, you can install Python packages without affecting other projects.
+
+
+## Virtual environments for windows
+
+Use anaconda, download it install it.
+
+open the anaconda prompt terminal in windows. Install git for anaconda:
+
+Install gitlab for conda:
+
+```bash
+> conda install -c anaconda git
+```
+
+And create a virtual environment
+
+```bash
+> conda create --name py.3.10.12 -c anaconda python=3.10.12
+```
+
+Activate the virtual environment
+
+```bash
+> conda activate py.3.10.12
+```
+
+Run the MOLONARI installation process from there. You can launch molonaviz from there.
+
+For developpers, run code . from there to be sure to be in the proper environment
+
+Deactivate the virtual environment 
+
+
+```bash
+> conda deactivate
+```
+
+
+
 
  
 
