@@ -73,9 +73,7 @@ class DialogCleanup(QtWidgets.QDialog, From_DialogCleanup):
         super(DialogCleanup, self).__init__()
         QtWidgets.QDialog.__init__(self)
 
-        self.statusNightmode = statusNightmode
-        if self.statusNightmode:
-            self.activerDesactiverModeSombre(self.statusNightmode)
+        self.activerDesactiverModeSombre(statusNightmode)
 
         self.setupUi(self)
         self.coordinator = coordinator
@@ -487,8 +485,6 @@ class DialogCleanup(QtWidgets.QDialog, From_DialogCleanup):
             self.setStyleSheet("background-color: rgb(50, 50, 50); color: rgb(255, 255, 255);")
         else:
             self.setStyleSheet("")  # Utilisez la feuille de style par défaut de l'application
-            cleanedData = pd.DataFrame()  # Empty Dataframe
-        return cleanedData
 
 def saveCleanedMeasures(self):
     cleanedDataSQL = self.coordinator.build_cleaned_measures(self, True)

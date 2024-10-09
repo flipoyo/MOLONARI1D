@@ -427,7 +427,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         Launch the computation of the direct model or the MCMC model, depending on the user's choice.
         '''
 
-        dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine)
+        dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine, self.statusNightmode)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             self.coordinator.delete_computations()
@@ -437,6 +437,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, thresh)
             else:
                 #Direct Model
+                dlg.SaveInput()
                 params, nb_cells = dlg.getInputDirectModel()
                 self.computeEngine.compute_direct_model(params, nb_cells)
 

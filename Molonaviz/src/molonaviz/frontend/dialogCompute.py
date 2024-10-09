@@ -20,8 +20,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
 
+        self.activerDesactiverModeSombre(statusNightMode)
+
         self.defaultParamValues = [12.0, 0.15, 3.4, 5000000.0]
-        self.interaction_occurred = False
         self.maxdepth = maxdepth
         self.layers = spointcoordinator.layers_depths()
         self.params = [] 
@@ -47,7 +48,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.spinBoxNLayersDirect.valueChanged.connect(self.updateNBLayers)
         self.pushButtonRestoreDefault.clicked.connect(self.setDefaultValues)
         self.pushButtonRun.clicked.connect(self.run)
-        self.closeEvent = self.handleCloseEvent
 
         self.groupBoxMCMC.setChecked(False)
 
@@ -113,25 +113,25 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         """
         Save the layers and the last parameters in the database.
         """
-        if self.interaction_occurred:
-            nb_layers = self.spinBoxNLayersDirect.value()
-            depths = []
-            permeability = []
-            porosity = [] 
-            thermconduct = []
-            thermcap = []
+        nb_cells = self.spinBoxNCellsDirect.value()
+        nb_layers = self.spinBoxNLayersDirect.value()
+        depths = []
+        permeability = []
+        porosity = [] 
+        thermconduct = []
+        thermcap = []
 
-            for i in range (nb_layers):
-                depths.append(float(self.tableWidget.item(i, 0).text()))
-                permeability.append(float(self.tableWidget.item(i, 1).text()))
-                porosity.append(float(self.tableWidget.item(i, 2).text()))
-                thermconduct.append(float(self.tableWidget.item(i, 3).text()))
-                thermcap.append(float(self.tableWidget.item(i, 4).text()))
+        for i in range (nb_layers):
+            depths.append(float(self.tableWidget.item(i, 0).text()))
+            permeability.append(float(self.tableWidget.item(i, 1).text()))
+            porosity.append(float(self.tableWidget.item(i, 2).text()))
+            thermconduct.append(float(self.tableWidget.item(i, 3).text()))
+            thermcap.append(float(self.tableWidget.item(i, 4).text()))
 
-            layers = [f"Layer {i+1}" for i in range(nb_layers)]
-            params = list(zip(layers, depths, permeability, porosity, thermconduct, thermcap))
+        layers = [f"Layer {i+1}" for i in range(nb_layers)]
+        params = list(zip(layers, depths, permeability, porosity, thermconduct, thermcap))
 
-            self.compute.save_layers_and_params(params)
+        self.compute.save_layers_and_params(params, nb_cells)
         
     def setDefaultValues(self):
         """
@@ -210,20 +210,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
             self.tableWidget.setItem(i, 4, QTableWidgetItem(str(self.input[i][3])))
 
-        self.SaveInput()
-
     def run(self):
         """
         This function is called when the user presses the "Run" button: it corresponds to the "Accept" button.
         """
-        self.interaction_occurred = True
         super().accept()
-    
-    
-    def handleCloseEvent(self, event):
-        # La fenêtre est en train de se fermer, sauvegardez les données
-        self.SaveInput()
-        event.accept()
 
     def computationIsMCMC(self):
         """
@@ -313,7 +304,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
     def activerDesactiverModeSombre(self, state):
         if state:
-            self.setStyleSheet("background-color: rgb(50, 50, 50); color: rgb(255, 255, 255)")
+            self.setStyleSheet("background-color: rgb(50, 50, 50); color: rgb(255, 255, 255);")
             self.tableWidget.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: #232326; color: white; }")
             self.tableWidget.verticalHeader().setStyleSheet("QHeaderView::section { background-color: #232326; color: white; }")
         else:

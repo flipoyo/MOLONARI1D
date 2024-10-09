@@ -166,8 +166,6 @@ class Compute(QtCore.QObject):
 
         self.thread.terminate()
         self.thread = QtCore.QThread()
-        self.save_layers_and_params(params)
-        self.update_nb_cells(nb_cells)
 
         self.set_column()  # Updates self.col
         self.direct_runner = ColumnDirectModelRunner(self.col, params, nb_cells)
@@ -203,10 +201,12 @@ class Compute(QtCore.QObject):
         )
         updatePoint.exec()
 
-    def save_layers_and_params(self, data: list[list]):
+    def save_layers_and_params(self, data: list[list], nb_cells : int):
         """
         Save the layers and the last parameters in the database.
         """
+        self.update_nb_cells(nb_cells)
+
         insertlayer = QSqlQuery(self.con)
         insertlayer.prepare(
             "INSERT INTO Layer (Name, Depth, PointKey) VALUES (:Name, :Depth, :PointKey)"
@@ -380,7 +380,6 @@ class Compute(QtCore.QObject):
 
         self.thread.terminate()
         self.thread = QtCore.QThread()
-        self.update_nb_cells(nb_cells)
 
         self.set_column()  # Updates self.col
         self.mcmc_runner = ColumnMCMCRunner(
@@ -411,6 +410,7 @@ class Compute(QtCore.QObject):
         """
         self.save_MCMC_results()
 
+        # TODO What is this function and why there are so much calls to that function in comments
         self.col.compute_solve_transi.reset()
 
         self.thread.quit()
@@ -602,6 +602,7 @@ class Compute(QtCore.QObject):
         self.con.commit()
 
         # Recompute direct model with best parameters.
+        # TODO Not the good place to call direct model after MCMC
         self.col.compute_solve_transi(layers, self.mcmc_runner.nb_cells, verbose=False)
         self.save_direct_model_results(save_dates=False)
 
