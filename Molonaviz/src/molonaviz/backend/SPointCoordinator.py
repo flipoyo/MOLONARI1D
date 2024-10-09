@@ -84,7 +84,7 @@ class SPointCoordinator:
 
     def get_best_params_model(self, layer : float):
         """
-        Given a layer (identified by its depth), return the associated best parameters.
+        Given a layer (identified by its depth (in m)), return the associated best parameters.
         """
         select_params = self.build_best_params_query(layer)
         select_params.exec()
@@ -94,7 +94,7 @@ class SPointCoordinator:
     
     def get_params_model(self, layer : float):
         """
-        Given a layer (identified by its depth), return the associated best parameters.
+        Given a layer (identified by its depth (in m)), return the associated best parameters.
         """
         select_params = self.build_params_query(layer)
         select_params.exec()
@@ -717,7 +717,7 @@ class SPointCoordinator:
 
     def build_max_depth(self):
         """
-        Build and return a query giving the total depth for the sampling point with the ID samplingPointID.
+        Build and return a query giving the total depth (in m) for the sampling point with the ID samplingPointID.
         """
         shaft_depth = QSqlQuery(self.con)
         shaft_depth.prepare(f"""

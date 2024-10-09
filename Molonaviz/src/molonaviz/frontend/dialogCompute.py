@@ -21,9 +21,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.setupUi(self)
 
         self.interaction_occurred = False
-        self.maxdepth = maxdepth * 100
+        self.maxdepth = maxdepth
         self.layers = spointcoordinator.layers_depths()
-        self.params =[] 
+        self.params = [] 
         for layer in self.layers:
             self.params.append(spointcoordinator.get_params_model(layer))
         self.input = []
@@ -64,15 +64,13 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.spinBoxNLayersDirect.setValue(len(self.layers))
         self.tableWidget.setRowCount(len(self.input))
 
-        layerBottom = int((self.maxdepth))
-
         for i in range(len(self.input)):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}"))
             self.tableWidget.setItem(i, 0, QTableWidgetItem(str(self.layers[i])))
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
-            # self.tableWidget.setItem(i, 4, QTableWidgetItem('{:.2e}'.format(self.input[i][3])))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem(str(self.input[i][3])))
 
         #MCMC
         self.lineEditChains.setText("10")
@@ -117,20 +115,20 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         if self.interaction_occurred:
             nb_layers = self.spinBoxNLayersDirect.value()
             depths = []
-            log10permeability = []
+            permeability = []
             porosity = [] 
             thermconduct = []
             thermcap = []
 
             for i in range (nb_layers):
-                log10permeability.append(-log10(abs(float(self.tableWidget.item(i, 1).text())))) #Apply -log10 to the permeability values
+                depths.append(float(self.tableWidget.item(i, 0).text()))
+                permeability.append(float(self.tableWidget.item(i, 1).text()))
                 porosity.append(float(self.tableWidget.item(i, 2).text()))
                 thermconduct.append(float(self.tableWidget.item(i, 3).text()))
                 thermcap.append(float(self.tableWidget.item(i, 4).text()))
-                depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
 
             layers = [f"Layer {i+1}" for i in range(nb_layers)]
-            params = list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap))
+            params = list(zip(layers, depths, permeability, porosity, thermconduct, thermcap))
 
             self.compute.save_layers_and_params(params)
         
@@ -142,11 +140,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.spinBoxNLayersDirect.setValue(1)
         self.tableWidget.setRowCount(1)
 
-        self.input.append([1e-12, 0.15, 3.4, 5e6])
+        self.input.append([12, 0.15, 3.4, 5000000])
 
         self.tableWidget.setVerticalHeaderItem(0, QTableWidgetItem(f"Layer {1}"))
-        layerBottom = int((self.maxdepth))
-        self.tableWidget.setItem(0, 0, QTableWidgetItem(str(layerBottom))) #In cm
+        layerBottom = self.maxdepth
+        self.tableWidget.setItem(0, 0, QTableWidgetItem(str(layerBottom)))
         self.tableWidget.setItem(0, 1, QTableWidgetItem(str(self.input[0][0])))
         self.tableWidget.setItem(0, 2, QTableWidgetItem(str(self.input[0][1])))
         self.tableWidget.setItem(0, 3, QTableWidgetItem(str(self.input[0][2])))
@@ -195,7 +193,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         if len(self.input) < nb_layers:
     
             for _ in range(nb_layers - len(self.input)):
-                self.input.append([ 1e-12, 0.15, 3.4, 5e6])
+                self.input.append([12, 0.15, 3.4, 5000000]) #TODO : factorize default values
+
         elif len(self.input) > nb_layers:
     
             for _ in range(len(self.input) - nb_layers):
@@ -206,7 +205,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(f"Layer {i+1}")) 
             layerBottom = int((self.maxdepth/nb_layers))
 
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom*(i+1)))) #In cm
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(layerBottom*(i+1))))
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.input[i][0])))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(self.input[i][1])))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(self.input[i][2])))
@@ -240,19 +239,19 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         nb_cells = self.spinBoxNCellsDirect.value()
         nb_layers = self.spinBoxNLayersDirect.value()
         depths = []
-        log10permeability = []
+        permeability = []
         porosity = []
         thermconduct = []
         thermcap = []
 
         for i in range (nb_layers):
-            log10permeability.append(-log10(abs(float(self.tableWidget.item(i, 1).text())))) #Apply -log10 to the permeability values
+            depths.append(float(self.tableWidget.item(i, 0).text()))
+            permeability.append(float(self.tableWidget.item(i, 1).text()))
             porosity.append(float(self.tableWidget.item(i, 2).text()))
             thermconduct.append(float(self.tableWidget.item(i, 3).text()))
             thermcap.append(float(self.tableWidget.item(i, 4).text()))
-            depths.append(float(self.tableWidget.item(i, 0).text())/100) #Convert the depths back to m.
         layers = [f"Layer {i+1}" for i in range(nb_layers)]
-        return list(zip(layers, depths, log10permeability, porosity, thermconduct, thermcap)), nb_cells
+        return list(zip(layers, depths, permeability, porosity, thermconduct, thermcap)), nb_cells
 
     def getInputMCMC(self):
         """
@@ -273,7 +272,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         nb_sous_ech_space = int(self.lineEditSpaceStep.text())
         nb_sous_ech_time = int(self.lineEditTimeStep.text())
 
-        #The user's input is not a permeability but a -log10(permeability)
+        # The user's input is not a permeability but a -log10(permeability)
         moins10logKmin = float(self.lineEditKMin.text())
         moins10logKmax = float(self.lineEditKMax.text())
         moins10logKsigma = float(self.lineEditmoinslog10IntrinKSigma.text())
@@ -299,7 +298,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         nb_layers = self.spinBoxNLayersDirect.value()
         depths = []
         for i in range (nb_layers):
-            depths.append(float(self.tableWidget.item(i, 0).text())/100)
+            depths.append(float(self.tableWidget.item(i, 0).text()))
         layers = [f"Layer {i+1}" for i in range(nb_layers)]
 
         all_priors = []
