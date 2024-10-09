@@ -63,10 +63,10 @@ Due to the large history of commits, cloning the repositroy may need to be perfo
 ## Installation
 
 Here is a step-by-step guide to install the ecosystem: 
-- First install **PyHeatMy**, from the __ad hoc__ folder, by running ```pip install -e .```
+- First install **pyheatmy**, from the **pyheatmy** folder, by running ```pip install -e .```
 For more informations on the software, please check the folder.
 
-- Second install **Molonaviz**, from the __ad hoc__ folder, by running ```pip install -e .```
+- Second install **molonaviz**, from the **Molonaviz** folder, by running ```pip install -e .```
 For more informations on the software, please check the folder.
 
 You are now set to use the ecosystem. To launch it, you can simply run ```molonaviz``` in a terminal.
