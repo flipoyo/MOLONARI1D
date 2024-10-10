@@ -19,7 +19,7 @@ class SPointCoordinator:
         self.con = con
 
         spointID_query = self.build_sampling_point_id(studyName, samplingPointName)
-        spointID_query.exec()
+        if (not spointID_query.exec()) : print(spointID_query.lastError())
         spointID_query.next()
         self.samplingPointID = spointID_query.value(0)
 
@@ -38,12 +38,12 @@ class SPointCoordinator:
         Return the Point ID corresponding to this sampling point OR if this is the first time this sampling point is opened, create the relevant entry in the Point table.
         """
         select_pointID = self.build_select_point_ID()
-        select_pointID.exec()
+        if (not select_pointID.exec()) : print(select_pointID.lastError())
         select_pointID.next()
         if select_pointID.value(0) is None:
             insertPoint = self.build_insert_point()
             insertPoint.bindValue(":SamplingPoint", self.samplingPointID)
-            insertPoint.exec()
+            if (not insertPoint.exec()) : print(insertPoint.lastError())
             return insertPoint.lastInsertId()
         return select_pointID.value(0)
 
@@ -71,37 +71,60 @@ class SPointCoordinator:
         """
         select_paths, select_infos = self.build_infos_queries()
         #Installation image
-        select_paths.exec()
+        if (not select_paths.exec()) : print(select_paths.lastError())
         select_paths.next()
         schemePath = select_paths.value(0)
         noticePath = select_paths.value(1)
 
-        select_infos.exec()
+        if (not select_infos.exec()) : print(select_infos.lastError())
         infosModel = QSqlQueryModel()
         infosModel.setQuery(select_infos)
 
         return schemePath, noticePath, infosModel
 
-    def get_best_params_model(self, layer : float):
+    def get_best_params_model(self):
+        """
+        Return the best parameters (all layers)
+        """
+        select_params = self.build_best_params_query()
+        if (not select_params.exec()) : print(select_params.lastError())
+        paramsModel = QSqlQueryModel()
+        paramsModel.setQuery(select_params)
+        return paramsModel
+    
+    def get_best_params_model_per_layer(self, layer : float):
         """
         Given a layer (identified by its depth (in m)), return the associated best parameters.
         """
-        select_params = self.build_best_params_query(layer)
-        select_params.exec()
-        self.paramsModel = QSqlQueryModel()
-        self.paramsModel.setQuery(select_params)
-        return self.paramsModel
+        select_params = self.build_best_params_query_per_layer(layer)
+        if (not select_params.exec()) : print(select_params.lastError())
+        paramsModel = QSqlQueryModel()
+        paramsModel.setQuery(select_params)
+        return paramsModel
     
     def get_params_model(self, layer : float):
         """
-        Given a layer (identified by its depth (in m)), return the associated best parameters.
+        Given a layer (identified by its depth (in m)), return the associated parameters.
         """
         select_params = self.build_params_query(layer)
-        select_params.exec()
-        self.paramsModel = QSqlQueryModel()
-        self.paramsModel.setQuery(select_params)
-        return self.paramsModel
+        if (not select_params.exec()) : print(select_params.lastError())
+        paramsModel = QSqlQueryModel()
+        paramsModel.setQuery(select_params)
+        return paramsModel
 
+    def get_params_MCMC_model(self):
+        """
+        Return a list of parameters for MCMC.
+        """
+        select_params = self.build_params_MCMC_query()
+        if (not select_params.exec()) : print(select_params.lastError())
+
+        params = []
+        if select_params.next():  # Check if there is at least one row
+            for column_index in range(24):
+                params.append(select_params.value(column_index))
+        return params
+    
     def get_table_model(self, raw_measures : bool):
         """
         Return a model with all direct information from the database.
@@ -111,7 +134,7 @@ class SPointCoordinator:
             select_query = self.build_raw_measures(full_query=True)
         else:
             select_query = self.build_cleaned_measures(full_query=True)
-        select_query.exec()
+        if (not select_query.exec()) : print(select_query.lastError())
         self.tableModel = QSqlQueryModel()
         self.tableModel.setQuery(select_query)
         return self.tableModel
@@ -122,7 +145,7 @@ class SPointCoordinator:
             -date (in datetime format), Temp1, Temp2, Temp3, Temp4, TempBed, Voltage
         """
         select_data = self.build_raw_measures(full_query=True)
-        select_data.exec()
+        if (not select_data.exec()) : print(select_data.lastError())
         result = []
         while select_data.next():
             result.append([databaseDateToDatetime(select_data.value(0))]+ [select_data.value(i) for i in range(1,7)])
@@ -135,7 +158,7 @@ class SPointCoordinator:
         -the second element is a list holding pressure readings (date, pressure, temperature at the river bed)
         """
         select_data = self.build_cleaned_measures(full_query=True)
-        select_data.exec()
+        if (not select_data.exec()) : print(select_data.lastError())
         result = []
         while select_data.next():
             result.append(([databaseDateToDatetime(select_data.value(0))] + [select_data.value(i) for i in range(1,5)],
@@ -147,7 +170,7 @@ class SPointCoordinator:
         Return a list with all the depths of the layers. It may be empty.
         """
         select_depths_layers = self.build_layers_query()
-        select_depths_layers.exec()
+        if (not select_depths_layers.exec()) : print(select_depths_layers.lastError())
         layers = []
         while select_depths_layers.next():
             layers.append(select_depths_layers.value(0))
@@ -161,7 +184,7 @@ class SPointCoordinator:
         -a list corresponding to the RMSE of the three thermometers
         """
         select_globalRMSE = self.build_global_RMSE_query()
-        select_globalRMSE.exec()
+        if (not select_globalRMSE.exec()) : print(select_globalRMSE.lastError())
         globalRmse = {}
         directModelRMSE = None
         while select_globalRMSE.next():
@@ -171,7 +194,7 @@ class SPointCoordinator:
                 directModelRMSE = select_globalRMSE.value(1)
 
         select_thermRMSE = self.build_therm_RMSE()
-        select_thermRMSE.exec()
+        if (not select_thermRMSE.exec()) : print(select_thermRMSE.lastError())
         select_thermRMSE.next()
 
         return directModelRMSE, globalRmse, [select_thermRMSE.value(i) for i in range(3)]
@@ -181,7 +204,7 @@ class SPointCoordinator:
         Given a thermometer number (1, 2, 3), return depth of associated thermometer.
         """
         select_thermo_depth = self.build_thermo_depth(depth_id)
-        select_thermo_depth.exec()
+        if (not select_thermo_depth.exec()) : print(select_thermo_depth.lastError())
         select_thermo_depth.next()
         return select_thermo_depth.value(0)
 
@@ -190,7 +213,7 @@ class SPointCoordinator:
         Return the altitude of the deepest point in the river. We can assume that this is the lenght of the shaft.
         """
         selectdepth = self.build_max_depth()
-        selectdepth.exec()
+        if (not selectdepth.exec()) : print(selectdepth.lastError())
         selectdepth.next()
         return selectdepth.value(0)
 
@@ -199,7 +222,7 @@ class SPointCoordinator:
         Return three values corresponding to the intercept, differential pressure (DuDH), and differential temperature (DuDT).
         """
         select_cal_infos = self.build_calibration_info()
-        select_cal_infos.exec()
+        if (not select_cal_infos.exec()) : print(select_cal_infos.lastError())
         select_cal_infos.next()
         return select_cal_infos.value(0), select_cal_infos.value(1), select_cal_infos.value(2)
 
@@ -276,7 +299,7 @@ class SPointCoordinator:
         self.con.transaction()
         for row in dfCleaned.itertuples():
             query_dates.bindValue(":Date", row[1])
-            query_dates.exec()
+            if (not query_dates.exec()) : print(query_dates.lastError())
             query_measures.bindValue(":DateID", query_dates.lastInsertId())
             query_measures.bindValue(":Temp1", row[2])
             query_measures.bindValue(":Temp2", row[3])
@@ -284,7 +307,7 @@ class SPointCoordinator:
             query_measures.bindValue(":Temp4", row[5])
             query_measures.bindValue(":TempBed", row[6])
             query_measures.bindValue(":Pressure", row[7])
-            query_measures.exec()
+            if (not query_measures.exec()) : print(query_measures.lastError())
         self.con.commit()
 
     def delete_processed_data(self):
@@ -296,9 +319,9 @@ class SPointCoordinator:
         #Now delete the cleaned measures and then the dates.
         dateID = QSqlQuery(self.con)
         dateID.exec(f"""SELECT Date.ID FROM DATE
-                        JOIN Point
-                        ON Date.PointKey = Point.ID
-                        WHERE Point.ID={self.pointID}""")
+                            JOIN Point
+                            ON Date.PointKey = Point.ID
+                            WHERE Point.ID={self.pointID}""")
         deleteTableQuery = QSqlQuery(self.con)
         deleteTableQuery.exec(f"DELETE FROM CleanedMeasures WHERE CleanedMeasures.PointKey=(SELECT ID FROM Point WHERE Point.ID={self.pointID})")
         deleteDate = QSqlQuery(self.con)
@@ -307,7 +330,7 @@ class SPointCoordinator:
         self.con.transaction()
         while dateID.next():
             deleteDate.bindValue(":Date", dateID.value(0))
-            deleteDate.exec()
+            if (not deleteDate.exec()) : print(deleteDate.lastError())
         self.con.commit()
         #Note: the Point has not been removed, but it doesn't matter. The find_or_create_point_ID function is here for this reason.
 
@@ -323,6 +346,7 @@ class SPointCoordinator:
         deleteTableQuery.exec(f'DELETE FROM TemperatureAndHeatFlows WHERE PointKey=(SELECT Point.ID FROM Point WHERE Point.ID  = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM ParametersDistribution WHERE ParametersDistribution.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM Parameters WHERE Parameters.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
+        deleteTableQuery.exec(f'DELETE FROM InputMCMC WHERE InputMCMC.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM BestParameters WHERE BestParameters.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM Quantiles WHERE Quantiles.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
         deleteTableQuery.exec(f'DELETE FROM Depth WHERE Depth.PointKey=(SELECT Point.ID FROM Point WHERE Point.ID = {self.pointID})')
@@ -346,7 +370,7 @@ class SPointCoordinator:
                 JOIN Point
                 ON Quantile.PointKey = Point.ID
                 WHERE Point.ID = {self.pointID}""")
-        quant.exec()
+        if (not quant.exec()) : print(quant.lastError())
         quant.next()
         comp = QSqlQuery(self.con)
         comp.prepare(f"""SELECT COUNT(*) FROM CleanedMeasures
@@ -354,7 +378,7 @@ class SPointCoordinator:
                 ON CleanedMeasures.PointKey = Point.ID
                 WHERE Point.ID = {self.pointID}
                 """)
-        comp.exec()
+        if (not comp.exec()) : print(comp.lastError())
         comp.next()
         if quant.value(0) ==0:
             if comp.value(0) ==0:
@@ -423,7 +447,20 @@ class SPointCoordinator:
         """)
         return query
 
-    def build_best_params_query(self, depth : float):
+    def build_best_params_query(self):
+        """
+        Build and return the best parameters for all layers.
+        """
+        query = QSqlQuery(self.con)
+        query.prepare(f"""
+            SELECT BestParameters.Permeability, BestParameters.Porosity, BestParameters.ThermConduct, BestParameters.Capacity FROM BestParameters
+            JOIN Point
+            ON BestParameters.PointKey = Point.ID
+            WHERE Point.ID = {self.pointID}
+        """)
+        return query
+    
+    def build_best_params_query_per_layer(self, depth : float):
         """
         Build and return the parameters for the given depth.
         """
@@ -431,8 +468,7 @@ class SPointCoordinator:
         query.prepare(f"""
             SELECT BestParameters.Permeability, BestParameters.Porosity, BestParameters.ThermConduct, BestParameters.Capacity FROM BestParameters
             JOIN Layer ON BestParameters.Layer = Layer.ID
-            JOIN Point
-            ON BestParameters.PointKey = Point.ID
+            JOIN Point ON BestParameters.PointKey = Point.ID
             WHERE Point.ID = {self.pointID}
             AND Layer.Depth = {depth}
         """)
@@ -453,6 +489,18 @@ class SPointCoordinator:
         """)
         return query
 
+    def build_params_MCMC_query(self):
+        """
+        Build and return the parameters for MCMC.
+        """
+        query = QSqlQuery(self.con)
+        query.prepare("""
+            SELECT Niter, Delta, Nchains,NCR, C, Cstar, Kmin, Kmax, Ksigma,PorosityMin, PorosityMax, PorositySigma,
+            TcondMin, TcondMax, TcondSigma, TcapMin, TcapMax, TcapSigma, Remanence , tresh , nb_sous_ech_iter ,
+            nb_sous_ech_space , nb_sous_ech_time ,  Quantiles FROM InputMCMC
+        """)
+        return query
+    
     def build_params_distribution(self, layer : float):
         """
         Given a layer's depth, return the distribution for the 4 types of parameters.
@@ -606,7 +654,7 @@ class SPointCoordinator:
         elif compute_type == ComputationsState.MCMC:
             #This could be enhanced by going in the database and seeing which quantiles are available. For now, these available quantiles will be hard-coded
             select_quantiles = self.build_quantiles()
-            select_quantiles.exec()
+            if (not select_quantiles.exec()) : print(select_quantiles.lastError())
             result = []
             while select_quantiles.next():
                 if select_quantiles.value(0) ==0:

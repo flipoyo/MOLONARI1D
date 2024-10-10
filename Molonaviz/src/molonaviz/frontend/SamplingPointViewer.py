@@ -79,7 +79,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
 
         # Link every button to their function
-        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams2)
+        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams)
         self.radioButtonTherm1.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm2.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm3.clicked.connect(self.refreshTempDepthView)
@@ -232,13 +232,13 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.comboBoxSelectLayer.addItem(str(layer))
         if len(layers) > 0:
             # By default, show the parameters associated with the first layer.
-            self.changeDisplayedParams2(layers[0])
+            self.changeDisplayedParams(layers[0])
 
-    def changeDisplayedParams2(self, layer : float):
+    def changeDisplayedParams(self, layer : float):
         """
         Display in the table view the parameters corresponding to the given layer, and update histograms.
         """
-        self.paramsModel = self.coordinator.get_best_params_model(layer)
+        #TODO : show parameters for the current layer?
         #Resize the table view so it looks pretty
         self.coordinator.refresh_params_distr(layer)
 
@@ -435,11 +435,13 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                 #MCMC
                 nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time = dlg.getInputMCMC()
                 self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, thresh)
+                dlg.save_input_MCMC()
+
             else:
                 #Direct Model
-                dlg.SaveInput()
                 params, nb_cells = dlg.getInputDirectModel()
                 self.computeEngine.compute_direct_model(params, nb_cells)
+                dlg.SaveInput()
 
             self.handleComputationsButtons()
 

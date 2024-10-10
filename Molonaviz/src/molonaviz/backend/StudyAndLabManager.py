@@ -28,14 +28,14 @@ class StudyAndLabManager:
         Create a new study with the name studyName attached to the laboratory called labName. The names must be valid (ie studyName is unique, and there is a unique laboratory called labName).
         """
         selectLabID = self.build_lab_id(labName)
-        selectLabID.exec()
+        if (not selectLabID.exec()) : print(selectLabID.lastError())
         selectLabID.next()
         labID = selectLabID.value(0)
 
         insertStudy = self.build_insert_study()
         insertStudy.bindValue(":Name",studyName)
         insertStudy.bindValue(":Labo",labID)
-        insertStudy.exec()
+        if (not insertStudy.exec()) : print(insertStudy.lastError())
         print(f"The study {studyName} has been added to the database.")
 
     def is_study_in_database(self, studyName : str):
@@ -44,7 +44,7 @@ class StudyAndLabManager:
         Return True if a study with the name studyName is in the database.
         """
         similar_studies = self.build_similar_studies(studyName)
-        similar_studies.exec()
+        if (not similar_studies.exec()) : print(similar_studies.lastError())
         if similar_studies.next():
             return True
         return False
@@ -56,7 +56,7 @@ class StudyAndLabManager:
         """
         labs_query = self.build_select_labs(studyName)
         labs = []
-        labs_query.exec()
+        if (not labs_query.exec()) : print(labs_query.lastError())
         while labs_query.next():
             labs.append(labs_query.value(0))
         return labs
@@ -68,7 +68,7 @@ class StudyAndLabManager:
         """
         studies_query = self.build_select_studies()
         studies = []
-        studies_query.exec()
+        if (not studies_query.exec()) : print(studies_query.lastError())
         while studies_query.next():
             studies.append(studies_query.value(0))
         return studies
@@ -79,7 +79,7 @@ class StudyAndLabManager:
         For now, this means checking there is no laboratory with the same name in the database.
         """
         similar_lab = self.build_similar_lab(labName)
-        similar_lab.exec()
+        if (not similar_lab.exec()) : print(similar_lab.lastError())
         if similar_lab.next():
             return False
         return True
@@ -90,7 +90,7 @@ class StudyAndLabManager:
         Return the ID of the newly inserted laboratory.
         """
         insert_lab = self.build_insert_lab(labName)
-        insert_lab.exec()
+        if (not insert_lab.exec()) : print(insert_lab.lastError())
         print(f"The lab {labName} has been added to the database.")
         return insert_lab.lastInsertId()
 
@@ -115,7 +115,7 @@ class StudyAndLabManager:
             insertQuery.bindValue(":ManuRef",ref)
             insertQuery.bindValue(":Error",sigma)
             insertQuery.bindValue(":Labo",labID)
-            insertQuery.exec()
+            if (not insertQuery.exec()) : print(insertQuery.lastError())
         print("The thermometers have been added to the database.") #TODO: Maybe a little check before asserting this?
 
         insertPsensor = self.build_insert_psensor()
@@ -129,7 +129,7 @@ class StudyAndLabManager:
             sigma = float(df.iloc[6].at[1].replace(',','.'))
             thermo_name = df.iloc[7].at[1]
             select_thermo = self.build_thermo_id(labID, thermo_name)
-            select_thermo.exec()
+            if (not select_thermo.exec()) : print(select_thermo.lastError())
             select_thermo.next()
             thermo_model = select_thermo.value(0)
 
@@ -142,7 +142,7 @@ class StudyAndLabManager:
             insertPsensor.bindValue(":Error",sigma)
             insertPsensor.bindValue(":ThermoModel",thermo_model)
             insertPsensor.bindValue(":Labo",labID)
-            insertPsensor.exec()
+            if (not insertPsensor.exec()) : print(insertPsensor.lastError())
         print("The pressure sensors have been added to the database.") #TODO: Maybe a little check before asserting this?
 
         insertShaft = self.build_insert_shaft()
@@ -152,7 +152,7 @@ class StudyAndLabManager:
             tSensorName = df.iloc[2].at[1]
             depths = literal_eval(df.iloc[3].at[1]) #This is now a list
             select_thermo = self.build_thermo_id(labID, tSensorName)
-            select_thermo.exec()
+            if (not select_thermo.exec()) : print(select_thermo.lastError())
             select_thermo.next()
             thermo_model = select_thermo.value(0)
 
@@ -164,7 +164,7 @@ class StudyAndLabManager:
             insertShaft.bindValue(":Depth4",depths[3])
             insertShaft.bindValue(":ThermoModel",thermo_model)
             insertShaft.bindValue(":Labo",labID)
-            insertShaft.exec()
+            if (not insertShaft.exec()) : print(insertShaft.lastError())
         print("The shafts have been added to the database.")#TODO: Maybe a little check before asserting this?
 
     def build_similar_lab(self, labName : str):
