@@ -6,9 +6,9 @@ MOLONARI means MOnitoring LOcal des échanges NAppe-RIvière, which translates i
 
 The ecosystem is dedicated to the monitoring of water and heat exchanges in riverbed. It includes monitoring devices and two softwares under the EPLv2.0 license. 
 
-One software **PyHeatMy** is dedicated to the inference of water and energy fluxes from the data acquired by the monitoring systems. It implements an MCMC approach taht infers the physical properties of a 1D column of a riverbed forced by hydraulic head difference between the top and the bottom of the column, as well as the associated temperatures. The energy of each MCMC iteration is calculated based on the RMSE between simulated and monitored temperatures at three depths of the porous medium column. For more information, please see the associated folder in the current repository.
+One software **pyheatmy** is dedicated to the inference of water and energy fluxes from the data acquired by the monitoring systems. It implements an MCMC approach taht infers the physical properties of a 1D column of a riverbed forced by hydraulic head difference between the top and the bottom of the column, as well as the associated temperatures. The energy of each MCMC iteration is calculated based on the RMSE between simulated and monitored temperatures at three depths of the porous medium column. For more information, please see the associated folder in the current repository.
 
-The other software **Molonaviz** is a GUI that allows for the management of the monitoring devices as "labs", the monitoring data of "sampling points", as the interpretation of the data with **PyHeatMy**. It is designed in a frontend and backend programs that interacts with each other. The frontend uses the Qt library in python, and the backend handles a SQL database. **WARNING**: Molonaviz requires python 3.10 at least. Always secure your python version operating in a virtual python environment (see below).
+The other software **molonaviz** is a GUI that allows for the management of the monitoring devices as "labs", the monitoring data of "sampling points", as the interpretation of the data with **pyheatmy**. It is designed in a frontend and backend programs that interacts with each other. The frontend uses the Qt library in python, and the backend handles a SQL database. **WARNING**: Molonaviz requires python 3.10 at least. Always secure your python version operating in a virtual python environment (see below).
 
 
 ## Contributors
@@ -16,17 +16,18 @@ MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 20
 
 - Nicolas Flipo supervises the development of the MOLONARI 1D ecosystem
 - Aurelien Baudin and Agnès Rivière supervise the **monitoring device development** and their **_in situ_ deployment**
-- Nicolas Flipo and Thomas Romary supervise the development of **PyHeatMy**
-- Fabien Ors contributed to the 2021 and 2022 editions by conceptualising **Molonaviz**
+- Nicolas Flipo and Thomas Romary supervise the development of **pyheatmy**
+- Fabien Ors contributed to the 2021 and 2022 editions by conceptualising **molonaviz**, and since 2024 securizing it
+- Since 2024, Pierre Guillou secure the software deployment
 
 The MOLONARI1D project is integrated into the french project [EQUIPEX+ TERRA FORMA](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires "link to TERRA FORMA") led by CNRS. 
 
-The student contributors are, for **PyHeatMy**:
+The student contributors are, for **pyheatmy**:
 - 2021 Mathis Bourdin & Youri Tchouboukoff
 - 2022 Guillaume de Rochefort, Loris Megy, Valentin Alleaume
 - 2023 Mattéo Leturcq-Daligaux, Nicolas Matte, Mathis Chevé, Zhan Jing, Dan Maurel
 
-for **Molonaviz**:
+for **molonaviz**:
 - 2021 Sandra Clodion & Charlotte de Mailly Nesle
 - 2022 software restarted from scratch by Guillaume Vigne
 - 2023 Thibault Lambert
@@ -43,7 +44,7 @@ for **hardwareProgramming**:
 
 *All rights reserved*. This software and the accompanying materials are made available under the terms of the Eclipse Public License (EPL) v2.0 which accompanies this distribution, and is available at http://www.eclipse.org/legal/epl-v20.html.
 
-**PyHeatMy** and **Molonaviz**  were first released in 2021 under the MIT license.
+**pyheatmy** and **molonaviz**  were first released in 2021 under the MIT license.
 
 
 ## Warning on reliability
