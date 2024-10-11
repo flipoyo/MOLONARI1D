@@ -151,13 +151,13 @@ Install gitlab for conda:
 And create a virtual environment
 
 ```bash
-> conda create --name py.3.10.12 -c anaconda python=3.10.12
+> conda create --name py.3.11.4 -c anaconda python=3.11.4
 ```
 
 Activate the virtual environment
 
 ```bash
-> conda activate py.3.10.12
+> conda activate py.3.11.4
 ```
 
 Run the MOLONARI installation process from there. You can launch molonaviz from there.
