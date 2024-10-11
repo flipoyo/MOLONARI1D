@@ -1,0 +1,36 @@
+name: test-molonari
+
+on:
+  # Activate the workflow at each push on every branch
+  push:
+    branches:
+      - "*"
+  # Activate the workflow at each pull request on "main" branch
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-job:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        pyver: ["3.9", "3.10", "3.11", "3.12"]
+        module: ["pyheatmy", "Molonaviz"]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.pyver }}
+
+    - name: Install pytest
+      run: pip install pytest
+
+    - name: Install ${{ matrix.module }}
+      run: pip install ${{ matrix.module }}/
+
+    - name: Test ${{ matrix.module }}
+      run: pytest ${{ matrix.module }}
