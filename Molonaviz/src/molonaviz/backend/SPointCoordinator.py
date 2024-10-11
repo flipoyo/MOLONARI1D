@@ -495,7 +495,7 @@ class SPointCoordinator:
         """
         query = QSqlQuery(self.con)
         query.prepare("""
-            SELECT Niter, Delta, Nchains,NCR, C, Cstar, Kmin, Kmax, Ksigma,PorosityMin, PorosityMax, PorositySigma,
+            SELECT Niter, Delta, Nchains, NCR, C, Cstar, Kmin, Kmax, Ksigma,PorosityMin, PorosityMax, PorositySigma,
             TcondMin, TcondMax, TcondSigma, TcapMin, TcapMax, TcapSigma, Remanence , tresh , nb_sous_ech_iter ,
             nb_sous_ech_space , nb_sous_ech_time ,  Quantiles FROM InputMCMC
         """)

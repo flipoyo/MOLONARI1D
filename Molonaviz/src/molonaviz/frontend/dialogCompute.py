@@ -84,10 +84,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
     def InitValuesMCMC(self):
 
         #MCMC
+        # Same order than SPointCoordinator build_params_MCMC_query
         self.lineEditMaxIterMCMC.setText(str(self.inputMCMC[0]))
+        self.lineEditDelta.setText(str(self.inputMCMC[1]))
 
-        self.lineEditChains.setText(str(self.inputMCMC[1]))
-        self.lineEditDelta.setText(str(self.inputMCMC[2]))
+        self.lineEditChains.setText(str(self.inputMCMC[2]))
         self.lineEditncr.setText(str(self.inputMCMC[3]))
         self.lineEditc.setText(str(self.inputMCMC[4]))
         self.lineEditcstar.setText(str(self.inputMCMC[5]))
@@ -118,30 +119,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditQuantiles.setText(str(self.inputMCMC[23]))
 
 
-    def SaveInput(self):
-
-        """
-        Save the layers, the parameters and the MCMC parameters in the database.
-        """
-        nb_cells = self.spinBoxNCellsDirect.value()
-        nb_layers = self.spinBoxNLayersDirect.value()
-        depths = []
-        permeability = []
-        porosity = [] 
-        thermconduct = []
-        thermcap = []
-
-        for i in range (nb_layers):
-            depths.append(float(self.tableWidget.item(i, 0).text()))
-            permeability.append(float(self.tableWidget.item(i, 1).text()))
-            porosity.append(float(self.tableWidget.item(i, 2).text()))
-            thermconduct.append(float(self.tableWidget.item(i, 3).text()))
-            thermcap.append(float(self.tableWidget.item(i, 4).text()))
-
-        layers = [f"Layer {i+1}" for i in range(nb_layers)]
-        params = list(zip(layers, depths, permeability, porosity, thermconduct, thermcap))
-
-        self.compute.save_layers_and_params(params, nb_cells)
         
     def setDefaultValues(self):
         """
@@ -309,52 +286,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             all_priors.append([layers[i], depths[i], priors])
 
         quantiles = self.lineEditQuantiles.text()
-        quantiles = quantiles.split(",")
-        quantiles = tuple(quantiles)
-        quantiles = [float(quantile) for quantile in quantiles]
 
-        return nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar,  remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time
-
-    def save_input_MCMC(self):
-        nb_cells = self.spinBoxNCellsDirect.value()
-
-        nb_iter = int(self.lineEditMaxIterMCMC.text())
-        nb_chains = int(self.lineEditChains.text())
-        delta = float(self.lineEditDelta.text())
-        ncr = float(self.lineEditncr.text())
-        c = float(self.lineEditc.text())
-        cstar = float(self.lineEditcstar.text())
-
-        #The user's input (in MCMC panel) is not a permeability but a -log10(permeability)
-        moins10logKmin = float(self.lineEditKMin.text())
-        moins10logKmax = float(self.lineEditKMax.text())
-        moins10logKsigma = float(self.lineEditmoinslog10IntrinKSigma.text())
-
-        nmin = float(self.lineEditPorosityMin.text())
-        nmax = float(self.lineEditPorosityMax.text())
-        nsigma = float(self.lineEditPorositySigma.text())
-
-        lambda_s_min = float(self.lineEditThermalConductivityMin.text())
-        lambda_s_max = float(self.lineEditThermalConductivityMax.text())
-        lambda_s_sigma = float(self.lineEditThermalConductivitySigma.text())
-
-        rhos_cs_min = float(self.lineEditThermalCapacityMin.text())
-        rhos_cs_max = float(self.lineEditThermalCapacityMax.text())
-        rhos_cs_sigma = float(self.lineEditThermalCapacitySigma.text())
-
-        remanence = float(self.lineEditPersi.text())
-        thresh = float(self.lineEditThresh.text())
-
-        nb_sous_ech_iter = int(self.lineEditIterStep.text())
-        nb_sous_ech_space = int(self.lineEditSpaceStep.text())
-        nb_sous_ech_time = int(self.lineEditTimeStep.text())
-
-        quantiles = self.lineEditQuantiles.text()
-
-        params = [nb_iter, nb_chains, delta, ncr, c, cstar, moins10logKmin, moins10logKmax, moins10logKsigma, nmin, nmax, nsigma, lambda_s_min, lambda_s_max, lambda_s_sigma, rhos_cs_min, rhos_cs_max, rhos_cs_sigma,remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, quantiles]
-
-        self.compute.save_params_MCMC(params, nb_cells)
-
+        # Warning: order must be the same than ColumnMCMCRunner constructor (otherwise use a dictionary)
+        return [nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, nb_sous_ech_iter, nb_sous_ech_time, nb_sous_ech_space, thresh]
 
     def activerDesactiverModeSombre(self, state):
         if state:

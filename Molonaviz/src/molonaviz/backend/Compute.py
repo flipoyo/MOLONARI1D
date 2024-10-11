@@ -194,6 +194,8 @@ class Compute(QtCore.QObject):
         self.thread = QtCore.QThread()
 
         self.set_column()  # Updates self.col
+        self.params = params
+        self.nb_cells = nb_cells
         self.direct_runner = ColumnDirectModelRunner(self.col, params, nb_cells)
 
         # we connect the signal which will be emitted by the runner when it's finished to the function which will be called (end_direct_model)
@@ -210,6 +212,7 @@ class Compute(QtCore.QObject):
         """
         This is called when the DirectModel is over. Save the relevant information in the database
         """
+        self.save_layers_and_params(self.params, self.nb_cells)
         self.save_direct_model_results()
 
         self.thread.quit()
@@ -271,11 +274,11 @@ class Compute(QtCore.QObject):
 
         self.con.commit()
 
-    def save_params_MCMC(self, data : list[list], nb_cells : int):
+    def save_params_MCMC(self, paramsMCMC : list[list]):
         """
         Save the parameters of MCMC inversion in the database.
         """
-        self.update_nb_cells(nb_cells)
+        self.update_nb_cells(paramsMCMC[2]) # see dialogCompute getInputMCMC
 
         insertparams = QSqlQuery(self.con)
         insertparams.prepare(f"""INSERT INTO InputMCMC (Niter , Delta , Nchains ,NCR, C , Cstar , Kmin , Kmax, Ksigma , PorosityMin , PorosityMax ,
@@ -288,30 +291,40 @@ class Compute(QtCore.QObject):
         insertparams.bindValue(":PointKey", self.pointID)
 
         self.con.transaction()
-        insertparams.bindValue(":Niter", data[0])
-        insertparams.bindValue(":Delta", data[1])
-        insertparams.bindValue(":Nchains", data[2])
-        insertparams.bindValue(":NCR", data[3])
-        insertparams.bindValue(":C", data[4])
-        insertparams.bindValue(":Cstar", data[5])
-        insertparams.bindValue(":Kmin", data[6])
-        insertparams.bindValue(":Kmax", data[7])
-        insertparams.bindValue(":Ksigma", data[8])
-        insertparams.bindValue(":PorosityMin", data[9])
-        insertparams.bindValue(":PorosityMax", data[10])
-        insertparams.bindValue(":PorositySigma", data[11])
-        insertparams.bindValue(":TcondMin", data[12])
-        insertparams.bindValue(":TcondMax", data[13])
-        insertparams.bindValue(":TcondSigma", data[14])
-        insertparams.bindValue(":TcapMin", data[15])
-        insertparams.bindValue(":TcapMax", data[16])
-        insertparams.bindValue(":TcapSigma", data[17])
-        insertparams.bindValue(":Remanence", data[18])
-        insertparams.bindValue(":tresh", data[19])
-        insertparams.bindValue(":nb_sous_ech_iter", data[20])
-        insertparams.bindValue(":nb_sous_ech_space", data[21])
-        insertparams.bindValue(":nb_sous_ech_time", data[22])
-        insertparams.bindValue(":Quantiles", data[23])
+        # We really should use a dictionary!
+        # Look at dialogCompute getInputMCMC
+        insertparams.bindValue(":Niter",            paramsMCMC[0])
+
+        # Each layer priors are equals
+        all_priors =                                paramsMCMC[1][0][2] # Priors ([2]) of the first layer ([0])
+
+        insertparams.bindValue(":Kmin",             all_priors["moinslog10IntrinK"][0][0])
+        insertparams.bindValue(":Kmax",             all_priors["moinslog10IntrinK"][0][1])
+        insertparams.bindValue(":Ksigma",           all_priors["moinslog10IntrinK"][1])
+        insertparams.bindValue(":PorosityMin",      all_priors["n"][0][0])
+        insertparams.bindValue(":PorosityMax",      all_priors["n"][0][1])
+        insertparams.bindValue(":PorositySigma",    all_priors["n"][1])
+        insertparams.bindValue(":TcondMin",         all_priors["lambda_s"][0][0])
+        insertparams.bindValue(":TcondMax",         all_priors["lambda_s"][0][1])
+        insertparams.bindValue(":TcondSigma",       all_priors["lambda_s"][1])
+        insertparams.bindValue(":TcapMin",          all_priors["rhos_cs"][0][0])
+        insertparams.bindValue(":TcapMax",          all_priors["rhos_cs"][0][1])
+        insertparams.bindValue(":TcapSigma",        all_priors["rhos_cs"][1])
+
+        #                                           paramsMCMC[2]  nb_cells
+
+        insertparams.bindValue(":Quantiles",        paramsMCMC[3]) # Must be a string
+        insertparams.bindValue(":Nchains",          paramsMCMC[4])
+        insertparams.bindValue(":Delta",            paramsMCMC[5])
+        insertparams.bindValue(":NCR",              paramsMCMC[6])
+        insertparams.bindValue(":C",                paramsMCMC[7])
+        insertparams.bindValue(":Cstar",            paramsMCMC[8])
+        insertparams.bindValue(":Remanence",        paramsMCMC[9])
+        insertparams.bindValue(":nb_sous_ech_iter", paramsMCMC[10])
+        insertparams.bindValue(":nb_sous_ech_time", paramsMCMC[11])
+        insertparams.bindValue(":nb_sous_ech_space",paramsMCMC[12])
+        insertparams.bindValue(":tresh",            paramsMCMC[13])
+
         if (not insertparams.exec()) : print(insertparams.lastError())
         self.con.commit()
 
@@ -439,20 +452,7 @@ class Compute(QtCore.QObject):
 
     def compute_MCMC(
         self,
-        nb_iter: int,
-        all_priors: list,
-        nb_cells: str,
-        quantiles: tuple,
-        nb_chains: int,
-        delta: float,
-        ncr,
-        c,
-        cstar,
-        remanence,
-        n_sous_ech_iter,
-        n_sous_ech_time,
-        n_sous_ech_space,
-        threshold
+        paramsMCMC
     ):
         """
         Launch the MCMC computation with given parameters.
@@ -461,26 +461,33 @@ class Compute(QtCore.QObject):
             print("Please wait while for the previous computation to end")
             return
 
+        self.paramsMCMC = paramsMCMC
         self.thread.terminate()
         self.thread = QtCore.QThread()
 
+        quantiles = paramsMCMC[3]
+        quantiles = quantiles.split(",")
+        quantiles = tuple(quantiles)
+        quantiles = [float(quantile) for quantile in quantiles]
+
         self.set_column()  # Updates self.col
+        # Warning: order must be the same than dialogCompute getInputMCMC(otherwise use a dictionary)
         self.mcmc_runner = ColumnMCMCRunner(
             self.col,
-            nb_iter,
-            all_priors,
-            nb_cells,
-            quantiles,
-            nb_chains,
-            delta,
-            ncr,
-            c,
-            cstar,
-            remanence,
-            n_sous_ech_iter,
-            n_sous_ech_time,
-            n_sous_ech_space,
-            threshold
+            paramsMCMC[0], #nb_iter,
+            paramsMCMC[1], #all_priors,
+            paramsMCMC[2], #nb_cells,
+            quantiles    , #quantiles,
+            paramsMCMC[4], #nb_chains,
+            paramsMCMC[5], #delta,
+            paramsMCMC[6], #ncr,
+            paramsMCMC[7], #c,
+            paramsMCMC[8], #cstar,
+            paramsMCMC[9], #remanence,
+            paramsMCMC[10], #n_sous_ech_iter,
+            paramsMCMC[11], #n_sous_ech_time,
+            paramsMCMC[12], #n_sous_ech_space,
+            paramsMCMC[13], #threshold
         )
         self.mcmc_runner.finished.connect(self.end_MCMC)
         self.mcmc_runner.moveToThread(self.thread)
@@ -497,6 +504,7 @@ class Compute(QtCore.QObject):
         self.save_direct_model_results()
 
         # Secondly: MCMC parameters distributions
+        self.save_params_MCMC(self.paramsMCMC)
         self.save_MCMC_results()
 
         self.thread.quit()
