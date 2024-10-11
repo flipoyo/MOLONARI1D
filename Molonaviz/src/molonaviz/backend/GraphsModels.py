@@ -273,12 +273,12 @@ class ParamsDistributionModel(MoloModel):
         try:
             while self.queries[0].next():
                 self.log10k.append(self.queries[0].value(0))
-                self.conductivity.append(self.queries[0].value(1))
-                self.porosity.append(self.queries[0].value(2))
+                self.porosity.append(self.queries[0].value(1))
+                self.conductivity.append(self.queries[0].value(2))
                 self.capacity.append(self.queries[0].value(3))
             self.log10k = np.array(self.log10k)
-            self.conductivity = np.array(self.conductivity)
             self.porosity = np.array(self.porosity)
+            self.conductivity = np.array(self.conductivity)
             self.capacity = np.array(self.capacity)
         except Exception:
             #Empty query or invalid query: then revert any changes done. The model is empty: nothing will be displayed.

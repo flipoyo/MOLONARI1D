@@ -179,12 +179,12 @@
      </row>
      <column>
       <property name="text">
-       <string>Layer bottom depth (cm)</string>
+       <string>Layer bottom depth (m)</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>Permeability (m/s)</string>
+       <string>-log10(Permeability)</string>
       </property>
      </column>
      <column>

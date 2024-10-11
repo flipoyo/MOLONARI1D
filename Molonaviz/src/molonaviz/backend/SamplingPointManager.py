@@ -38,7 +38,7 @@ class SamplingPointManager:
         self.spointModel = SamplingPointModel([])
 
         select_study_id = self.build_study_id(studyName)
-        select_study_id.exec()
+        if (not select_study_id.exec()) : print(select_study_id.lastError())
         select_study_id.next()
         self.studyID = select_study_id.value(0)
         self.studyName = studyName
@@ -53,7 +53,7 @@ class SamplingPointManager:
         """
         select_spoints = self.build_select_spoints()
         spoints = []
-        select_spoints.exec()
+        if (not select_spoints.exec()) : print(select_spoints.lastError())
         while select_spoints.next():
             spoints.append(select_spoints.value(0))
         return spoints
@@ -63,7 +63,7 @@ class SamplingPointManager:
         Return a SamplingPoint object representing the sampling point with name spointName.
         """
         select_spoints = self.build_select_spoints(spointName)
-        select_spoints.exec()
+        if (not select_spoints.exec()) : print(select_spoints.lastError())
         select_spoints.next()
         return SamplingPoint(select_spoints.value(0), select_spoints.value(1),select_spoints.value(2), select_spoints.value(3), select_spoints.value(4))
 
@@ -99,7 +99,7 @@ class SamplingPointManager:
             insertRawPress.bindValue(":Date", row[1])
             insertRawPress.bindValue(":TempBed", row[3])
             insertRawPress.bindValue(":Voltage", row[2])
-            insertRawPress.exec()
+            if (not insertRawPress.exec()) : print(insertRawPress.lastError())
         self.con.commit()
 
         #Temperature records
@@ -112,7 +112,7 @@ class SamplingPointManager:
             insertRawTemp.bindValue(":Temp2", row[3])
             insertRawTemp.bindValue(":Temp3", row[4])
             insertRawTemp.bindValue(":Temp4", row[5])
-            insertRawTemp.exec()
+            if (not insertRawTemp.exec()) : print(insertRawTemp.lastError())
         self.con.commit()
 
     def insert_new_point(self, pointName : str, psensorName : str, shaftName :str, noticefile : str, configfile : str, infoDF : pd.DataFrame,):
@@ -139,12 +139,12 @@ class SamplingPointManager:
         insertPoint.bindValue(":RiverBed", infoDF.iloc[5].at[1])
         #Add the shaft's ID
         select_shaft_id = self.build_shaft_id(shaftName)
-        select_shaft_id.exec()
+        if (not select_shaft_id.exec()) : print(select_shaft_id.lastError())
         select_shaft_id.next()
         insertPoint.bindValue(":Shaft", select_shaft_id.value(0))
         #Add the pressure sensor's ID
         select_psensor_id = self.build_psensor_id(psensorName)
-        select_psensor_id.exec()
+        if (not select_psensor_id.exec()) : print(select_psensor_id.lastError())
         select_psensor_id.next()
         insertPoint.bindValue(":PressureSensor", select_psensor_id.value(0))
         #Path to the configuration file
@@ -154,8 +154,8 @@ class SamplingPointManager:
         #Default cleanup script
         cleanupScriptPath = os.path.join(os.path.dirname(self.con.databaseName()),"Scripts", "sample_text.txt")
         insertPoint.bindValue(":CleanupScript", cleanupScriptPath)
-
-        insertPoint.exec()
+        if (not insertPoint.exec()) : print(insertPoint.lastError())
+        
         return insertPoint.lastInsertId()
 
     def build_study_id(self, studyName : str):

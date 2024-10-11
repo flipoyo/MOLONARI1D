@@ -7,7 +7,7 @@ from ..interactions.InnerMessages import ComputationsState
 from ..backend.SPointCoordinator import SPointCoordinator
 from ..backend.Compute import Compute
 
-from .GraphViews import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, ConductivityView, PorosityView, CapacityView
+from .GraphViews import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, PorosityView, ConductivityView, CapacityView
 from .dialogExportCleanedMeasures import DialogExportCleanedMeasures
 from .dialogConfirm import DialogConfirm
 from .dialogsCleanup import DialogCleanup
@@ -65,8 +65,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.depth_view = TempDepthView(self.coordinator.get_temp_model(), self.coordinator.get_temp_map_model(), self.coordinator)
         paramsDistrModel = self.coordinator.get_params_distr_model()
         self.logk_view = Log10KView(paramsDistrModel)
-        self.conductivity_view = ConductivityView(paramsDistrModel)
         self.porosity_view = PorosityView(paramsDistrModel)
+        self.conductivity_view = ConductivityView(paramsDistrModel)
         self.capacity_view = CapacityView(paramsDistrModel)
 
         self.layoutsRules = self.initialiseLayoutsRules()
@@ -79,7 +79,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
 
         # Link every button to their function
-        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams2)
+        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams)
         self.radioButtonTherm1.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm2.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm3.clicked.connect(self.refreshTempDepthView)
@@ -120,8 +120,8 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
                             self.botLeftVLayout : (self.umbrella_view, default_message),
                             self.botRightVLayout : (self.tempmap_view, default_message),
                             self.log10KVBox : (self.logk_view, default_message),
-                            self.conductivityVBox : (self.conductivity_view, default_message),
                             self.porosityVBox : (self.porosity_view, default_message),
+                            self.conductivityVBox : (self.conductivity_view, default_message),
                             self.capacityVBox : (self.capacity_view, default_message)}
         return layoutsRules
 
@@ -177,11 +177,11 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         self.logk_view.updateBins(bins)
         self.logk_view.onUpdate()
 
-        self.conductivity_view.updateBins(bins)
-        self.conductivity_view.onUpdate()
-
         self.porosity_view.updateBins(bins)
         self.porosity_view.onUpdate()
+
+        self.conductivity_view.updateBins(bins)
+        self.conductivity_view.onUpdate()
 
         self.capacity_view.updateBins(bins)
         self.capacity_view.onUpdate()
@@ -232,13 +232,13 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
             self.comboBoxSelectLayer.addItem(str(layer))
         if len(layers) > 0:
             # By default, show the parameters associated with the first layer.
-            self.changeDisplayedParams2(layers[0])
+            self.changeDisplayedParams(layers[0])
 
-    def changeDisplayedParams2(self, layer : float):
+    def changeDisplayedParams(self, layer : float):
         """
         Display in the table view the parameters corresponding to the given layer, and update histograms.
         """
-        self.paramsModel = self.coordinator.get_best_params_model(layer)
+        #TODO : show parameters for the current layer?
         #Resize the table view so it looks pretty
         self.coordinator.refresh_params_distr(layer)
 
@@ -355,7 +355,7 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
 
         This function takes into account checkBoxRawData's status and the computation type given by the backend
         """
-        MCMC_layouts = [self.log10KVBox, self.conductivityVBox, self.porosityVBox, self.capacityVBox]
+        MCMC_layouts = [self.log10KVBox, self.porosityVBox, self.conductivityVBox, self.capacityVBox]
         direct_model_layouts = [self.waterFluxVBox, self.advectiveFluxVBox, self.totalFluxVBox, self.conductiveFluxVBox, self.topRightVLayout, self.botLeftVLayout, self.botRightVLayout]
         cleaned_measures_layouts = [self.pressVBox, self.tempVBox]
         all_layouts =  cleaned_measures_layouts + direct_model_layouts + MCMC_layouts
@@ -427,14 +427,15 @@ class SamplingPointViewer(QtWidgets.QWidget, From_SamplingPointViewer):
         Launch the computation of the direct model or the MCMC model, depending on the user's choice.
         '''
 
-        dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine)
+        dlg = DialogCompute(self.coordinator.max_depth(), self.coordinator, self.computeEngine, self.statusNightmode)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             self.coordinator.delete_computations()
             if dlg.computationIsMCMC():
                 #MCMC
-                nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, thresh, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time = dlg.getInputMCMC()
-                self.computeEngine.compute_MCMC(nb_iter, all_priors, nb_cells, quantiles, nb_chains, delta, ncr, c, cstar, remanence, nb_sous_ech_iter, nb_sous_ech_space, nb_sous_ech_time, thresh)
+                paramsMCMC = dlg.getInputMCMC()
+                self.computeEngine.compute_MCMC(paramsMCMC)
+
             else:
                 #Direct Model
                 params, nb_cells = dlg.getInputDirectModel()

@@ -15,7 +15,7 @@ class LabEquipementManager:
         self.shaftModel = ShaftsModel([])
 
         selectLabID = self.build_select_lab_id(labName)
-        selectLabID.exec()
+        if (not selectLabID.exec()) : print(selectLabID.lastError())
         selectLabID.next()
         self.labID = selectLabID.value(0)
 
@@ -35,7 +35,7 @@ class LabEquipementManager:
         """
         select_psensors = self.build_select_psensors()
         psensors = []
-        select_psensors.exec()
+        if (not select_psensors.exec()) : print(select_psensors.lastError())
         while select_psensors.next():
             psensors.append(select_psensors.value(0))
         return psensors
@@ -47,7 +47,7 @@ class LabEquipementManager:
         """
         select_shafts = self.build_select_shafts()
         shafts = []
-        select_shafts.exec()
+        if (not select_shafts.exec()) : print(select_shafts.lastError())
         while select_shafts.next():
             shafts.append(select_shafts.value(0))
         return shafts
