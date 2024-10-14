@@ -83,3 +83,6 @@ SENSOR_FILE_NAMES = {
     SensorType.shafts: 'Svirtual',
     SensorType.temperature_sensors: 'Tvirtual'
 }
+
+# MCMC parametrization
+NITMCMC = 1000

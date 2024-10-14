@@ -705,7 +705,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temperatures = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
         _flows = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
 
-        for _ in trange(1000, desc="Init Mcmc ", file=sys.stdout):
+        for _ in trange(NITMCMC, desc="Init Mcmc ", file=sys.stdout):
             init_layers = all_priors.sample()
             self.compute_solve_transi(init_layers, nb_cells, verbose=False)
             self._states.append(
