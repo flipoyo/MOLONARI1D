@@ -1,0 +1,38 @@
+# The MOLONARI sensor installation tutorial
+## 1. Prerequisites 
+### 1.0. Previously
+To carry out this set-up, you'll need a degree in nuclear physics OR (exclusively) two working hands (minimum one)(or feet).
+### 1.1.Hardware
+- Two [Arduino MKR WAN 1310](https://docs.arduino.cc/hardware/mkr-wan-1310) (data recovery + LoRa transmission)
+- Two waterproof antennas (for connection to MKR WAN 1310)
+- Featherwing SD- RTC Adalogger Module (connect as per instructions below)
+- Micro USB - USB cables or batteries (to power the cards). Note: the USB connection enables power supply and communication with the computer (for the code, and the Serial port). It can also be used to charge a battery connected to the MKR WAN.
+### 1.2. Software
+- Arduino IDE
+- Visual Studio Code (recommended)
+On Arduino IDE, make sure you have installed the following libraries:
+- Arduino Low Power (deep sleep)
+- FlashStorage (Data storage in flash memory)
+- LoRa (LoRa communication)
+- RTCLib (External real-time clock management)
+- RTCZero (Management of the MKR WAN 1310's internal real-time clock) 
+- SD (SD card communication)
+## 2. Connections
+For connections, we strongly advise you to make them on a bread board (in this case, 2 joined together) to ensure very clean connections and avoid having to keep asking yourself whether it's your connections that are causing the problems.
+
+By pinouts we mean the electrical connections between the MKR WAN 1310 (A) and the Featherwing Adalogger (B) (SD + RTC), as well as with the sensors. For greater clarity, you can find pinouts (= maps of the pins on a board) at the following links:
+- Pinout MKR WAN 1310→"Pinout+"
+- Pinout Featherwing
+It's interesting to note that the pins that won't be used on the Featherwing are useless and, above all, connected to nothing. 
+So you can run cables on the breadboard lines associated with these pins (which are not pins).
+
+Each step is detailed later, but here's a diagram that sums it all up: 
+
+![Schéma branchements](Images/schéma_branchement.png)
+### 2.1. The feed section
+Make sure that the battery power supply goes to the Featherwing. 
+This means connecting, as shown in diagram 1:
+- grounds (GND). 
+It is recommended to reserve a line on the breadboard for the use of a common ground (this is a common practice which facilitates wiring and its revision). 
+- pin VCC (A) to port 3.3V (B). Same note as for ground: reserve an entire line for this purpose.2.2. 
+The SD partThere are 4 pairs of pins to connect to ensure communication:The CS pin selected on (A) (we took the 5)* to the SDCS pin (B) The next 3 pins (they ensure SPI communication) are very technical:(A) SCK-SCK (B)(A) MOSI -MOSI (B)
