@@ -11,7 +11,7 @@ class Analy_Sol:
     def __init__( 
         self,
         column_exp : Column,
-        time_series : Time_series,
+        time_series : synthetic_MOLONARI,
         monolayer : Layer,
         nb_cells : int,
     ):
