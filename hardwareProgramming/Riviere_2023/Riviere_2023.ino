@@ -50,10 +50,10 @@ Writer logger;
 const char filename[] = "RIVIERE.CSV";
 
 // --- Sensors ---
-TemperatureSensor tempSensor1(A1, 1);
-TemperatureSensor tempSensor2(A2, 2);
-TemperatureSensor tempSensor3(A3, 3);
-TemperatureSensor tempSensor4(A4, 4);
+TemperatureSensor tempSensor1(A1, 1, 0.5, 100);
+TemperatureSensor tempSensor2(A2, 2, 0.5, 100);
+TemperatureSensor tempSensor3(A3, 3, 0.5, 100);
+TemperatureSensor tempSensor4(A4, 4, 0.5, 100);
 
 
 // ----- Main Setup -----
