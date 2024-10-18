@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-class Time_series:  # on simule un tableau de mesures
+class synthetic_MOLONARI:  # on simule un tableau de mesures
     def __init__(
         self,
         offset: float = CODE_scalar,

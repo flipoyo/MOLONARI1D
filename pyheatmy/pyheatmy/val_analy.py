@@ -2,7 +2,7 @@ import numpy as np
 from typing import Sequence
 
 from pyheatmy.core import Column
-from pyheatmy.time_series import Time_series
+from pyheatmy.pyheatmy.synthetic_MOLONARI import synthetic_MOLONARI
 from pyheatmy.layers import Layer, layersListCreator
 from pyheatmy.config import *
 
