@@ -14,6 +14,8 @@ ABSURD_DATE = "1999/09/09  09:09:09"
 CODE_Temp = 959595
 CODE_scalar = -9999
 
+# param par défaut dans prior
+PARAMBOUND = 1e7
 
 # param par défaut dans time_series.py
 DEFAULT_H_amp = 0.1
@@ -35,6 +37,20 @@ DEFAULT_sigmaT = CODE_scalar
 DEFAULT_time_step = 15  # 15mn
 DEFAULT_period = 1  # 1j
 
+# prior initialisation
+
+MOINSLOG10INTRINK_INTERVAL = (11, 15)
+MOINSLOG10INTRINK_SIGMA = 0.01
+
+N_INTERVAL = (0.01, 0.25)
+N_SIGMA = 0.01
+
+LAMBDA_S_INTERVAL = (1, 5)
+LAMBDA_S_SIGMA = 0.1
+
+RHOS_CS_INTERVAL = (1e6, 1e7)  # Ensure PARAMBOUND is defined in config.py
+RHOS_CS_SIGMA = 1e5
+
 # param par défaut dans pyheatmy.py
 DEFAULT_sensor_depth = [0.1, 0.2, 0.3, 0.4]
 
@@ -48,6 +64,14 @@ N_UPDATE_MU = 96
 MU = 1e-3
 MU_W = 1e-3
 ZERO_CELSIUS = 273.15
+QUANTILE_MIN=0.05
+MEDIANE=0.5
+QUANTILE_MAX=0.95
+N_PARAM_MCMC=4
+
+
+
+
 
 class DeviceType(Enum):
     PRESSURE = 1
@@ -63,6 +87,11 @@ DEVICE_FILE_NAMES = {
 class ClassType(Enum):
     COLUMN = 1
     TIME_SERIES = 2
+
+class RangeType(Enum):
+    MIN = 0
+    MAX = 1
+
 
 # Dictionary mapping SensorType to file names
 CLASS_FILE_NAMES = {
@@ -83,3 +112,6 @@ SENSOR_FILE_NAMES = {
     SensorType.shafts: 'Svirtual',
     SensorType.temperature_sensors: 'Tvirtual'
 }
+
+# MCMC parametrization
+NITMCMC = 1000

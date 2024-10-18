@@ -26,17 +26,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     def __init__(
         self,
         river_bed: float ,  # profondeur de la colonne en mètres
-        # profondeur des capteurs de températures en mètres
-        depth_sensors: Sequence[float],
+        depth_sensors: Sequence[float], # profondeur des capteurs de températures en mètres
         offset: float,  # correspond au décalage du capteur de température par rapport au lit de la rivière
-        # liste contenant un tuple avec la date, la charge et la température au sommet de la colonne
-        dH_measures: list,
+        dH_measures: list, # liste contenant un tuple avec la date, la charge et la température au sommet de la colonne
         T_measures: list,  # liste contenant un tuple avec la date et la température aux points de mesure de longueur le nombre de temps mesuré
         sigma_meas_P: float,  # écart type de l'incertitude sur les valeurs de pression capteur
         sigma_meas_T: float,  # écart type de l'incertitude sur les valeurs de température capteur
-        # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
-        inter_mode: str = "linear",
-        eps=10**-9,
+        inter_mode: str = "linear", # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
+        eps=EPSILON,
         rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default,
         verbose=False
     ):
@@ -657,7 +654,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ],
         ],
         nb_cells: int,
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         verbose=True,
         sigma2=1.0,
     ):
@@ -705,7 +702,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temperatures = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
         _flows = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
 
-        for _ in trange(1000, desc="Init Mcmc ", file=sys.stdout):
+        for _ in trange(NITMCMC, desc="Init Mcmc ", file=sys.stdout):
             init_layers = all_priors.sample()
             self.compute_solve_transi(init_layers, nb_cells, verbose=False)
             self._states.append(
@@ -776,7 +773,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ],
         ],
         nb_cells: int,
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         verbose=True,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
     ):
@@ -898,7 +895,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ],
         ],
         nb_cells: int,
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         verbose=False,
         sigma2=1.0,
         nb_chain=10,
@@ -930,7 +927,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # quantités des différents paramètres
         nb_layer = len(all_priors)  # nombre de couches
-        nb_param = 4  # nombre de paramètres à estimer par couche
+        nb_param = N_PARAM_MCMC  # nombre de paramètres à estimer par couche
         nb_accepted = 0  # nombre de propositions acceptées
         nb_burn_in_iter = 0  # nombre d'itération de burn-in
 
@@ -1274,7 +1271,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ],
         nb_cells: int,  # le nombre de cellules de la colonne
         # les quantiles pour l'affichage de stats sur les valeurs de température
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         nb_chain: int = 5,
         delta=2,
         ncr=3,
