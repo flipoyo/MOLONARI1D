@@ -26,11 +26,22 @@ jobs:
       with:
         python-version: ${{ matrix.pyver }}
 
-    - name: Install pytest
-      run: pip install pytest
+    - name: Install dev dependencies
+      run: pip install pytest nbmake
 
     - name: Install ${{ matrix.module }}
       run: pip install ${{ matrix.module }}/
 
     - name: Test ${{ matrix.module }}
       run: pytest ${{ matrix.module }}
+
+    - name: Test Jupyter Notebooks
+      if: matrix.module == 'pyheatmy'
+      run: |
+        mkdir pyheatmy/images
+        pytest --nbmake \
+          pyheatmy/demoPyheatmy.ipynb \
+          pyheatmy/pyheatmy/DREAM_v1.ipynb \
+          pyheatmy/pyheatmy/DREAM_v3.ipynb \
+          pyheatmy/research/synthetic_cases_generator/demo_genData.ipynb
+      shell: bash
