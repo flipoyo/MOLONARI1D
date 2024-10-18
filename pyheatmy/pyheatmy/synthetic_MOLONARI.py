@@ -39,7 +39,7 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
         self._param_T_aq = param_T_aq_signal
         self._sigma_P = sigma_meas_P
         self._sigma_T = sigma_meas_T
-        print("Initializing time series")
+        print("Initializing time series of synthetic_MOLONARI")
         print("param_time_dates:", self._param_dates)
         print("param_dH_signal:", self._param_dH)
         print("param_T_riv_signal:", self._param_T_riv)
