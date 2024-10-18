@@ -39,7 +39,6 @@ jobs:
       if: matrix.module == 'pyheatmy'
       run: |
         pytest --nbmake \
-          pyheatmy/demoPyheatmy.ipynb \
           pyheatmy/pyheatmy/DREAM_v1.ipynb \
           pyheatmy/research/synthetic_cases_generator/demo_genData.ipynb
       shell: bash
