@@ -86,8 +86,8 @@ if __name__ == "__main__":
         return 1 / x
 
     priors = {
-        "moinslog10IntrinK": ((11, 15), 0.01),  # (intervalle, sigma)
-        "n": ((0.01, 0.25), 0.01),
+        "moinslog10IntrinK": ((10, 15), 0.01),  # (intervalle, sigma)
+        "n": ((0.005, 0.20), 0.01),
         "lambda_s": ((1, 5), 0.1),
         "rhos_cs": ((1e6, 1e7), 1e5),
     }

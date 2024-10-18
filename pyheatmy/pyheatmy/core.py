@@ -36,7 +36,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         sigma_meas_T: float,  # écart type de l'incertitude sur les valeurs de température capteur
         # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         inter_mode: str = "linear",
-        eps=10**-9,
+        eps=EPSILON,
         rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default,
         verbose=False
     ):
@@ -657,7 +657,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ],
         ],
         nb_cells: int,
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         verbose=True,
         sigma2=1.0,
     ):
@@ -776,7 +776,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ],
         ],
         nb_cells: int,
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         verbose=True,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
     ):
@@ -898,7 +898,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ],
         ],
         nb_cells: int,
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         verbose=False,
         sigma2=1.0,
         nb_chain=10,
@@ -930,7 +930,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # quantités des différents paramètres
         nb_layer = len(all_priors)  # nombre de couches
-        nb_param = 4  # nombre de paramètres à estimer par couche
+        nb_param = NB_PARAM  # nombre de paramètres à estimer par couche
         nb_accepted = 0  # nombre de propositions acceptées
         nb_burn_in_iter = 0  # nombre d'itération de burn-in
 
@@ -1274,7 +1274,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ],
         nb_cells: int,  # le nombre de cellules de la colonne
         # les quantiles pour l'affichage de stats sur les valeurs de température
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
+        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         nb_chain: int = 5,
         delta=2,
         ncr=3,
