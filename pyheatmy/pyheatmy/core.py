@@ -32,8 +32,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         T_measures: list,  # liste contenant un tuple avec la date et la température aux points de mesure de longueur le nombre de temps mesuré
         sigma_meas_P: float,  # écart type de l'incertitude sur les valeurs de pression capteur
         sigma_meas_T: float,  # écart type de l'incertitude sur les valeurs de température capteur
-        # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
-        inter_mode: str = "linear",
+        inter_mode: str = "linear", # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         eps=EPSILON,
         rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default,
         verbose=False
