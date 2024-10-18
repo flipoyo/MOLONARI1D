@@ -18,7 +18,7 @@ MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 20
 - Aurelien Baudin and Agnès Rivière supervise the **monitoring device development** and their **_in situ_ deployment**
 - Nicolas Flipo and Thomas Romary supervise the development of **pyheatmy**
 - Fabien Ors contributed to the 2021 and 2022 editions by conceptualising **molonaviz**, and since 2024 securizing it
-- Since 2024, Pierre Guillou secure the software deployment
+- Since 2024, Pierre Guillou secures the software deployment
 
 The MOLONARI1D project is integrated into the french project [EQUIPEX+ TERRA FORMA](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires "link to TERRA FORMA") led by CNRS. 
 
