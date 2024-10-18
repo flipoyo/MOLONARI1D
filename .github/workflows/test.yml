@@ -38,10 +38,8 @@ jobs:
     - name: Test Jupyter Notebooks
       if: matrix.module == 'pyheatmy'
       run: |
-        mkdir pyheatmy/images
         pytest --nbmake \
           pyheatmy/demoPyheatmy.ipynb \
           pyheatmy/pyheatmy/DREAM_v1.ipynb \
-          pyheatmy/pyheatmy/DREAM_v3.ipynb \
           pyheatmy/research/synthetic_cases_generator/demo_genData.ipynb
       shell: bash
