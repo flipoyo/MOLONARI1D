@@ -24,30 +24,30 @@ class Prior:
     def perturb(self, val):  # perturbe la valeur d'un paramètre en respectant le prior
         # perturbation dans le  cadre d'une mcmc classique
         new_val = val + gauss(0, self.sigma)
-        while new_val > self.range[1]:
-            new_val = self.range[0] + (new_val - self.range[1]) % (
-                self.range[1] - self.range[0]
+        while new_val > self.range[RangeType.MAX.value]:
+            new_val = self.range[RangeType.MIN.value] + (new_val - self.range[1]) % (
+                self.range[RangeType.MAX.value] - self.range[RangeType.MIN.value]
             )
-        while new_val < self.range[0]:
-            new_val = self.range[1] - (self.range[0] - new_val) % (
-                self.range[1] - self.range[0]
+        while new_val < self.range[RangeType.MIN.value]:
+            new_val = self.range[RangeType.MAX.value] - (self.range[RangeType.MIN.value] - new_val) % (
+                self.range[RangeType.MAX.value] - self.range[RangeType.MIN.value]
             )
         return new_val
 
     def sample(self):  # retourne de manière uniforme un nombre de l'intervalle
-        if self.range[0] > -inf and self.range[1] < inf:
+        if self.range[RangeType.MIN.value] > -inf and self.range[RangeType.MAX.value] < inf:
             return uniform(*self.range)
-        elif self.range[0] > -inf:
+        elif self.range[RangeType.MIN.value] > -inf:
             # better choices possible : arctan(uniform)
-            return 1 / uniform(self.range[0], 1e7)
-        elif self.range[1] < inf:
-            return 1 / uniform(-1e7, self.range[1])
+            return 1 / uniform(self.range[RangeType.MIN.value], PARAMBOUND)
+        elif self.range[RangeType.MAX.value] < inf:
+            return 1 / uniform(-PARAMBOUND, self.range[RangeType.MAX.value])
         else:
-            1 / uniform(-1e7, 1e7)
+            1 / uniform(-PARAMBOUND, PARAMBOUND)
 
     def __repr__(self) -> str:
         return (
-            f"Prior sur une valeure qui évolue entre {self.range[0]} et {self.range[1]}"
+            f"Prior sur une valeure qui évolue entre {self.range[RangeType.MIN.value]} et {self.range[1]}"
         )
 
 
@@ -86,11 +86,12 @@ if __name__ == "__main__":
         return 1 / x
 
     priors = {
-        "moinslog10IntrinK": ((11, 15), 0.01),  # (intervalle, sigma)
-        "n": ((0.01, 0.25), 0.01),
-        "lambda_s": ((1, 5), 0.1),
-        "rhos_cs": ((1e6, 1e7), 1e5),
+        "moinslog10IntrinK": (MOINSLOG10INTRINK_INTERVAL, MOINSLOG10INTRINK_SIGMA),  # (intervalle, sigma)
+        "n": (N_INTERVAL, N_SIGMA),
+        "lambda_s": (LAMBDA_S_INTERVAL, LAMBDA_S_SIGMA),
+        "rhos_cs": (RHOS_CS_INTERVAL, RHOS_CS_SIGMA),
     }
+
     priors1 = ParamsPriors(
         [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
     )
