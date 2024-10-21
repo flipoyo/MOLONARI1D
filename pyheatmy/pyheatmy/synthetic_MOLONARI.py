@@ -241,10 +241,14 @@ def convert_period_in_second(period, unit):
         return period * NSECINMIN
     elif unit == 'h':
         return period * NSECINHOUR
-    elif unit == 'j':
+    elif unit == 'd':
         return period * NSECINDAY
+    elif unit == 'm':
+        return period * NDAYINMONTH * NSECINDAY
+    elif unit == 'y':
+        return period * NDAYINYEAR * NSECINDAY
     else:
-        raise ValueError(f"Unit {unit} not recognized. Please use 's', 'min', 'h', or 'j'.")
+        raise ValueError(f"Unit {unit} not recognized. Please use 's' for seconds, 'min' for minutes, 'h' for hours, 'd' for days, 'm' for month or 'y' for year.")
 
 
 
