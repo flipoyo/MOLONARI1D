@@ -232,7 +232,23 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
 #         else:
 #             print("Type not recognized")
 
+#Ajout d'une fonction pour convertir une période d'unité donnée en secondes
 
+def convert_period_in_second(period, unit):
+    if unit == 's':
+        return period
+    elif unit == 'min':
+        return period * NSECINMIN
+    elif unit == 'h':
+        return period * NSECINHOUR
+    elif unit == 'd':
+        return period * NSECINDAY
+    elif unit == 'm':
+        return period * NDAYINMONTH * NSECINDAY
+    elif unit == 'y':
+        return period * NDAYINYEAR * NSECINDAY
+    else:
+        raise ValueError(f"Unit {unit} not recognized. Please use 's' for seconds, 'min' for minutes, 'h' for hours, 'd' for days, 'm' for month or 'y' for year.")
 
 
 
