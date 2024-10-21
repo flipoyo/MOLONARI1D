@@ -37,6 +37,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         inter_mode: str = "linear",
         eps=10**-9,
+        heat_source = np.ndarray,
         rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default,
         verbose=False
     ):
@@ -55,6 +56,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self._T_aq = np.array([t[-1] for _, t in T_measures])
         # récupère la liste de températures des capteurs (au cours du temps)
         self._T_measures = np.array([t[:-1] for _, t in T_measures])
+
+        # Appel du terme source
+        self._heat_source = heat_source
+        
 
         # décale d'un offset les positions des capteurs de température (aussi riviere)
         self._real_z = np.array([0] + depth_sensors) + offset

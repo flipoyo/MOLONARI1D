@@ -119,6 +119,7 @@ class T_stratified:
         T_aq,
         alpha=ALPHA,
         N_update_Mu=N_UPDATE_MU,
+        heat_source
     ):
         self.a = a
         self.Ss_list = Ss_list
@@ -156,6 +157,7 @@ class T_stratified:
         print("a", self.T_res)
         self.T_res[:, 0] = self.T_init
         self.compute_T_stratified()
+        self.heat_source = heat_source
 
     def compute_Mu(self, T):
         """
@@ -264,6 +266,7 @@ class T_stratified:
             )
             * self.T_aq[j]
         )
+        c += self.heat_source[:,j]
         return c
 
     def _compute_A_diagonals(self):
@@ -328,6 +331,7 @@ class H_stratified:
         H_riv,
         H_aq,
         alpha=ALPHA,
+        heat_source
     ):
         self.array_K = array_K
         self.array_Ss = array_Ss
@@ -353,6 +357,7 @@ class H_stratified:
         self.KsurSs_list = self.K_list / Ss_list
         self.dK_list = self.compute_dK_list()
         self.compute_H_stratified()
+        self.heat_source = heat_source
 
     def compute_Mu(self, T):
         A = 1.856e-11 * 1e-3
@@ -547,6 +552,7 @@ class H_stratified:
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
+        c += self.heat_source[:,j]
         return c
 
 
@@ -799,6 +805,7 @@ class HTKStratified:
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
+        c += self.heat_source[:, j]
         return c
 
 
