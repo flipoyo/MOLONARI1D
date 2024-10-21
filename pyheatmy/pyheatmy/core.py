@@ -1015,6 +1015,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 x_new = np.zeros((nb_layer, nb_param))
                 dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
                 for l in range(nb_layer):
+
+                    if np.isnan(pcr[l]).any():
+                        raise ValueError("NaN values in pcr[l].")
+
                     # actualiation des paramètres DREAM pour la couche l
                     id = np.random.choice(ncr, p=pcr[l])
                     z = np.random.uniform(0, 1, nb_param)
