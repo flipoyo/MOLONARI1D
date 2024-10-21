@@ -1,15 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pyheatmy.synthetic_MOLONARI import *
+from synthetic_MOLONARI import *
 from pyheatmy.config import *
+from utils import create_periodic_signal
+
 
 # à mettre dans utils (?)
 def two_column_array(a1, a2):
     assert len(a1) == len(a2), "t and T must have the same length"
-    L = np.zeros((2, len(a1)))
-    L[0] = a1
-    L[1] = a2
-    return L
+    return np.array([a1, a2])
 
 
 class time_series_multiperiodic:
@@ -27,32 +26,39 @@ class time_series_multiperiodic:
             return "This is not a time series"
 
     def create_multiperiodic_signal(
-        self, amplitude, period, time_step, offset=DEFAULT_T_riv_offset, duration=0, verbose=True
-    ): #duration = 0 means that duration will be taken as 2 times the largest period
+        self, amplitude, periods, dates, dt, offset=DEFAULT_T_riv_offset, verbose=True
+    ):
         if self.type == "multi_periodic":
             assert len(amplitude) == len(
-                period
-            ), "amplitude and period must have the same length"
+                periods
+            ), "amplitude and periods must have the same length"
             if verbose:
                 print(
                     "Creating a multi-periodic signal, with the following period:",
-                    period,
+                    periods,
                     "and the following amplitude:",
                     amplitude,
                 )
-            for i in range(len(period)):
-                period[i]=convert_period_in_second(period[i][0],period[i][1])
-                print(period[i])
-            if duration == 0:
-                duration = max(period) * 2
-            number_of_points = int(duration // time_step)
+            for i in range(len(periods)):
+                periods[i] = convert_period_in_second(periods[i][0], periods[i][1])
+                print("periods :", periods)
+            T = create_periodic_signal(
+                dates,
+                dt,
+                [amplitude[0], periods[0], offset],
+                signal_name="TBD",
+                verbose=False,
+            )
 
-            t = np.array([i * time_step for i in range(number_of_points)])
-            T = np.zeros(number_of_points)
-            T += offset
-            for i in range(len(amplitude)):
-                T += amplitude[i] * np.sin(2 * np.pi / period[i] * t)
-            self.multi_periodic = two_column_array(t, T)
+            for i in range(1, len(amplitude)):
+                T += create_periodic_signal(
+                    dates,
+                    dt,
+                    [amplitude[i], periods[i], 0],
+                    signal_name="TBD",
+                    verbose=False,
+                )
+            self.multi_periodic = two_column_array(dates, T)
         else:
             return "This is not a multi-periodic type"
 
@@ -66,13 +72,22 @@ class time_series_multiperiodic:
 
         plt.plot(a[0], a[1])
         plt.title("Temperature profile")
-        plt.xlabel("time : " + str(time_unit))
+        plt.xlabel("date")
         plt.ylabel("temperature : °C")
         plt.show()
 
 
 # testing
 if __name__ == "__main__":
+    from datetime import datetime, timedelta
+
+    timestamp = 1485714600
+    date_0 = datetime.fromtimestamp(timestamp)
+    step = timedelta(days=2, hours=3)
+    dates = [date_0 + i * step for i in range(1000)]
+
     mp_ts = time_series_multiperiodic("multi_periodic")
-    mp_ts.create_multiperiodic_signal([10, 8, 9], [[5,'h'], [10, 'm'], [7, 'd']], time_step=15*NSECINMIN)
+    mp_ts.create_multiperiodic_signal(
+        [10, 5, 3], [[1, "y"], [2, "m"], [21, "d"]], dates, dt=2 * 86400 + 3 * 3600
+    )
     mp_ts.plot()
