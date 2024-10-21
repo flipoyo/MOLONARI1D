@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from pyheatmy.synthetic_MOLONARI import *
+from pyheatmy.config import *
 
 # à mettre dans utils (?)
 def two_column_array(a1, a2):
@@ -26,8 +27,8 @@ class time_series_multiperiodic:
             return "This is not a time series"
 
     def create_multiperiodic_signal(
-        self, amplitude, period, time_step, offset=12, duration=0, verbose=True
-    ):
+        self, amplitude, period, time_step, offset=DEFAULT_T_riv_offset, duration=0, verbose=True
+    ): #duration = 0 means that duration will be taken as 2 times the largest period
         if self.type == "multi_periodic":
             assert len(amplitude) == len(
                 period
@@ -39,6 +40,9 @@ class time_series_multiperiodic:
                     "and the following amplitude:",
                     amplitude,
                 )
+            for i in range(len(period)):
+                period[i]=convert_period_in_second(period[i][0],period[i][1])
+                print(period[i])
             if duration == 0:
                 duration = max(period) * 2
             number_of_points = int(duration // time_step)
@@ -70,5 +74,5 @@ class time_series_multiperiodic:
 # testing
 if __name__ == "__main__":
     mp_ts = time_series_multiperiodic("multi_periodic")
-    mp_ts.create_multiperiodic_signal([10, 8, 9], [5, 10, 7], 0.01)
+    mp_ts.create_multiperiodic_signal([10, 8, 9], [[5,'h'], [10, 'm'], [7, 'd']], time_step=15*NSECINMIN)
     mp_ts.plot()
