@@ -1015,6 +1015,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 x_new = np.zeros((nb_layer, nb_param))
                 dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
                 for l in range(nb_layer):
+
+                    if np.isnan(pcr[l]).any():
+                        raise ValueError("NaN values in pcr[l].")
+
                     # actualiation des paramètres DREAM pour la couche l
                     # Vérifications avant d'appeler np.random.choice
                     #NF issue 85. DemoPyheatmy n'utilise pas DREAM. Mauvaise initialisation quelque part
