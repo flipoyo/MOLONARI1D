@@ -15,23 +15,27 @@ class time_series_multiperiodic :
         assert type in ['ts', 'mutli_periodic'], 'type must be either ts or multi_periodic'
         self.type = type
     
-    if type == 'ts' :
         def values_time_series(self, t, T):
-            self.time_series = two_column_array(t, T)
+            if self.type == 'ts' :
+                self.time_series = two_column_array(t, T)
+            else :
+                return 'This is not a time series'
 
-    if type == 'multi_periodic' :
         def create_mutiperiodic_signal(self, amplitude, period, number_of_points, offset=12, verbose=True):
-            assert len(amplitude)==len(period), 'amplitude and period must have the same length'
-            if verbose : 
-                print('Creating a multi-periodic signal, with the following period:', period, 'and the following amplitude:', amplitude)
-            p_max = max(period)
-            step = p_max / number_of_points
-            t = np.array([i*step for i in range(number_of_points)])
-            T = np.zeros(number_of_points)
-            T += offset
-            for i in range(len(amplitude)):
-                T += amplitude[i] * np.sin(2*np.pi/period[i]*t)
-            self.multi_periodic = two_column_array(t, T)
+             if self.type == 'multi_periodic' :
+                assert len(amplitude)==len(period), 'amplitude and period must have the same length'
+                if verbose : 
+                    print('Creating a multi-periodic signal, with the following period:', period, 'and the following amplitude:', amplitude)
+                p_max = max(period)
+                step = p_max / number_of_points
+                t = np.array([i*step for i in range(number_of_points)])
+                T = np.zeros(number_of_points)
+                T += offset
+                for i in range(len(amplitude)):
+                    T += amplitude[i] * np.sin(2*np.pi/period[i]*t)
+                self.multi_periodic = two_column_array(t, T)
+             else :
+                return 'This is not a multi-periodic type'
     
     def plot(self, a, time_unit = 's'):
         assert a.ndim == 2 and len(a[0]) == len(a[1]), 'a must be a n * 2 array'
