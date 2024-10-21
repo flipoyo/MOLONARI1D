@@ -1282,7 +1282,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_cells: int,  # le nombre de cellules de la colonne
         # les quantiles pour l'affichage de stats sur les valeurs de température
         quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
-        nb_chain: int = 5,
+        nb_chain: int = 1,
         delta=2,
         ncr=3,
         c=0.1,
