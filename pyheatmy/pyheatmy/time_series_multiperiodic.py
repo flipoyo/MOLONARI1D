@@ -15,4 +15,7 @@ class time_series_multiperiodic :
             self.time_series = L
 
     if type == 'multi_periodic' :
-        def create_mutiperiodic_signal()
+        def create_mutiperiodic_signal(self, offset=12, duration, step, amplitude, period):
+            assert len(amplitude)==len(period), 'amplitude and period must have the same length'
+            assert duration%step==0, 'duration must be a multiple of step'
+            
