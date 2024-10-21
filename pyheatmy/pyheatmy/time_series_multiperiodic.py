@@ -20,8 +20,10 @@ class time_series_multiperiodic :
             self.time_series = two_column_array(t, T)
 
     if type == 'multi_periodic' :
-        def create_mutiperiodic_signal(self, amplitude, period, number_of_points, offset=12):
+        def create_mutiperiodic_signal(self, amplitude, period, number_of_points, offset=12, verbose=True):
             assert len(amplitude)==len(period), 'amplitude and period must have the same length'
+            if verbose : 
+                print('Creating a multi-periodic signal, with the following period:', period, 'and the following amplitude:', amplitude)
             p_max = max(period)
             step = p_max / number_of_points
             t = np.array([i*step for i in range(number_of_points)])
@@ -31,9 +33,9 @@ class time_series_multiperiodic :
                 T += amplitude[i] * np.sin(2*np.pi/period[i]*t)
             self.multi_periodic = two_column_array(t, T)
     
-    def plot(a, time_unit = 's'):
+    def plot(self, a, time_unit = 's'):
         assert a.ndim == 2 and len(a[0]) == len(a[1]), 'a must be a n * 2 array'
-        assert type(time_unit) == str, 'time_unit musty be of type str'
+        assert type(time_unit) == str, 'time_unit must be of type str'
         plt.plot(a[0], a[1])
         plt.title("Temperature profile")
         plt.xlabel("time" + str(time_unit))
