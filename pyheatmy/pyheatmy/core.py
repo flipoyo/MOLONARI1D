@@ -1016,6 +1016,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
                 for l in range(nb_layer):
                     # actualiation des paramètres DREAM pour la couche l
+                    # Vérifications avant d'appeler np.random.choice
+                    #NF issue 85. DemoPyheatmy n'utilise pas DREAM. Mauvaise initialisation quelque part
+                    if not ncr:
+                        raise ValueError("ncr est vide.")
+                    if l >= len(pcr):
+                        raise IndexError("Index l est en dehors des limites de pcr.")
+                    if np.isnan(pcr[l]).any():
+                        raise ValueError("pcr[l] contient des valeurs NaN.")
+                    if not np.isclose(sum(pcr[l]), 1):
+                        raise ValueError("Les probabilités dans pcr[l] ne sont pas normalisées.")
                     id = np.random.choice(ncr, p=pcr[l])
                     z = np.random.uniform(0, 1, nb_param)
                     A = z <= cr_vec[id]
