@@ -1030,7 +1030,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     choose = np.delete(np.arange(nb_chain), a)
                     b = np.random.choice(choose, delta, replace=False)
 
-                    gamma = 2.38 / np.sqrt(2 * d_star * delta)
+                    gamma = GAMMA_FACTOR / np.sqrt(2 * d_star * delta)
                     gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
                     dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
                         X[a, l][:, A] - X[b, l][:, A], axis=0
@@ -1149,7 +1149,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     a = np.random.choice(choose, delta, replace=False)
                     choose = np.delete(np.arange(nb_chain), a)
                     b = np.random.choice(choose, delta, replace=False)
-                    gamma = 2.38 / np.sqrt(2 * d_star * delta)
+                    gamma = GAMMA_FACTOR / np.sqrt(2 * d_star * delta)
                     gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
                     dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
                         X[a, l][:, A] - X[b, l][:, A], axis=0
