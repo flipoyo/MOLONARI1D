@@ -45,9 +45,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         inter_mode: str = "linear",
         eps=10**-9,
-        heat_source = np.ndarray,
-        rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default,
-        verbose=False
+        heat_source=np.ndarray,
+        rac="~/OUTPUT_MOLONARI1D/generated_data",  # printing directory by default,
+        verbose=False,
     ):
 
         self._dir_print = create_dir(
@@ -69,7 +69,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # Appel du terme source
         self._heat_source = heat_source
-        
 
         # décale d'un offset les positions des capteurs de température (aussi riviere)
         self._real_z = np.array([0] + depth_sensors) + offset
@@ -261,11 +260,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             )
             Ss_list = n_list / heigth
             ##
-            print("initialization done")
             a = 1  # à adapter
             # alpha = 0.3  # à adapter
             # N_update_Mu = 100  # à adapter
-            initialization = Initialization(
+            linear_system = Linear_system(
                 a,
                 Ss_list,
                 moinslog10IntrinK_list,
@@ -286,9 +284,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 z_solve,
                 inter_cara,
                 isdtconstant,
-                heatsource
+                heatsource,
             )
-            H_res = initialization.H_stratified.H_res
+            H_res = linear_system.H_stratified.H_res
 
             # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
             nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
@@ -300,7 +298,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
 
-            T_res = initialization.get_T
+            T_res = linear_system.get_T
 
             # calcule toutes les températures à tout temps et à toute profondeur
 
