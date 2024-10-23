@@ -115,3 +115,5 @@ SENSOR_FILE_NAMES = {
 
 # MCMC parametrization
 NITMCMC = 1000
+
+PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs") #a priori sigma2 a un statut particulier
