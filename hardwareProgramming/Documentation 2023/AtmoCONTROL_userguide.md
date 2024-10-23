@@ -104,18 +104,13 @@ To load the program, you should first touch the "MENU" to go into the "PROG". Th
 
 The above user guide is not complete. If you have other needs, please refer to https://www.memmert.be/wp-content/uploads/2019/10/AtmoCONTROL-.pdf
 
-### 2.4 Program exemple
-We use the function $T=-a\sin{\left(\frac{2\pi}{24}h\right)}+b$ to represent the way of daily temperature change in a region.
+### 2.4 Parameters to simulate a day
+We use the function $T=-a\sin{\left(\frac{2\pi}{24}h\right)}+b$ to represent the way of daily temperature change in a region, with $a$ half of the daily temperature change and $b$ the average temperature of a day.
 
-We want to convert the sinus function into straight lines so that the climate chamber could work to simulate the daily change. We take the average temperature of Paris on a random day of $20℃$ and the diurnal temperature range of about $8℃$ as example. So here we take $a=4$ and $b=20$. 
+We want to convert the sinus function into straight lines so that the climate chamber could work to simulate the daily change. We want to form the shape of a trapezoid with the same area as the sinus function, as shown in the picture below. 
 
-With the function, we can integrate and get the area above $T=20$, which is $30.56$. We would like to form the same area above and below average with straight lines.
+![DailyT](./Images/sinus_to_trapezoid.jpg)
 
-![DailyT](./Images/dailyT.jpg)
+Here we take the slope the same as the deviation of the function at the point $h=0$, and the height of the trapezoid as $2a$ so we could easily achieve the goal. In the AtmoCONTROL_param program we made all the calculation in two parts. The first part of the program needs you to input your average temperature and the temperature difference. The second part of the program has the highest temprerature set at 25℃, and the lowest temperature varies with your input temperature difference. You could go there and input the situation you want to simulate and directly get the result as a shape of trapezoid, and set the AtmoCONTROL as being told.
 
- With the graph of three day’s temperature change above, we can get the heating rate is approximately three times higher than the cooling rate. By calculating the trapezoid size, we will have the following result as an example: 
-
-We start the climate chamber at the simulation of 8am, when the sun starts to heat the earth, we experience a climbing temperature of 4 hours 22 minutes from $16℃$ to $24℃$. Then we maintain the temperature at $24℃$ for 3 hours 28 minutes. Now it should be around 4pm in the afternoon, the temperature starts to decrease slowly, so we set the climate chamber to cool down for 13 hours 4 minutes to reach $16℃$, until it’s early morning again, and the temperature stays at $16℃$ for 3 hours 28 minutes, before the next 8am arrives. We can identify that this model looks pretty similar to the temperature change on the graph above based on the real statistics
-
-In this case, we can successfully simulate the temperature change of one day in Paris, for winter or summer we could simply replace $16-24℃$ by for example $6-14℃$ or $22-30℃$.
 
