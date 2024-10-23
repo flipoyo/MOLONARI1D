@@ -164,7 +164,6 @@ void loop() {
   // Serial.println("sleep time: " + String(sleepTime));
 
   // Close the serial port before entering low power mode
-  Serial.println("");
   Serial.end();
   waiter.sleepUntil(sleepTime);
 

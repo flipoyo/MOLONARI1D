@@ -27,8 +27,8 @@ public :
         unsigned long time_to_wait = (millis() - starting_time) + desired_waiting_time;
         
         // Test code
-        // Serial.println("Sleeping for " + String(time_to_wait) + " ms");
-
+        Serial.println("Sleeping for " + String(time_to_wait) + " ms");
+        Serial.println("");
         MyLowPower.Sleep(time_to_wait);
     }
 
