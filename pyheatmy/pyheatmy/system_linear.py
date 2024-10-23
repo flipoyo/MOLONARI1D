@@ -802,3 +802,7 @@ class HTKStratified:
         )
         c += self.heat_source[:, j]
         return c
+
+
+if __name__ == "__main__":
+    print(1)

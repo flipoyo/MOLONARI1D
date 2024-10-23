@@ -226,6 +226,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 self._dH
             )  # self.dH contient déjà les charges de la rivière à tout temps, stocke juste dans une variable locale
 
+            heatsource = self._heat_source
+
             # crée les températures initiales (t=0) sur toutes les profondeurs (milieu des cellules)
             if self.inter_mode == "lagrange":
                 T_init = np.array([self.lagr(z) for z in self._z_solve])
@@ -284,6 +286,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 z_solve,
                 inter_cara,
                 isdtconstant,
+                heatsource
             )
             H_res = initialization.H_stratified.H_res
 
@@ -296,7 +299,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
 
             nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
-            
+
             T_res = initialization.get_T
 
             # calcule toutes les températures à tout temps et à toute profondeur
