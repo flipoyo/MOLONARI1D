@@ -34,6 +34,7 @@ class Initialization:
         z_solve,
         inter_cara,
         isdtconstant,
+        heatsource,
         alpha=ALPHA,
         N_update_Mu=N_UPDATE_MU,
     ):
@@ -53,6 +54,7 @@ class Initialization:
             H_init,
             H_riv,
             H_aq,
+            heatsource,
             alpha=ALPHA,
         )
         self.nablaH = self.H_stratified.nablaH
@@ -72,8 +74,9 @@ class Initialization:
         #     T_init,
         #     T_riv,
         #     T_aq,
+        #     heatsource,
         #     alpha,
-        #     N_update_Mu,
+        #     N_update_Mu)
         # )
         # self.HTK_stratified = HTKStratified(
         #     lambda_s_list,
@@ -87,6 +90,7 @@ class Initialization:
         #     H_init,
         #     H_riv,
         #     H_aq,
+        #     heatsource
         #     alpha,
         # )
 
@@ -124,6 +128,7 @@ class T_stratified:
         T_init,
         T_riv,
         T_aq,
+        heatsource,
         alpha=ALPHA,
         N_update_Mu=N_UPDATE_MU,
     ):
@@ -144,6 +149,7 @@ class T_stratified:
         self.T_aq = T_aq
         self.alpha = alpha
         self.N_update_Mu = N_update_Mu
+        self.heat_source = heatsource
         self.mu_list = compute_Mu(self.T_init)
         self.rho_mc_m_list = (
             self.n_list * RHO_W * C_W + (1 - self.n_list) * self.rhos_cs_list
@@ -246,7 +252,7 @@ class T_stratified:
             * self.ae_list[self.n_cell - 1]
             * self.nablaH[self.n_cell - 1, j]
             / (3 * self.dz)
-            * T_aq[j + 1]
+            * self.T_aq[j + 1]
             + (
                 8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
                 + 2
@@ -257,6 +263,7 @@ class T_stratified:
             )
             * self.T_aq[j]
         )
+        c += self.heat_source[:, j]
         return c
 
     def _compute_A_diagonals(self):
@@ -320,6 +327,7 @@ class H_stratified:
         H_init,
         H_riv,
         H_aq,
+        heat_source,
         alpha=ALPHA,
     ):
         self.array_K = array_K
@@ -337,6 +345,7 @@ class H_stratified:
         self.H_riv = H_riv
         self.H_aq = H_aq
         self.alpha = alpha
+        self.heat_source = heat_source
         self.n_cell = len(H_init)
         self.n_times = len(all_dt) + 1
         self.H_res = zeros((self.n_cell, self.n_times), float32)
@@ -544,6 +553,7 @@ class H_stratified:
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
+        c += self.heat_source[:, j]
         return c
 
 
@@ -567,6 +577,7 @@ class HTKStratified:
         H_init,
         H_riv,
         H_aq,
+        heatsource,
         alpha=ALPHA,
     ):
         self.lambda_s_list = lambda_s_list
@@ -587,6 +598,7 @@ class HTKStratified:
         self.H_riv = H_riv
         self.H_aq = H_aq
         self.alpha = alpha
+        self.heat_source = heatsource
         self.n_cell = len(H_init)
         self.n_times = len(all_dt) + 1
         self.H_res = zeros((self.n_cell, self.n_times), float32)
@@ -788,4 +800,5 @@ class HTKStratified:
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
+        c += self.heat_source[:, j]
         return c

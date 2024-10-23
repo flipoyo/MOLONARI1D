@@ -45,8 +45,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         inter_mode: str = "linear",
         eps=10**-9,
-        rac="~/OUTPUT_MOLONARI1D/generated_data",  # printing directory by default,
-        verbose=False,
+        heat_source = np.ndarray,
+        rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default,
+        verbose=False
     ):
 
         self._dir_print = create_dir(
@@ -65,6 +66,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self._T_aq = np.array([t[-1] for _, t in T_measures])
         # récupère la liste de températures des capteurs (au cours du temps)
         self._T_measures = np.array([t[:-1] for _, t in T_measures])
+
+        # Appel du terme source
+        self._heat_source = heat_source
+        
 
         # décale d'un offset les positions des capteurs de température (aussi riviere)
         self._real_z = np.array([0] + depth_sensors) + offset
@@ -245,7 +250,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             array_moinslog10IntrinK = np.array([moinslog10IntrinK, moinslog10IntrinK])
             # array_K = 10 ** (-array_moinslog10IntrinK * 1.0)
             array_K = (RHO_W * G * 10.0**-array_moinslog10IntrinK) * 1.0 / MU
-            print(array_K)
             array_Ss = np.array([Ss, Ss])
             list_zLow = np.array([0.2])
             inter_cara = np.array([[nb_cells // 2, 0]])
@@ -292,6 +296,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
 
             nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
+            
             T_res = initialization.get_T
 
             # calcule toutes les températures à tout temps et à toute profondeur
