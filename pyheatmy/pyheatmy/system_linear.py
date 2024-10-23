@@ -6,8 +6,9 @@ from numpy.linalg import solve
 from numba import njit
 import numpy as np
 
-from solver import solver, tri_product
-from config import *
+from pyheatmy.solver import solver, tri_product
+from pyheatmy.config import *
+from pyheatmy.utils import *
 
 
 class Initialization:
@@ -21,67 +22,73 @@ class Initialization:
         rhos_cs_list,
         all_dt,
         dz,
-        H_res,
+        H_init,
         H_riv,
         H_aq,
-        nablaH,
         T_init,
         T_riv,
         T_aq,
+        array_K,
+        array_Ss,
+        list_zLow,
+        z_solve,
+        inter_cara,
+        isdtconstant,
         alpha=ALPHA,
         N_update_Mu=N_UPDATE_MU,
     ):
-        self.T_stratified = T_stratified(
-            a,
-            Ss_list,
-            moinslog10IntrinK_list,
-            n_list,
-            lambda_s_list,
-            rhos_cs_list,
-            all_dt,
-            dz,
-            H_res,
-            H_riv,
-            H_aq,
-            nablaH,
-            T_init,
-            T_riv,
-            T_aq,
-            alpha,
-            N_update_Mu,
-        )
+
         self.H_stratified = H_stratified(
-            a,
-            Ss_list,
+            array_K,
+            array_Ss,
+            list_zLow,
+            z_solve,
+            T_init,
+            inter_cara,
             moinslog10IntrinK_list,
-            n_list,
-            lambda_s_list,
-            rhos_cs_list,
-            all_dt,
-            dz,
-            H_res,
-            H_riv,
-            H_aq,
-            nablaH,
-            T_init,
-            T_riv,
-            T_aq,
-            alpha,
-        )
-        self.HTK_stratified = HTKStratified(
-            lambda_s_list,
-            rhos_cs_list,
-            n_list,
-            T_init,
-            a,
             Ss_list,
             all_dt,
+            isdtconstant,
             dz,
-            H_res,
+            H_init,
             H_riv,
             H_aq,
-            alpha,
+            alpha=ALPHA,
         )
+        self.nablaH = self.H_stratified.nablaH
+
+        # self.T_stratified = T_stratified(a,
+        #     Ss_list,
+        #     moinslog10IntrinK_list,
+        #     n_list,
+        #     lambda_s_list,
+        #     rhos_cs_list,
+        #     all_dt,
+        #     dz,
+        #     H_init,
+        #     H_riv,
+        #     H_aq,
+        #     self.nablaH,
+        #     T_init,
+        #     T_riv,
+        #     T_aq,
+        #     alpha,
+        #     N_update_Mu,
+        # )
+        # self.HTK_stratified = HTKStratified(
+        #     lambda_s_list,
+        #     rhos_cs_list,
+        #     n_list,
+        #     T_init,
+        #     a,
+        #     Ss_list,
+        #     all_dt,
+        #     dz,
+        #     H_init,
+        #     H_riv,
+        #     H_aq,
+        #     alpha,
+        # )
 
     def get_T(self):
         return self.T_stratified.T_res
@@ -137,7 +144,7 @@ class T_stratified:
         self.T_aq = T_aq
         self.alpha = alpha
         self.N_update_Mu = N_update_Mu
-        self.mu_list = self.compute_Mu(self.T_init)
+        self.mu_list = compute_Mu(self.T_init)
         self.rho_mc_m_list = (
             self.n_list * RHO_W * C_W + (1 - self.n_list) * self.rhos_cs_list
         )
@@ -153,22 +160,8 @@ class T_stratified:
         self.n_cell = len(self.T_init)
         self.n_times = len(self.all_dt) + 1
         self.T_res = np.zeros((self.n_cell, self.n_times), np.float32)
-        print("a", self.T_res)
         self.T_res[:, 0] = self.T_init
         self.compute_T_stratified()
-
-    def compute_Mu(self, T):
-        """
-        Paramètres : T : Température ou Tableau de températures
-        Résultat : mu : Viscosité à la température T selon l'approximation de ...
-        NF --> Retrouver les références et les unités SVP
-        """
-        A = 1.856e-11 * 1e-3
-        B = 4209
-        C = 0.04527
-        D = -3.376e-5
-        mu = A * np.exp(B * 1.0 / T + C * T + D * (T**2))
-        return mu
 
     def compute_T_stratified(self):
         for j, dt in enumerate(self.all_dt):
@@ -348,19 +341,11 @@ class H_stratified:
         self.n_times = len(all_dt) + 1
         self.H_res = zeros((self.n_cell, self.n_times), float32)
         self.H_res[:, 0] = H_init[:]
-        self.mu_list = self.compute_Mu(T_init)
+        self.mu_list = compute_Mu(T_init)
         self.K_list = (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / self.mu_list
         self.KsurSs_list = self.K_list / Ss_list
         self.dK_list = self.compute_dK_list()
         self.compute_H_stratified()
-
-    def compute_Mu(self, T):
-        A = 1.856e-11 * 1e-3
-        B = 4209
-        C = 0.04527
-        D = -3.376e-5
-        mu = A * np.exp(B * 1.0 / T + C * T + D * (T**2))
-        return mu
 
     def compute_dK_list(self):
         dK_list = zeros(self.n_cell, float32)
@@ -371,7 +356,7 @@ class H_stratified:
         return dK_list
 
     def compute_H_stratified(self):
-        if self.isdtconstant:
+        if self.isdtconstant.all():
             self.compute_H_constant_dt()
         else:
             self.compute_H_variable_dt()
@@ -405,6 +390,18 @@ class H_stratified:
             self.H_res[:, j + 1] = solver(
                 lower_diagonal_A, diagonal_A, upper_diagonal_A, B_fois_H_plus_c
             )
+
+    def nablaH(self):
+        nablaH = np.zeros((self.n_cell, self.n_times), np.float32)
+
+        nablaH[0, :] = 2 * (self.H_res[1, :] - self.H_riv) / (3 * dz)
+
+        for i in range(1, self.n_cell - 1):
+            nablaH[i, :] = (self.H_res[i + 1, :] - self.H_res[i - 1, :]) / (2 * dz)
+
+        nablaH[self.n_cell - 1, :] = (
+            2 * (H_aq - self.H_res[self.n_cell - 2, :]) / (3 * dz)
+        )
 
     def compute_H_variable_dt(self):
         for j, dt in enumerate(self.all_dt):
@@ -594,7 +591,7 @@ class HTKStratified:
         self.n_times = len(all_dt) + 1
         self.H_res = zeros((self.n_cell, self.n_times), float32)
         self.H_res[:, 0] = H_init[:]
-        self.mu_list = self.compute_Mu(T_init)
+        self.mu_list = compute_Mu(T_init)
         self.rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
         self.K_list = (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / self.mu_list
         self.lambda_m_list = (
@@ -605,14 +602,6 @@ class HTKStratified:
         self.KsurSs_list = self.K_list / Ss_list
         self.dK_list = self.compute_dK_list()
         self.compute_HTK_stratified()
-
-    def compute_Mu(self, T):
-        A = 1.856e-11 * 1e-3
-        B = 4209
-        C = 0.04527
-        D = -3.376e-5
-        mu = A * np.exp(B * 1.0 / T + C * T + D * (T**2))
-        return mu
 
     def compute_dK_list(self):
         dK_list = zeros(self.n_cell, float32)
@@ -800,53 +789,3 @@ class HTKStratified:
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
         return c
-
-
-a = 1
-Ss_list = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])
-
-moinslog10IntrinK_list = np.array(
-    [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
-)
-n_list = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])
-lambda_s_list = np.array(
-    [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
-)
-rhos_cs_list = np.array(
-    [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
-)
-all_dt = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-dz = 1
-H_res = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])
-H_riv = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])
-H_aq = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])
-nablaH = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])
-T_init = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])
-T_riv = 1
-T_aq = 1
-alpha = 0.3
-N_update_Mu = 100
-
-print("SystemLinear imported")
-initialization = Initialization(
-    a,
-    Ss_list,
-    moinslog10IntrinK_list,
-    n_list,
-    lambda_s_list,
-    rhos_cs_list,
-    all_dt,
-    dz,
-    H_res,
-    H_riv,
-    H_aq,
-    nablaH,
-    T_init,
-    T_riv,
-    T_aq,
-    alpha,
-    N_update_Mu,
-)
-print(initialization.get_H)
-print(initialization.get_T)
-print(initialization.get_HTK)
