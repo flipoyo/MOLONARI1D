@@ -7,23 +7,10 @@
 
 
 #include <ArduinoLowPower.h>
-
+#include "Low_Power.hpp"
 #include "Lora.hpp"
 
-
-// Switch to low-power mode for a given amount of time (in milli-seconds)
-void MyLowPowerClass::Sleep(uint32_t millis) {
-  // Disable all power-consuming features
-  SleepLora();
-  DisableAllIOPins();
-
-  // Wait
-  LowPower.deepSleep(millis);
-
-  // Enable back all the features that werer disabled.
-  EnableAllIOPins();
-  WakeUpLora();
-}
+MyLowPowerClass MyLowPower;
 
 
 // Disable all IO pins to save battery
@@ -51,6 +38,19 @@ void MyLowPowerClass::EnableAllIOPins() {
   // TODO : Is the original output still the same ?
 }
 
+// Switch to low-power mode for a given amount of time (in milli-seconds)
+void MyLowPowerClass::Sleep(uint32_t millis) {
+  // Disable all power-consuming features
+  SleepLora();
+  DisableAllIOPins();
+
+  // Wait
+  LowPower.sleep(millis);
+  
+  // Enable back all the features that werer disabled.
+  EnableAllIOPins();
+  WakeUpLora();
+}
 
 // Get the pinMode of a given pin
 int MyLowPowerClass::GetPinMode(uint8_t pin)
@@ -68,5 +68,6 @@ int MyLowPowerClass::GetPinMode(uint8_t pin)
   volatile uint32_t *out = portOutputRegister(port);
   return ((*out & bit) ? INPUT_PULLUP : INPUT);
 }
+
 
 #endif

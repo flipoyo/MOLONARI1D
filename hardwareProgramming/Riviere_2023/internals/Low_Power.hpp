@@ -33,6 +33,5 @@ private :
 // A collection of methods to put the Arduino into low-power mode.
 extern MyLowPowerClass MyLowPower;
 
-#include "Low_Power.cpp"
 
 #endif // LOW_POWER_HPP

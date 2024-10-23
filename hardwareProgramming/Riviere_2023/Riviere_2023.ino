@@ -29,13 +29,14 @@ Required hardware :
 // ----- Imports -----
 
 #include "internals/Lora.hpp"
-#include "internals/Low_Power.hpp"
+#include "internals/Low_Power.cpp"
 #include "internals/Pressure_Sensor.hpp"
 #include "internals/Temp_Sensor.hpp"
 #include "internals/Time.cpp"
 #include "internals/SD_Initializer.cpp"
 #include "internals/Writer.hpp"
 #include "internals/Waiter.hpp"
+#include <ArduinoLowPower.h>
 // #include "internals/FreeMemory.cpp"
 
 
@@ -55,7 +56,6 @@ TemperatureSensor tempSensor2(A2, 2, 0.5, 100);
 TemperatureSensor tempSensor3(A3, 3, 0.5, 100);
 TemperatureSensor tempSensor4(A4, 4, 0.5, 100);
 
-
 // ----- Main Setup -----
 
 void setup() {
@@ -65,18 +65,16 @@ void setup() {
 
   // Initialise Serial
   Serial.begin(115200);
-
   // Wait up to 5 seconds for serial to connect
   unsigned long end_date = millis() + 5000; 
   while (!Serial && millis() < end_date) {
     // Do nothing
   }
 
-
   // Initialise LoRa
-  Serial.println("Initialising LoRa");
+  Serial.print("Initialising LoRa ...");
   InitialiseLora();
-  Serial.println("Done");
+  Serial.println(" Done");
 
   // Initialise SD Card
   Serial.print("Initialising SD card ...");
@@ -99,30 +97,75 @@ void setup() {
   InitialiseRTC();
   Serial.println(" Done");
 
-  Serial.println("Initialisation complete !");
-  Serial.println();
+  // Initialise the measurement times
+  Serial.print("Initialising measurement times ...");
+  InitializeMeasurementTimes();
+  Serial.println(" Done");
 
   // Disable the builtin LED
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
-}
 
+  Serial.println("Initialisation complete !");
+  Serial.println();
+}
 
 // ----- Main Loop -----
 
 void loop() {
+  // Initialise Serial
+  Serial.begin(115200);
+  // Wait up to 5 seconds for serial to connect
+  unsigned long end_date = millis() + 5000; 
+  while (!Serial && millis() < end_date) {
+    // Do nothing
+  }
+  // Initialise LoRa
+  InitialiseLora();
+  // Initialise SD Card
+  InitialiseLog(CSPin);
+  // Initialise the SD logger
+  logger.EstablishConnection(CSPin);
+  // Initialise RTC
+  InitialiseRTC();
+  // Disable the builtin LED
+  pinMode(LED_BUILTIN, INPUT_PULLDOWN);
+
   Waiter waiter;
   waiter.startTimer();
+  Serial.println("Measurement " + String(NbMeasurements));
 
-  // Perform measurements
-  TEMP_T temp1 = tempSensor1.MeasureTemperature();
-  TEMP_T temp2 = tempSensor2.MeasureTemperature();
-  TEMP_T temp3 = tempSensor3.MeasureTemperature();
-  TEMP_T temp4 = tempSensor4.MeasureTemperature();
+  // Count and check that the number of daily measurements has been reached
+  if (measurementCount < TOTAL_MEASUREMENTS_PER_DAY) {
+    // Perform measurements
+    TEMP_T temp1 = tempSensor1.MeasureTemperature();
+    TEMP_T temp2 = tempSensor2.MeasureTemperature();
+    TEMP_T temp3 = tempSensor3.MeasureTemperature();
+    TEMP_T temp4 = tempSensor4.MeasureTemperature();
 
-  logger.LogData(temp1, temp2, temp3, temp4);
+    logger.LogData(temp1, temp2, temp3, temp4);
+    
+    // Increase count
+    measurementCount++;
+  }
 
-  // Decoment this line to use low-power mode
-  // Warning : Low-power mode has not been tested yet
-  //waiter.sleepUntil(5000);
-  waiter.delayUntil(5000);
+  // If all measurements for the day are complete, transmit data and reset the counter
+  if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
+    Serial.println("Transmitting data via LoRa...");
+    waiter.delayUntil(60000);
+    Serial.println("Data transmitted. Resetting measurement count.");
+    // Reset the count for the next day's measurements
+    measurementCount = 0;
+  }
+  
+  // Calculate the time to sleep until the next measurement
+  unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
+
+  // Test code
+  // Serial.println("sleep time: " + String(sleepTime));
+
+  // Close the serial port before entering low power mode
+  Serial.println("");
+  Serial.end();
+  waiter.sleepUntil(sleepTime);
+
 }

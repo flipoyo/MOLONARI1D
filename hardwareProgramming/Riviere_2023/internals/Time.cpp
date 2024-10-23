@@ -75,7 +75,53 @@ String GetCurrentHour() {
     ":" +
     UIntTo2DigitString(internalRtc.getMinutes()) +
     ":" +
-    UIntTo2DigitString(internalRtc.getSeconds());
+    UIntTo2DigitString(internalRtc.getSeconds());  
+
+}
+
+
+// Function to get the current time in minutes since midnight
+unsigned long GetSecondsSinceMidnight() {
+    uint8_t hour = internalRtc.getHours();
+    uint8_t minute = internalRtc.getMinutes();
+    uint8_t second = internalRtc.getSeconds();
+    return hour * 3600 + minute * 60 + second; // Return the current time in seconds since midnight
+}
+
+// --- Measurement Control ---
+const int MEASURE_INTERVAL_MINUTES = 15 ; // Measurement interval in minutes
+const int TOTAL_MEASUREMENTS_PER_DAY = 1440/MEASURE_INTERVAL_MINUTES ; // 96 measurements in a day
+unsigned int measurementTimes[TOTAL_MEASUREMENTS_PER_DAY]; // Array to store measurement times
+int measurementCount = 0; // Counter for measurements
+int NbMeasurements = measurementCount + 1; // Number of measurements taken
+// Function to initialize the measurement time intervals
+void InitializeMeasurementTimes() {
+  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
+    measurementTimes[i] = i * MEASURE_INTERVAL_MINUTES * 60; // Store times in seconds from midnight
+  }
+}
+
+// Function to calculate the sleep time until the next measurement time
+unsigned long CalculateSleepTimeUntilNextMeasurement() {
+  // Get current time from the RTC in minutes since midnight (00:00)
+  unsigned long currentTime = GetSecondsSinceMidnight() + 300 ;
+
+  // Test code
+  // Serial.println("Current time: " + String(currentTime));
+
+  // Find the next measurement time
+  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
+    if (currentTime < measurementTimes[i]) {
+      unsigned long nextTime = measurementTimes[i];
+      // Calculate the time difference in milliseconds
+      unsigned long sleepTime = (nextTime - currentTime) * 1000; // Convert minutes to milliseconds
+      return sleepTime;
+    }
+  }
+  // If no upcoming time found (current time is beyond the last time slot), calculate time until the next day's first measurement
+  unsigned long nextDayFirstTime = measurementTimes[0] + 24 * 3600; // Add 24 hours to the first time slot (start of the next day)
+  unsigned long sleepTime = (nextDayFirstTime - currentTime) * 1000;
+  return sleepTime;
 }
 
 #endif
