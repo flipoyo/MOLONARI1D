@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from synthetic_MOLONARI import *
+from pyheatmy.synthetic_MOLONARI import *
 from pyheatmy.config import *
-from utils import create_periodic_signal
+from pyheatmy.utils import create_periodic_signal
 
 
 # à mettre dans utils (?)
