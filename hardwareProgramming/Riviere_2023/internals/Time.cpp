@@ -52,7 +52,7 @@ void InitialiseRTC() {
   uint8_t month = startingDate.month();
   uint8_t year = startingDate.year() % 100;
   uint8_t hour = startingDate.hour();
-  uint8_t minute = startingDate.minute() + 5;
+  uint8_t minute = startingDate.minute();
   uint8_t second = startingDate.second();
   internalRtc.setDate(day, month, year);
   internalRtc.setTime(hour, minute, second);
@@ -88,17 +88,37 @@ unsigned long GetSecondsSinceMidnight() {
     return hour * 3600 + minute * 60 + second; // Return the current time in seconds since midnight
 }
 
+
 // --- Measurement Control ---
 const int MEASURE_INTERVAL_MINUTES = 15 ; // Measurement interval in minutes
 const int TOTAL_MEASUREMENTS_PER_DAY = 1440/MEASURE_INTERVAL_MINUTES ; // 96 measurements in a day
 unsigned int measurementTimes[TOTAL_MEASUREMENTS_PER_DAY]; // Array to store measurement times
 int measurementCount = 0; // Counter for measurements
-int NbMeasurements = measurementCount + 1; // Number of measurements taken
+int NbMeasurements = 1; // Number of measurements taken
+
 // Function to initialize the measurement time intervals
 void InitializeMeasurementTimes() {
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
     measurementTimes[i] = i * MEASURE_INTERVAL_MINUTES * 60; // Store times in seconds from midnight
   }
+}
+
+// Function to initialize the measurement count
+void InitializeMeasurementCount() {
+  // Get current time from the RTC in minutes since midnight (00:00)
+  unsigned long currentTime = GetSecondsSinceMidnight();
+
+  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
+    if (currentTime > measurementTimes[i]) {
+      measurementCount++;
+      NbMeasurements++;
+    }
+    else {
+      break; // If the current time is less than the next measurement time, break the loop
+    }
+  }
+  measurementCount;
+  NbMeasurements;
 }
 
 // Function to calculate the sleep time until the next measurement time
@@ -107,7 +127,7 @@ unsigned long CalculateSleepTimeUntilNextMeasurement() {
   unsigned long currentTime = GetSecondsSinceMidnight();
 
   // Test code
-  Serial.println("Current time: " + String(currentTime));
+  // Serial.println("Current time: " + String(currentTime));
 
   // Find the next measurement time
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {

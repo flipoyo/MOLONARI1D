@@ -98,19 +98,20 @@ void setup() {
   Serial.println(" Done");
 
   // Initialise the measurement times
-  Serial.print("Initialising measurement times ...");
+  Serial.print("Initialising measurement control");
   InitializeMeasurementTimes();
+  InitializeMeasurementCount();
   Serial.println(" Done");
 
   // Disable the builtin LED
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 
   Serial.println("Initialisation complete !");
-  Serial.println();
 }
 
 // ----- Main Loop -----
 
+int initialstartup = 0;
 void loop() {
   // Initialise Serial
   Serial.begin(115200);
@@ -132,39 +133,60 @@ void loop() {
 
   Waiter waiter;
   waiter.startTimer();
-  Serial.println("Measurement " + String(NbMeasurements));
 
-  // Count and check that the number of daily measurements has been reached
-  if (measurementCount < TOTAL_MEASUREMENTS_PER_DAY) {
-    // Perform measurements
-    TEMP_T temp1 = tempSensor1.MeasureTemperature();
-    TEMP_T temp2 = tempSensor2.MeasureTemperature();
-    TEMP_T temp3 = tempSensor3.MeasureTemperature();
-    TEMP_T temp4 = tempSensor4.MeasureTemperature();
-
-    logger.LogData(temp1, temp2, temp3, temp4);
-    
-    // Increase count
-    measurementCount++;
-  }
-
-  // If all measurements for the day are complete, transmit data and reset the counter
-  if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
-    Serial.println("Transmitting data via LoRa...");
-    waiter.delayUntil(60000);
-    Serial.println("Data transmitted. Resetting measurement count.");
-    // Reset the count for the next day's measurements
-    measurementCount = 0;
-  }
-  
   // Calculate the time to sleep until the next measurement
-  unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
+  unsigned long firstsleep = CalculateSleepTimeUntilNextMeasurement();
+  // Initial start-up don't take measure
+  if (initialstartup < 1) {
+    initialstartup++;
+    // Enter low power mode
+    Serial.end();
+    waiter.sleepUntil(firstsleep);
+  }
+  else {
+    Serial.println("");
 
-  // Test code
-  // Serial.println("sleep time: " + String(sleepTime));
+    // Count and check that the number of daily measurements has been reached
+    if (measurementCount < TOTAL_MEASUREMENTS_PER_DAY) {
+      Serial.println("——Measurement " + String(NbMeasurements) + "——");
+      // Perform measurements
+      TEMP_T temp1 = tempSensor1.MeasureTemperature();
+      TEMP_T temp2 = tempSensor2.MeasureTemperature();
+      TEMP_T temp3 = tempSensor3.MeasureTemperature();
+      TEMP_T temp4 = tempSensor4.MeasureTemperature();
 
-  // Close the serial port before entering low power mode
-  Serial.end();
-  waiter.sleepUntil(sleepTime);
+      logger.LogData(temp1, temp2, temp3, temp4);
+    
+      // Increase count
+      measurementCount++;
+      NbMeasurements++;
+    }
 
+    // If all measurements for the day are complete, transmit data and reset the counter
+    if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
+      Serial.println("Transmitting data via LoRa...");
+      waiter.delayUntil(60000);
+      Serial.println("Data transmitted. Resetting measurement count.");
+      // Reset the count and number for the next day's measurements
+      measurementCount = 0;
+      NbMeasurements = 1;
+    }
+
+    // Test code
+    /*
+    Serial.print("Hour: "); 
+    Serial.println(internalRtc.getHours());
+    Serial.print("Minute: "); 
+    Serial.println(internalRtc.getMinutes());
+    Serial.print("Second: "); 
+    Serial.println(internalRtc.getSeconds());
+    // Serial.println("sleep time: " + String(sleepTime));
+    */
+
+    // Calculate the time to sleep until the next measurement
+    unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
+    // Enter low power mode
+    Serial.end();
+    waiter.sleepUntil(sleepTime);
+  }
 }
