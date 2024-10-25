@@ -216,31 +216,7 @@ class H_stratified(Linear_system):
         N_update_Mu=N_UPDATE_MU,
     ):
         print("H_stratified")
-        super(Linear_system, self).__init__(
-            a,
-            Ss_list,
-            moinslog10IntrinK_list,
-            n_list,
-            lambda_s_list,
-            rhos_cs_list,
-            all_dt,
-            dz,
-            H_init,
-            H_riv,
-            H_aq,
-            T_init,
-            T_riv,
-            T_aq,
-            array_K,
-            array_Ss,
-            list_zLow,
-            z_solve,
-            inter_cara,
-            isdtconstant,
-            heatsource,
-            alpha=ALPHA,
-            N_update_Mu=N_UPDATE_MU,
-        )
+
         print("Init done")
         self.array_K = array_K
         self.array_Ss = array_Ss
