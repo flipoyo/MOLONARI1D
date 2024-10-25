@@ -89,3 +89,7 @@ A = 1.856e-11 * 1e-3
 B = 4209
 C = 0.04527
 D = -3.376e-5
+
+# Heatsource
+HEAT_SOURCE = np.zeros((n_list, all_dt))
+NB_CELLS = 100

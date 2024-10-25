@@ -150,15 +150,6 @@ class Linear_system:
         self.KsurSs_list = self.compute_KsurSs_list()
         self.T_res = self.compute_T_res()
 
-    def get_T(self):
-        return self.T_stratified.T_res
-
-    def get_H(self):
-        return self.H_stratified.H_res
-
-    def get_HTK(self):
-        return self.HTK_stratified.H_res
-
 
 class H_stratified(Linear_system):
     def __init__(
@@ -268,14 +259,15 @@ class H_stratified(Linear_system):
     def nablaH(self):
         nablaH = np.zeros((self.n_cell, self.n_times), np.float32)
 
-        nablaH[0, :] = 2 * (self.H_res[1, :] - self.H_riv) / (3 * dz)
+        nablaH[0, :] = 2 * (self.H_res[1, :] - self.H_riv) / (3 * self.dz)
 
         for i in range(1, self.n_cell - 1):
-            nablaH[i, :] = (self.H_res[i + 1, :] - self.H_res[i - 1, :]) / (2 * dz)
+            nablaH[i, :] = (self.H_res[i + 1, :] - self.H_res[i - 1, :]) / (2 * self.dz)
 
         nablaH[self.n_cell - 1, :] = (
-            2 * (H_aq - self.H_res[self.n_cell - 2, :]) / (3 * dz)
+            2 * (self.H_aq - self.H_res[self.n_cell - 2, :]) / (3 * self.dz)
         )
+        return nablaH
 
     def compute_H_variable_dt(self):
         for j, dt in enumerate(self.all_dt):
@@ -309,14 +301,12 @@ class H_stratified(Linear_system):
             )
 
     def compute_B_diagonals(self, dt):
-        lower_diagonal_B = H_stratified.K_list[1:] * self.alpha / self.dz**2
+        lower_diagonal_B = self.K_list[1:] * self.alpha / self.dz**2
         lower_diagonal_B[-1] = (
             4 * self.K_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
         )
 
-        diagonal_B = (
-            H_stratified.Ss_list * 1 / dt - 2 * self.K_list * self.alpha / self.dz**2
-        )
+        diagonal_B = self.Ss_list * 1 / dt - 2 * self.K_list * self.alpha / self.dz**2
         diagonal_B[0] = (
             self.Ss_list[0] * 1 / dt - 4 * self.K_list[0] * self.alpha / self.dz**2
         )
@@ -420,6 +410,7 @@ class H_stratified(Linear_system):
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
+        print(self.heat_source[:, j])
         c += self.heat_source[:, j]
         return c
 

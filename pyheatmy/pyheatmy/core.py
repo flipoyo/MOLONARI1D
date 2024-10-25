@@ -46,6 +46,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         inter_mode: str = "linear",
         eps=10**-9,
         heat_source=np.ndarray,
+        nb_cells = NB_CELLS
         rac="~/OUTPUT_MOLONARI1D/generated_data",  # printing directory by default,
         verbose=False,
     ):
@@ -67,8 +68,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # récupère la liste de températures des capteurs (au cours du temps)
         self._T_measures = np.array([t[:-1] for _, t in T_measures])
 
+        # Nombre de cellules
+        self._nb_cells = nb_cells
+        
         # Appel du terme source
-        self._heat_source = heat_source
+        self._heat_source = np.zeros((nb_cells, len(self._times)))
 
         # décale d'un offset les positions des capteurs de température (aussi riviere)
         self._real_z = np.array([0] + depth_sensors) + offset
@@ -262,7 +266,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ##
             a = 1  # à adapter
 
-            H_res = H_stratified(
+            H_strat = H_stratified(
                 a,
                 Ss_list,
                 moinslog10IntrinK_list,
@@ -286,19 +290,23 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 heatsource,
                 alpha=ALPHA,
                 N_update_Mu=N_UPDATE_MU,
-            ).compute_H_stratified
+            )
+            H_res = H_strat.compute_H_stratified()
+            print(H_res)
 
+            nablaH = H_strat.nablaH()
             # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
-            nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
-            print(nablaH)
-            nablaH[0, :] = 2 * (H_res[1, :] - H_riv) / (3 * dz)
-            ## zhan Nov8: calculation de la derivation
-            for i in range(1, nb_cells - 1):
-                nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
+            # nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
+            # nablaH[0, :] = 2 * (H_res[1, :] - H_riv) / (3 * dz)
+            # ## zhan Nov8: calculation de la derivation
+            # for i in range(1, nb_cells - 1):
+            #     nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
 
-            nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
+            # nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
 
-            T_res = T_stratified(nablaH, a,
+            T_res = T_stratified(
+                nablaH,
+                a,
                 Ss_list,
                 moinslog10IntrinK_list,
                 n_list,
@@ -320,7 +328,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 isdtconstant,
                 heatsource,
                 alpha=ALPHA,
-                N_update_Mu=N_UPDATE_MU,).T_res
+                N_update_Mu=N_UPDATE_MU,
+            ).T_res
 
             # calcule toutes les températures à tout temps et à toute profondeur
 
