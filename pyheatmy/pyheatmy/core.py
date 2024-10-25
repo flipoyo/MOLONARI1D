@@ -261,8 +261,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             Ss_list = n_list / heigth
             ##
             a = 1  # à adapter
-            # alpha = 0.3  # à adapter
-            # N_update_Mu = 100  # à adapter
+            
             linear_system = Linear_system(
                 a,
                 Ss_list,

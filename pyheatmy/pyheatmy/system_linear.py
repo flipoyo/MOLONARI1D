@@ -46,7 +46,7 @@ class Linear_system:
         self.all_dt = all_dt
         self.dz = dz
         self.Ss_list = Ss_list
-        self.calc_physical_param()
+        a = self.calc_physical_param()
         self.H_stratified = H_stratified(
             a,
             Ss_list,
@@ -111,10 +111,6 @@ class Linear_system:
 
     # @njit
     def compute_Mu(self, T):
-        A = 1.856e-11 * 1e-3
-        B = 4209
-        C = 0.04527
-        D = -3.376e-5
         mu = A * np.exp(B * 1.0 / T + C * T + D * (T**2))
         return mu
 
@@ -143,14 +139,13 @@ class Linear_system:
     def compute_ae_list(self):
         return RHO_W * C_W * self.K_list / self.rho_mc_m_list
 
-    def compute_dK_list(self):
-        dK_list = zeros(self.n_cell, float32)
-        dK_list[0] = (self.K_list[1] - self.K_list[0]) / self.dz
-        dK_list[-1] = (self.K_list[-1] - self.K_list[-2]) / self.dz
-        for idx in range(1, len(dK_list) - 1):
-            dK_list[idx] = (self.K_list[idx + 1] - self.K_list[idx - 1]) / (2 * self.dz)
-            print(idx)
-        return dK_list
+    def compute_dK_list(self, K_list, n_cell, dz):
+        list = zeros(n_cell, float32)
+        list[0] = (K_list[1] - K_list[0]) / dz
+        list[-1] = (K_list[-1] - K_list[-2]) / dz
+        for idx in range(1, len(list) - 1):
+            list[idx] = (K_list[idx + 1] - K_list[idx - 1]) / (2 * dz)
+        return list
 
     def compute_H_res(self):
         H_res = zeros((self.n_cell, self.n_times), float32)
@@ -174,10 +169,14 @@ class Linear_system:
         self.lambda_m_list = self.compute_lambda_m_list()
         self.ke_list = self.compute_ke_list()
         self.ae_list = self.compute_ae_list()
-        self.dK_list = self.compute_dK_list()
         self.H_res = self.compute_H_res()
+        # self.dK_list = self.compute_dK_list(self.K_list, self.n_cell, self.dz)
+        self.dK_list = np.gradient(self.K_list, self.dz)
+        self.dK_list = zeros(self.n_cell, float32)
         self.KsurSs_list = self.compute_KsurSs_list()
         self.T_res = self.compute_T_res()
+        print("Physical parameters calculated")
+        return 1
 
     def get_T(self):
         return self.T_stratified.T_res
@@ -216,7 +215,8 @@ class H_stratified(Linear_system):
         alpha=ALPHA,
         N_update_Mu=N_UPDATE_MU,
     ):
-        super().__init__(
+        print("H_stratified")
+        super(Linear_system, self).__init__(
             a,
             Ss_list,
             moinslog10IntrinK_list,
@@ -241,6 +241,7 @@ class H_stratified(Linear_system):
             alpha=ALPHA,
             N_update_Mu=N_UPDATE_MU,
         )
+        print("Init done")
         self.array_K = array_K
         self.array_Ss = array_Ss
         self.list_zLow = list_zLow
@@ -594,17 +595,16 @@ class T_stratified(Linear_system):
         return c
 
     def _compute_A_diagonals(self):
-        lambda_w = 0.598
         lambda_m = (
-            self.n_list * np.sqrt(lambda_w)
+            self.n_list * np.sqrt(LAMBDA_W)
             + (1 - self.n_list) * np.sqrt(self.lambda_s_list)
         ) ** 2
-        lower_diagonal = -c_w * rho_w * self.moinslog10IntrinK_list * self.nablaH / (
+        lower_diagonal = -C_W * RHO_W * self.moinslog10IntrinK_list * self.nablaH / (
             self.dz
         ) - lambda_m / (self.dz**2)
         lower_diagonal[-1] = -2 * self.moinslog10IntrinK_list * self.nablaH[
             L - self.dz
-        ] * rho_w * c_w / (3 * self.dz) - 4 * lambda_m / (3 * (self.dz**2))
+        ] * RHO_W * C_W / (3 * self.dz) - 4 * lambda_m / (3 * (self.dz**2))
 
         diagonal = (
             4 * lambda_m / (self.dz**2) + self.moinslog10IntrinK_list * self.a / 2
@@ -616,12 +616,12 @@ class T_stratified(Linear_system):
             4 * lambda_m / (self.dz**2) + self.moinslog10IntrinK_list * self.a / 2
         )
 
-        upper_diagonal = c_w * rho_w * self.moinslog10IntrinK_list * self.nablaH / (
+        upper_diagonal = C_W * RHO_W * self.moinslog10IntrinK_list * self.nablaH / (
             self.dz
         ) - lambda_m / (self.dz**2)
         upper_diagonal[0] = -self.moinslog10IntrinK_list * self.nablaH[
             self.dz
-        ] * 2 * rho_w * c_w / (3 * self.dz) - 4 * lambda_m / (3 * (self.dz**2))
+        ] * 2 * RHO_W * C_W / (3 * self.dz) - 4 * lambda_m / (3 * (self.dz**2))
         return lower_diagonal, diagonal, upper_diagonal
 
     def _construct_A_matrix(self, lower_diagonal, diagonal, upper_diagonal):
@@ -864,7 +864,4 @@ class HTKStratified(Linear_system):
 
 if __name__ == "__main__":
     L = 0.5
-    rho_w = 1000
-    c_w = 4182
-    lambda_w = 0.598
     print(1)
