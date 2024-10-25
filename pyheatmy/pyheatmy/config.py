@@ -1,5 +1,6 @@
 from enum import Enum
 
+import numpy as np
 
 # temporal values
 NSECINMIN = 60
@@ -90,6 +91,6 @@ B = 4209
 C = 0.04527
 D = -3.376e-5
 
-# Heatsource
-HEAT_SOURCE = np.zeros((n_list, all_dt))
+# VALEURS
+#HEAT_SOURCE = 
 NB_CELLS = 100

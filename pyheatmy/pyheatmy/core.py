@@ -46,7 +46,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         inter_mode: str = "linear",
         eps=10**-9,
         heat_source=np.ndarray,
-        nb_cells = NB_CELLS
+        nb_cells=NB_CELLS,
         rac="~/OUTPUT_MOLONARI1D/generated_data",  # printing directory by default,
         verbose=False,
     ):
@@ -67,12 +67,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self._T_aq = np.array([t[-1] for _, t in T_measures])
         # récupère la liste de températures des capteurs (au cours du temps)
         self._T_measures = np.array([t[:-1] for _, t in T_measures])
-
-        # Nombre de cellules
-        self._nb_cells = nb_cells
-        
-        # Appel du terme source
-        self._heat_source = np.zeros((nb_cells, len(self._times)))
 
         # décale d'un offset les positions des capteurs de température (aussi riviere)
         self._real_z = np.array([0] + depth_sensors) + offset
@@ -124,6 +118,18 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             print(f"T_aq: {self._T_aq}")
             print(f"dH : {self._dH}")
             print(f"list of dates   : {self._times}")
+
+        self.initialization(nb_cells)
+
+    def initialization(self, nb_cells):
+        self._nb_cells = nb_cells
+        self.initialize_heat_source()
+
+    def initialization_nb_cells(self, nb_cells):
+        self._nb_cells = nb_cells
+
+    def initialize_heat_source(self):
+        self._heat_source = np.zeros((self._nb_cells, len(self._times)))
 
     def tests(self):
         # teste que les données sont aux bons formats
@@ -195,7 +201,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     #
     # #######################################################################################"
 
-    def _compute_solve_transi_multiple_layers(self, layersList, nb_cells, verbose):
+    def _compute_solve_transi_multiple_layers(self, layersList, verbose):
+        nb_cells = self._nb_cells
         if not (len(layersList) - 1):
             layer = layersList[0]
             dz = self._real_z[-1] / nb_cells  # profondeur d'une cellule
@@ -664,7 +671,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     @checker
     def compute_solve_transi(
-        self, layersList: Union[tuple, Sequence[Layer]], nb_cells: int, verbose=True
+        self, layersList: Union[tuple, Sequence[Layer]], verbose=True
     ):
         """
         Computes H, T and flow for each time and depth of the discretization of the column.
@@ -680,16 +687,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     layersList[3],
                 )
             ]
-            self.compute_solve_transi(layer, nb_cells, verbose)
+            self.compute_solve_transi(layer, verbose)
             # if len(self._layersList) == 1:
             # self._compute_solve_transi_one_layer(
             # self._layersList[0], nb_cells, verbose)
         else:
             # Checking the layers are well defined
             self._check_layers(layersList)
-            self._compute_solve_transi_multiple_layers(
-                self._layersList, nb_cells, verbose
-            )
+            self._compute_solve_transi_multiple_layers(self._layersList, verbose)
 
     @compute_solve_transi.needed
     def get_id_sensors(self):
