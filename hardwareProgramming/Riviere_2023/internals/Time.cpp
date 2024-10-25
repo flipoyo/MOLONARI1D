@@ -90,6 +90,7 @@ unsigned long GetSecondsSinceMidnight() {
 
 
 // --- Measurement Control ---
+// Manage the timing and intervals of measurements taken throughout the day
 const int MEASURE_INTERVAL_MINUTES = 15 ; // Measurement interval in minutes
 const int TOTAL_MEASUREMENTS_PER_DAY = 1440/MEASURE_INTERVAL_MINUTES ; // 96 measurements in a day
 unsigned int measurementTimes[TOTAL_MEASUREMENTS_PER_DAY]; // Array to store measurement times
@@ -107,7 +108,8 @@ void InitializeMeasurementTimes() {
 void InitializeMeasurementCount() {
   // Get current time from the RTC in minutes since midnight (00:00)
   unsigned long currentTime = GetSecondsSinceMidnight();
-
+  measurementCount = 0; // Counter for measurements
+  NbMeasurements = 1; // Number of measurements taken
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
     if (currentTime > measurementTimes[i]) {
       measurementCount++;
@@ -117,8 +119,6 @@ void InitializeMeasurementCount() {
       break; // If the current time is less than the next measurement time, break the loop
     }
   }
-  measurementCount;
-  NbMeasurements;
 }
 
 // Function to calculate the sleep time until the next measurement time

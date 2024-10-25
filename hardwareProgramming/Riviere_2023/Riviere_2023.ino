@@ -133,19 +133,17 @@ void loop() {
 
   Waiter waiter;
   waiter.startTimer();
-
-  // Calculate the time to sleep until the next measurement
-  unsigned long firstsleep = CalculateSleepTimeUntilNextMeasurement();
   // Initial start-up don't take measure
   if (initialstartup < 1) {
     initialstartup++;
+    // Calculate the time to sleep until the next measurement
+    unsigned long firstsleep = CalculateSleepTimeUntilNextMeasurement();
     // Enter low power mode
     Serial.end();
     waiter.sleepUntil(firstsleep);
   }
   else {
     Serial.println("");
-
     // Count and check that the number of daily measurements has been reached
     if (measurementCount < TOTAL_MEASUREMENTS_PER_DAY) {
       Serial.println("——Measurement " + String(NbMeasurements) + "——");
@@ -162,6 +160,9 @@ void loop() {
       NbMeasurements++;
     }
 
+    // Calculate the time to sleep until the next measurement
+    unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
+
     // If all measurements for the day are complete, transmit data and reset the counter
     if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
       Serial.println("Transmitting data via LoRa...");
@@ -174,17 +175,20 @@ void loop() {
 
     // Test code
     /*
+    Serial.print("year: ");
+    Serial.println(internalRtc.getYear());
+    Serial.print("Month: "); 
+    Serial.println(internalRtc.getMonth());
+    Serial.print("Day: ");
+    Serial.println(internalRtc.getDay());
     Serial.print("Hour: "); 
     Serial.println(internalRtc.getHours());
     Serial.print("Minute: "); 
     Serial.println(internalRtc.getMinutes());
     Serial.print("Second: "); 
     Serial.println(internalRtc.getSeconds());
-    // Serial.println("sleep time: " + String(sleepTime));
     */
 
-    // Calculate the time to sleep until the next measurement
-    unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
     // Enter low power mode
     Serial.end();
     waiter.sleepUntil(sleepTime);
