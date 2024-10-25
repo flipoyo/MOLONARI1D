@@ -46,33 +46,7 @@ class Linear_system:
         self.all_dt = all_dt
         self.dz = dz
         self.Ss_list = Ss_list
-        a = self.calc_physical_param()
-        self.H_stratified = H_stratified(
-            a,
-            Ss_list,
-            moinslog10IntrinK_list,
-            n_list,
-            lambda_s_list,
-            rhos_cs_list,
-            all_dt,
-            dz,
-            H_init,
-            H_riv,
-            H_aq,
-            T_init,
-            T_riv,
-            T_aq,
-            array_K,
-            array_Ss,
-            list_zLow,
-            z_solve,
-            inter_cara,
-            isdtconstant,
-            heatsource,
-            alpha=ALPHA,
-            N_update_Mu=N_UPDATE_MU,
-        )
-        self.nablaH = self.H_stratified.nablaH
+        self.calc_physical_param()
 
         # self.T_stratified = T_stratified(a,
         #     Ss_list,
@@ -175,8 +149,6 @@ class Linear_system:
         self.dK_list = zeros(self.n_cell, float32)
         self.KsurSs_list = self.compute_KsurSs_list()
         self.T_res = self.compute_T_res()
-        print("Physical parameters calculated")
-        return 1
 
     def get_T(self):
         return self.T_stratified.T_res
@@ -215,9 +187,31 @@ class H_stratified(Linear_system):
         alpha=ALPHA,
         N_update_Mu=N_UPDATE_MU,
     ):
-        print("H_stratified")
-
-        print("Init done")
+        super().__init__(
+            a,
+            Ss_list,
+            moinslog10IntrinK_list,
+            n_list,
+            lambda_s_list,
+            rhos_cs_list,
+            all_dt,
+            dz,
+            H_init,
+            H_riv,
+            H_aq,
+            T_init,
+            T_riv,
+            T_aq,
+            array_K,
+            array_Ss,
+            list_zLow,
+            z_solve,
+            inter_cara,
+            isdtconstant,
+            heatsource,
+            alpha=ALPHA,
+            N_update_Mu=N_UPDATE_MU,
+        )
         self.array_K = array_K
         self.array_Ss = array_Ss
         self.list_zLow = list_zLow
@@ -234,7 +228,6 @@ class H_stratified(Linear_system):
         self.H_aq = H_aq
         self.alpha = alpha
         self.heat_source = heatsource
-        self.compute_H_stratified()
 
     def compute_H_stratified(self):
         if self.isdtconstant.all():
@@ -434,6 +427,7 @@ class H_stratified(Linear_system):
 class T_stratified(Linear_system):
     def __init__(
         self,
+        nablaH,
         a,
         Ss_list,
         moinslog10IntrinK_list,
@@ -442,26 +436,53 @@ class T_stratified(Linear_system):
         rhos_cs_list,
         all_dt,
         dz,
-        H_res,
+        H_init,
         H_riv,
         H_aq,
-        nablaH,
         T_init,
         T_riv,
         T_aq,
+        array_K,
+        array_Ss,
+        list_zLow,
+        z_solve,
+        inter_cara,
+        isdtconstant,
         heatsource,
         alpha=ALPHA,
         N_update_Mu=N_UPDATE_MU,
     ):
+        super().__init__(
+            a,
+            Ss_list,
+            moinslog10IntrinK_list,
+            n_list,
+            lambda_s_list,
+            rhos_cs_list,
+            all_dt,
+            dz,
+            H_init,
+            H_riv,
+            H_aq,
+            T_init,
+            T_riv,
+            T_aq,
+            array_K,
+            array_Ss,
+            list_zLow,
+            z_solve,
+            inter_cara,
+            isdtconstant,
+            heatsource,
+            alpha=ALPHA,
+            N_update_Mu=N_UPDATE_MU,
+        )
         self.a = a
         self.Ss_list = Ss_list
         self.moinslog10IntrinK_list = moinslog10IntrinK_list
         self.n_list = n_list
         self.lambda_s_list = lambda_s_list
         self.rhos_cs_list = rhos_cs_list
-        self.all_dt = all_dt
-        self.dz = dz
-        self.H_res = H_res
         self.H_riv = H_riv
         self.H_aq = H_aq
         self.nablaH = nablaH
