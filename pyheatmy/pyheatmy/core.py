@@ -261,8 +261,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             Ss_list = n_list / heigth
             ##
             a = 1  # à adapter
-            
-            linear_system = Linear_system(
+
+            H_res = H_stratified(
                 a,
                 Ss_list,
                 moinslog10IntrinK_list,
@@ -284,12 +284,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 inter_cara,
                 isdtconstant,
                 heatsource,
-            )
-            H_res = linear_system.H_stratified.H_res
+                alpha=ALPHA,
+                N_update_Mu=N_UPDATE_MU,
+            ).compute_H_stratified
 
             # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
             nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
-
+            print(nablaH)
             nablaH[0, :] = 2 * (H_res[1, :] - H_riv) / (3 * dz)
             ## zhan Nov8: calculation de la derivation
             for i in range(1, nb_cells - 1):
@@ -297,7 +298,29 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
 
-            T_res = linear_system.get_T
+            T_res = T_stratified(nablaH, a,
+                Ss_list,
+                moinslog10IntrinK_list,
+                n_list,
+                lambda_s_list,
+                rhos_cs_list,
+                all_dt,
+                dz,
+                H_init,
+                H_riv,
+                H_aq,
+                T_init,
+                T_riv,
+                T_aq,
+                array_K,
+                array_Ss,
+                list_zLow,
+                z_solve,
+                inter_cara,
+                isdtconstant,
+                heatsource,
+                alpha=ALPHA,
+                N_update_Mu=N_UPDATE_MU,).T_res
 
             # calcule toutes les températures à tout temps et à toute profondeur
 
