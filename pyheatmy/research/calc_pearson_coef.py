@@ -8,14 +8,14 @@ from pyheatmy.core import *
 from pyheatmy import layersListCreator
 import scipy as sp
 
-def nb_per_day(dt, Verbose = True):
-    if Verbose:
+def nb_per_day(dt, verbose = True):
+    if verbose:
         print('dt must be in seconds')
     return(int(NSECINDAY/dt))
 
 
-def nb_days_in_period(dates, dt):
-    return int(dates.shape[0]/nb_per_day(dt))
+def nb_days_in_period(dates, dt, verbose = True):
+    return int(dates.shape[0]/nb_per_day(dt, verbose = verbose))
 
 
 # Argument : la matrice, un jour donné et la période journalière à regarder 
