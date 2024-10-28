@@ -34,3 +34,19 @@ def ln_amp(T, day, n_dt_in_day):
     return ln_rapport_amplitude
 
 def get_pearson_coef(depths, temperatures, dates, dt):
+    n_dt_in_day = nb_per_day(dt)
+    n_days = nb_days_in_period(dates, dt)
+    pearson_coef = np.zeros(n_days)
+    for i in range(n_days):
+        ln_amp_i = ln_amp(temperatures, i*n_dt_in_day, n_dt_in_day)
+        Lr = sp.stats.linregress(depths, ln_amp_i)
+        pearson_coef[i] = Lr.rvalue
+    return pearson_coef
+
+def plot_pearson_coef(pearson_coef, dates, dt):
+    n_days = nb_days_in_period(dates, dt)
+    plt.plot(n_days, pearson_coef)
+    plt.xlabel('Jours')
+    plt.ylabel('Coefficient de Pearson')
+    plt.title('Evolution du coefficient de Pearson en fonction du temps')
+    plt.show()
