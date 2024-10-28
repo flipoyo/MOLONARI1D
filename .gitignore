@@ -1,0 +1,8 @@
+.DS_Store
+plot
+.ipynb_checkpoints/
+*.pyc
+__pycache__/
+*.egg-info/
+build/
+.vscode
