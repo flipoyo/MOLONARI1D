@@ -8,6 +8,22 @@ from pyheatmy.core import *
 from pyheatmy import layersListCreator
 import scipy as sp
 
+# Test
+# Paramètres
+
+T_riv = time_series_multiperiodic("multi_periodic")
+T_MOY_ANNUELLE = 12 + ZERO_CELSIUS # °C, représente l'offset commun de nos signaux de température
+T_AMP_ANNUELLE = 6 # °C, représente l'amplitude de variation de température annuelle
+T_AMP_JOURNALIERE = 1 # °C, représente l'amplitude de variation de température journalière
+
+P_an = 12 # Période annuelle en mois
+P_jour = 24 # Période journalière, en heures
+
+t_debut = (2024, 4, 15, 8, 0, 0)  # (year, month, day, hour, minute, second)
+t_fin = (2024, 10, 15, 8, 0, 0)
+dt = int(NSECINHOUR / 4)  #On se place dans le cas d'un point de mesure toutes les heures (à moduler en fonction de l'intervale temporel considéré)
+
+
 def nb_per_day(dt, Verbose = True):
     if Verbose:
         print('dt must be in seconds')
@@ -55,25 +71,6 @@ def plot_pearson_coef(pearson_coef, dates, dt):
     plt.title('Evolution du coefficient de Pearson en fonction du temps')
     plt.show()
 
-# Test
-
-# Paramètres
-
-T_riv = time_series_multiperiodic("multi_periodic")
-
-T_MOY_ANNUELLE = 12 + ZERO_CELSIUS # °C, représente l'offset commun de nos signaux de température
-
-T_AMP_ANNUELLE = 6 # °C, représente l'amplitude de variation de température annuelle
-
-T_AMP_JOURNALIERE = 1 # °C, représente l'amplitude de variation de température journalière
-
-P_an = 12 # Période annuelle en mois
-
-P_jour = 24 # Période journalière, en heures
-
-t_debut = (2024, 4, 15, 8, 0, 0)  # (year, month, day, hour, minute, second)
-t_fin = (2024, 10, 15, 8, 0, 0)
-dt = int(NSECINHOUR / 4)  #On se place dans le cas d'un point de mesure toutes les heures (à moduler en fonction de l'intervale temporel considéré)
 
 def pearson_coef_test(offset_H, moinslog10IntrinK): 
     """Conditions limites"""
@@ -147,4 +144,6 @@ def pearson_coef_test(offset_H, moinslog10IntrinK):
     pears_coef=get_pearson_coef(depth_cells, np.transpose(col._temperatures), emu_observ_test_user1._dates, dt)
     plot_pearson_coef(pears_coef, emu_observ_test_user1._dates, dt)
 
-pearson_coef_test(0.05, 12)
+
+if __name__ == '__main__':
+    pearson_coef_test(0.05, 12)
