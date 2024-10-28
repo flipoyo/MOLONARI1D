@@ -113,6 +113,9 @@ void setup() {
 
 int initialstartup = 0;
 void loop() {
+  // Enable the builtin LED during initialisation
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
   // Initialise Serial
   Serial.begin(115200);
   // Wait up to 5 seconds for serial to connect
