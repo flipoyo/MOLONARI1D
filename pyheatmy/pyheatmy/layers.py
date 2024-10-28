@@ -8,7 +8,7 @@ class Layer:
     def __init__(
         self,
         name: str,
-        zLow: float,
+        zLow: float,  #profondeur en m du bas de la couche (>0)
         moinslog10IntrinK: float,
         n: float,
         lambda_s: float,
