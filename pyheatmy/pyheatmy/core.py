@@ -17,7 +17,7 @@ from pyheatmy.params import Param, ParamsPriors, Prior, PARAM_LIST, calc_K
 from pyheatmy.state import State
 from pyheatmy.checker import checker
 from pyheatmy.config import *
-from pyheatmy.system_linear import *
+from pyheatmy.pyheatmy.linear_system import *
 
 from pyheatmy.utils import *
 from pyheatmy.layers import (

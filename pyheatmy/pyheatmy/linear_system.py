@@ -410,7 +410,6 @@ class H_stratified(Linear_system):
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
-        print(self.heat_source[:, j])
         c += self.heat_source[:, j]
         return c
 
@@ -587,29 +586,34 @@ class T_stratified(Linear_system):
             self.n_list * np.sqrt(LAMBDA_W)
             + (1 - self.n_list) * np.sqrt(self.lambda_s_list)
         ) ** 2
-        lower_diagonal = -C_W * RHO_W * self.moinslog10IntrinK_list * self.nablaH / (
-            self.dz
-        ) - lambda_m / (self.dz**2)
-        lower_diagonal[-1] = -2 * self.moinslog10IntrinK_list * self.nablaH[
-            L - self.dz
-        ] * RHO_W * C_W / (3 * self.dz) - 4 * lambda_m / (3 * (self.dz**2))
+        lower_diagonal = -C_W * RHO_W * self.moinslog10IntrinK_list * self.nablaH[
+            :, 0
+        ] / (self.dz) - lambda_m / (self.dz**2)
+
+        lower_diagonal[-1] = -2 * self.moinslog10IntrinK_list[
+            self.n_cell - 1
+        ] * self.nablaH[self.n_cell - 1][0] * RHO_W * C_W / (
+            3 * self.dz
+        ) - 4 * self.lambda_m_list[self.n_cell - 1] / (
+            3 * (self.dz**2)
+        )
 
         diagonal = (
-            4 * lambda_m / (self.dz**2) + self.moinslog10IntrinK_list * self.a / 2
+            4 * self.lambda_m_list / (self.dz**2) + self.moinslog10IntrinK_list * self.a / 2
         )
         diagonal[0] = (
-            4 * lambda_m / (self.dz**2) + self.moinslog10IntrinK_list * self.a / 2
+            4 * self.lambda_m_list[0] / (self.dz**2) + self.moinslog10IntrinK_list[0] * self.a / 2
         )
         diagonal[-1] = (
-            4 * lambda_m / (self.dz**2) + self.moinslog10IntrinK_list * self.a / 2
+            4 * self.lambda_m_list[self.n_cell -1] / (self.dz**2) + self.moinslog10IntrinK_list[self.n_cell - 1] * self.a / 2
         )
 
-        upper_diagonal = C_W * RHO_W * self.moinslog10IntrinK_list * self.nablaH / (
-            self.dz
-        ) - lambda_m / (self.dz**2)
-        upper_diagonal[0] = -self.moinslog10IntrinK_list * self.nablaH[
-            self.dz
-        ] * 2 * RHO_W * C_W / (3 * self.dz) - 4 * lambda_m / (3 * (self.dz**2))
+        upper_diagonal = C_W * RHO_W * self.moinslog10IntrinK_list * self.nablaH[
+            :, 0
+        ] / (self.dz) - self.lambda_m_list / (self.dz**2)
+        upper_diagonal[0] = -self.moinslog10IntrinK_list[0] * self.nablaH[0][
+            1
+        ] * 2 * RHO_W * C_W / (3 * self.dz) - 4 * self.lambda_m_list[0] / (3 * (self.dz**2))
         return lower_diagonal, diagonal, upper_diagonal
 
     def _construct_A_matrix(self, lower_diagonal, diagonal, upper_diagonal):
