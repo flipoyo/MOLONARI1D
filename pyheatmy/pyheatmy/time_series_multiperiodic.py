@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from synthetic_MOLONARI import *
+from pyheatmy.synthetic_MOLONARI import *
 from pyheatmy.config import *
-from utils import create_periodic_signal
+from pyheatmy.utils import create_periodic_signal
 
 
 # à mettre dans utils (?)
@@ -41,7 +41,8 @@ class time_series_multiperiodic:
                 )
             for i in range(len(periods)):
                 periods[i] = convert_period_in_second(periods[i][0], periods[i][1])
-                print("periods :", periods)
+                if verbose :
+                    print("periods :", periods)
             T = create_periodic_signal(
                 dates,
                 dt,
@@ -88,6 +89,6 @@ if __name__ == "__main__":
 
     mp_ts = time_series_multiperiodic("multi_periodic")
     mp_ts.create_multiperiodic_signal(
-        [10, 5, 3], [[1, "y"], [2, "m"], [21, "d"]], dates, dt=2 * 86400 + 3 * 3600
+        [10, 5, 3], [[1, "y"], [2, "m"], [21, "d"]], dates, dt=2 * NSECINDAY + 3 * NSECINHOUR
     )
     mp_ts.plot()
