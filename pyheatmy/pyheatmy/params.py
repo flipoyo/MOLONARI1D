@@ -5,10 +5,12 @@ from numpy import inf
 from typing import Callable, Sequence
 from pyheatmy.config import *
 
-PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs")
+PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q")
 
 Param = namedtuple("Parametres", PARAM_LIST)
 
+test_params = Param(moinslog10IntrinK=11, n=0.1, lambda_s=2, rhos_cs=4e6, q=0)
+print(test_params)
 
 def cst(x):
     return 1.0  # fonction de densité par défaut
@@ -59,6 +61,7 @@ class ParamsPriors:
         self.prior_list = priors
 
     def sample(self):
+        print(len([prior.sample() for prior in self.prior_list]))
         return Param(*(prior.sample() for prior in self.prior_list))
 
     def perturb(self, param):
@@ -90,6 +93,7 @@ if __name__ == "__main__":
         "n": ((0.01, 0.25), 0.01),
         "lambda_s": ((1, 5), 0.1),
         "rhos_cs": ((1e6, 1e7), 1e5),
+        "q": ((0, 1), 1e2)
     }
     priors1 = ParamsPriors(
         [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
