@@ -564,6 +564,17 @@ class HTK_stratified(Linear_system):
         heatsource,
         alpha=ALPHA,
     ):
+        super().__init__(
+            Ss_list,
+            moinslog10IntrinK_list,
+            n_list,
+            lambda_s_list,
+            rhos_cs_list,
+            all_dt,
+            dz,
+            H_init,
+            T_init,
+        )
         self.lambda_s_list = lambda_s_list
         self.rhos_cs_list = rhos_cs_list
         self.n_list = n_list

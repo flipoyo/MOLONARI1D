@@ -1634,6 +1634,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_rhos_cs = property(get_all_rhos_cs)
 
+    def get_all_q(self):
+        # retourne toutes les valeurs de rho_cs (rho_cs : produite de la densité par la capacité calorifique spécifique du solide) par lesquels est passé la MCMC
+        return [
+            [layer.params.q for layer in state.layers] for state in self._states
+        ]
+
+    all_q = property(get_all_q)
+
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
     def get_all_sigma2(self):
