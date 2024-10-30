@@ -272,9 +272,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ##
             a = 1  # à adapter
 
-            # print(q_list)
-            # print(all_dt)
-
             H_strat = H_stratified(
                 Ss_list,
                 moinslog10IntrinK_list,
@@ -1134,7 +1131,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # quantités des différents paramètres
         nb_layer = len(all_priors)  # nombre de couches
-        nb_param = 4  # nombre de paramètres à estimer par couche
+        nb_param = 5  # nombre de paramètres à estimer par couche
         nb_accepted = 0  # nombre de propositions acceptées
         nb_burn_in_iter = 0  # nombre d'itération de burn-in
 
