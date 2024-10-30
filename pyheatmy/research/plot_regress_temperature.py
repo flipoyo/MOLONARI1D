@@ -6,6 +6,7 @@ import calc_pearson_coef as cpc
 from pyheatmy.core import *
 from pyheatmy.time_series_multiperiodic import class_time_series_multiperiodic
 from pyheatmy import *
+import matplotlib.dates as mdates
 
 # Argument : la matrice, liste des profondeur
 # Sortie : liste des amplitudes
@@ -214,3 +215,54 @@ def list_k_T(list_of_minus_log_K):
     for l in list_of_minus_log_K:
         T_list.append(np.transpose(profil_temperature(dH_offset, l)[0:last_cell,:]))
     return T_list
+
+
+# Function that plots the pearson coefficient day by day
+def data_plot_pearson(point_number, verbose = True):
+    # url = path MOLONARI1D\dataAnalysis\data_traite\
+    url = 'dataAnalysis\data_traite\point' + str(point_number) + '_temperature_traité.csv'
+    df = pd.read_csv(url)
+    df.columns = ['Date_heure', 'T_Sensor0', 'T_Sensor1', 'T_Sensor2', 'T_Sensor3']
+    if verbose:
+        print(df.head())
+
+    # Create the temperature matrix
+    T = [df['T_Sensor' + str(i)] for i in range(4)]
+    T = np.array(T)
+    T = np.transpose(T)
+
+    depths = np.linspace(0, 0.4, 4)
+
+    # prt.plot_linear_regression(depths, T)
+    Y = cpc.get_pearson_coef(depths, T, df['Date_heure'], dt)
+    n_days = cpc.nb_days_in_period(df['Date_heure'], dt)
+    n_days = np.arange(n_days)
+    X = n_days
+
+    plt.scatter(X, Y)
+    plt.title('Pearson coefficient for Point' + str(point_number))
+    plt.xlabel('day')
+    plt.ylabel('Pearson coefficient')
+    plt.show()
+
+
+# Possible improvements of the function :
+# - verbose to display all the possible numbers of the point
+# Mosaic for different points
+
+# plot on the same graph for the different depths temperatures as a function of time 
+def plot_data(point_number, verbose = True):
+    url = 'dataAnalysis\data_traite\point' + str(point_number) + '_temperature_traité.csv'
+    df = pd.read_csv(url)
+    df.columns = ['Date_heure', 'T_Sensor0', 'T_Sensor1', 'T_Sensor2', 'T_Sensor3']
+    df['Date_heure'] = pd.to_datetime(df['Date_heure'], dayfirst = True)
+
+    # Tracer toutes les colonnes sauf 'Date_heure' en fonction de 'Date_heure'
+    df.set_index('Date_heure').plot(figsize=(10, 6), grid=True, title="Graphique des valeurs en fonction des dates")
+    plt.xlabel("Date")
+    plt.ylabel("Température (°C)")
+    plt.title("signal de température pour le capteur " + str(point_number))
+    plt.show()
+
+if __name__ == '__main__':
+    plot_data(53)
