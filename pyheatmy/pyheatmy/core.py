@@ -276,7 +276,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             # print(all_dt)
 
             H_strat = H_stratified(
-                a,
                 Ss_list,
                 moinslog10IntrinK_list,
                 n_list,
@@ -289,8 +288,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 H_riv,
                 H_aq,
                 T_init,
-                T_riv,
-                T_aq,
                 array_K,
                 array_Ss,
                 list_zLow,
@@ -298,7 +295,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 inter_cara,
                 isdtconstant,
                 alpha=ALPHA,
-                N_update_Mu=N_UPDATE_MU,
             )
             H_res = H_strat.compute_H_stratified()
 
@@ -329,12 +325,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 T_init,
                 T_riv,
                 T_aq,
-                array_K,
-                array_Ss,
-                list_zLow,
-                z_solve,
-                inter_cara,
-                isdtconstant,
                 alpha=ALPHA,
                 N_update_Mu=N_UPDATE_MU,
             ).T_res
@@ -819,7 +809,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._z_solve[1] - self._z_solve[0]  # pas en profondeur
         nb_cells = len(self._z_solve)
 
-        _, n_list, lambda_s_list, _ = getListParameters(self._layersList, nb_cells)
+        _, n_list, lambda_s_list, _ , _ = getListParameters(self._layersList, nb_cells)
 
         lambda_m_list = (
             n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
@@ -1723,7 +1713,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         temperatures[0] = self._T_riv
         temperatures[len(ids) + 1] = self._T_aq
         for id in range(len(ids)):
-            print(self.get_temperatures_solve())
+            # print(self.get_temperatures_solve()) # mise en commentaire car on ne sait pas à quoi elle sert
             temperatures[id + 1] = self.get_temperatures_solve()[ids[id]]
             # print(f"printing extracted temperatures:{id+1}")
             # print(temperatures[id+1])
@@ -2078,7 +2068,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     @compute_mcmc.needed
     def plot_all_param_pdf(self):
-        fig, axes = plt.subplots(2, 4, figsize=(30, 20))
+        fig, axes = plt.subplots(2, 5, figsize=(30, 20))
 
         for id_layer, layer_distribs in enumerate(self.get_all_params()):
             axes[id_layer, 0].hist(layer_distribs[::, 0])
@@ -2089,6 +2079,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             axes[id_layer, 2].set_title(f"Couche {id_layer + 1} : lambda_s")
             axes[id_layer, 3].hist(layer_distribs[::, 3])
             axes[id_layer, 3].set_title(f"Couche {id_layer + 1} : rhos_cs")
+            axes[id_layer, 4].hist(layer_distribs[::, 4])
+            axes[id_layer, 4].set_title(f"Couche {id_layer + 1} : q")
 
     @compute_mcmc.needed
     def plot_darcy_flow_quantile(self):

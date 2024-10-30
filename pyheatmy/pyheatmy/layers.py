@@ -18,7 +18,6 @@ class Layer:
     ):
         self.name = name
         self.zLow = zLow
-        print(moinslog10IntrinK, n, lambda_s, rhos_cs, q)
         PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q")
         Param = namedtuple("Parametres", PARAM_LIST)
         self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs, q)
