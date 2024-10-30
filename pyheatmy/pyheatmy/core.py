@@ -643,7 +643,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     def compute_mcmc_without_sigma2(
         self,
-        nb_iter: int,
         all_priors: Union[
             AllPriors,
             Sequence[
@@ -655,6 +654,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ],
         nb_cells: int,
         quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
+        nb_iter=NITMCMC,
         verbose=True,
         sigma2=1.0,
     ):
@@ -702,7 +702,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temperatures = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
         _flows = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
 
-        for _ in trange(NITMCMC, desc="Init Mcmc ", file=sys.stdout):
+        for _ in trange(nb_iter, desc="Init Mcmc ", file=sys.stdout):
             init_layers = all_priors.sample()
             self.compute_solve_transi(init_layers, nb_cells, verbose=False)
             self._states.append(
@@ -762,7 +762,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     def compute_mcmc_with_sigma2(
         self,
-        nb_iter: int,
         all_priors: Union[
             AllPriors,
             Sequence[
@@ -775,6 +774,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_cells: int,
         quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         verbose=True,
+        nb_iter=NITMCMC,
         sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
     ):
         if isinstance(quantile, Number):
@@ -814,7 +814,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temperatures = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
         _flows = np.zeros((nb_iter + 1, nb_cells, len(self._times)), np.float32)
 
-        for _ in trange(1000, desc="Init Mcmc ", file=sys.stdout):
+        for _ in trange(nb_iter, desc="Init Mcmc ", file=sys.stdout):
             init_layers = all_priors.sample()
             init_sigma2_temp = sigma2_temp_prior.sample()
             self.compute_solve_transi(init_layers, nb_cells, verbose=False)
@@ -884,7 +884,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     def compute_dream_mcmc_without_sigma2(
         self,
-        nb_iter: int,
         all_priors: Union[
             AllPriors,
             Sequence[
@@ -898,6 +897,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
         verbose=False,
         sigma2=1.0,
+        nb_iter=NITMCMC,
         nb_chain=10,
         delta=3,
         ncr=3,
@@ -1257,66 +1257,418 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             print("Quantiles computed")
 
     @checker
-    def compute_mcmc(
-        self,  # la colonne
-        nb_iter: int,
-        all_priors: Union[
-            AllPriors,
-            Sequence[
-                Union[
-                    LayerPriors,
-                    Sequence[Union[str, float, Sequence[Union[Prior, dict]]]],
-                ]
+    def compute_mcmc_DREAM(
+            self,
+            all_priors: Union[
+                AllPriors,
+                Sequence[
+                    Union[
+                        LayerPriors,
+                        Sequence[Union[str, float, Sequence[Union[Prior, dict]]]],
+                    ]
+                ],
             ],
-        ],
-        nb_cells: int,  # le nombre de cellules de la colonne
-        # les quantiles pour l'affichage de stats sur les valeurs de température
-        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
-        nb_chain: int = 5,
-        delta=2,
-        ncr=3,
-        c=0.1,
-        c_star=1e-6,
-        verbose=True,  # affiche texte explicatifs ou non
-        sigma2=1.0,
-        sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
-        remanence = 1,
-        n_sous_ech_iter=10,
-        n_sous_ech_space=1,
-        n_sous_ech_time=1,
-        threshold=1.2
-    ):
-        if nb_chain < 2:
-            if sigma2 is None:
-                self.compute_mcmc_with_sigma2(
-                    nb_iter, all_priors, nb_cells, quantile, verbose, sigma2_temp_prior
-                )
-            else:
-                self.compute_mcmc_without_sigma2(
-                    nb_iter, all_priors, nb_cells, quantile, verbose, sigma2
-                )
-        else:
-            self.compute_dream_mcmc_without_sigma2(
-                nb_iter,
-                all_priors,
-                nb_cells,
-                quantile,
-                verbose,
-                sigma2,
-                nb_chain,
-                delta,
-                ncr,
-                c,
-                c_star,
-                remanence,
-                n_sous_ech_iter,
-                n_sous_ech_space,
-                n_sous_ech_time,
-                threshold
-            )
+            nb_cells: int,
+            quantile: Union[float, Sequence[float]] = (QUANTILE_MIN,MEDIANE,QUANTILE_MAX),
+            verbose=False,
+            typealgo="no sigma",
+            nb_iter=NITMCMC,
+            nb_chain=10,
+            delta=3,
+            ncr=3,
+            c=0.1,
+            c_star=1e-12,
+            remanence = 1,
+            n_sous_ech_iter=10,
+            n_sous_ech_space=1,
+            n_sous_ech_time=1,
+            threshold=1.2
+        ):
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+            process = psutil.Process()
+
+            if typealgo=="no sigma":
+                sigma2 =1.0 
+                sigma2_distrib=None
+            else :
+                sigma2_temp_prior = Prior((0.01, np.inf), 1, lambda x: 1 / x)
+                sigma2_distrib = sigma2_temp_prior.density
+
+            # vérification des types des arguments
+            if isinstance(quantile, Number):
+                quantile = [quantile]
+
+            if not isinstance(all_priors, AllPriors):
+                all_priors = AllPriors([LayerPriors(*conv(layer)) for layer in all_priors])
+
+            # définition des paramètres de la simulation
+            dz = self._real_z[-1] / nb_cells
+            _z_solve = dz / 2 + np.array([k * dz for k in range(nb_cells)])
+            ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
+            temp_ref = self._T_measures[:, :].T
+
+            # quantités des différents paramètres
+            nb_layer = len(all_priors)  # nombre de couches
+            nb_param = N_PARAM_MCMC  # nombre de paramètres à estimer par couche
+            nb_accepted = 0  # nombre de propositions acceptées
+            nb_burn_in_iter = 0  # nombre d'itération de burn-in
+
+            # création des bornes des paramètres
+            ranges = np.empty((nb_layer, nb_param, 2))
+            for l in range(nb_layer):
+                for p in range(nb_param):
+                    ranges[l, p] = all_priors[l][p].range
+
+            # propriétés des couches
+            name_layer = [all_priors.sample()[i].name for i in range(nb_layer)]
+            z_low = [all_priors.sample()[i].zLow for i in range(nb_layer)]
+
+            _temp_iter = np.zeros(
+                (nb_chain, nb_cells, len(self._times)), np.float32
+            )  # dernière température acceptée pour chaque chaine
+            _flow_iter = np.zeros(
+                (nb_chain, nb_cells, len(self._times)), np.float32
+            )  # dernier débit accepté pour chaque chaine
+
+            _energy_burn_in = np.zeros((nb_iter + 1, nb_chain), np.float32)  # énergie pour le burn-in
+
+            # variables pour l'état courant
+            temp_new = np.zeros(
+                (nb_cells, len(self._times)), np.float32
+                                )
+            energy_new = 0
+            X = np.array([np.array(all_priors.sample()) for _ in range(nb_chain)])
+            X = np.array(
+                [
+                    np.array([X[c][l].params for l in range(nb_layer)])
+                    for c in range(nb_chain)
+                ]
+            )  # stockage des paramètres pour l'itération en cours
+
+            # stockage des résultats
+            self._states = list()  # stockage des états à chaque itération
+            self._acceptance = np.zeros((nb_chain,), np.float32)  # stockage des taux d'acceptation
+
+            _params = np.zeros(
+                (nb_iter + 1, nb_chain, nb_layer, nb_param), np.float32
+            )  # stockage des paramètres
+            _params[0] = X  # initialisation des paramètres
+
+            # objets liés à DREAM
+            cr_vec = np.arange(1, ncr + 1) / ncr
+            n_id = np.zeros((nb_layer, ncr), np.float32)
+            J = np.zeros((nb_layer, ncr), np.float32)
+            pcr = np.ones((nb_layer, ncr)) / ncr
+
+            if verbose:
+                print(
+                    "--- Compute DREAM MCMC ---",
+                    "Priors :",
+                    *(f"    {prior}" for prior in all_priors),
+                    f"Number of cells : {nb_cells}",
+                    f"Number of iterations : {nb_iter}",
+                    f"Number of chains : {nb_chain}",
+                    "--------------------",
+                    sep="\n",
+                )
+
+            def compute_energy_mcmc(temp1,temp2, remanence,sigma2, sigma2_distrib):
+                    if sigma2_distrib is None:
+                        return(compute_energy(temp1,temp2,remanence, sigma2))
+                    else :
+                        return(compute_energy_with_distrib(temp1,temp2,sigma2,sigma2_distrib))
+            
+
+            # initialisation des chaines
+            init_sigma2=[]
+            for j in range(nb_chain):
+                self.compute_solve_transi(
+                    convert_to_layer(nb_layer, name_layer, z_low, X[j]),
+                    nb_cells,
+                    verbose=False,
+                )
+                _temp_iter[j] = self.get_temperatures_solve()
+                _flow_iter[j] = self.get_flows_solve()
+                if typealgo=="no sigma":
+                    init_sigma2.append(sigma2)
+                    _energy_burn_in[0][j] = compute_energy_mcmc(
+                    _temp_iter[j][ind_ref], temp_ref, remanence, sigma2,sigma2_distrib
+                    )
+                else:
+                    init_sigma2_temp = sigma2_temp_prior.sample()
+                    init_sigma2.append(init_sigma2_temp)
+                    _energy_burn_in[0][j] = compute_energy_mcmc(_temp_iter[j][ind_ref], temp_ref, remanence, init_sigma2_temp,sigma2_distrib)
+
+
+            print(f"Initialisation - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
+
+            current_sigma2=init_sigma2
+            if verbose:
+                print("--- Begin Burn in phase ---")
+            for i in trange(nb_iter, desc="Burn in phase"):
+                # Initialisation pour les nouveaux paramètres
+                std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
+                for j in range(nb_chain):
+                    x_new = np.zeros((nb_layer, nb_param))
+                    dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
+                    if typealgo=="no sigma":
+                        new_sigma2_temp=sigma2
+                    else :
+                        new_sigma2_temp=sigma2_temp_prior.perturb(current_sigma2[j])
+                    for l in range(nb_layer):
+                        # actualiation des paramètres DREAM pour la couche l
+                        id = np.random.choice(ncr, p=pcr[l])
+                        z = np.random.uniform(0, 1, nb_param)
+                        A = z <= cr_vec[id]
+                        d_star = np.sum(A)
+                        if d_star == 0:
+                            A[np.argmin(z)] = True
+                            d_star = 1
+                        lambd = np.random.uniform(-c, c, d_star)
+                        zeta = np.random.normal(0, c_star, d_star)
+                        choose = np.delete(np.arange(nb_chain), j)
+                        a = np.random.choice(choose, delta, replace=False)
+                        choose = np.delete(np.arange(nb_chain), a)
+                        b = np.random.choice(choose, delta, replace=False)
+
+                        gamma = 2.38 / np.sqrt(2 * d_star * delta)
+                        gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
+                        dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
+                            X[a, l][:, A] - X[b, l][:, A], axis=0
+                        )
+
+                        x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
+                        x_new[l] = check_range(
+                            x_new[l], ranges[l]
+                        )  # vérification des bornes et réajustement si besoin
+
+                    # Calcul du profil de température associé aux nouveaux paramètres
+                    self.compute_solve_transi(
+                        convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                        nb_cells,
+                        verbose=False,
+                    )
+                    temp_new = (
+                        self.get_temperatures_solve()
+                    )  # récupération du profil de température
+
+                    energy_new = compute_energy_mcmc(
+                        temp_new[ind_ref], temp_ref, remanence, new_sigma2_temp, sigma2_distrib
+                    )  # calcul de l'énergie
+
+                    # calcul de la probabilité d'accpetation
+                    log_ratio_accept = compute_log_acceptance(
+                        energy_new, _energy_burn_in[i][j]
+                    )
+
+                    # Acceptation ou non des nouveaux paramètres
+                    if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
+                        X[j] = x_new  # actualisation des paramètres pour la chaine j
+                        _temp_iter[j] = temp_new  # actualisation du profil de température
+                        _flow_iter[j] = self.get_flows_solve()  # actualisation du débit
+                        _energy_burn_in[i + 1][j] = energy_new  # actualisation de l'énergie
+                        current_sigma2[j] = new_sigma2_temp  # actualisation de sigma2_temp
+                    else:
+                        dX = np.zeros((nb_layer, nb_param))
+                        _energy_burn_in[i + 1][j] = _energy_burn_in[i][
+                            j
+                        ]  # on garde la même énergie
+                        current_sigma2[j] = current_sigma2[j]  # on garde la même sigma2_temp
+
+                    # Mise à jour des paramètres de la couche j pour DREAM
+                    for l in range(nb_layer):
+                        J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
+                        n_id[l, id] += 1
+
+                # Mise à jour du pcr pour chaque couche pour DREAM
+                for l in range(nb_layer):
+                    pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
+                    pcr[l] = pcr[l] / np.sum(pcr[l])
+
+                # Actualisation des paramètres à la fin de l'itération
+                _params[i + 1] = X
+                # Fin d'une itération, on check si on peut sortir du burn-in
+                if gelman_rubin(i + 2, nb_param, nb_layer, _params[: i + 2], threshold=threshold):
+                    if verbose:
+                        print(f"Burn-in finished after : {nb_burn_in_iter} iterations")
+                    break  # on sort du burn-in
+                nb_burn_in_iter += 1  # incrémentation du numbre d'itération de burn-in
+
+            self.nb_burn_in_iter = nb_burn_in_iter
+
+            # Transition après le burn in
+            del _params  # la variable _params n'est plus utile
+
+            # Préparation du sous-échantillonnage
+            nb_iter_sous_ech = int( np.ceil( (nb_iter+1) / n_sous_ech_iter))
+            nb_cells_sous_ech = int( np.ceil(nb_cells / n_sous_ech_space) )
+            nb_times_sous_ech = int( np.ceil(len(self._times) / n_sous_ech_time) )
+
+            # Initialisation des flux
+            _flows = np.zeros(
+                (nb_iter_sous_ech, nb_chain, nb_cells_sous_ech, nb_times_sous_ech), np.float32
+            )  # initisaliton du flow
+            _flows[0] = _flow_iter[
+                :, ::n_sous_ech_space, ::n_sous_ech_time
+            ]  # initialisation du flow
+
+            _temp = np.zeros(
+                (nb_iter_sous_ech, nb_chain, nb_cells_sous_ech, nb_times_sous_ech), np.float32
+                )
+            _temp[0] = _temp_iter[:, ::n_sous_ech_space, ::n_sous_ech_time]  # initialisation des températures sous-échantillonnées
+
+            # initialisation des états
+            for j in range(nb_chain):
+                init_sigma2_temp = current_sigma2[j]
+                self._states.append(
+                    State(
+                        layers=convert_to_layer(nb_layer, name_layer, z_low, X[j]),
+                        energy=_energy_burn_in[
+                            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+                        ][j],
+                        ratio_accept=1,
+                        sigma2_temp=init_sigma2_temp,
+                    )
+                )
+
+            print(f"Initialisation post burn-in - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
+
+            for i in trange(nb_iter, desc="DREAM MCMC Computation", file=sys.stdout):
+                # Initialisation pour les nouveaux paramètres
+                std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
+                for j in range(nb_chain):
+                    x_new = np.zeros((nb_layer, nb_param), np.float32)
+                    dX = np.zeros((nb_layer, nb_param), np.float32)  # perturbation DREAM
+                    if typealgo=="no sigma":
+                        new_sigma2_temp=sigma2
+                    else :
+                        new_sigma2_temp=sigma2_temp_prior.perturb(current_sigma2[j])
+                    for l in range(nb_layer):
+                        # actualiation des paramètres DREAM pour la couche l
+                        id = np.random.choice(ncr, p=pcr[l])
+                        z = np.random.uniform(0, 1, nb_param)
+                        A = z <= cr_vec[id]
+                        d_star = np.sum(A)
+                        if d_star == 0:
+                            A[np.argmin(z)] = True
+                            d_star = 1
+                        lambd = np.random.uniform(-c, c, d_star)
+                        zeta = np.random.normal(0, c_star, d_star)
+                        choose = np.delete(np.arange(nb_chain), j)
+                        a = np.random.choice(choose, delta, replace=False)
+                        choose = np.delete(np.arange(nb_chain), a)
+                        b = np.random.choice(choose, delta, replace=False)
+                        gamma = 2.38 / np.sqrt(2 * d_star * delta)
+                        gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
+                        dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
+                            X[a, l][:, A] - X[b, l][:, A], axis=0
+                        )
+
+                        x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
+                        x_new[l] = check_range(
+                            x_new[l], ranges[l]
+                        )  # vérifaication des bornes et réajustement si besoin
+
+                    # Calcul du profil de température associé aux nouveaux paramètres
+                    self.compute_solve_transi(
+                        convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                        nb_cells,
+                        verbose=False,
+                    )
+                    temp_new = (
+                        self.get_temperatures_solve()
+                    )  # récupération du profil de température
+
+                    energy_new = compute_energy_mcmc(
+                        temp_new[ind_ref], temp_ref, remanence,new_sigma2_temp,sigma2_distrib
+                    )  # calcul de l'énergie
+
+                    # calcul de la probabilité d'accpetation
+                    log_ratio_accept = compute_log_acceptance(
+                        energy_new, self._states[-nb_chain].energy
+                    )
+
+                    # Acceptation ou non des nouveaux paramètres
+                    if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
+                        X[j] = x_new
+                        current_sigma2[j]= new_sigma2_temp
+
+                        _temp_iter[j] = temp_new
+
+                        _flow_iter[j] = self.get_flows_solve()
+
+                        if (i+1) % n_sous_ech_iter == 0: 
+                            # Si i+1 est un multiple de n_sous_ech_iter, on stocke
+                            k = (i+1) // n_sous_ech_iter
+                            _temp[k, j] = temp_new[::n_sous_ech_space, ::n_sous_ech_time]
+                            _flows[k, j] = _flow_iter[j, ::n_sous_ech_space, ::n_sous_ech_time]
+
+                        nb_accepted += 1
+                        self._acceptance[j] += 1
+                        self._states.append(
+                            State(
+                                layers=convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                                energy=energy_new,
+                                ratio_accept=nb_accepted / (i * nb_chain + j + 1),
+                                sigma2_temp=current_sigma2[j],
+                            )
+                        )
+                    else:
+                        dX = np.zeros(
+                            (nb_layer, nb_param), np.float32
+                            )
+                        current_sigma2[j] = current_sigma2[j]
+                        if (i+1) % n_sous_ech_iter == 0:
+                            # Si i+1 est un multiple de n_sous_ech_iter, on stocke
+                            k = (i+1) // n_sous_ech_iter
+                            _temp[k][j] = _temp_iter[j][
+                            ::n_sous_ech_space, ::n_sous_ech_time
+                        ]
+                            _flows[k][j] = _flow_iter[j][
+                            ::n_sous_ech_space, ::n_sous_ech_time
+                        ]
+
+                        self._states.append(
+                            State(
+                                layers=self._states[-nb_chain].layers,
+                                energy=self._states[-nb_chain].energy,
+                                ratio_accept=nb_accepted / (i * nb_chain + j + 1),
+                                sigma2_temp=current_sigma2[j],
+                            )
+                        )  # ajout de l'état à la liste des états
+
+                    # Mise à jour des paramètres de la couche j pour DREAM
+                    for l in range(nb_layer):
+                        J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
+                        n_id[l, id] += 1
+
+            # Calcul des quantiles pour la température
+            _temp = _temp.reshape(nb_iter_sous_ech * nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
+            _flows = _flows.reshape(nb_iter_sous_ech * nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
+
+            # print("Occupation mémoire des températures (en Mo) : ", _temp.nbytes/1e6)
+            # print("Occupation mémoire des flux (en Mo) : ", _flows.nbytes/1e6)
+
+            print(f"Fin itérations MCMC, avant le calcul des quantiles - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
+
+            self._quantiles_temperatures = {
+                quant: res
+                for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
+            }
+            
+            self._quantiles_flows = {
+                quant: res
+                for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
+            }
+
+            self._acceptance = self._acceptance / nb_iter
+
+            if verbose:
+                print("Quantiles computed")
+
+
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_depths_mcmc(self):
         return (
             self._z_solve
@@ -1324,41 +1676,41 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     depths_mcmc = property(get_depths_mcmc)
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_times_mcmc(self):
         return self._times
 
     times_mcmc = property(get_times_mcmc)
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def sample_param(self):
         # retourne aléatoirement un des couples de paramètres parlesquels est passé la MCMC
         return choice(
             [[layer.params for layer in state.layers] for state in self._states]
         )
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_best_param(self):
         """return the params that minimize the energy"""
         return [
             layer.params for layer in min(self._states, key=attrgetter("energy")).layers
         ]  # retourne le couple de paramètres minimisant l'énergie par lequels est passé la MCMC
 
-    @compute_mcmc.needed
+    @compute_mcmc_DREAM.needed
     def get_best_sigma2(self):
         """return the best sigma that minimizes the energy"""
         return min(self._states, key=attrgetter("energy")).sigma2_temp
 
-    @compute_mcmc.needed
+    @compute_mcmc_DREAM.needed
     def get_best_layers(self):
         """return the params that minimize the energy"""
         return min(self._states, key=attrgetter("energy")).layers
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_all_params(self):
         n_layers = len(self._layersList)
         n_params = len(self._layersList[0].params)
@@ -1371,8 +1723,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_params = property(get_all_params)
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_all_moinslog10IntrinK(self):
         # retourne toutes les valeurs de moinslog10IntrinK (K : perméabilité) par lesquels est passé la MCMC
         return [
@@ -1382,16 +1734,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_moinslog10IntrinK = property(get_all_moinslog10IntrinK)
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_all_n(self):
         # retourne toutes les valeurs de n (n : porosité) par lesquels est passé la MCMC
         return [[layer.params.n for layer in state.layers] for state in self._states]
 
     all_n = property(get_all_n)
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_all_lambda_s(self):
         # retourne toutes les valeurs de lambda_s (lambda_s : conductivité thermique du solide) par lesquels est passé la MCMC
         return [
@@ -1400,8 +1752,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_lambda_s = property(get_all_lambda_s)
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_all_rhos_cs(self):
         # retourne toutes les valeurs de rho_cs (rho_cs : produite de la densité par la capacité calorifique spécifique du solide) par lesquels est passé la MCMC
         return [
@@ -1410,42 +1762,42 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_rhos_cs = property(get_all_rhos_cs)
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_all_sigma2(self):
         return [state.sigma2_temp for state in self._states]
 
     all_sigma = property(get_all_sigma2)
 
-    @compute_mcmc.needed
+    @compute_mcmc_DREAM.needed
     def get_all_energy(self):
         return self._initial_energies + [state.energy for state in self._states]
 
     all_energy = property(get_all_energy)
 
-    @compute_mcmc.needed
+    @compute_mcmc_DREAM.needed
     # retourne toutes les valeurs d'acceptance empirique par lesquels est passée la MCMC
     def get_all_acceptance_ratio(self):
         return self._acceptance
 
     all_acceptance_ratio = property(get_all_acceptance_ratio)
 
-    @compute_mcmc.needed
+    @compute_mcmc_DREAM.needed
     def get_quantiles(self):
         return self._quantiles_temperatures.keys()
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_temperatures_quantile(self, quantile):
         return self._quantiles_temperatures[quantile]
         # retourne les valeurs des températures en fonction du temps selon le quantile demandé
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
+    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc_DREAM.needed
     def get_flows_quantile(self, quantile):
         return self._quantiles_flows[quantile]
 
-    @compute_mcmc.needed
+    @compute_mcmc_DREAM.needed
     def get_RMSE_quantile(self, quantile):
         # Number of sensors (except boundary conditions : river and aquifer)
         nb_sensors = len(self._T_measures[0])
@@ -1592,7 +1944,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
 
 
-    @compute_mcmc.needed
+    @compute_mcmc_DREAM.needed
     def plot_quantile_temperatures_sensors(self, tunits="K",fontsize=15):
         temps_en_jours = self.create_time_in_day()
 
@@ -1795,7 +2147,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         self.plot_CALC_results()
 
-    @compute_mcmc.needed
+    @compute_mcmc_DREAM.needed
     def plot_all_param_pdf(self):
         fig, axes = plt.subplots(2, 4, figsize=(30, 20))
 
@@ -1810,7 +2162,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             axes[id_layer, 3].set_title(f"Couche {id_layer + 1} : rhos_cs")
 
 
-    @compute_mcmc.needed
+    @compute_mcmc_DREAM.needed
     def plot_darcy_flow_quantile(self):
         temps_en_jours = self.create_time_in_day()
 
