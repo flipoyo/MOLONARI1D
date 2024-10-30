@@ -51,7 +51,8 @@ LAMBDA_S_SIGMA = 0.1
 RHOS_CS_INTERVAL = (1e6, 1e7)  # Ensure PARAMBOUND is defined in config.py
 RHOS_CS_SIGMA = 1e5
 
-SIGMA2_MAX_T=2
+SIGMA2_MAX_T = 1.
+RANDOMWALKSIGMAT = 0.01
 
 # param par défaut dans pyheatmy.py
 DEFAULT_sensor_depth = [0.1, 0.2, 0.3, 0.4]
