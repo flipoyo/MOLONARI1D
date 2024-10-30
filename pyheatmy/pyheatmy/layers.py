@@ -70,8 +70,8 @@ class AllPriors:
 
 def layersListCreator(layersListInput):
     layersList = list()
-    for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs in layersListInput:
-        layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs))
+    for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, q in layersListInput:
+        layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, q))
     return layersList
 
 

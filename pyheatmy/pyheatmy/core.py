@@ -528,30 +528,27 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                                 print("type cara asymetric")
             ## end
             # version zhan
+            a = 1  # à adapter
             H_strat = H_stratified(
-                a,
                 Ss_list,
                 moinslog10IntrinK_list,
                 n_list,
                 lambda_s_list,
                 rhos_cs_list,
                 all_dt,
+                q_list,
                 dz,
                 H_init,
                 H_riv,
                 H_aq,
                 T_init,
-                T_riv,
-                T_aq,
                 array_K,
                 array_Ss,
                 list_zLow,
                 z_solve,
                 inter_cara,
                 isdtconstant,
-                heatsource,
                 alpha=ALPHA,
-                N_update_Mu=N_UPDATE_MU,
             )
             H_res = H_strat.compute_H_stratified()
 
@@ -568,14 +565,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             K_list = calc_K(k_list)
             # print(f"calculating flow in multilayer with permeability {K_list}")
 
-            nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
-
-            nablaH[0, :] = 2 * (H_res[1, :] - H_riv) / (3 * dz)
-            ## zhan Nov8: calculation de la derivation
-            for i in range(1, nb_cells - 1):
-                nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
-
-            nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
+            nablaH = H_strat.nablaH()
 
             flows = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -650,6 +640,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 lambda_s_list,
                 rhos_cs_list,
                 all_dt,
+                q_list,
                 dz,
                 H_init,
                 H_riv,
@@ -657,13 +648,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 T_init,
                 T_riv,
                 T_aq,
-                array_K,
-                array_Ss,
-                list_zLow,
-                z_solve,
-                inter_cara,
-                isdtconstant,
-                q_list,
                 alpha=ALPHA,
                 N_update_Mu=N_UPDATE_MU,
             ).T_res
@@ -806,7 +790,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._z_solve[1] - self._z_solve[0]  # pas en profondeur
         nb_cells = len(self._z_solve)
 
-        _, n_list, lambda_s_list, _ , _ = getListParameters(self._layersList, nb_cells)
+        _, n_list, lambda_s_list, _, _ = getListParameters(self._layersList, nb_cells)
 
         lambda_m_list = (
             n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
@@ -1633,9 +1617,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     def get_all_q(self):
         # retourne toutes les valeurs de rho_cs (rho_cs : produite de la densité par la capacité calorifique spécifique du solide) par lesquels est passé la MCMC
-        return [
-            [layer.params.q for layer in state.layers] for state in self._states
-        ]
+        return [[layer.params.q for layer in state.layers] for state in self._states]
 
     all_q = property(get_all_q)
 

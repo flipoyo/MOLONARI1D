@@ -41,6 +41,7 @@ from pyheatmy.config import *
 def conv(layer):
     name, prof, priors = layer
     if isinstance(priors, dict):
+        print(priors)
         return (
             name,
             prof,
@@ -116,19 +117,19 @@ def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
     return all(R < threshold)
 
 
-@njit
-def compute_Mu(T):
-    """
-    Paramètres : T : Température ou Tableau de températures
-    Résultat : mu : Viscosité à la température T selon l'approximation de ...
-    NF --> Retrouver les références et les unités SVP
-    """
-    A = 1.856e-11 * 1e-3
-    B = 4209
-    C = 0.04527
-    D = -3.376e-5
-    mu = A * exp(B * 1.0 / T + C * T + D * (T**2))
-    return mu
+# @njit
+# def compute_Mu(T):
+#     """
+#     Paramètres : T : Température ou Tableau de températures
+#     Résultat : mu : Viscosité à la température T selon l'approximation de ...
+#     NF --> Retrouver les références et les unités SVP
+#     """
+#     A = 1.856e-11 * 1e-3
+#     B = 4209
+#     C = 0.04527
+#     D = -3.376e-5
+#     mu = A * exp(B * 1.0 / T + C * T + D * (T**2))
+#     return mu
 
 
 # @njit
