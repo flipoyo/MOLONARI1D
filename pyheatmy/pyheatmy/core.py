@@ -212,11 +212,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10IntrinK, n, lambda_s, rhos_cs = layer.params
+            moinslog10IntrinK, n, lambda_s, rhos_cs, q = layer.params
 
             if verbose:
                 print("--- Compute Solve Transi ---",
-                    f"One layer : moinslog10IntrinK = {moinslog10IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}", sep="\n")
+                    f"One layer : moinslog10IntrinK = {moinslog10IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}, q = {q}", sep="\n")
 
             heigth = abs(self._real_z[-1] - self._real_z[0])
             Ss = n / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
@@ -225,15 +225,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             array_moinslog10IntrinK = np.array([moinslog10IntrinK, moinslog10IntrinK])
             # array_K = 10 ** (-array_moinslog10IntrinK * 1.0)
             array_K = (RHO_W * G * 10.0**-array_moinslog10IntrinK) * 1.0 / MU
+            array_q = np.array([q, q])
             array_Ss = np.array([Ss, Ss])
             list_zLow = np.array([0.2])
             inter_cara = np.array([[nb_cells // 2, 0]])
             z_solve = self._z_solve.copy()
-            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(layersList, nb_cells)
+            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_list = getListParameters(layersList, nb_cells)
             Ss_list = n_list / heigth
             ##
 
-            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, q_list, isdtconstant, dz, H_init, H_riv, H_aq)
             # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
             nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
 
@@ -244,7 +245,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             nablaH[nb_cells - 1, :] = 2*(H_aq - H_res[nb_cells - 2, :])/(3*dz)
             
-            T_res = compute_T_stratified(Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
+            T_res = compute_T_stratified(Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, all_dt, q_list, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
 
             # calcule toutes les températures à tout temps et à toute profondeur
 
@@ -288,12 +289,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list = getListParameters(
+            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_list = getListParameters(
                 layersList, nb_cells)
         
             array_moinslog10IntrinK = np.array([float(x.params.moinslog10IntrinK) for x in layersList])
             array_k = 10 ** (-array_moinslog10IntrinK)
             array_K = calc_K(array_k)
+            array_q= np.array([float(x.params.q) for x in layersList])
             heigth = abs(self._real_z[-1] - self._real_z[0])
             array_Ss = np.array([float(x.params.n) for x in layersList]) / heigth
             array_eps = np.zeros(len(layersList)) # eps de chaque couche
@@ -324,6 +326,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         
             Matrix_b = scalar_gauche - scalar_droite
             Matrix_A = H_droite - H_gauche
+            Matrix_heat = np.zeros(N-1)
+            for i in range(N-1):
+                Matrix_heat[i]= -array_q
+            Matrix_b = Matrix_heat + Matrix_b
             H_sol = np.linalg.solve(Matrix_A, Matrix_b)
             for idx in range(len(H_sol)):
                 array_Hinter[idx + 1] = H_sol[idx]
@@ -407,7 +413,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                                 print("type cara asymetric")
         ## end
             #version zhan
-            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq)
+            H_res = compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt,q_list, isdtconstant, dz, H_init, H_riv, H_aq)
 
             self._H_res = H_res  # stocke les résultats
 
@@ -467,7 +473,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         
 ## zhan Nov8
             T_res = compute_T_stratified(Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list,
-                                     rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
+                                     rhos_cs_list, all_dt, q_list, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq)
 
             self._temperatures = T_res
 
@@ -495,6 +501,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     layersList[1],
                     layersList[2],
                     layersList[3],
+                    layersList[4],
                 )
             ]
             self.compute_solve_transi(layer, nb_cells, verbose)
@@ -605,7 +612,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._z_solve[1] - self._z_solve[0]  # pas en profondeur
         nb_cells = len(self._z_solve)
 
-        _, n_list, lambda_s_list, _ = getListParameters(self._layersList, nb_cells)
+        _, n_list, lambda_s_list, _, _ = getListParameters(self._layersList, nb_cells)
 
         lambda_m_list = (
             n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
@@ -1403,6 +1410,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         return [[layer.params.n for layer in state.layers] for state in self._states]
 
     all_n = property(get_all_n)
+    
+    def get_all_q(self):
+        # retourne toutes les valeurs de n (n : porosité) par lesquels est passé la MCMC
+        return [[layer.params.q for layer in state.layers] for state in self._states]
+
+    all_q = property(get_all_q)
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
@@ -1811,7 +1824,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     @compute_mcmc.needed
     def plot_all_param_pdf(self):
-        fig, axes = plt.subplots(2, 4, figsize=(30, 20))
+        fig, axes = plt.subplots(2, 5, figsize=(30, 20))
 
         for id_layer, layer_distribs in enumerate(self.get_all_params()):
             axes[id_layer, 0].hist(layer_distribs[::, 0])
@@ -1822,6 +1835,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             axes[id_layer, 2].set_title(f"Couche {id_layer + 1} : lambda_s")
             axes[id_layer, 3].hist(layer_distribs[::, 3])
             axes[id_layer, 3].set_title(f"Couche {id_layer + 1} : rhos_cs")
+            axes[id_layer, 4].hist(layer_distribs[::, 4])
+            axes[id_layer, 4].set_title(f"Couche {id_layer + 1} : q")
 
 
     @compute_mcmc.needed

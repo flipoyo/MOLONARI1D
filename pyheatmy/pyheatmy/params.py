@@ -5,7 +5,7 @@ from numpy import inf
 from typing import Callable, Sequence
 from pyheatmy.config import *
 
-PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs")
+PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q")
 
 Param = namedtuple("Parametres", PARAM_LIST)
 
@@ -90,6 +90,7 @@ if __name__ == "__main__":
         "n": (N_INTERVAL, N_SIGMA),
         "lambda_s": (LAMBDA_S_INTERVAL, LAMBDA_S_SIGMA),
         "rhos_cs": (RHOS_CS_INTERVAL, RHOS_CS_SIGMA),
+        "q": (PHI_INTERVAL, PHI_SIGMA),
     }
 
     priors1 = ParamsPriors(
@@ -111,10 +112,11 @@ if __name__ == "__main__":
             n: float,
             lambda_s: float,
             rhos_cs: float,
+            q : float,
         ):
             self.name = name
             self.zLow = zLow
-            self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs)
+            self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs, q)
 
         # The repr() function returns a printable representational string of the given object.
         # def __repr__(self) -> str:
@@ -122,8 +124,8 @@ if __name__ == "__main__":
 
     def layersListCreator(layersListInput):
         layersList = list()
-        for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs in layersListInput:
-            layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs))
+        for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, q in layersListInput:
+            layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs,q))
         return layersList
 
 def calc_K(k):

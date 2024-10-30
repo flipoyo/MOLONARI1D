@@ -48,6 +48,9 @@ N_SIGMA = 0.01
 LAMBDA_S_INTERVAL = (1, 5)
 LAMBDA_S_SIGMA = 0.1
 
+PHI_INTERVAL = (1, 5)
+PHI_SIGMA = 0.1
+
 RHOS_CS_INTERVAL = (1e6, 1e7)  # Ensure PARAMBOUND is defined in config.py
 RHOS_CS_SIGMA = 1e5
 

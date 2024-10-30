@@ -184,7 +184,7 @@ def compute_Mu(T):
 
 @njit
 def compute_T_stratified(
-    Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu=N_UPDATE_MU
+    Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, all_dt,q_list, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu=N_UPDATE_MU
 ):
     """Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an heterogeneous column.
 
@@ -274,20 +274,20 @@ def compute_T_stratified(
         c[0] = (
             8 * ke_list[0] * (1 - alpha) / (3 * dz**2)
             - 2 * (1 - alpha) * ae_list[0] * nablaH[0, j] / (3 * dz)
-        ) * T_riv[j + 1] + (
+        ) * T_riv[j] + (
             8 * ke_list[0] * alpha / (3 * dz**2)
             - 2 * alpha * ae_list[0] * nablaH[0, j] / (3 * dz)
         ) * T_riv[
-            j
+            j +1
         ]
         c[-1] = (
             8 * ke_list[n_cell - 1] * (1 - alpha) / (3 * dz**2)
             + 2 * (1 - alpha) * ae_list[n_cell - 1] * nablaH[n_cell - 1, j] / (3 * dz)
-        ) * T_aq[j + 1] + (
+        ) * T_aq[j] + (
             8 * ke_list[n_cell - 1] * alpha / (3 * dz**2)
             + 2 * alpha * ae_list[n_cell - 1] * nablaH[n_cell - 1, j] / (3 * dz)
         ) * T_aq[
-            j
+            j +1
         ]
 
         B_fois_T_plus_c = (
@@ -337,7 +337,7 @@ def compute_T_stratified(
 
 
 @njit
-def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt,q_list, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
 
     Parameters
@@ -451,9 +451,11 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_ca
             # Defining c
             c = zeros(n_cell, float32)
             c[0] = (8*K_list[0] / (3*dz**2)) * \
-                ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
+                ((1-alpha)*H_riv[j+1] + alpha*H_riv[j]) - q_list[0]
             c[-1] = (8*K_list[n_cell - 1] / (3*dz**2)) * \
-                ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
+                ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])- q_list[-1]
+            for i in range(n_cell -2):
+                c[i+1] = -q_list[i+1]
             B_fois_H_plus_c = tri_product(
                 lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j]) + c
 
@@ -523,9 +525,11 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_ca
             # Defining c
             c = zeros(n_cell, float32)
             c[0] = (8*KsurSs_list[0] / (3*dz**2)) * \
-                ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
+                ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])- q_list[0]
             c[-1] = (8*KsurSs_list[n_cell - 1] / (3*dz**2)) * \
-                ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
+                ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])-q_list[i+1]
+            for i in range(n_cell -2):
+                c[i+1] = -q_list[i+1]
 
             B_fois_H_plus_c = (
                 tri_product(lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j])
@@ -540,7 +544,7 @@ def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_ca
 
 
 @njit
-def compute_HTK_stratified(lambda_s_list, rhos_cs_list, n_list, T_init, array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+def compute_HTK_stratified(lambda_s_list, rhos_cs_list, n_list, T_init, array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, q_list, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
 
     Parameters
