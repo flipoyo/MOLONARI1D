@@ -11,7 +11,7 @@ def two_column_array(a1, a2):
     return np.array([a1, a2])
 
 
-class time_series_multiperiodic:
+class class_time_series_multiperiodic:
     def __init__(self, type):
         assert type in [
             "ts",
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     step = timedelta(days=2, hours=3)
     dates = [date_0 + i * step for i in range(1000)]
 
-    mp_ts = time_series_multiperiodic("multi_periodic")
+    mp_ts = class_time_series_multiperiodic("multi_periodic")
     mp_ts.create_multiperiodic_signal(
         [10, 5, 3], [[1, "y"], [2, "m"], [21, "d"]], dates, dt=2 * NSECINDAY + 3 * NSECINHOUR
     )
