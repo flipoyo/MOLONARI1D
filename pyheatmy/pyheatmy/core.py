@@ -1305,7 +1305,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 sigma2 =1.0 
                 sigma2_distrib=None
             else :
-                sigma2_temp_prior = Prior((0.01, np.inf), 1, lambda x: 1 / x)
+                sigma2_temp_prior = Prior((0.01, SIGMA2_MAX_T), RANDOMWALKSIGMAT, lambda x: 1 / x)
                 sigma2_distrib = sigma2_temp_prior.density
 
             # vérification des types des arguments
@@ -1484,9 +1484,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         current_sigma2[j] = new_sigma2_temp  # actualisation de sigma2_temp
                     else:
                         dX = np.zeros((nb_layer, nb_param))
-                        _energy_burn_in[i + 1][j] = _energy_burn_in[i][
-                            j
-                        ]  # on garde la même énergie
+                        _energy_burn_in[i + 1][j] = _energy_burn_in[i][j]  # on garde la même énergie
                         current_sigma2[j] = current_sigma2[j]  # on garde la même sigma2_temp
 
                     # Mise à jour des paramètres de la couche j pour DREAM
