@@ -1015,7 +1015,21 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 x_new = np.zeros((nb_layer, nb_param))
                 dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
                 for l in range(nb_layer):
+
+                    if np.isnan(pcr[l]).any():
+                        raise ValueError("NaN values in pcr[l].")
+
                     # actualiation des paramètres DREAM pour la couche l
+                    # Vérifications avant d'appeler np.random.choice
+                    #NF issue 85. DemoPyheatmy n'utilise pas DREAM. Mauvaise initialisation quelque part
+                    if not ncr:
+                        raise ValueError("ncr est vide.")
+                    if l >= len(pcr):
+                        raise IndexError("Index l est en dehors des limites de pcr.")
+                    if np.isnan(pcr[l]).any():
+                        raise ValueError("pcr[l] contient des valeurs NaN.")
+                    if not np.isclose(sum(pcr[l]), 1):
+                        raise ValueError("Les probabilités dans pcr[l] ne sont pas normalisées.")
                     id = np.random.choice(ncr, p=pcr[l])
                     z = np.random.uniform(0, 1, nb_param)
                     A = z <= cr_vec[id]
@@ -1030,7 +1044,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     choose = np.delete(np.arange(nb_chain), a)
                     b = np.random.choice(choose, delta, replace=False)
 
-                    gamma = 2.38 / np.sqrt(2 * d_star * delta)
+                    gamma = GAMMA_FACTOR / np.sqrt(2 * d_star * delta)
                     gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
                     dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
                         X[a, l][:, A] - X[b, l][:, A], axis=0
@@ -1149,7 +1163,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     a = np.random.choice(choose, delta, replace=False)
                     choose = np.delete(np.arange(nb_chain), a)
                     b = np.random.choice(choose, delta, replace=False)
-                    gamma = 2.38 / np.sqrt(2 * d_star * delta)
+                    gamma = GAMMA_FACTOR / np.sqrt(2 * d_star * delta)
                     gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
                     dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
                         X[a, l][:, A] - X[b, l][:, A], axis=0

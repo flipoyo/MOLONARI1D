@@ -2,7 +2,7 @@ import numpy as np
 from typing import Sequence
 
 from pyheatmy.core import Column
-from pyheatmy.time_series import Time_series
+from pyheatmy.synthetic_MOLONARI import synthetic_MOLONARI
 from pyheatmy.layers import Layer, layersListCreator
 from pyheatmy.config import *
 
@@ -11,7 +11,7 @@ class Analy_Sol:
     def __init__( 
         self,
         column_exp : Column,
-        time_series : Time_series,
+        time_series : synthetic_MOLONARI,
         monolayer : Layer,
         nb_cells : int,
     ):

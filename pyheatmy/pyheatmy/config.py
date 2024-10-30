@@ -17,7 +17,7 @@ CODE_scalar = -9999
 # param par défaut dans prior
 PARAMBOUND = 1e7
 
-# param par défaut dans time_series.py
+# param par défaut dans synthetic_MOLONARI.py
 DEFAULT_H_amp = 0.1
 DEFAULT_steady = CODE_scalar
 DEFAULT_H_offset = 0.05
@@ -68,7 +68,7 @@ QUANTILE_MIN=0.05
 MEDIANE=0.5
 QUANTILE_MAX=0.95
 N_PARAM_MCMC=4
-
+GAMMA_FACTOR=2.38
 
 
 
