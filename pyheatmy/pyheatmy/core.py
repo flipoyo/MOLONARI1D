@@ -1305,7 +1305,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 sigma2 =1.0 
                 sigma2_distrib=None
             else :
-                sigma2_temp_prior = Prior((0.01, np.inf), 1, lambda x: 1 / x)
+                sigma2_temp_prior = Prior((0.01, SIGMA2_MAX_T), 0.1, lambda x: 1 / x)
                 sigma2_distrib = sigma2_temp_prior.density
 
             # vérification des types des arguments
