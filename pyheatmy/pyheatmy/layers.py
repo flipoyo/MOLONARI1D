@@ -92,6 +92,7 @@ def getListParameters(layersList, nbCells: int):
                     layer.params.n,
                     layer.params.lambda_s,
                     layer.params.rhos_cs,
+                    layer.params.q,
                 ]
             )
             currentAltitude += dz
@@ -101,4 +102,5 @@ def getListParameters(layersList, nbCells: int):
         listParameters[:, 1],
         listParameters[:, 2],
         listParameters[:, 3],
+        listParameters[:, 4],
     )
