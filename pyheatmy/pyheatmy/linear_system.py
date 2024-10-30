@@ -48,41 +48,6 @@ class Linear_system:
         self.Ss_list = Ss_list
         self.calc_physical_param()
 
-        # self.T_stratified = T_stratified(a,
-        #     Ss_list,
-        #     moinslog10IntrinK_list,
-        #     n_list,
-        #     lambda_s_list,
-        #     rhos_cs_list,
-        #     all_dt,
-        #     dz,
-        #     H_init,
-        #     H_riv,
-        #     H_aq,
-        #     self.nablaH,
-        #     T_init,
-        #     T_riv,
-        #     T_aq,
-        #     heatsource,
-        #     alpha,
-        #     N_update_Mu)
-        # )
-        # self.HTK_stratified = HTKStratified(
-        #     lambda_s_list,
-        #     rhos_cs_list,
-        #     n_list,
-        #     T_init,
-        #     a,
-        #     Ss_list,
-        #     all_dt,
-        #     dz,
-        #     H_init,
-        #     H_riv,
-        #     H_aq,
-        #     heatsource
-        #     alpha,
-        # )
-
     # @njit
     def compute_Mu(self, T):
         mu = A * np.exp(B * 1.0 / T + C * T + D * (T**2))
@@ -161,6 +126,7 @@ class H_stratified(Linear_system):
         lambda_s_list,
         rhos_cs_list,
         all_dt,
+        q_list,
         dz,
         H_init,
         H_riv,
@@ -174,7 +140,6 @@ class H_stratified(Linear_system):
         z_solve,
         inter_cara,
         isdtconstant,
-        heatsource,
         alpha=ALPHA,
         N_update_Mu=N_UPDATE_MU,
     ):
@@ -200,7 +165,6 @@ class H_stratified(Linear_system):
             z_solve,
             inter_cara,
             isdtconstant,
-            heatsource,
             alpha=ALPHA,
             N_update_Mu=N_UPDATE_MU,
         )
@@ -219,7 +183,7 @@ class H_stratified(Linear_system):
         self.H_riv = H_riv
         self.H_aq = H_aq
         self.alpha = alpha
-        self.heat_source = heatsource
+        self.heat_source = q_list
 
     def compute_H_stratified(self):
         if self.isdtconstant.all():
@@ -411,7 +375,7 @@ class H_stratified(Linear_system):
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         ) 
-        c -= self.heat_source[:, j]
+        #c -= self.heat_source[j]
         return c
 
 
@@ -579,7 +543,7 @@ class T_stratified(Linear_system):
             )
             * self.T_aq[j]
         )
-        c += self.heat_source[:, j]
+        # c += self.heat_source[:, j]
         return c
 
     def _compute_A_diagonals(self, j, dt):
@@ -843,7 +807,7 @@ class HTK_stratified(Linear_system):
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
-        c += self.heat_source[:, j]
+        # c += self.heat_source[:, j]
         return c
 
 

@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Sequence
+from collections import namedtuple
 
 from pyheatmy.params import Param, Prior, ParamsPriors
 
@@ -13,10 +14,14 @@ class Layer:
         n: float,
         lambda_s: float,
         rhos_cs: float,
+        q: float,
     ):
         self.name = name
         self.zLow = zLow
-        self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs)
+        print(moinslog10IntrinK, n, lambda_s, rhos_cs, q)
+        PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q")
+        Param = namedtuple("Parametres", PARAM_LIST)
+        self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs, q)
 
     def __repr__(self) -> str:
         return self.name + f" : ends at {self.zLow} m. " + self.params.__repr__()

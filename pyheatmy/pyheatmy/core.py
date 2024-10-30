@@ -272,6 +272,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ##
             a = 1  # à adapter
 
+            # print(q_list)
+            # print(all_dt)
+
             H_strat = H_stratified(
                 a,
                 Ss_list,
