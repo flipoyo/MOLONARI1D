@@ -24,7 +24,10 @@ public :
 
     // Put the arduino in low-power mode for the desired amount of time (in ms after the start of the timer)
     void sleepUntil(unsigned long desired_waiting_time) {
-        unsigned long time_to_wait = (millis() - starting_time) + desired_waiting_time;
+        unsigned long time_to_wait = (starting_time - millis()) + desired_waiting_time;
+        
+        // Test code
+        Serial.println("Sleeping for " + String(time_to_wait) + " ms");
         MyLowPower.Sleep(time_to_wait);
     }
 

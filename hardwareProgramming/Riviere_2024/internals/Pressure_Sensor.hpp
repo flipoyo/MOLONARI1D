@@ -1,24 +1,24 @@
 // This file contains all the code relative to the measurement of pressure
-// See internals/Temp_Sensor.cpp for the implementation.
+// See internals/Pressure_Sensor.cpp for the implementation.
 
 
 // Check that the file has not been imported before
-#ifndef TEMP_SENSOR_H
-#define TEMP_SENSOR_H
+#ifndef PRESSURE_SENSOR_H
+#define PRESSURE_SENSOR_H
 
-// The data type of a temperature measurement
-#define TEMP_T double
+// The data type of a pressure measurement
+#define PRESSURE_T unsigned short
 
 
-class TemperatureSensor {
+class PressureSensor {
     public :
-        // Initialise the temperature sensor for the first time. 
+        // Initialise the pressure sensor for the first time. 
         // dataPin -> Analog input to read data from (Analog pin)
         // enablePin -> Digital output to enable/disable the sensor 
-        TemperatureSensor(int dataPin, int enablePin);
+        PressureSensor(int dataPin, int enablePin);
         
-        // Measure the temperature
-        TEMP_T MeasureTemperature();
+        // Measure the pressure
+        PRESSURE_T MeasurePressure();
 
     private :
         // Pin to read data from (Analog pin)
@@ -27,6 +27,6 @@ class TemperatureSensor {
         const int enablePin;
 };
 
-#include "Temp_Sensor.cpp"
+#include "Pressure_Sensor.cpp"
 
 #endif

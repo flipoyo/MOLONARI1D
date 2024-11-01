@@ -15,7 +15,7 @@ class TemperatureSensor {
         // Initialise the temperature sensor for the first time. 
         // dataPin -> Analog input to read data from (Analog pin)
         // enablePin -> Digital output to enable/disable the sensor 
-        TemperatureSensor(int dataPin, int enablePin);
+        TemperatureSensor(int dataPin, int enablePin, float offset, float scale);
         
         // Measure the temperature
         TEMP_T MeasureTemperature();
@@ -25,6 +25,9 @@ class TemperatureSensor {
         const int dataPin;
         // Pin to enable/disable the sensor
         const int enablePin;
+        // Calibration coefficients
+        const float offset;  
+        const float scale;   
 };
 
 #include "Temp_Sensor.cpp"

@@ -7,8 +7,8 @@
 
 #include <ArduinoLowPower.h>
 
-#include "Low_Power.hpp"
 #include "Lora.hpp"
+#include "Low_Power.hpp"
 
 
 // A class to wait for a given amount of time after a timer has been started.
@@ -22,13 +22,13 @@ public :
         starting_time = millis();
     }
 
-    // Put the arduino in low-power mode for the desired amount of time (in ms after the start of the timer)
+    // Put the arduino in low power mode for the desired time (in ms after the start of the timer)
     void sleepUntil(unsigned long desired_waiting_time) {
         unsigned long time_to_wait = (millis() - starting_time) + desired_waiting_time;
         MyLowPower.Sleep(time_to_wait);
     }
 
-    // Put the arduino in delay mode for the desired amount of time (in ms after the start of the timer)
+    // Put the arduino in delay mode for the desired time (in ms after the start of the timer)
     // In this mode, the arduino will still be able to serve the Lora requests
     void delayUntil(unsigned long desired_waiting_time) {
         unsigned long end_date = starting_time + desired_waiting_time;
