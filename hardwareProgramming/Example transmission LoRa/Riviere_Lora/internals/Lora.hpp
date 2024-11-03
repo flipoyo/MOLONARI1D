@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <LoRa.h>
 #include <queue>
-
+#include <unordered_set>
 enum RequestType : uint8_t {
 
   SYN = 0x01,
@@ -43,7 +43,7 @@ private:
     uint8_t localAddress;
     uint8_t destination;
     bool active; // Internal flag to track whether LoRa is currently active
-    unordered_set<uint8_t> myNet = {0xaa};
+    std::unordered_set<uint8_t> myNet = {0xaa};
 };
 #include "Lora.cpp"
 #endif // LORA_HPP

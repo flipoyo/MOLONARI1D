@@ -18,7 +18,7 @@ void setup() {
   Serial.println("Receiver ready...");
 }
 
-void PrintQueue(std::queue<String> receiveQueue;) {
+void PrintQueue(std::queue<String> receiveQueue) {
   Serial.println("Session ended. Printing all received data:");
   while (!receiveQueue.empty()) {
     Serial.println(receiveQueue.front());  // Print the front item in the queue
@@ -33,9 +33,9 @@ void loop() {
   LoraCommunication lora(868E6, 0xaa , 0xff);
   std::queue<String> receiveQueue;
   lora.startLoRa();
-  if (performHandshake(rotate*20)){
-    int last = receivePackets(receiveQueue)
-    closeSession(last);
+  if (lora.performHandshake(rotate*20)){
+    int last = lora.receivePackets(receiveQueue);
+    lora.closeSession(last);
   }
   lora.stopLoRa();
   PrintQueue(receiveQueue);

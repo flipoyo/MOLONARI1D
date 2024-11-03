@@ -140,6 +140,7 @@ bool LoraCommunication::performHandshake( uint8_t shiftback)
     String payload;
     uint8_t packetNumber;
     RequestType requestType;
+
    
     while (true)
     {
@@ -151,6 +152,7 @@ bool LoraCommunication::performHandshake( uint8_t shiftback)
         }
     }
 
+    int retries = 0;
     Serial.println("SYN-ACK sent.");
     while (retries < 3)
     {

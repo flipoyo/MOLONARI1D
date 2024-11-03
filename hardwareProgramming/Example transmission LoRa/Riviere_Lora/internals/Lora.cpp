@@ -77,7 +77,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
     if (packetSize)
     {
       int recipient = LoRa.read();
-      destination = LoRa.read();
+      int dest = LoRa.read();
       packetNumber = LoRa.read();
       requestType = static_cast<RequestType>(LoRa.read());
       uint8_t incomingLength = LoRa.read(); // Get payload length

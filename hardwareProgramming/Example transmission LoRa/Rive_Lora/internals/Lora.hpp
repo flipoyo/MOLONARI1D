@@ -45,7 +45,7 @@ private:
     uint8_t localAddress;
     uint8_t destination;
     bool active; // Internal flag to track whether LoRa is currently active
-    unordered_set<uint8_t> myNet = {0xbb , 0xcc};
+    std::unordered_set<uint8_t> myNet = {0xbb , 0xcc};
 };
 #include "Lora.cpp"
 #endif // LORA_HPP
