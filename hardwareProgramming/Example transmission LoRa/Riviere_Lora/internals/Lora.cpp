@@ -68,7 +68,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 {
   if (!active)
     return false;
-  delay(50);
+  delay(80);
   int ackTimeout = 2000;
   unsigned long startTime = millis();
   while (millis() - startTime < ackTimeout)
@@ -95,11 +95,19 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
         return false; // Exit on length error
       }
 
-      if (recipient != localAddress && recipient != 0xFF)
+      if (recipient != localAddress)
       {
         Serial.println("This message is not for me. Sent to: 0x" + String(recipient, HEX));
         Serial.println();
         return false; // Ignore packet if not for this device
+      }
+
+      if ( destination == dest || (requestType == SYN && destination == 0xff && myNet.find(dest) != myNet.end())){
+        destination = dest;
+      } else {
+        Serial.println("This message is out of this session.");
+        Serial.println();
+        return false;
       }
 
       Serial.println("Received from: 0x" + String(destination, HEX));
@@ -123,7 +131,7 @@ bool LoraCommunication::isLoRaActive()
   return active;
 }
 
-bool LoraCommunication::performHandshake()
+bool LoraCommunication::performHandshake(int &shift)
 {
   sendPacket(0, SYN, "");
   Serial.println("SYN sent, waiting for SYN-ACK...");
@@ -132,8 +140,9 @@ bool LoraCommunication::performHandshake()
   uint8_t packetNumber;
   RequestType requestType;
 
-  if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && packetNumber == 0)
+  if (receivePacket(packetNumber, requestType, payload) && requestType == SYN )
   {
+    shift = packetNumber;
     Serial.println("SYN-ACK received, sending final ACK...");
     sendPacket(packetNumber, ACK, "");
     delay(1000);
@@ -195,7 +204,7 @@ int LoraCommunication::sendPackets(std::queue<String> &sendQueue)
       break;
     }
     
-    delay(500);
+    delay(100);
   }
   closeSession(packetNumber);
 }

@@ -17,10 +17,10 @@ class LoraCommunication {
 public:
     LoraCommunication(long frequency, uint8_t localAddress , uint8_t destination);
 
-    // Method to start (initialize) LoRa and set control flag
+    // Method to start (initialize) LoRa
     void startLoRa();
 
-    // Method to stop (deactivate) LoRa and reset control flag
+    // Method to stop (deactivate) LoRa
     void stopLoRa();
 
     // Send a structured packet
@@ -29,7 +29,7 @@ public:
     // Receive and parse a structured packet
     bool receivePacket(uint8_t &packetNumber,RequestType &requestType, String &payload);
 
-    bool performHandshake();
+    bool performHandshake(int &shift);
     
     int sendPackets(std::queue<String> &sendQueue);
 
@@ -43,6 +43,7 @@ private:
     uint8_t localAddress;
     uint8_t destination;
     bool active; // Internal flag to track whether LoRa is currently active
+    unordered_set<uint8_t> myNet = {0xaa};
 };
 #include "Lora.cpp"
 #endif // LORA_HPP
