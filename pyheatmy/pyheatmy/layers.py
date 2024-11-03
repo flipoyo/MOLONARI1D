@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Sequence
+from collections import namedtuple
 
 from pyheatmy.params import Param, Prior, ParamsPriors
 
@@ -8,12 +9,12 @@ class Layer:
     def __init__(
         self,
         name: str,
-        zLow: float,  #profondeur en m du bas de la couche (>0)
+        zLow: float,
         moinslog10IntrinK: float,
         n: float,
         lambda_s: float,
         rhos_cs: float,
-        q : float,
+        q: float,
     ):
         self.name = name
         self.zLow = zLow
