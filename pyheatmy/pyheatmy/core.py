@@ -677,8 +677,29 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 x_new[l][p] = all_priors[l][p].perturb(X[j, l][p])
         return x_new
 
+    def burning_single_chain():
+        for _ in trange(nb_iter, desc="Init Mcmc ", file=sys.stdout):
+            init_layers = all_priors.sample()
+            self.compute_solve_transi(init_layers, nb_cells, verbose=False)
+            self._states.append(
+                State(
+                    layers=init_layers,
+                    energy=compute_energy(self.temperatures_solve[ind_ref, :]),
+                    ratio_accept=1,
+                    sigma2_temp=sigma2,
+                )
+            )
 
+        self._initial_energies = [state.energy for state in self._states]
+        self._states = [min(self._states, key=attrgetter("energy"))]
+        self._acceptance = np.zeros(nb_iter)
 
+        _temperatures[0] = self.get_temperatures_solve()
+        _flows[0] = self.get_flows_solve()
+
+        nb_accepted = 0    
+
+       
     @checker
     def compute_mcmc(
             self,
