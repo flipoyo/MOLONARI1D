@@ -23,6 +23,7 @@ class time_series_multiperiodic:
         if self.type == "ts":
             self.time_series = two_column_array(t, T)
             self.dt = dt
+            self.nb_sensors = len(T[0, :])
         else:
             return "This is not a time series"
 
@@ -89,6 +90,32 @@ class time_series_multiperiodic:
             return int(self.multi_periodic.shape[0]/self.nb_per_day())
         elif self.type == "ts":
             return int(self.time_series.shape[0]/self.nb_per_day())
+        
+    def create_matrix(self):
+        if self.type == "ts":
+            matrix = np.zeros(self.time_series.shape[0], self.nb_sensors)
+            for i in range(self.time_series.shape[0]):
+                matrix[i,:] = self.time_series[i,1]
+            self.matrix = matrix
+        elif self.type == 'multi_periodic':
+            return 0
+    
+    def amplitude(self, day):
+        amplitude_list = []
+        n_dt_in_day = self.nb_per_day(Verbose=False)
+        if self.type == "multi_periodic":
+            T = self.multi_periodic[:,1]
+        elif self.type == "ts":
+            self.create_matrix()
+            T = self.matrix
+        else : 
+            return "You can not compute the method before creating a time series or a multi-periodic signal"
+        for j in range(len(T[0,:])):
+            T_max = max(T[day:day + n_dt_in_day,j])
+            T_min = min(T[day: day + n_dt_in_day,j])
+            A = (T_max - T_min) / 2
+            amplitude_list.append(A)
+        return amplitude_list
 
 
 # testing
