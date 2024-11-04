@@ -131,7 +131,7 @@ class time_series_multiperiodic:
             amplitude_list.append(A)
         return amplitude_list
     def ln_amp(self, day):
-        amplitude_list = self.amplitude(self, day)
+        amplitude_list = self.amplitude(day)
         amplitude_array = np.array(amplitude_list)
         ln_rapport_amplitude = np.log( amplitude_array / amplitude_array[0] )
         return ln_rapport_amplitude
