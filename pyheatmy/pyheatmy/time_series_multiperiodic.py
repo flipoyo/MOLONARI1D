@@ -20,9 +20,9 @@ class time_series_multiperiodic:
         ], "type must be either ts or multi_periodic"
         self.type = type
 
-    def values_time_series(self, t, T, dt, depth_sensors):
+    def values_time_series(self, dates, T, dt, depth_sensors):
         if self.type == "ts":
-            self.time_series = two_column_array(t, T)
+            self.time_series = two_column_array(dates, T)
             self.dt = dt
             self.nb_sensors = len(T[0, :])
             self.depth_sensors = depth_sensors
