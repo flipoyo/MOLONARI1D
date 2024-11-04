@@ -722,7 +722,16 @@ def compute_HTK_stratified(lambda_s_list, rhos_cs_list, n_list, T_init, array_K,
     return H_res
 
 
-def create_periodic_signal(dates,dt,params : list,signal_name="TBD",verbose=True): #params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
+def create_periodic_signal(dates : list[datetime.datetime]
+,params : list,signal_name="TBD",verbose=True): #params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
+    
+    # check if the time step is constant
+    t_step_list = []
+    for i in range(len(dates) - 1):
+        t_step_list.append(dates[i+1] - dates[i])
+    assert len(set(t_step_list)) <= 1, "The time step between two consecutive dates should be constant."
+    
+    dt = t_step_list[0]
     if verbose:
         print(f"Entering {signal_name} generation with amplitude {params[0]}, period of {params[1]}, offset {params[2]}, dt {dt} --> ")
     t_range = arange(len(dates)) * dt

@@ -53,7 +53,6 @@ class time_series_multiperiodic:
             for i in range(1, len(amplitude)):
                 T += create_periodic_signal(
                     dates,
-                    dt,
                     [amplitude[i], periods[i], 0],
                     signal_name="TBD",
                     verbose=False,
