@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from pyheatmy.params import Param, ParamsPriors, Prior, PARAM_LIST
+from pyheatmy.params import Param, Prior, PARAM_LIST
 from pyheatmy.checker import checker
 from pyheatmy.core import Column
 from pyheatmy.config import *

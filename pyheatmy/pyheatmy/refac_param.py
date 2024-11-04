@@ -51,46 +51,6 @@ class Prior:
 # The repr() function returns a printable representational string of the given object.
 
 
-@dataclass
-class Param:
-    def __init__(self,name,Pdf,empiricalDistb):#empiricalDistrib est un vecteur de taille niter/subsamplingStep
-        self.name=name
-        self.Prior=Pdf
-        self.Posterior=np.zeros(len(empiricalDistb))
-        self.value=CODE_scalar
-
-    def sample(self):
-        return self.Prior.sample()
-
-    def draw_param_value(self):
-        self.value=self.sample()
-
-
-    def perturb(self, valini):
-        return self.Prior.perturb(valini)
-    
-    def random_walk(self,valini):
-        self.value=self.perturb(valini)
-
-
-class ParamsPriors:
-    def __init__(self, priors: Sequence[Prior]):
-        self.prior_list = priors
-
-
-
-    def __iter__(self):
-        return self.prior_list.__iter__()
-
-    def __getitem__(self, key):
-        return self.prior_list[key]
-
-    def __repr__(self):
-        return self.prior_list.__repr__()
-
-    def __len__(self):
-        return self.prior_list.__len__()
-
 
 if __name__ == "__main__":
     import numpy as np
