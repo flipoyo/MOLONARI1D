@@ -68,19 +68,22 @@ class time_series_multiperiodic:
         else:
             return "This is not a multi-periodic type"
 
-    def plot(self, time_unit="s"):
+    def plot_temp_river(self, time_unit="s"):
+        assert type(time_unit) == str, "time_unit must be of type str"
         if self.type == "multi_periodic":
-            a = self.multi_periodic
+            a = self.multi_periodic #ok, as we have a multi-periodic signal (which already is a n*2 matrix, corresponding of the river temperature at a given time)
+            plt.plot(a[0], a[1])
+            plt.title("Temperature profile")
+            plt.xlabel("date")
+            plt.ylabel("temperature : °C")
+            plt.show()
         if self.type == "ts":
             a = self.time_series
-        assert a.ndim == 2 and len(a[0]) == len(a[1]), "a must be a n * 2 array"
-        assert type(time_unit) == str, "time_unit must be of type str"
-
-        plt.plot(a[0], a[1])
-        plt.title("Temperature profile")
-        plt.xlabel("date")
-        plt.ylabel("temperature : °C")
-        plt.show()
+            plt.plot(a[0], a[1][0]) #corresponding at the first sensor temperature, ie river temperature at a given time
+            plt.title("Temperature profile")
+            plt.xlabel("date")
+            plt.ylabel("temperature : °C")
+            plt.show()
 
     def nb_per_day(self, Verbose = True): #method to get the number of points per day
         if Verbose:
