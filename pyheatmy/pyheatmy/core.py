@@ -1307,7 +1307,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
 
     @checker
-    def compute_mcmc_DREAM(
+    def compute_mcmc(
             self,
             all_priors: Union[
                 AllPriors,
@@ -1677,8 +1677,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 print("Quantiles computed")
 
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_depths_mcmc(self):
         return (
             self._z_solve
@@ -1686,41 +1686,41 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     depths_mcmc = property(get_depths_mcmc)
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_times_mcmc(self):
         return self._times
 
     times_mcmc = property(get_times_mcmc)
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def sample_param(self):
         # retourne aléatoirement un des couples de paramètres parlesquels est passé la MCMC
         return choice(
             [[layer.params for layer in state.layers] for state in self._states]
         )
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_best_param(self):
         """return the params that minimize the energy"""
         return [
             layer.params for layer in min(self._states, key=attrgetter("energy")).layers
         ]  # retourne le couple de paramètres minimisant l'énergie par lequels est passé la MCMC
 
-    @compute_mcmc_DREAM.needed
+    @compute_mcmc.needed
     def get_best_sigma2(self):
         """return the best sigma that minimizes the energy"""
         return min(self._states, key=attrgetter("energy")).sigma2_temp
 
-    @compute_mcmc_DREAM.needed
+    @compute_mcmc.needed
     def get_best_layers(self):
         """return the params that minimize the energy"""
         return min(self._states, key=attrgetter("energy")).layers
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_all_params(self):
         n_layers = len(self._layersList)
         n_params = len(self._layersList[0].params)
@@ -1733,8 +1733,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_params = property(get_all_params)
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_all_moinslog10IntrinK(self):
         # retourne toutes les valeurs de moinslog10IntrinK (K : perméabilité) par lesquels est passé la MCMC
         return [
@@ -1744,16 +1744,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_moinslog10IntrinK = property(get_all_moinslog10IntrinK)
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_all_n(self):
         # retourne toutes les valeurs de n (n : porosité) par lesquels est passé la MCMC
         return [[layer.params.n for layer in state.layers] for state in self._states]
 
     all_n = property(get_all_n)
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_all_lambda_s(self):
         # retourne toutes les valeurs de lambda_s (lambda_s : conductivité thermique du solide) par lesquels est passé la MCMC
         return [
@@ -1762,8 +1762,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_lambda_s = property(get_all_lambda_s)
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_all_rhos_cs(self):
         # retourne toutes les valeurs de rho_cs (rho_cs : produite de la densité par la capacité calorifique spécifique du solide) par lesquels est passé la MCMC
         return [
@@ -1772,42 +1772,42 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_rhos_cs = property(get_all_rhos_cs)
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_all_sigma2(self):
         return [state.sigma2_temp for state in self._states]
 
     all_sigma = property(get_all_sigma2)
 
-    @compute_mcmc_DREAM.needed
+    @compute_mcmc.needed
     def get_all_energy(self):
         return self._initial_energies + [state.energy for state in self._states]
 
     all_energy = property(get_all_energy)
 
-    @compute_mcmc_DREAM.needed
+    @compute_mcmc.needed
     # retourne toutes les valeurs d'acceptance empirique par lesquels est passée la MCMC
     def get_all_acceptance_ratio(self):
         return self._acceptance
 
     all_acceptance_ratio = property(get_all_acceptance_ratio)
 
-    @compute_mcmc_DREAM.needed
+    @compute_mcmc.needed
     def get_quantiles(self):
         return self._quantiles_temperatures.keys()
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_temperatures_quantile(self, quantile):
         return self._quantiles_temperatures[quantile]
         # retourne les valeurs des températures en fonction du temps selon le quantile demandé
 
-    # erreur si pas déjà éxécuté compute_mcmc_DREAM, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc_DREAM.needed
+    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
+    @compute_mcmc.needed
     def get_flows_quantile(self, quantile):
         return self._quantiles_flows[quantile]
 
-    @compute_mcmc_DREAM.needed
+    @compute_mcmc.needed
     def get_RMSE_quantile(self, quantile):
         # Number of sensors (except boundary conditions : river and aquifer)
         nb_sensors = len(self._T_measures[0])
@@ -1954,7 +1954,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
 
 
-    @compute_mcmc_DREAM.needed
+    @compute_mcmc.needed
     def plot_quantile_temperatures_sensors(self, tunits="K",fontsize=15):
         temps_en_jours = self.create_time_in_day()
 
@@ -2157,7 +2157,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         self.plot_CALC_results()
 
-    @compute_mcmc_DREAM.needed
+    @compute_mcmc.needed
     def plot_all_param_pdf(self):
         fig, axes = plt.subplots(2, 4, figsize=(30, 20))
 
@@ -2172,7 +2172,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             axes[id_layer, 3].set_title(f"Couche {id_layer + 1} : rhos_cs")
 
 
-    @compute_mcmc_DREAM.needed
+    @compute_mcmc.needed
     def plot_darcy_flow_quantile(self):
         temps_en_jours = self.create_time_in_day()
 
