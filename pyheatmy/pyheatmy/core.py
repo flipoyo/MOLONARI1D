@@ -48,11 +48,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         heat_source=np.ndarray,
         nb_cells=NB_CELLS,
         rac="~/OUTPUT_MOLONARI1D/generated_data",  # printing directory by default,
-        verbose=False,
-        heat_source=np.ndarray,
-        nb_cells=NB_CELLS,
-        rac="~/OUTPUT_MOLONARI1D/generated_data",  # printing directory by default,
-        verbose=False,
+        verbose=False
     ):
 
         self._dir_print = create_dir(
