@@ -26,7 +26,7 @@ class time_series_multiperiodic:
             return "This is not a time series"
 
     def create_multiperiodic_signal(
-        self, amplitude, periods, dates, dt, offset=DEFAULT_T_riv_offset, verbose=True
+        self, amplitude, periods, dates, offset=DEFAULT_T_riv_offset, verbose=True
     ):
         if self.type == "multi_periodic":
             assert len(amplitude) == len(
@@ -45,7 +45,6 @@ class time_series_multiperiodic:
                     print("periods :", periods)
             T = create_periodic_signal(
                 dates,
-                dt,
                 [amplitude[0], periods[0], offset],
                 signal_name="TBD",
                 verbose=False,
@@ -54,7 +53,6 @@ class time_series_multiperiodic:
             for i in range(1, len(amplitude)):
                 T += create_periodic_signal(
                     dates,
-                    dt,
                     [amplitude[i], periods[i], 0],
                     signal_name="TBD",
                     verbose=False,
