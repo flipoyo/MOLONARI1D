@@ -711,10 +711,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             process = psutil.Process()
 
             if typealgo=="no sigma":
-                sigma2 =1.0 
+                sigma2 = DEFAULT_SIGMA2_T
                 sigma2_distrib=None
             else :
-                sigma2_temp_prior = Prior((0.01, SIGMA2_MAX_T), RANDOMWALKSIGMAT, lambda x: 1 / x)
+                sigma2_temp_prior = Prior((SIGMA2_MIN_T, SIGMA2_MAX_T), RANDOMWALKSIGMAT, lambda x: 1 / x)
                 sigma2_distrib = sigma2_temp_prior.density
 
             # vérification des types des arguments
