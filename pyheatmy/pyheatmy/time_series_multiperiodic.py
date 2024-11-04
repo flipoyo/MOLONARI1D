@@ -9,7 +9,10 @@ import scipy as sp
 # à mettre dans utils (?)
 def two_column_array(a1, a2):
     assert len(a1) == len(a2), "t and T must have the same length"
-    return np.array([a1, a2])
+    a = np.zeros((len(a1), 2))
+    a[:, 0] = a1
+    a[:, 1] = a2
+    return a
 
 
 class time_series_multiperiodic:
@@ -72,7 +75,7 @@ class time_series_multiperiodic:
         assert type(time_unit) == str, "time_unit must be of type str"
         if self.type == "multi_periodic":
             a = self.multi_periodic #ok, as we have a multi-periodic signal (which already is a n*2 matrix, corresponding of the river temperature at a given time)
-            plt.plot(a[0], a[1])
+            plt.plot(a[:, 0], a[:, 1])
             plt.title("Temperature profile")
             plt.xlabel("date")
             plt.ylabel("temperature : °C")
