@@ -106,16 +106,16 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
             self._dates = np.array(times_vir1)
             self._time_array = np.array(times_list)
 
-    def _generate_dH_series(self, verbose = True):
-        ts = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH,"Hydraulic head differential",verbose=verbose)
+    def _generate_dH_series(self,verbose=True):
+        ts = create_periodic_signal(self._dates,self._param_dH,"Hydraulic head differential",verbose=verbose)
         self._dH = ts
 
-    def _generate_Temp_riv_series(self, verbose = True):  # renvoie un signal sinusoïdal de temperature rivière
-        ts = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_riv,"T_riv",verbose=verbose)
+    def _generate_Temp_riv_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature rivière
+        ts = create_periodic_signal(self._dates,self._param_T_riv,"T_riv",verbose=verbose)
         self._T_riv = ts
 
-    def _generate_Temp_aq_series(self, verbose = True):  # renvoie un signal sinusoïdal de temperature aquifère
-        ts = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq,"T_aq",verbose=verbose)
+    def _generate_Temp_aq_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature aquifère
+        ts = create_periodic_signal(self._dates,self._param_T_aq,"T_aq",verbose=verbose)
         self._T_aq = ts
 
     def _generate_Shaft_Temp_series(self, verbose = True):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
