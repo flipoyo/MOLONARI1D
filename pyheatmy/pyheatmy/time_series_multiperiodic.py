@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from pyheatmy.synthetic_MOLONARI import *
 from pyheatmy.config import *
 from pyheatmy.utils import create_periodic_signal
+import scipy as sp
 
 
 # à mettre dans utils (?)
@@ -19,9 +20,12 @@ class time_series_multiperiodic:
         ], "type must be either ts or multi_periodic"
         self.type = type
 
-    def values_time_series(self, t, T):
+    def values_time_series(self, t, T, dt, depth_sensors):
         if self.type == "ts":
             self.time_series = two_column_array(t, T)
+            self.dt = dt
+            self.nb_sensors = len(T[0, :])
+            self.depth_sensors = depth_sensors
         else:
             return "This is not a time series"
 
@@ -29,6 +33,7 @@ class time_series_multiperiodic:
         self, amplitude, periods, dates, dt, offset=DEFAULT_T_riv_offset, verbose=True
     ):
         if self.type == "multi_periodic":
+            self.dt = dt
             assert len(amplitude) == len(
                 periods
             ), "amplitude and periods must have the same length"
@@ -41,7 +46,8 @@ class time_series_multiperiodic:
                 )
             for i in range(len(periods)):
                 periods[i] = convert_period_in_second(periods[i][0], periods[i][1])
-                print("periods :", periods)
+                if verbose :
+                    print("periods :", periods)
             T = create_periodic_signal(
                 dates,
                 dt,
@@ -76,6 +82,68 @@ class time_series_multiperiodic:
         plt.ylabel("temperature : °C")
         plt.show()
 
+    def nb_per_day(self, Verbose = True): #method to get the number of points per day
+        if Verbose:
+            print('dt must be in seconds')
+        return(int(NSECINDAY/self.dt))
+    
+    def nb_days_in_period(self): #method to get the number of days in the period
+        if self.type == "multi_periodic":
+            return int(self.multi_periodic.shape[0]/self.nb_per_day())
+        elif self.type == "ts":
+            return int(self.time_series.shape[0]/self.nb_per_day())
+        
+    def create_matrix(self):
+        if self.type == "ts":
+            matrix = np.zeros(self.time_series.shape[0], self.nb_sensors)
+            for i in range(self.time_series.shape[0]):
+                matrix[i,:] = self.time_series[i,1]
+            self.matrix = matrix
+        elif self.type == 'multi_periodic':
+            return 0 # to be implemented, must compute an analytical resolution of temperature diffusion problem to get the matrix...
+    
+    def amplitude(self, day):
+        amplitude_list = []
+        n_dt_in_day = self.nb_per_day(Verbose=False)
+        if self.type == "multi_periodic":
+            return "To be implemented..."
+        elif self.type == "ts":
+            self.create_matrix()
+            T = self.matrix
+        else : 
+            return "You can not compute the method before creating a time series or a multi-periodic signal"
+        for j in range(len(T[0,:])):
+            T_max = max(T[day:day + n_dt_in_day,j])
+            T_min = min(T[day: day + n_dt_in_day,j])
+            A = (T_max - T_min) / 2
+            amplitude_list.append(A)
+        return amplitude_list
+    def ln_amp(self, day):
+        amplitude_list = self.amplitude(self, day)
+        amplitude_array = np.array(amplitude_list)
+        ln_rapport_amplitude = np.log( amplitude_array / amplitude_array[0] )
+        return ln_rapport_amplitude
+
+    def get_pearson_coef(self):
+        n_dt_in_day = self.nb_per_day(Verbose=False)
+        n_days = self.nb_days_in_period()
+        pearson_coef = np.zeros(n_days)
+        for i in range(n_days):
+            ln_amp_i = self.ln_amp(i*n_dt_in_day)
+            Lr = sp.stats.linregress(self.depths, ln_amp_i)
+            pearson_coef[i] = Lr.rvalue
+        return pearson_coef
+    
+    def plot_pearson_coef(self):
+        pearson_coef = self.get_pearson_coef()
+        n_days = self.nb_days_in_period()
+        n_days = np.arange(n_days)
+        plt.scatter(n_days, pearson_coef)
+        plt.xlabel('Jours')
+        plt.ylabel('Coefficient de Pearson')
+        plt.ylim(-1, 1)
+        plt.title('Evolution du coefficient de Pearson en fonction du temps')
+        plt.show()
 
 # testing
 if __name__ == "__main__":
