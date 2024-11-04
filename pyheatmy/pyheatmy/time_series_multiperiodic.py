@@ -19,9 +19,10 @@ class time_series_multiperiodic:
         ], "type must be either ts or multi_periodic"
         self.type = type
 
-    def values_time_series(self, t, T):
+    def values_time_series(self, t, T, dt):
         if self.type == "ts":
             self.time_series = two_column_array(t, T)
+            self.dt = dt
         else:
             return "This is not a time series"
 
@@ -29,6 +30,7 @@ class time_series_multiperiodic:
         self, amplitude, periods, dates, dt, offset=DEFAULT_T_riv_offset, verbose=True
     ):
         if self.type == "multi_periodic":
+            self.dt = dt
             assert len(amplitude) == len(
                 periods
             ), "amplitude and periods must have the same length"
@@ -76,6 +78,17 @@ class time_series_multiperiodic:
         plt.xlabel("date")
         plt.ylabel("temperature : °C")
         plt.show()
+
+    def nb_per_day(self, Verbose = True): #method to get the number of points per day
+        if Verbose:
+            print('dt must be in seconds')
+        return(int(NSECINDAY/self.dt))
+    
+    def nb_days_in_period(self):
+        if self.type == "multi_periodic":
+            return int(self.multi_periodic.shape[0]/self.nb_per_day())
+        elif self.type == "ts":
+            return int(self.time_series.shape[0]/self.nb_per_day())
 
 
 # testing
