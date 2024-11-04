@@ -1050,7 +1050,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         X[a, l][:, A] - X[b, l][:, A], axis=0
                     )
 
-                    x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
+                    x_new[l] = X[j, l] + dX[l]  # calcul du potentiel nouveau paramètre
                     x_new[l] = check_range(
                         x_new[l], ranges[l]
                     )  # vérification des bornes et réajustement si besoin
@@ -1269,6 +1269,42 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         if verbose:
             print("Quantiles computed")
+    def sampling_DREAM(self,nb_chain,nb_layer, nb_param, X, dX,x_new, j, delta, ncr, c, c_star, cr_vec, pcr, ranges):
+        for l in range(nb_layer):
+            # actualiation des paramètres DREAM pour la couche l
+            id = np.random.choice(ncr, p=pcr[l])
+            z = np.random.uniform(0, 1, nb_param)
+            A = z <= cr_vec[id]
+            d_star = np.sum(A)
+            if d_star == 0:
+                A[np.argmin(z)] = True
+                d_star = 1
+            lambd = np.random.uniform(-c, c, d_star)
+            zeta = np.random.normal(0, c_star, d_star)
+            choose = np.delete(np.arange(nb_chain), j)
+            a = np.random.choice(choose, delta, replace=False)
+            choose = np.delete(np.arange(nb_chain), a)
+            b = np.random.choice(choose, delta, replace=False)
+
+            gamma = 2.38 / np.sqrt(2 * d_star * delta)
+            gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
+            dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
+                X[a, l][:, A] - X[b, l][:, A], axis=0
+            )
+
+            x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
+            x_new[l] = check_range(
+                x_new[l], ranges[l]
+            )  # vérification des bornes et réajustement si besoin
+        return(x_new,id)
+    
+    def sample_random_walk(self, nb_layer, X, x_new, j, all_priors):
+        for l in range(nb_layer):
+            for p in range(len(X[j, l])):
+                x_new[l][p] = all_priors[l][p].perturb(X[j, l][p])
+        return x_new
+
+
 
     @checker
     def compute_mcmc_DREAM(
@@ -1429,33 +1465,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         new_sigma2_temp=sigma2
                     else :
                         new_sigma2_temp=sigma2_temp_prior.perturb(current_sigma2[j])
-                    for l in range(nb_layer):
-                        # actualiation des paramètres DREAM pour la couche l
-                        id = np.random.choice(ncr, p=pcr[l])
-                        z = np.random.uniform(0, 1, nb_param)
-                        A = z <= cr_vec[id]
-                        d_star = np.sum(A)
-                        if d_star == 0:
-                            A[np.argmin(z)] = True
-                            d_star = 1
-                        lambd = np.random.uniform(-c, c, d_star)
-                        zeta = np.random.normal(0, c_star, d_star)
-                        choose = np.delete(np.arange(nb_chain), j)
-                        a = np.random.choice(choose, delta, replace=False)
-                        choose = np.delete(np.arange(nb_chain), a)
-                        b = np.random.choice(choose, delta, replace=False)
-
-                        gamma = 2.38 / np.sqrt(2 * d_star * delta)
-                        gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
-                        dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
-                            X[a, l][:, A] - X[b, l][:, A], axis=0
-                        )
-
-                        x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
-                        x_new[l] = check_range(
-                            x_new[l], ranges[l]
-                        )  # vérification des bornes et réajustement si besoin
-
+                    if nb_chain>1:
+                        x_new=self.sampling_DREAM(nb_chain,nb_layer, nb_param, X, dX,x_new, j, delta, ncr, c, c_star, cr_vec, pcr, ranges)[0]
+                        id=self.sampling_DREAM(nb_chain,nb_layer, nb_param, X, dX,x_new, j, delta, ncr, c, c_star, cr_vec, pcr, ranges)[1]                                                                                                               
+                    else:
+                        x_new=self.sample_random_walk(nb_layer, X, x_new, j, all_priors)
                     # Calcul du profil de température associé aux nouveaux paramètres
                     self.compute_solve_transi(
                         convert_to_layer(nb_layer, name_layer, z_low, x_new),
@@ -1488,14 +1502,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         current_sigma2[j] = current_sigma2[j]  # on garde la même sigma2_temp
 
                     # Mise à jour des paramètres de la couche j pour DREAM
-                    for l in range(nb_layer):
-                        J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
-                        n_id[l, id] += 1
+                    if nb_chain>1:
+                        for l in range(nb_layer):
+                            J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
+                            n_id[l, id] += 1
 
                 # Mise à jour du pcr pour chaque couche pour DREAM
-                for l in range(nb_layer):
-                    pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
-                    pcr[l] = pcr[l] / np.sum(pcr[l])
+                if nb_chain>1:
+                    for l in range(nb_layer):
+                        pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
+                        pcr[l] = pcr[l] / np.sum(pcr[l])
 
                 # Actualisation des paramètres à la fin de l'itération
                 _params[i + 1] = X
@@ -1545,6 +1561,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             print(f"Initialisation post burn-in - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
 
+
             for i in trange(nb_iter, desc="DREAM MCMC Computation", file=sys.stdout):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
@@ -1555,31 +1572,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         new_sigma2_temp=sigma2
                     else :
                         new_sigma2_temp=sigma2_temp_prior.perturb(current_sigma2[j])
-                    for l in range(nb_layer):
-                        # actualiation des paramètres DREAM pour la couche l
-                        id = np.random.choice(ncr, p=pcr[l])
-                        z = np.random.uniform(0, 1, nb_param)
-                        A = z <= cr_vec[id]
-                        d_star = np.sum(A)
-                        if d_star == 0:
-                            A[np.argmin(z)] = True
-                            d_star = 1
-                        lambd = np.random.uniform(-c, c, d_star)
-                        zeta = np.random.normal(0, c_star, d_star)
-                        choose = np.delete(np.arange(nb_chain), j)
-                        a = np.random.choice(choose, delta, replace=False)
-                        choose = np.delete(np.arange(nb_chain), a)
-                        b = np.random.choice(choose, delta, replace=False)
-                        gamma = 2.38 / np.sqrt(2 * d_star * delta)
-                        gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
-                        dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
-                            X[a, l][:, A] - X[b, l][:, A], axis=0
-                        )
-
-                        x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
-                        x_new[l] = check_range(
-                            x_new[l], ranges[l]
-                        )  # vérifaication des bornes et réajustement si besoin
+                    if nb_chain>1:
+                        x_new=self.sampling_DREAM(nb_chain,nb_layer, nb_param, X, dX,x_new, j, delta, ncr, c, c_star, cr_vec, pcr, ranges)[0]
+                        id=self.sampling_DREAM(nb_chain,nb_layer, nb_param, X, dX,x_new, j, delta, ncr, c, c_star, cr_vec, pcr, ranges)[1]                                                                                                   
+                    else:
+                        x_new=self.sample_random_walk( nb_layer,X,x_new,j, all_priors)
 
                     # Calcul du profil de température associé aux nouveaux paramètres
                     self.compute_solve_transi(
@@ -1650,9 +1647,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         )  # ajout de l'état à la liste des états
 
                     # Mise à jour des paramètres de la couche j pour DREAM
-                    for l in range(nb_layer):
-                        J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
-                        n_id[l, id] += 1
+                    if nb_chain>1:
+                        for l in range(nb_layer):
+                            J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
+                            n_id[l, id] += 1
 
             # Calcul des quantiles pour la température
             _temp = _temp.reshape(nb_iter_sous_ech * nb_chain, nb_cells_sous_ech, nb_times_sous_ech)
