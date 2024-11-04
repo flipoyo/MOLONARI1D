@@ -107,7 +107,7 @@ class time_series_multiperiodic:
         
     def create_matrix(self):
         if self.type == "ts":
-            matrix = np.zeros(self.time_series.shape[0], self.nb_sensors)
+            matrix = np.zeros((self.time_series.shape[0], self.nb_sensors))
             for i in range(self.time_series.shape[0]):
                 matrix[i,:] = self.time_series[i,1:]
             self.matrix = matrix
