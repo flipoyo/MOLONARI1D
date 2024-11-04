@@ -469,7 +469,7 @@ class T_stratified(Linear_system):
         c[0] = (
             8 * self.ke_list[0] * (1 - self.alpha) / (3 * self.dz**2)
             - 2 * (1 - self.alpha) * self.ae_list[0] * self.nablaH[0, j] / (3 * self.dz)
-        ) * self.T_riv[j + 1] + (
+        ) * self.T_riv[j+1] + (
             8 * self.ke_list[0] * self.alpha / (3 * self.dz**2)
             - 2 * self.alpha * self.ae_list[0] * self.nablaH[0, j] / (3 * self.dz)
         ) * self.T_riv[
@@ -477,15 +477,15 @@ class T_stratified(Linear_system):
         ]
         c[-1] = (
             8 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
-            + 2
+            - 2
             * (1 - self.alpha)
             * self.ae_list[self.n_cell - 1]
             * self.nablaH[self.n_cell - 1, j]
             / (3 * self.dz)
-            * self.T_aq[j + 1]
+            * self.T_aq[j+1]
             + (
                 8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
-                + 2
+                - 2
                 * self.alpha
                 * self.ae_list[self.n_cell - 1]
                 * self.nablaH[self.n_cell - 1, j]
