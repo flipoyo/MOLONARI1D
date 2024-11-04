@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from pyheatmy.synthetic_MOLONARI import *
 from pyheatmy.config import *
 from pyheatmy.utils import create_periodic_signal
+import scipy as sp
 
 
 # à mettre dans utils (?)
@@ -19,11 +20,12 @@ class time_series_multiperiodic:
         ], "type must be either ts or multi_periodic"
         self.type = type
 
-    def values_time_series(self, t, T, dt):
+    def values_time_series(self, t, T, dt, depth_sensors):
         if self.type == "ts":
             self.time_series = two_column_array(t, T)
             self.dt = dt
             self.nb_sensors = len(T[0, :])
+            self.depth_sensors = depth_sensors
         else:
             return "This is not a time series"
 
@@ -98,13 +100,13 @@ class time_series_multiperiodic:
                 matrix[i,:] = self.time_series[i,1]
             self.matrix = matrix
         elif self.type == 'multi_periodic':
-            return 0
+            return 0 # to be implemented, must compute an analytical resolution of temperature diffusion problem to get the matrix...
     
     def amplitude(self, day):
         amplitude_list = []
         n_dt_in_day = self.nb_per_day(Verbose=False)
         if self.type == "multi_periodic":
-            T = self.multi_periodic[:,1]
+            return "To be implemented..."
         elif self.type == "ts":
             self.create_matrix()
             T = self.matrix
@@ -116,7 +118,32 @@ class time_series_multiperiodic:
             A = (T_max - T_min) / 2
             amplitude_list.append(A)
         return amplitude_list
+    def ln_amp(self, day):
+        amplitude_list = self.amplitude(self, day)
+        amplitude_array = np.array(amplitude_list)
+        ln_rapport_amplitude = np.log( amplitude_array / amplitude_array[0] )
+        return ln_rapport_amplitude
 
+    def get_pearson_coef(self):
+        n_dt_in_day = self.nb_per_day(Verbose=False)
+        n_days = self.nb_days_in_period()
+        pearson_coef = np.zeros(n_days)
+        for i in range(n_days):
+            ln_amp_i = self.ln_amp(i*n_dt_in_day)
+            Lr = sp.stats.linregress(self.depths, ln_amp_i)
+            pearson_coef[i] = Lr.rvalue
+        return pearson_coef
+    
+    def plot_pearson_coef(self):
+        pearson_coef = self.get_pearson_coef()
+        n_days = self.nb_days_in_period()
+        n_days = np.arange(n_days)
+        plt.scatter(n_days, pearson_coef)
+        plt.xlabel('Jours')
+        plt.ylabel('Coefficient de Pearson')
+        plt.ylim(-1, 1)
+        plt.title('Evolution du coefficient de Pearson en fonction du temps')
+        plt.show()
 
 # testing
 if __name__ == "__main__":
