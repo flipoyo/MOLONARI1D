@@ -41,7 +41,8 @@ class time_series_multiperiodic:
                 )
             for i in range(len(periods)):
                 periods[i] = convert_period_in_second(periods[i][0], periods[i][1])
-                print("periods :", periods)
+                if verbose :
+                    print("periods :", periods)
             T = create_periodic_signal(
                 dates,
                 [amplitude[0], periods[0], offset],
