@@ -9,10 +9,16 @@ import scipy as sp
 # à mettre dans utils (?)
 def two_column_array(a1, a2):
     assert len(a1) == len(a2), "t and T must have the same length"
-    a = np.zeros((len(a1), 2))
-    a[:, 0] = a1
-    a[:, 1] = a2
-    return a
+    if len(a2.shape) == 1:
+        a = np.zeros((len(a1), 2))
+        a[:, 0] = a1
+        a[:, 1] = a2
+        return a
+    else:
+        a = np.zeros((len(a1), int(1 + a2.shape[1])))
+        a[:, 0] = a1
+        a[:, 1:] = a2
+        return a
 
 
 class time_series_multiperiodic:
@@ -82,7 +88,7 @@ class time_series_multiperiodic:
             plt.show()
         if self.type == "ts":
             a = self.time_series
-            plt.plot(a[0], a[1][0]) #corresponding at the first sensor temperature, ie river temperature at a given time
+            plt.plot(a[:, 0], a[:, 1]) #corresponding at the first sensor temperature, ie river temperature at a given time
             plt.title("Temperature profile")
             plt.xlabel("date")
             plt.ylabel("temperature : °C")
@@ -103,7 +109,7 @@ class time_series_multiperiodic:
         if self.type == "ts":
             matrix = np.zeros(self.time_series.shape[0], self.nb_sensors)
             for i in range(self.time_series.shape[0]):
-                matrix[i,:] = self.time_series[i,1]
+                matrix[i,:] = self.time_series[i,1:]
             self.matrix = matrix
         elif self.type == 'multi_periodic':
             return 0 # to be implemented, must compute an analytical resolution of temperature diffusion problem to get the matrix...
