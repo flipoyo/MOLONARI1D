@@ -80,11 +80,6 @@ class Linear_system:
     def compute_KsurSs_list(self):
         return self.K_list / self.Ss_list
 
-    def compute_T_res(self):
-        T_res = np.zeros((self.n_cell, self.n_times), np.float32)
-        T_res[:, 0] = self.T_init
-        return T_res
-
     def calc_physical_param(self):
         self.n_cell = self.compute_n_cell()
         self.n_times = self.compute_n_times()
@@ -99,7 +94,6 @@ class Linear_system:
         self.dK_list = np.gradient(self.K_list, self.dz)
         self.dK_list = zeros(self.n_cell, float32)
         self.KsurSs_list = self.compute_KsurSs_list()
-        self.T_res = self.compute_T_res()
 
 
 class H_stratified(Linear_system):
@@ -395,9 +389,10 @@ class T_stratified(Linear_system):
         self.alpha = alpha
         self.N_update_Mu = N_update_Mu
         self.heat_source = q_list
-        self.compute_T_stratified()
 
     def compute_T_stratified(self):
+        self.T_res = np.zeros((self.n_cell, self.n_times), np.float32)
+        self.T_res[:, 0] = self.T_init
         for j, dt in enumerate(self.all_dt):
             # Update of Mu(T) after N_update_Mu iterations:
             if j % self.N_update_Mu == 1:
@@ -469,7 +464,7 @@ class T_stratified(Linear_system):
         c[0] = (
             8 * self.ke_list[0] * (1 - self.alpha) / (3 * self.dz**2)
             - 2 * (1 - self.alpha) * self.ae_list[0] * self.nablaH[0, j] / (3 * self.dz)
-        ) * self.T_riv[j+1] + (
+        ) * self.T_riv[j + 1] + (
             8 * self.ke_list[0] * self.alpha / (3 * self.dz**2)
             - 2 * self.alpha * self.ae_list[0] * self.nablaH[0, j] / (3 * self.dz)
         ) * self.T_riv[
@@ -482,7 +477,7 @@ class T_stratified(Linear_system):
             * self.ae_list[self.n_cell - 1]
             * self.nablaH[self.n_cell - 1, j]
             / (3 * self.dz)
-            * self.T_aq[j+1]
+            * self.T_aq[j + 1]
             + (
                 8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
                 - 2

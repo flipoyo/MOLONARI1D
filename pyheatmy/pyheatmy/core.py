@@ -296,16 +296,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             H_res = H_strat.compute_H_stratified()
 
             nablaH = H_strat.nablaH()
-            # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
-            # nablaH = np.zeros((nb_cells, len(self._times)), np.float32)
-            # nablaH[0, :] = 2 * (H_res[1, :] - H_riv) / (3 * dz)
-            # ## zhan Nov8: calculation de la derivation
-            # for i in range(1, nb_cells - 1):
-            #     nablaH[i, :] = (H_res[i + 1, :] - H_res[i - 1, :]) / (2 * dz)
-
-            # nablaH[nb_cells - 1, :] = 2 * (H_aq - H_res[nb_cells - 2, :]) / (3 * dz)
-
-            T_res = T_stratified(
+            
+            T_strat = T_stratified(
                 nablaH,
                 a,
                 Ss_list,
@@ -324,7 +316,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 T_aq,
                 alpha=ALPHA,
                 N_update_Mu=N_UPDATE_MU,
-            ).T_res
+            )
+            T_res = T_strat.compute_T_stratified()
 
             # calcule toutes les températures à tout temps et à toute profondeur
 
