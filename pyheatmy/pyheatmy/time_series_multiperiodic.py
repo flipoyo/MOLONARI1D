@@ -142,7 +142,7 @@ class time_series_multiperiodic:
         pearson_coef = np.zeros(n_days)
         for i in range(n_days):
             ln_amp_i = self.ln_amp(i*n_dt_in_day)
-            Lr = sp.stats.linregress(self.depths, ln_amp_i)
+            Lr = sp.stats.linregress(self.depth_sensors, ln_amp_i)
             pearson_coef[i] = Lr.rvalue
         return pearson_coef
     
