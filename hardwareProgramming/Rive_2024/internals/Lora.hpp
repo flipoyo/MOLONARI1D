@@ -1,100 +1,51 @@
-// This file will contain all the definitions relative to LoRa communication.
-// See internals/Lora.cpp for the implementation.
+#ifndef LORA_HPP
+#define LORA_HPP
 
-// Check that the file has not been imported before
-#ifndef MY_LORA_H
-#define MY_LORA_H
-
+#include <Arduino.h>
 #include <LoRa.h>
+#include <queue>
+#include <unordered_set>
 
-#include "Measure.hpp"
-
-
-// ----- Variables -----
-
-// The id number of the next packet that will be received
-unsigned int receivedPacketNumber = 0;
-// The id number of the next packet that will be sent
-unsigned int sentPacketNumber = 0;
-
-// The nework ID of this device
-unsigned int networkId = 0;
-
-// Function called when a measure is received
-void (*onGetMeasureCallback)(Measure);
-
-
-// ----- Data type -----
-
-// Represents a type of LoRa request
 enum RequestType : uint8_t {
-  // Request data (ie measurements)
-  DT_REQ = 0x01,
-  // Reply data (ie send measurements)
-  DT_RPL = 0x81,
 
-  // Request time
-  TIME_REQ = 0x02,
-  // Reply time
-  TIME_RPL = 0x82
+  SYN = 0x01,
+  ACK = 0x51,
+  DATA = 0x10,
+  FIN = 0x92
+
 };
+const int MAX_QUEUE_SIZE = 255;  // Queue size limit for the receiver
+class LoraCommunication {
+public:
+    LoraCommunication(long frequency, uint8_t localAddress , uint8_t destination);
 
+    // Method to start (initialize) LoRa
+    void startLoRa();
 
-// ----- Public functions -----
+    // Method to stop (deactivate) LoRa
+    void stopLoRa();
 
-// Initialise the lora module for the first time. Call before any other LoRa function
-// Arguments :
-//  onGetMeasureCallback -> Fonction qui prend en argument une mesure et qui ne renvoit rien. Elle sera appelée quand une mesure est reçue.
-//  frequency -> Fréquence de la porteuse en Hz
-void InitialiseLora(void (*onGetMeasureCallback)(Measure), float frequency = 868E6);
+    // Send a structured packet
+    void sendPacket(const uint8_t packetNumber, const RequestType requestType, const String &payload);
 
-// Temporarily disable the LoRa module to save battery. It can be waken up with WakeUpLora
-void SleepLora();
+    // Receive and parse a structured packet
+    bool receivePacket(uint8_t &packetNumber,RequestType &requestType, String &payload);
 
-// Re-enable the LoRa module if it was asleep. I.E. Exit low-power mode for the LoRa module
-void WakeUpLora();
+    bool performHandshake( uint8_t shiftback);
+    
+    int receivePackets(std::queue<String> &receiveQueue);
 
-// Send a DT_REQ request on LoRa
-// Arguments :
-//  firstMissingId -> Id number of the first measure that this card does not know
-//  destinationId -> Address of the sensor that we want to request data from
-bool RequestMeasurement(uint32_t firstMissingId, unsigned int destinationId);
+    void closeSession(int lastPacket);
 
+    // Method to check if LoRa is active
+    bool isLoRaActive();
 
-void ServeLora();
-
-
-
-// ----- Internal functions -----
-
-// Callback function when the lora module receives a packet
-// Arguments :
-//  packetSize -> Size of the received packet
-void OnLoraReceivePacket(int packetSize);
-
-// Read an incoming data reply request
-void HandleDataReplyPacket();
-
-// Discards a given amount of data received by LoRa
-void ClearBytes(unsigned int length);
-
-// Reads an object in binary from LoRa
-template<typename T>
-T ReadFromLoRa();
-
-// Sends a data packet through LoRa
-//
-// Arguments :
-//  payload -> A pointer to the object to send (ex : &obj)
-//  payloadSize -> The size of the object to send (ex : sizeof(obj))
-//  destinationId -> The address of the destination device of the message
-//  requestType -> The type of packet request to send
-//
-// Example :
-//  SendPacket(&data, sizeof(data), destId, DT_REQ)
-bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType);
-
-
+private:
+    long freq;
+    uint8_t localAddress;
+    uint8_t destination;
+    bool active; // Internal flag to track whether LoRa is currently active
+    std::unordered_set<uint8_t> myNet = {0xbb , 0xcc};
+};
 #include "Lora.cpp"
-
-#endif
+#endif // LORA_HPP

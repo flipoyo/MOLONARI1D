@@ -17,7 +17,7 @@ enum RequestType : uint8_t {
 const int MAX_QUEUE_SIZE = 255;  // Queue size limit for the receiver
 class LoraCommunication {
 public:
-    LoraCommunication(long frequency, uint8_t localAddress , uint8_t destination);
+    LoraCommunication(long frequency, uint8_t localAdd , uint8_t desti);
 
     // Method to start (initialize) LoRa
     void startLoRa();
@@ -30,6 +30,10 @@ public:
 
     // Receive and parse a structured packet
     bool receivePacket(uint8_t &packetNumber,RequestType &requestType, String &payload);
+
+    bool isValidDestination(int recipient, int dest, RequestType requestType);
+
+    uint8_t calculateChecksum(int recipient, int dest, uint8_t packetNumber, RequestType requestType, const String &payload);
 
     bool performHandshake( uint8_t shiftback);
     

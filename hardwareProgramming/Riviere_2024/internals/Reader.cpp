@@ -9,7 +9,7 @@
 
 #include "Measure.hpp"
 #include "Reader.hpp"
-
+#include <queue>
 
 #ifdef SD_DEBUG
 #define SD_LOG(msg) Serial.print(msg)
@@ -19,88 +19,67 @@
 #define SD_LOG_LN(msg)
 #endif
 
+unsigned int Reader::line_cursor = 0;
 
-// Convert a CSV line (Arduino String Type) into a Measure.
-Measure Reader::StringToMeasure(String line){
-  Measure measure;
-  String delimiter = ",";
-  String token;
-  line.concat(delimiter);
-  int i = 0;
-  int pos = 0;
-  while ((pos = line.indexOf(delimiter)) != -1) {
-    token = line.substring(0, pos);
-    switch (i)
-    {
-    case 0:
-      measure.id = token.toInt();
-      break;
-    case 1:
-      strncpy(measure.date, token.c_str(), 11);
-      break;
-    case 2:
-      strncpy(measure.time, token.c_str(), 9);
-      break;
-    case 3:
-      measure.chanel1 = token.TO_MEASURE_T();
-      break;
-    case 4:
-      measure.chanel2 = token.TO_MEASURE_T();
-      break;
-    case 5:
-      measure.chanel3 = token.TO_MEASURE_T();
-      break;
-    case 6:
-      measure.chanel4 = token.TO_MEASURE_T();
-      break;
-    default:
-      break;
-    }
-    line.remove(0, pos + delimiter.length());
-    i++;
-  }
-  return measure;
-}
-
-
-void Reader::EstablishConnection()
+bool Reader::EstablishConnection(unsigned int shift)
 {
   SD_LOG("SD Reader : establishing connection ...");
-
-  this->line_cursor = 0;
   this->file = SD.open(filename);
-
-  SD_LOG_LN(" Done");
-}
-
-void Reader::MoveCursor(unsigned int lineId) {
-  SD_LOG("SD Reader : Moving cursor ...");
-
-  while ((this->line_cursor < lineId) && (this->file.available())) {
-      this->file.readStringUntil('\n');
-      this->line_cursor++;
+  unsigned int lineId = 0;
+  if (line_cursor - shift >= 0)
+  {
+    line_cursor = line_cursor - shift;
+  }
+  else
+  {
+    return false;
   }
 
+  while ((lineId < line_cursor) && (this->file.available()))
+  {
+    this->file.readStringUntil('\n');
+  }
+  return true;
+
   SD_LOG_LN(" Done");
 }
 
-Measure Reader::ReadMeasure() {
-  SD_LOG("SD Reader : Reading measure n°" + String(this->line_cursor) + " ...");
+void Reader::UpdateCursor(unsigned int shift)
+{
 
+  line_cursor = line_cursor + shift;
+}
+
+std::queue<String> Reader::loadDataIntoQueue()
+{
+  std::queue<String> Queue;
+  while (IsDataAvailable())
+  {
+    String line = ReadMeasure();
+    Queue.push(line);
+    if (Queue.size() >= 250)
+      break; // Limit queue size if necessary
+  }
+  return Queue;
+}
+String Reader::ReadMeasure()
+{
+
+  SD_LOG("SD Reader : Reading measure n°" + String(line_cursor) + " ...");
   String line = this->file.readStringUntil('\n');
-  this->line_cursor++;
-  return this->StringToMeasure(line);
+  return line;
 
   SD_LOG_LN(" Done");
 }
 
-bool Reader::IsDataAvailable() {
-    return this->file.available();
+bool Reader::IsDataAvailable()
+{
+  return this->file.available();
 }
 
 void Reader::Dispose()
 {
-    this->file.close();
+  this->file.close();
 }
 
 #endif

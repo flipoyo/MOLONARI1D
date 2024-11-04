@@ -1,7 +1,10 @@
 #include "internals/Lora.hpp"
 #include <queue>
 
+uint8_t MyAddres = 0xaa;
+uint8_t defaultdestination = 0xff;
 uint8_t rotate = 0;
+
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
@@ -27,10 +30,10 @@ void PrintQueue(std::queue<String> receiveQueue) {
   Serial.println("All data printed. Queue is now empty.");
 }
 
+//LoraCommunication lora(868E6, MyAddres , defaultdestination);
+
 void loop() {
-  // localAddress = 0xaa;
-  
-  LoraCommunication lora(868E6, 0xaa , 0xff);
+  /*
   std::queue<String> receiveQueue;
   lora.startLoRa();
   if (lora.performHandshake(rotate*20)){
@@ -39,6 +42,6 @@ void loop() {
   }
   lora.stopLoRa();
   PrintQueue(receiveQueue);
-  rotate=rotate ^ 1;
+  rotate=rotate ^ 1;*/
   
 }

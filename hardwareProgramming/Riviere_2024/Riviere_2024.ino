@@ -66,15 +66,11 @@ void setup() {
   // Initialise Serial
   Serial.begin(115200);
   // Wait up to 5 seconds for serial to connect
-  unsigned long end_date = millis() + 5000; 
+  unsigned long end_date = millis() + 5000;
   while (!Serial && millis() < end_date) {
     // Do nothing
   }
 
-  // Initialise LoRa
-  Serial.print("Initialising LoRa ...");
-  InitialiseLora();
-  Serial.println(" Done");
 
   // Initialise SD Card
   Serial.print("Initialising SD card ...");
@@ -84,7 +80,7 @@ void setup() {
   } else {
     Serial.println(" Failed");
     noInterrupts();
-    while(true) {}
+    while (true) {}
   }
 
   // Initialise the SD logger
@@ -107,11 +103,16 @@ void setup() {
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 
   Serial.println("Initialisation complete !");
+  Waiter firstWaiter;
+  firstWaiter.startTimer();
+  unsigned long firstsleep = CalculateSleepTimeUntilNextMeasurement();
+  // Enter low power mode
+  Serial.end();
+  firstWaiter.sleepUntil(firstsleep);
 }
 
 // ----- Main Loop -----
 
-int initialstartup = 0;
 void loop() {
   // Enable the builtin LED during initialisation
   pinMode(LED_BUILTIN, OUTPUT);
@@ -119,12 +120,11 @@ void loop() {
   // Initialise Serial
   Serial.begin(115200);
   // Wait up to 5 seconds for serial to connect
-  unsigned long end_date = millis() + 5000; 
+  unsigned long end_date = millis() + 5000;
   while (!Serial && millis() < end_date) {
     // Do nothing
   }
-  // Initialise LoRa
-  InitialiseLora();
+
   // Initialise SD Card
   InitialiseLog(CSPin);
   // Initialise the SD logger
@@ -133,35 +133,24 @@ void loop() {
   InitialiseRTC();
   // Disable the builtin LED
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
-
   Waiter waiter;
-  waiter.startTimer();
-  // Initial start-up don't take measure
-  if (initialstartup < 1) {
-    initialstartup++;
-    // Calculate the time to sleep until the next measurement
-    unsigned long firstsleep = CalculateSleepTimeUntilNextMeasurement();
-    // Enter low power mode
-    Serial.end();
-    waiter.sleepUntil(firstsleep);
-  }
-  else {
-    Serial.println("");
-    // Count and check that the number of daily measurements has been reached
-    if (measurementCount < TOTAL_MEASUREMENTS_PER_DAY) {
-      Serial.println("——Measurement " + String(NbMeasurements) + "——");
-      // Perform measurements
-      TEMP_T temp1 = tempSensor1.MeasureTemperature();
-      TEMP_T temp2 = tempSensor2.MeasureTemperature();
-      TEMP_T temp3 = tempSensor3.MeasureTemperature();
-      TEMP_T temp4 = tempSensor4.MeasureTemperature();
 
-      logger.LogData(temp1, temp2, temp3, temp4);
-    
-      // Increase count
-      measurementCount++;
-      NbMeasurements++;
-    }
+  Serial.println("");
+  // Count and check that the number of daily measurements has been reached
+  if (measurementCount < TOTAL_MEASUREMENTS_PER_DAY) {
+    Serial.println("——Measurement " + String(NbMeasurements) + "——");
+    // Perform measurements
+    TEMP_T temp1 = tempSensor1.MeasureTemperature();
+    TEMP_T temp2 = tempSensor2.MeasureTemperature();
+    TEMP_T temp3 = tempSensor3.MeasureTemperature();
+    TEMP_T temp4 = tempSensor4.MeasureTemperature();
+
+    logger.LogData(temp1, temp2, temp3, temp4);
+
+    // Increase count
+    measurementCount++;
+    NbMeasurements++;
+
 
     // Calculate the time to sleep until the next measurement
     unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
@@ -169,7 +158,7 @@ void loop() {
     // If all measurements for the day are complete, transmit data and reset the counter
     if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
       Serial.println("Transmitting data via LoRa...");
-      waiter.delayUntil(60000);
+      waiter.delayUntil(180000);
       Serial.println("Data transmitted. Resetting measurement count.");
       // Reset the count and number for the next day's measurements
       measurementCount = 0;

@@ -41,7 +41,6 @@ void MyLowPowerClass::EnableAllIOPins() {
 // Switch to low-power mode for a given amount of time (in milli-seconds)
 void MyLowPowerClass::Sleep(uint32_t millis) {
   // Disable all power-consuming features
-  SleepLora();
   DisableAllIOPins();
 
   // Wait
@@ -49,7 +48,6 @@ void MyLowPowerClass::Sleep(uint32_t millis) {
   
   // Enable back all the features that werer disabled.
   EnableAllIOPins();
-  WakeUpLora();
 }
 
 // Get the pinMode of a given pin

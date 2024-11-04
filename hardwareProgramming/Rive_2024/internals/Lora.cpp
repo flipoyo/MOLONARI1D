@@ -1,202 +1,247 @@
-// This file will contain all the functions relative to LoRa communication
-// See internals/Lora.hpp for the definitions.
-
-// Check that the file has not been imported before
-#ifndef MY_LORA
-#define MY_LORA
-
-
 #include "Lora.hpp"
 
-
-// Debug methods to enable or disable logging
-#ifdef LORA_DEBUG
-#define LORA_LOG(msg) Serial.print(msg);
-#define LORA_LOG_HEX(msg) Serial.print(msg, HEX);
-#define LORA_LOG_LN(msg) Serial.println(msg);
-#else
-#define LORA_LOG(msg)
-#define LORA_LOG_HEX(msg)
-#define LORA_LOG_LN(msg)
-#endif
-
-
-
-// ----- Public functions -----
-
-// Initialise the lora module for the first time. Call before any other LoRa function
-void InitialiseLora(void (*_onGetMeasureCallback)(Measure), float frequency) {
-  onGetMeasureCallback = _onGetMeasureCallback;
-
-  LoRa.begin(frequency);
-  
-  LoRa.enableCrc();
-  sentPacketNumber = LoRa.random();
-
-  //LoRa.onReceive(OnLoraReceivePacket);
-  LoRa.receive();
+// Constructor: Set pin and frequency for the LoRa module
+LoraCommunication::LoraCommunication(long frequency, uint8_t localAddress, uint8_t destination)
+    : freq(frequency), localAddress(localAddress), destination(destination), active(false)
+{
+    LoRa.enableCrc();
 }
 
-
-// Temporarily disable the LoRa module to save battery. It can be waken up with WakeUpLora
-void SleepLora() {
-  LoRa.sleep();
+void LoraCommunication::startLoRa()
+{
+    if (!active)
+    {
+        int retries = 3;
+        while (retries--)
+        {
+            if (LoRa.begin(freq))
+            {
+                active = true;
+                Serial.println("LoRa started.");
+                return;
+            }
+            else
+            {
+                Serial.println("LoRa failed to start, retrying...");
+                delay(1000); // Delay before retrying
+            }
+        }
+        Serial.println("Starting LoRa failed after retries.");
+    }
 }
 
+void LoraCommunication::stopLoRa()
+{
+    if (active)
+    {
+        LoRa.end(); // This internally calls LoRa.sleep() and stops SPI
 
-// Re-enable the LoRa module if it was asleep. I.E. Exit low-power mode for the LoRa module
-void WakeUpLora() {
-  // TODO : test that this works
-  LoRa.receive();
+        // Step 3: Pull the RESET pin low to cut power if connected directly
+        pinMode(LORA_RESET, OUTPUT);
+        digitalWrite(LORA_RESET, LOW);
+        active = false;
+        Serial.println("LoRa stopped.");
+    }
 }
 
-
-// Send a DT_REQ request on LoRa
-// Arguments :
-//  firstMissingId -> Id number of the first measure that this card does not know
-//  destinationId -> Address of the sensor that we want to request data from
-bool RequestMeasurement(uint32_t lastMeasurementId, unsigned int destinationId) {
-  return SendPacket(&lastMeasurementId, sizeof(lastMeasurementId), destinationId, DT_REQ);
+void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload)
+{
+    if (active)
+    {
+        // Flush LoRa buffer to clear any residual data
+        uint8_t t = requestType;
+        delay(100); // Small delay to ensure buffer is cleared
+        LoRa.beginPacket();
+        LoRa.write(destination);
+        LoRa.write(localAddress);
+        LoRa.write(packetNumber);
+        LoRa.write(requestType);
+        LoRa.write(payload.length()); // Ensure packet length is specified
+        LoRa.print(payload);
+        LoRa.endPacket();
+        Serial.print("Packet sent: ");
+        Serial.println(payload);
+    }
+    else
+    {
+        Serial.println("LoRa is not active, cannot send packet.");
+    }
 }
 
+bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload)
+{
+    if (!active)
+        return false;
+    delay(80);
+    int ackTimeout = 2000;
+    unsigned long startTime = millis();
+    while (millis() - startTime < ackTimeout)
+    {
+        int packetSize = LoRa.parsePacket();
+        if (packetSize)
+        {
+            int recipient = LoRa.read();
+            uint8_t dest = LoRa.read();
+            packetNumber = LoRa.read();
+            requestType = static_cast<RequestType>(LoRa.read());
+            uint8_t incomingLength = LoRa.read(); // Get payload length
 
-void ServeLora() {
-  int packetSize = LoRa.parsePacket();
-  if (packetSize != 0) {
-    OnLoraReceivePacket(packetSize);
-  }
+            payload = "";
+            while (LoRa.available())
+            {
+                payload += (char)LoRa.read();
+            }
+
+            if (incomingLength != payload.length())
+            {
+                Serial.println("Error: message length mismatch.  Message length: " + String(incomingLength) + "Message: " + payload);
+                Serial.println();
+                return false; // Exit on length error
+            }
+
+            if (recipient != localAddress)
+            {
+                Serial.println("This message is not for me. Sent to: 0x" + String(recipient, HEX));
+                Serial.println();
+                return false; // Ignore packet if not for this device
+            }
+
+            if (destination == dest || (requestType == SYN && destination == 0xff && myNet.find(dest) != myNet.end()))
+            {
+                destination = dest;
+            }
+            else
+            {
+                Serial.println("This message is out of this session.");
+                Serial.println();
+                return false;
+            }
+
+            Serial.println("Received from: 0x" + String(destination, HEX));
+            Serial.println("Sent to: 0x" + String(recipient, HEX));
+            Serial.println("Packet Number ID: " + String(packetNumber));
+            Serial.println("Packet requestType : " + String(requestType) + "  " + String(requestType == SYN));
+            Serial.println("Message length: " + String(incomingLength));
+            Serial.println("Message: " + payload);
+            Serial.println("RSSI: " + String(LoRa.packetRssi()));
+            Serial.println("Snr: " + String(LoRa.packetSnr()));
+            Serial.println();
+
+            return true;
+        }
+    }
+    return false; // Return false if no packet received within timeout
 }
 
-
-
-// ----- Internal functions -----
-
-// Callback function when the lora module receives a packet
-// Arguments :
-//  packetSize -> Size of the received packet
-void OnLoraReceivePacket(int packetSize) {
-  LORA_LOG_LN("Receiving packet");
-
-  // If the header is incomplete, ignore the packet
-  if (packetSize < 13) {
-    LORA_LOG_LN("Ignoring packet : wrong size");
-    ClearBytes(packetSize);
-    return;
-  }
-
-  // Get sender and destination
-  unsigned int senderId = ReadFromLoRa<unsigned int>();
-  unsigned int destinationId = ReadFromLoRa<unsigned int>();
-
-  LORA_LOG_LN("Sender : " + String(senderId));
-  LORA_LOG_LN("Destination : " + String(destinationId));
-
-  // If the packet is not for me, ignore it
-  if (destinationId != networkId) {
-    LORA_LOG_LN("Ignoring packet : not destined to me");
-    ClearBytes(packetSize - 8);
-    return;
-  }
-
-  // Get the packet number
-  unsigned int thisPacketNumber = ReadFromLoRa<unsigned int>();
-  LORA_LOG_LN("Packet number : " + String(thisPacketNumber));
-
-  // If the packet has already been received, ignore it
-  if (thisPacketNumber == receivedPacketNumber) {
-    LORA_LOG_LN("Ignoring packet : packet already received");
-    ClearBytes(packetSize - 12);
-    return;
-  }
-  receivedPacketNumber = thisPacketNumber;
-
-  // Get the request type
-  RequestType requestId = (RequestType)LoRa.read();
-
-  if (requestId == DT_RPL) {
-    HandleDataReplyPacket();
-    return;
-  }
-
-  // If the request method is unknown, inore the packet
-  LORA_LOG_LN("Ignoring packet : unknown request (0x");
-  LORA_LOG_HEX(requestId);
-  LORA_LOG_LN(")");
-  ClearBytes(packetSize - 13);
+bool LoraCommunication::isLoRaActive()
+{
+    return active;
 }
 
+bool LoraCommunication::performHandshake(uint8_t shiftback)
+{
 
-// Read an incoming data reply request
-void HandleDataReplyPacket() {
-  Measure measure = ReadFromLoRa<Measure>();
+    String payload;
+    uint8_t packetNumber;
+    RequestType requestType;
 
-  onGetMeasureCallback(measure);
+    while (true)
+    {
+        if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && packetNumber == 0 && destination != 0xff)
+        {
+            // get from the saved variable//////////////////////
+            sendPacket(shiftback, SYN, "SYN-ACK");
+            break;
+        }
+    }
+
+    int retries = 0;
+    Serial.println("SYN-ACK sent.");
+    while (retries < 3)
+    {
+        if (receivePacket(shiftback, requestType, payload) && requestType == ACK)
+        {
+            Serial.println("Handshake complete. Ready to receive data.");
+            return true;
+        }
+        else
+        {
+            Serial.println("No ACK received, retrying ...");
+            delay(100 * (retries + 1));
+            sendPacket(shiftback, SYN, "SYN-ACK");
+        }
+    }
+
+    if (retries == 3)
+    {
+        Serial.println("Handshake failed.");
+        stopLoRa();
+        return false;
+    }
 }
 
+int LoraCommunication::receivePackets(std::queue<String> &receiveQueue)
+{
+    uint8_t packetNumber = 0;
+    String payload;
+    RequestType requestType;
+    uint8_t previous_packetNumber = 0;
 
-// Discards a given amount of data received by LoRa
-void ClearBytes(unsigned int length) {
-  for (size_t i = 0; i < length; i++)
-  {
-    LoRa.read();
-  }
+    while (true)
+    {
+        if (receivePacket(packetNumber, requestType, payload))
+        {
+            switch (requestType)
+            {
+            case FIN:
+                Serial.println("FIN received, session closing.");
+                return packetNumber; // End loop to reset the session
+            default:
+                if (receiveQueue.size() >= MAX_QUEUE_SIZE)
+                {
+                    Serial.println("Queue full, sending FIN to close session.");
+                    return packetNumber; // End loop to reset the session
+                }
+                if (previous_packetNumber == packetNumber)
+                {
+                    sendPacket(packetNumber, ACK, "ACK");
+                    break;
+                }
+                previous_packetNumber = packetNumber;
+                receiveQueue.push(payload); // Add received data to the queue
+                sendPacket(packetNumber, ACK, "ACK");
+                Serial.println("ACK sent for packet " + String(packetNumber));
+                break;
+            }
+        }
+    }
 }
 
+void LoraCommunication::closeSession(int lastPacket)
+{
+    sendPacket(lastPacket, FIN, "");
+    Serial.println("FIN sent, waiting for final ACK...");
 
-// Reads an object in binary from LoRa
-template<typename T>
-T ReadFromLoRa() {
-  char bytes[sizeof(T)];
+    String payload;
+    uint8_t packetNumber;
+    RequestType requestType;
+    int retries = 0;
 
-  for (size_t i = 0; i < sizeof(T); i++)
-  {
-    bytes[i] = static_cast<char>(LoRa.read());
-  }
-  
-  return *reinterpret_cast<T*>(&bytes);
+    while (retries < 6)
+    {
+        if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket)
+        {
+            Serial.println("Final ACK received, session closed.");
+
+            return;
+        }
+        else
+        {
+            Serial.println("No final ACK, retrying...");
+            delay(100 * (retries + 1));
+            sendPacket(lastPacket, FIN, "");
+            retries++;
+        }
+        Serial.println("Session closure failed after retries.");
+    }
 }
-
-
-// Sends a data packet through LoRa
-//
-// Arguments :
-//  payload -> A pointer to the object to send (ex : &obj)
-//  payloadSize -> The size of the object to send (ex : sizeof(obj))
-//  destinationId -> The address of the destination device of the message
-//  requestType -> The type of packet request to send
-//
-// Example :
-//  SendPacket(&data, sizeof(data), destId, DT_REQ)
-bool SendPacket(const void* payload, unsigned int payloadSize, unsigned int destinationId, RequestType requestType) {
-  LORA_LOG_LN("Sending packet to " + String(destinationId) + "(" + String(payloadSize) + " bytes)");
-  LORA_LOG("Request type : ");
-  LORA_LOG_HEX(requestType);
-  LORA_LOG("\n");
-
-  bool success = (bool)LoRa.beginPacket();
-  if (!success) {
-    LORA_LOG_LN("Aborting transmission : LoRa module busy");
-    return false;
-  }
-
-  LoRa.write(reinterpret_cast<uint8_t*>(&networkId), sizeof(networkId));
-  LoRa.write(reinterpret_cast<uint8_t*>(&destinationId), sizeof(destinationId));
-  LoRa.write(reinterpret_cast<uint8_t*>(&sentPacketNumber), sizeof(sentPacketNumber));
-  LoRa.write(reinterpret_cast<uint8_t*>(&requestType), sizeof(requestType));
-  LoRa.write(reinterpret_cast<const uint8_t*>(payload), payloadSize);
-
-  success = (bool)LoRa.endPacket();
-  if (!success) {
-    LORA_LOG_LN("Transmission failed");
-  }
-
-  // Set the module back to receive mode
-  LoRa.receive();
-
-  sentPacketNumber++;
-
-  return success;
-}
-
-
-#endif

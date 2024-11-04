@@ -17,22 +17,22 @@ class Reader
 {
     private:
         File file;
-        unsigned int line_cursor;
-
-        Measure StringToMeasure(String line);
+        static unsigned int line_cursor;
 
     public:
         // Establish a connection with the SD card.
-        void EstablishConnection();
-
-        // Sets the cursor to a given line.
+        bool EstablishConnection(unsigned  int shift);
+        
+        // move the cursor to a g.
         // The cursor can only be moved forward.
-        void MoveCursor(unsigned int lineId);
+        void UpdateCursor(unsigned int lineId);
+
+        std::queue<String> loadDataIntoQueue();
 
         // Returns the Measure located at the cursor's line.
         // This function does increment the cursor.
         // Make sure that there is data availble before calling this function.
-        Measure ReadMeasure();
+        String ReadMeasure();
 
         // Check if there are still lines to read.
         // Should be called before ReadMeasure() to avoid getting stuck in a loop.
