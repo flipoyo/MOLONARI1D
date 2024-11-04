@@ -87,7 +87,7 @@ class time_series_multiperiodic:
             print('dt must be in seconds')
         return(int(NSECINDAY/self.dt))
     
-    def nb_days_in_period(self):
+    def nb_days_in_period(self): #method to get the number of days in the period
         if self.type == "multi_periodic":
             return int(self.multi_periodic.shape[0]/self.nb_per_day())
         elif self.type == "ts":
