@@ -684,8 +684,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         self._initial_energies = [state.energy for state in self._states]
         self._states = [min(self._states, key=attrgetter("energy"))]
+        print("best state", self._states[0])
+        for index, layer in enumerate(self.all_layers):
+            layer.params = Param(*self._states[0].layers[index])   # On met à jour les paramètres des couches avec les paramètres de la meilleure itération pour l'énergie
         self._acceptance = np.zeros(nb_iter)
-
+        print("layers 1 params", self.all_layers[0].params)
         _temperatures[0] = self.get_temperatures_solve()
         _flows[0] = self.get_flows_solve()
 
@@ -694,6 +697,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         for i in trange(nb_iter, desc="Mcmc Computation ", file=sys.stdout):
             self.perturb_params()
+            print("\n", "liste des paramètres après perturbation n° :", i, ': ', self.get_list_current_params(), "\n")
             self.compute_solve_transi(nb_cells, verbose=False)
             energy = compute_energy(self.temperatures_solve[ind_ref, :])
             log_ratio_accept = compute_log_acceptance(energy, self._states[-1].energy)
