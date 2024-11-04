@@ -59,11 +59,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             rac, verbose=verbose
         )  # once validated verbose=False
 
-
-        self._dir_print = create_dir(
-            rac, verbose=verbose
-        )  # once validated verbose=False
-
         self._classType = ClassType.COLUMN
 
         # ! Pour l'instant on suppose que les temps matchent
@@ -133,6 +128,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     def initialization(self, nb_cells):
         self._nb_cells = nb_cells
         self.initialize_heat_source()
+
+    def initialization_nb_cells(self, nb_cells):
+        self._nb_cells = nb_cells
 
     def initialize_heat_source(self):
         self._heat_source = np.zeros((self._nb_cells, len(self._times)))
@@ -272,9 +270,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             inter_cara = np.array([[nb_cells // 2, 0]])
             z_solve = self._z_solve.copy()
             moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_list = (
-                (
                 getListParameters(layersList, nb_cells)
-            )
             )
             Ss_list = n_list / heigth
             ##
@@ -1706,9 +1702,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             (len(ids) + 2, self.get_timelength())
         )  # adding the boundary conditions
         temperatures[0] = self._T_riv
-        temperatures[len(ids)+1] = self._T_aq
-        for id in range(len(ids)) :
-            temperatures[id+1]=self.get_temperatures_solve()[ids[id]]
+        temperatures[len(ids) + 1] = self._T_aq
+        for id in range(len(ids)):
+            # print(self.get_temperatures_solve()) # mise en commentaire car on ne sait pas à quoi elle sert
+            temperatures[id + 1] = self.get_temperatures_solve()[ids[id]]
             # print(f"printing extracted temperatures:{id+1}")
             # print(temperatures[id+1])
             # for j in range(len(temperatures[id+1])):
