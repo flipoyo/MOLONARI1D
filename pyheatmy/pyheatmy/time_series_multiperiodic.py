@@ -4,11 +4,12 @@ from pyheatmy.synthetic_MOLONARI import *
 from pyheatmy.config import *
 from pyheatmy.utils import create_periodic_signal
 import scipy as sp
+from datetime import datetime, timedelta
 
 
 # à mettre dans utils (?)
 def two_column_array(a1, a2):
-    assert len(a1) == len(a2), "t and T must have the same length"
+    assert len(a1) == len(a2), "The two arrays must have the same length"
     if len(a2.shape) == 1:
         a = np.zeros((len(a1), 2))
         a[:, 0] = a1
@@ -29,29 +30,27 @@ class time_series_multiperiodic:
         ], "type must be either ts or multi_periodic"
         self.type = type
 
-    def values_time_series(self, dates, T, dt, depth_sensors):
+    def values_time_series(self, dates, T, depth_sensors):
         if self.type == "ts":
             self.time_series = two_column_array(dates, T)
-            self.dt = dt
             self.nb_sensors = len(T[0, :])
             self.depth_sensors = depth_sensors
         else:
             return "This is not a time series"
 
     def create_multiperiodic_signal(
-        self, amplitude, periods, dates, offset=DEFAULT_T_riv_offset, verbose=True
+        self, amplitudes, periods, dates, offset=DEFAULT_T_riv_offset, verbose=True
     ):
         if self.type == "multi_periodic":
-            self.dt = dt
-            assert len(amplitude) == len(
+            assert len(amplitudes) == len(
                 periods
-            ), "amplitude and periods must have the same length"
+            ), "amplitudes and periods must have the same length"
             if verbose:
                 print(
                     "Creating a multi-periodic signal, with the following period:",
                     periods,
                     "and the following amplitude:",
-                    amplitude,
+                    amplitudes,
                 )
             for i in range(len(periods)):
                 periods[i] = convert_period_in_second(periods[i][0], periods[i][1])
@@ -59,15 +58,15 @@ class time_series_multiperiodic:
                     print("periods :", periods)
             T = create_periodic_signal(
                 dates,
-                [amplitude[0], periods[0], offset],
+                [amplitudes[0], periods[0], offset],
                 signal_name="TBD",
                 verbose=False,
             )
 
-            for i in range(1, len(amplitude)):
+            for i in range(1, len(amplitudes)):
                 T += create_periodic_signal(
                     dates,
-                    [amplitude[i], periods[i], 0],
+                    [amplitudes[i], periods[i], 0],
                     signal_name="TBD",
                     verbose=False,
                 )
@@ -79,18 +78,20 @@ class time_series_multiperiodic:
         assert type(time_unit) == str, "time_unit must be of type str"
         if self.type == "multi_periodic":
             a = self.multi_periodic #ok, as we have a multi-periodic signal (which already is a n*2 matrix, corresponding of the river temperature at a given time)
-            plt.plot(a[:, 0], a[:, 1])
-            plt.title("Temperature profile")
-            plt.xlabel("date")
-            plt.ylabel("temperature : °C")
-            plt.show()
         if self.type == "ts":
-            a = self.time_series
-            plt.plot(a[:, 0], a[:, 1]) #corresponding at the first sensor temperature, ie river temperature at a given time
-            plt.title("Temperature profile")
-            plt.xlabel("date")
-            plt.ylabel("temperature : °C")
-            plt.show()
+            a = self.time_series #corresponding at the first sensor temperature, ie river temperature at a given time
+        print(a.dtypes)
+        # To plot : translating seconds into dates :
+        # Original timestamp
+        timestamp = 1485714600
+        # Convert the timestamp to a datetime object
+        dt = datetime.fromtimestamp(timestamp)
+
+        plt.title("Temperature profile")
+        plt.plot(a[:, 0], a[:, 1]) 
+        plt.xlabel("date")
+        plt.ylabel("temperature : °C")
+        plt.show()
 
     def nb_per_day(self, Verbose = True): #method to get the number of points per day
         if Verbose:
