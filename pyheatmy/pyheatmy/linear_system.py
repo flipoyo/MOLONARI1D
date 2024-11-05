@@ -460,22 +460,23 @@ class T_stratified(Linear_system):
         ]
         c[-1] = (
             8 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
-            - 2
+            + 2
             * (1 - self.alpha)
             * self.ae_list[self.n_cell - 1]
             * self.nablaH[self.n_cell - 1, j]
             / (3 * self.dz)
-            * self.T_aq[j + 1]
-            + (
-                8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
-                - 2
-                * self.alpha
-                * self.ae_list[self.n_cell - 1]
-                * self.nablaH[self.n_cell - 1, j]
-                / (3 * self.dz)
-            )
-            * self.T_aq[j]
-        )
+        ) * self.T_aq[j + 1] + (
+            8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
+            + 2
+            * self.alpha
+            * self.ae_list[self.n_cell - 1]
+            * self.nablaH[self.n_cell - 1, j]
+            / (3 * self.dz)
+        ) * self.T_aq[
+            j
+        ]
+
+        # c += self.heat_source[:, j]
         return c
 
     def _compute_A_diagonals(self, j, dt):
