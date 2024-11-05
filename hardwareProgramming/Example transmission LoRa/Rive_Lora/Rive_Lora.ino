@@ -30,10 +30,10 @@ void PrintQueue(std::queue<String> receiveQueue) {
   Serial.println("All data printed. Queue is now empty.");
 }
 
-//LoraCommunication lora(868E6, MyAddres , defaultdestination);
+LoraCommunication lora(868E6, MyAddres , defaultdestination);
 
 void loop() {
-  /*
+  
   std::queue<String> receiveQueue;
   lora.startLoRa();
   if (lora.performHandshake(rotate*20)){
@@ -42,6 +42,6 @@ void loop() {
   }
   lora.stopLoRa();
   PrintQueue(receiveQueue);
-  rotate=rotate ^ 1;*/
+  rotate=rotate ^ 1;
   
 }

@@ -4,7 +4,7 @@
 LoraCommunication::LoraCommunication(long frequency, uint8_t localAdd, uint8_t desti)
     : freq(frequency), localAddress(localAdd), destination(desti), active(false)
 {
-    LoRa.enableCrc();
+    
 }
 
 void LoraCommunication::startLoRa()
@@ -44,12 +44,19 @@ void LoraCommunication::stopLoRa()
     }
 }
 
-#include <LoRa.h>
 
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
     if (active) {
         delay(100);  // Small delay to ensure buffer is cleared
-        LoRa.beginPacket();
+
+        bool success = (bool)LoRa.beginPacket();
+        if (!success) {
+        LORA_LOG_LN("Aborting transmission : LoRa module busy");
+        return;
+        }
+        // Calculate and append a simple checksum 
+        uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
+        LoRa.write(checksum);
 
         LoRa.write(destination);
         LoRa.write(localAddress);
@@ -57,10 +64,6 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
         LoRa.write(requestType);
         LoRa.write(payload.length());  // Specify payload length
         LoRa.print(payload);
-        
-        // Calculate and append a simple checksum (optional)
-        uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
-        LoRa.write(checksum);
         
         LoRa.endPacket();
         
@@ -81,8 +84,9 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
     while (millis() - startTime < ackTimeout) {
         int packetSize = LoRa.parsePacket();
         if (packetSize) {
-            int recipient = LoRa.read();
-            int dest = LoRa.read();
+            uint8_t receivedChecksum = LoRa.read();  // Read the checksum byte
+            uint8_t recipient = LoRa.read();
+            uint8_t dest = LoRa.read();
             packetNumber = LoRa.read();
             requestType = static_cast<RequestType>(LoRa.read());
             uint8_t incomingLength = LoRa.read();  // Get payload length
@@ -91,8 +95,6 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             while (LoRa.available()) {
                 payload += (char)LoRa.read();
             }
-
-            uint8_t receivedChecksum = LoRa.read();  // Read the checksum byte at the end
 
             // Verify length
             if (incomingLength != payload.length()) {
