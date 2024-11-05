@@ -33,7 +33,7 @@ public :
     void delayUntil(unsigned long desired_waiting_time) {
         unsigned long end_date = starting_time + desired_waiting_time;
         while(millis() < end_date) {
-            ServeLora();
+
             delay(1);
         }
     }

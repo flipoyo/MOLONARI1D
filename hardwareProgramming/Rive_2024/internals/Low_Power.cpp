@@ -14,7 +14,6 @@
 // Switch to low-power mode for a given amount of time (in milli-seconds)
 void MyLowPowerClass::Sleep(uint32_t millis) {
   // Disable all power-consuming features
-  SleepLora();
   DisableAllIOPins();
 
   // Wait
@@ -22,7 +21,6 @@ void MyLowPowerClass::Sleep(uint32_t millis) {
 
   // Enable back all the features that werer disabled.
   EnableAllIOPins();
-  WakeUpLora();
 }
 
 
@@ -30,9 +28,6 @@ void MyLowPowerClass::Sleep(uint32_t millis) {
 void MyLowPowerClass::DisableAllIOPins() {
   for (uint8_t pin = 0; pin < NUM_DIGITAL_PINS; pin++)
   {
-    // Skip the reset pin as it has to remain an output low.
-    if (pin == LORA_RESET) continue;
-
     // Save the pin mode to restore it later
     pinModes[pin] = GetPinMode(pin);
     // Set the pin to input pullup to save battery

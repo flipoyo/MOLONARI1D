@@ -1,10 +1,19 @@
 #include "Lora.hpp"
 
+#ifdef LORA_DEBUG
+#define LORA_LOG(msg) Serial.print(msg);
+#define LORA_LOG_HEX(msg) Serial.print(msg, HEX);
+#define LORA_LOG_LN(msg) Serial.println(msg);
+#else
+#define LORA_LOG(msg)
+#define LORA_LOG_HEX(msg)
+#define LORA_LOG_LN(msg)
+#endif
+
 // Constructor: Set pin and frequency for the LoRa module
 LoraCommunication::LoraCommunication(long frequency, uint8_t localAdd, uint8_t desti)
     : freq(frequency), localAddress(localAdd), destination(desti), active(false)
 {
-  
 }
 
 void LoraCommunication::startLoRa()
@@ -34,7 +43,7 @@ void LoraCommunication::stopLoRa()
 {
   if (active)
   {
-    LoRa.end();  // This internally calls LoRa.sleep() and stops SPI
+    LoRa.end(); // This internally calls LoRa.sleep() and stops SPI
 
     // Step 3: Pull the RESET pin low to cut power if connected directly
     pinMode(LORA_RESET, OUTPUT);
@@ -44,110 +53,128 @@ void LoraCommunication::stopLoRa()
   }
 }
 
-void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
-    if (active) {
-        delay(100);  // Small delay to ensure buffer is cleared
-        LoRa.beginPacket();
-
-        // Calculate and append a simple checksum
-        uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
-        LoRa.write(checksum);
-        LoRa.write(destination);
-        LoRa.write(localAddress);
-        LoRa.write(packetNumber);
-        LoRa.write(requestType);
-        LoRa.write(payload.length());  // Specify payload length
-        LoRa.print(payload);
-        
-        
-        LoRa.endPacket();
-        
-        Serial.print("Packet sent: ");
-        Serial.println(payload);
-    } else {
-        Serial.println("LoRa is not active, cannot send packet.");
+void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload)
+{
+  if (active)
+  {
+    delay(100); // Small delay to ensure buffer is cleared
+    bool success = (bool)LoRa.beginPacket();
+    if (!success)
+    {
+      LORA_LOG_LN("Aborting transmission : LoRa module busy");
+      return;
     }
+    // Calculate and append a simple checksum
+    uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
+    LoRa.write(checksum);
+    LoRa.write(destination);
+    LoRa.write(localAddress);
+    LoRa.write(packetNumber);
+    LoRa.write(requestType);
+    LoRa.write(payload.length()); // Specify payload length
+    LoRa.print(payload);
+
+    LoRa.endPacket();
+
+    Serial.print("Packet sent: ");
+    Serial.println(payload);
+  }
+  else
+  {
+    Serial.println("LoRa is not active, cannot send packet.");
+  }
 }
 
-bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload) {
-    if (!active) return false;
+bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload)
+{
+  if (!active)
+    return false;
 
-    delay(80);  // Small delay for synchronization
-    int ackTimeout = 2000;
-    unsigned long startTime = millis();
-    
-    while (millis() - startTime < ackTimeout) {
-        int packetSize = LoRa.parsePacket();
-        if (packetSize) {
-            uint8_t receivedChecksum = LoRa.read();  // Read the checksum byte
-            uint8_t recipient = LoRa.read();
-            uint8_t dest = LoRa.read();
-            packetNumber = LoRa.read();
-            requestType = static_cast<RequestType>(LoRa.read());
-            uint8_t incomingLength = LoRa.read();  // Get payload length
+  delay(80); // Small delay for synchronization
+  int ackTimeout = 2000;
+  unsigned long startTime = millis();
 
-            payload = "";
-            while (LoRa.available()) {
-                payload += (char)LoRa.read();
-            }
+  while (millis() - startTime < ackTimeout)
+  {
+    int packetSize = LoRa.parsePacket();
+    if (packetSize)
+    {
+      uint8_t receivedChecksum = LoRa.read(); // Read the checksum byte
+      uint8_t recipient = LoRa.read();
+      uint8_t dest = LoRa.read();
+      packetNumber = LoRa.read();
+      requestType = static_cast<RequestType>(LoRa.read());
+      uint8_t incomingLength = LoRa.read(); // Get payload length
 
+      payload = "";
+      while (LoRa.available())
+      {
+        payload += (char)LoRa.read();
+      }
 
-            // Verify length
-            if (incomingLength != payload.length()) {
-                Serial.println("Error: message length mismatch. Expected: " + String(incomingLength) + ", Actual: " + String(payload.length()));
-                return false;
-            }
+      // Verify length
+      if (incomingLength != payload.length())
+      {
+        Serial.println("Error: message length mismatch. Expected: " + String(incomingLength) + ", Actual: " + String(payload.length()));
+        return false;
+      }
 
-            // Verify destination
-            if (!isValidDestination(recipient, dest, requestType)) {
-                Serial.println("Message is not for this device or is out of session.");
-                return false;
-            }
+      // Verify destination
+      if (!isValidDestination(recipient, dest, requestType))
+      {
+        Serial.println("Message is not for this device or is out of session.");
+        return false;
+      }
 
-            // Verify checksum
-            uint8_t calculatedChecksum = calculateChecksum(recipient, dest, packetNumber, requestType, payload);
-            if (calculatedChecksum != receivedChecksum) {
-                Serial.println("Checksum mismatch: packet discarded.");
-                return false;
-            }
+      // Verify checksum
+      uint8_t calculatedChecksum = calculateChecksum(recipient, dest, packetNumber, requestType, payload);
+      if (calculatedChecksum != receivedChecksum)
+      {
+        Serial.println("Checksum mismatch: packet discarded.");
+        return false;
+      }
 
-            // Log received packet details
-            Serial.println("Received from: 0x" + String(dest, HEX));
-            Serial.println("Sent to: 0x" + String(recipient, HEX));
-            Serial.println("Packet Number ID: " + String(packetNumber));
-            Serial.println("Packet requestType: " + String(requestType));
-            Serial.println("Message length: " + String(incomingLength));
-            Serial.println("Message: " + payload);
-            Serial.println("RSSI: " + String(LoRa.packetRssi()));
-            Serial.println("SNR: " + String(LoRa.packetSnr()));
-            Serial.println();
+      // Log received packet details
+      Serial.println("Received from: 0x" + String(dest, HEX));
+      Serial.println("Sent to: 0x" + String(recipient, HEX));
+      Serial.println("Packet Number ID: " + String(packetNumber));
+      Serial.println("Packet requestType: " + String(requestType));
+      Serial.println("Message length: " + String(incomingLength));
+      Serial.println("Message: " + payload);
+      Serial.println("RSSI: " + String(LoRa.packetRssi()));
+      Serial.println("SNR: " + String(LoRa.packetSnr()));
+      Serial.println();
 
-            return true;
-        }
+      return true;
     }
-    return false;  // Return false if no packet received within timeout
+  }
+  return false; // Return false if no packet received within timeout
 }
-
 
 // Helper function to validate the destination of incoming packets
-bool LoraCommunication::isValidDestination(int recipient, int dest, RequestType requestType) {
-    if (recipient != localAddress) {
-        return false;  // Not for this device
-    }
-    if (destination == dest || (requestType == SYN && destination == 0xff && myNet.find(dest) != myNet.end())) {
-        destination = dest;
-        return true;
-    }
-    return false;  // Out of session or invalid destination
+bool LoraCommunication::isValidDestination(int recipient, int dest, RequestType requestType)
+{
+  if (recipient != localAddress)
+  {
+    return false; // Not for this device
+  }
+  if (destination == dest || (requestType == SYN && destination == 0xff && myNet.find(dest) != myNet.end()))
+  {
+    destination = dest;
+    return true;
+  }
+  return false; // Out of session or invalid destination
 }
 
 // Helper function to calculate a simple checksum for data integrity verification
-uint8_t LoraCommunication::calculateChecksum(int recipient, int dest, uint8_t packetNumber, RequestType requestType, const String &payload) {
-    uint8_t checksum = recipient ^ dest ^ packetNumber ^ static_cast<uint8_t>(requestType);
-    for (char c : payload) {
-        checksum ^= c;
-    }
-    return checksum;
+uint8_t LoraCommunication::calculateChecksum(int recipient, int dest, uint8_t packetNumber, RequestType requestType, const String &payload)
+{
+  uint8_t checksum = recipient ^ dest ^ packetNumber ^ static_cast<uint8_t>(requestType);
+  for (char c : payload)
+  {
+    checksum ^= c;
+  }
+  return checksum;
 }
 
 bool LoraCommunication::isLoRaActive()
@@ -163,21 +190,25 @@ bool LoraCommunication::performHandshake(int &shift)
   String payload;
   uint8_t packetNumber;
   RequestType requestType;
+  int retries = 0;
 
-  if (receivePacket(packetNumber, requestType, payload) && requestType == SYN )
-  {
-    shift = packetNumber;
-    Serial.println("SYN-ACK received, sending final ACK...");
-    sendPacket(packetNumber, ACK, "");
-    delay(1000);
-    return true;
-  }
-  else
-  {
-    Serial.println("Handshake failed.");
-    stopLoRa();
-    return false;
-  }
+  while (retries < 6)
+    if (receivePacket(packetNumber, requestType, payload) && requestType == SYN)
+    {
+      shift = packetNumber;
+      Serial.println("SYN-ACK received, sending final ACK...");
+      sendPacket(packetNumber, ACK, "");
+      delay(1000);
+      return true;
+    }
+    else
+    {
+      delay(100 * (retries + 1));
+      sendPacket(0, SYN, "");
+      retries++;
+    }
+  Serial.println("Handshake failed.");
+  return false;
 }
 
 int LoraCommunication::sendPackets(std::queue<String> &sendQueue)
@@ -227,7 +258,7 @@ int LoraCommunication::sendPackets(std::queue<String> &sendQueue)
       }
       break;
     }
-    
+
     delay(100);
   }
   closeSession(packetNumber);

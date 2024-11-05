@@ -33,15 +33,14 @@ void PrintQueue(std::queue<String> receiveQueue) {
 LoraCommunication lora(868E6, MyAddres , defaultdestination);
 
 void loop() {
-  
+  setdesttodefault();
   std::queue<String> receiveQueue;
   lora.startLoRa();
-  if (lora.performHandshake(rotate*20)){
+  if (lora.Handshake(rotate*20)){
     int last = lora.receivePackets(receiveQueue);
     lora.closeSession(last);
   }
   lora.stopLoRa();
   PrintQueue(receiveQueue);
   rotate=rotate ^ 1;
-  
 }

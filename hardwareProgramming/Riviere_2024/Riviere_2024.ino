@@ -158,7 +158,7 @@ void loop() {
     // If all measurements for the day are complete, transmit data and reset the counter
     if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
       Serial.println("Transmitting data via LoRa...");
-      waiter.delayUntil(180000);
+      waiter.delayUntil(300000);
       Serial.println("Data transmitted. Resetting measurement count.");
       // Reset the count and number for the next day's measurements
       measurementCount = 0;

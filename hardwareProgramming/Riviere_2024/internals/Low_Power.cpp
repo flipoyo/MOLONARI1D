@@ -17,9 +17,6 @@ MyLowPowerClass MyLowPower;
 void MyLowPowerClass::DisableAllIOPins() {
   for (uint8_t pin = 0; pin < NUM_DIGITAL_PINS; pin++)
   {
-    // Skip the reset pin as it has to remain an output low.
-    if (pin == LORA_RESET) continue;
-
     // Save the pin mode to restore it later
     pinModes[pin] = GetPinMode(pin);
     // Set the pin to input pullup to save battery

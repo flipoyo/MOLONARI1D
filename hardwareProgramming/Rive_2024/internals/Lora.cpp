@@ -1,10 +1,18 @@
 #include "Lora.hpp"
 
+#ifdef LORA_DEBUG
+#define LORA_LOG(msg) Serial.print(msg);
+#define LORA_LOG_HEX(msg) Serial.print(msg, HEX);
+#define LORA_LOG_LN(msg) Serial.println(msg);
+#else
+#define LORA_LOG(msg)
+#define LORA_LOG_HEX(msg)
+#define LORA_LOG_LN(msg)
+#endif
 // Constructor: Set pin and frequency for the LoRa module
-LoraCommunication::LoraCommunication(long frequency, uint8_t localAddress, uint8_t destination)
-    : freq(frequency), localAddress(localAddress), destination(destination), active(false)
+LoraCommunication::LoraCommunication(long frequency, uint8_t localAdd, uint8_t desti)
+    : freq(frequency), localAddress(localAdd), destination(desti), active(false)
 {
-    LoRa.enableCrc();
 }
 
 void LoraCommunication::startLoRa()
@@ -44,21 +52,37 @@ void LoraCommunication::stopLoRa()
     }
 }
 
+void LoraCommunication::setdesttodefault()
+{
+    if (destination != 0xff)
+        destination = 0xff;
+}
+
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload)
 {
     if (active)
     {
-        // Flush LoRa buffer to clear any residual data
-        uint8_t t = requestType;
         delay(100); // Small delay to ensure buffer is cleared
-        LoRa.beginPacket();
+
+        bool success = (bool)LoRa.beginPacket();
+        if (!success)
+        {
+            LORA_LOG_LN("Aborting transmission : LoRa module busy");
+            return;
+        }
+        // Calculate and append a simple checksum
+        uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
+        LoRa.write(checksum);
+
         LoRa.write(destination);
         LoRa.write(localAddress);
         LoRa.write(packetNumber);
         LoRa.write(requestType);
-        LoRa.write(payload.length()); // Ensure packet length is specified
+        LoRa.write(payload.length()); // Specify payload length
         LoRa.print(payload);
+
         LoRa.endPacket();
+
         Serial.print("Packet sent: ");
         Serial.println(payload);
     }
@@ -72,15 +96,18 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 {
     if (!active)
         return false;
-    delay(80);
+
+    delay(80); // Small delay for synchronization
     int ackTimeout = 2000;
     unsigned long startTime = millis();
+
     while (millis() - startTime < ackTimeout)
     {
         int packetSize = LoRa.parsePacket();
         if (packetSize)
         {
-            int recipient = LoRa.read();
+            uint8_t receivedChecksum = LoRa.read(); // Read the checksum byte
+            uint8_t recipient = LoRa.read();
             uint8_t dest = LoRa.read();
             packetNumber = LoRa.read();
             requestType = static_cast<RequestType>(LoRa.read());
@@ -92,39 +119,37 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
                 payload += (char)LoRa.read();
             }
 
+            // Verify length
             if (incomingLength != payload.length())
             {
-                Serial.println("Error: message length mismatch.  Message length: " + String(incomingLength) + "Message: " + payload);
-                Serial.println();
-                return false; // Exit on length error
-            }
-
-            if (recipient != localAddress)
-            {
-                Serial.println("This message is not for me. Sent to: 0x" + String(recipient, HEX));
-                Serial.println();
-                return false; // Ignore packet if not for this device
-            }
-
-            if (destination == dest || (requestType == SYN && destination == 0xff && myNet.find(dest) != myNet.end()))
-            {
-                destination = dest;
-            }
-            else
-            {
-                Serial.println("This message is out of this session.");
-                Serial.println();
+                Serial.println("Error: message length mismatch. Expected: " + String(incomingLength) + ", Actual: " + String(payload.length()));
                 return false;
             }
 
-            Serial.println("Received from: 0x" + String(destination, HEX));
+            // Verify destination
+            if (!isValidDestination(recipient, dest, requestType))
+            {
+                Serial.println("Message is not for this device or is out of session.");
+                return false;
+            }
+
+            // Verify checksum
+            uint8_t calculatedChecksum = calculateChecksum(recipient, dest, packetNumber, requestType, payload);
+            if (calculatedChecksum != receivedChecksum)
+            {
+                Serial.println("Checksum mismatch: packet discarded.");
+                return false;
+            }
+
+            // Log received packet details
+            Serial.println("Received from: 0x" + String(dest, HEX));
             Serial.println("Sent to: 0x" + String(recipient, HEX));
             Serial.println("Packet Number ID: " + String(packetNumber));
-            Serial.println("Packet requestType : " + String(requestType) + "  " + String(requestType == SYN));
+            Serial.println("Packet requestType: " + String(requestType));
             Serial.println("Message length: " + String(incomingLength));
             Serial.println("Message: " + payload);
             Serial.println("RSSI: " + String(LoRa.packetRssi()));
-            Serial.println("Snr: " + String(LoRa.packetSnr()));
+            Serial.println("SNR: " + String(LoRa.packetSnr()));
             Serial.println();
 
             return true;
@@ -133,12 +158,38 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
     return false; // Return false if no packet received within timeout
 }
 
+// Helper function to validate the destination of incoming packets
+bool LoraCommunication::isValidDestination(int recipient, int dest, RequestType requestType)
+{
+    if (recipient != localAddress)
+    {
+        return false; // Not for this device
+    }
+    if (destination == dest || (requestType == SYN && destination == 0xff && myNet.find(dest) != myNet.end()))
+    {
+        destination = dest;
+        return true;
+    }
+    return false; // Out of session or invalid destination
+}
+
+// Helper function to calculate a simple checksum for data integrity verification
+uint8_t LoraCommunication::calculateChecksum(int recipient, int dest, uint8_t packetNumber, RequestType requestType, const String &payload)
+{
+    uint8_t checksum = recipient ^ dest ^ packetNumber ^ static_cast<uint8_t>(requestType);
+    for (char c : payload)
+    {
+        checksum ^= c;
+    }
+    return checksum;
+}
+
 bool LoraCommunication::isLoRaActive()
 {
     return active;
 }
 
-bool LoraCommunication::performHandshake(uint8_t shiftback)
+bool LoraCommunication::Handshake(uint8_t shiftback)
 {
 
     String payload;
@@ -157,7 +208,7 @@ bool LoraCommunication::performHandshake(uint8_t shiftback)
 
     int retries = 0;
     Serial.println("SYN-ACK sent.");
-    while (retries < 3)
+    while (retries < 6)
     {
         if (receivePacket(shiftback, requestType, payload) && requestType == ACK)
         {
@@ -172,12 +223,9 @@ bool LoraCommunication::performHandshake(uint8_t shiftback)
         }
     }
 
-    if (retries == 3)
-    {
-        Serial.println("Handshake failed.");
-        stopLoRa();
-        return false;
-    }
+    Serial.println("Handshake failed.");
+    stopLoRa();
+    return false;
 }
 
 int LoraCommunication::receivePackets(std::queue<String> &receiveQueue)
@@ -187,7 +235,10 @@ int LoraCommunication::receivePackets(std::queue<String> &receiveQueue)
     RequestType requestType;
     uint8_t previous_packetNumber = 0;
 
-    while (true)
+    int ackTimeout = 300000;
+    unsigned long startTime = millis();
+
+    while (millis() - startTime < ackTimeout)
     {
         if (receivePacket(packetNumber, requestType, payload))
         {
@@ -215,6 +266,7 @@ int LoraCommunication::receivePackets(std::queue<String> &receiveQueue)
             }
         }
     }
+    Serial.println("Connection lost at packetNumber: " + String(packetNumber));
 }
 
 void LoraCommunication::closeSession(int lastPacket)
