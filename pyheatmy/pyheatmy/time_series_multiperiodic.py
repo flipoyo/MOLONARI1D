@@ -17,6 +17,7 @@ class time_series_multiperiodic:
 
         if verbose:
             print("To use methods from 'profile_temperature' to the end of the code, you should define 3 arguments :")
+            # + dates
             print("time_series_dict_user1, \n layers_list, \n and col_dict.")
             print("To check how to define those, go to :")
             print("MOLONARI1D/pyheatmy/research/Temp_ampl_ratio_diffusive_case.ipynb")
@@ -61,6 +62,8 @@ class time_series_multiperiodic:
                     verbose=False,
                 )
             self.multi_periodic = [dates, T]
+            if verbose:
+                self.plot_temp_river(self)
         else:
             return "This is not a multi-periodic type"
 
@@ -95,7 +98,7 @@ class time_series_multiperiodic:
         elif self.type == "ts":
             return int(self.time_series[0].shape[0]/self.nb_per_day())
         
-    def create_matrix(self, verbose = True):
+    def profil_temperature(self, verbose = True):
         if self.type == "ts":
             matrix = np.zeros((self.time_series[0].shape[0], self.nb_sensors))
             for i in range(self.time_series[0].shape[0]):
@@ -115,7 +118,7 @@ class time_series_multiperiodic:
             emu_observ_test_user1._generate_perturb_T_riv_dH_series()
 
             col = Column.from_dict(self.col_dict,verbose=False)
-            col._compute_solve_transi_multiple_layers(self.layers_list, nb_cells, verbose=False)
+            col._compute_solve_transi_multiple_layers(self.layers_list, self.nb_cells, verbose=False)
 
             if verbose:
                 print(f"Layers list: {self.layers_list}")
@@ -132,7 +135,7 @@ class time_series_multiperiodic:
         if self.type == "multi_periodic":
             return "To be implemented..."
         elif self.type == "ts":
-            self.create_matrix()
+            self.profil_temperature()
             T = self.matrix
         else : 
             return "You can not compute the method before creating a time series or a multi-periodic signal"
@@ -149,6 +152,7 @@ class time_series_multiperiodic:
         ln_rapport_amplitude = np.log( amplitude_array / amplitude_array[0] )
         return ln_rapport_amplitude
 
+    # returns the list of pearson coefficients for the amplitudes along each day 
     def get_pearson_coef(self):
         n_dt_in_day = self.nb_per_day(Verbose=False)
         n_days = self.nb_days_in_period()
@@ -169,6 +173,36 @@ class time_series_multiperiodic:
         plt.ylim(-1, 1)
         plt.title('Evolution du coefficient de Pearson en fonction du temps')
         plt.show()
+
+    # Méthode pour tracer une mosaïque avec différentes valeurs de k
+    # des graphes (pearson coefficient day by day)
+    # Pour avoir une vue d'ensemble
+    # list_k = liste de ces valeurs)
+    def plot_mosaic_pearson(self, list_k):
+        # To save the values of the attributes, so that the method doesn't change them
+        T = self.multi_periodic
+        k = self.layers_list[0].moinslog10K
+
+        n_rows = len(list_k)//2 + len(list_k)%2
+        fig, ax = plt.subplots(n_rows, ncols=2, constrained_layout = True)
+        n_days = self.nb_days_in_period(self)
+        X = np.arange(n_days)
+        for i in range(n_rows):
+            for j in range(2):
+                if 2*i + j < len(list_k):
+                    self.layers_list[0].moinslog10K = list_k[2*i+j]
+                    self.multi_periodic = self.profil_temperature(self, verbose = False)
+                    Y = self.get_pearson_coef(self)
+                    ax[i][j].scatter(X, Y, color="r", marker="o", s=30)
+                    ax[i][j].set_xlabel('day')
+                    ax[i][j].set_ylabel('Pearson coefficient')
+                    ax[i][j].set_title('Pearson par jour avec -log(k) = ' + str(list_k[2*i + j]), size = 10)   
+                    ax[i][j].set_ylim(-1,1) 
+        plt.show()
+
+        self.multi_periodic = T
+        self.layers_list[0].moinslog10K = k
+        
 
 # testing
 if __name__ == "__main__":
