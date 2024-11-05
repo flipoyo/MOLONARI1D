@@ -8,7 +8,6 @@ import numpy as np
 
 from pyheatmy.solver import solver, tri_product
 from pyheatmy.config import *
-from pyheatmy.core import *
 
 
 class Linear_system:
@@ -65,6 +64,19 @@ class Linear_system:
     def compute_ae_list(self):
         return RHO_W * C_W * self.K_list / self.rho_mc_m_list
 
+    def compute_dK_list(self, K_list, n_cell, dz):
+        list = zeros(n_cell, float32)
+        list[0] = (K_list[1] - K_list[0]) / dz
+        list[-1] = (K_list[-1] - K_list[-2]) / dz
+        for idx in range(1, len(list) - 1):
+            list[idx] = (K_list[idx + 1] - K_list[idx - 1]) / (2 * dz)
+        return list
+
+    def compute_H_res(self):
+        H_res = zeros((self.n_cell, self.n_times), float32)
+        H_res[:, 0] = self.H_init[:]
+        return H_res
+
     def compute_KsurSs_list(self):
         return self.K_list / self.Ss_list
 
@@ -77,7 +89,10 @@ class Linear_system:
         self.lambda_m_list = self.compute_lambda_m_list()
         self.ke_list = self.compute_ke_list()
         self.ae_list = self.compute_ae_list()
+        self.H_res = self.compute_H_res()
+        # self.dK_list = self.compute_dK_list(self.K_list, self.n_cell, self.dz)
         self.dK_list = np.gradient(self.K_list, self.dz)
+        self.dK_list = zeros(self.n_cell, float32)
         self.KsurSs_list = self.compute_KsurSs_list()
 
 
@@ -133,8 +148,6 @@ class H_stratified(Linear_system):
         self.heat_source = q_list
 
     def compute_H_stratified(self):
-        self.H_res = zeros((self.n_cell, self.n_times), float32)
-        self.H_res[:, 0] = self.H_init[:]
         if self.isdtconstant.all():
             self.compute_H_constant_dt()
         else:
@@ -414,6 +427,7 @@ class T_stratified(Linear_system):
                     lower_diagonal_A, diagonal_A, upper_diagonal_A
                 )
                 self.T_res[:, j + 1] = solve(A, B_fois_T_plus_c)
+
         return self.T_res
 
     def _compute_lower_diagonal(self, j):
@@ -458,22 +472,12 @@ class T_stratified(Linear_system):
         ]
         c[-1] = (
             8 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
-            + 2
-            * (1 - self.alpha)
-            * self.ae_list[self.n_cell - 1]
-            * self.nablaH[self.n_cell - 1, j]
-            / (3 * self.dz)
-        ) * self.T_aq[j + 1] + (
-            8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
-            + 2
-            * self.alpha
-            * self.ae_list[self.n_cell - 1]
-            * self.nablaH[self.n_cell - 1, j]
-            / (3 * self.dz)
-        ) * self.T_aq[
-            j
-        ]
-
+            + 2* (1 - self.alpha)* self.ae_list[self.n_cell - 1]* self.nablaH[self.n_cell - 1, j]/ (3 * self.dz)
+        )* self.T_aq[j + 1] + (
+                8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
+                + 2 * self.alpha* self.ae_list[self.n_cell - 1]* self.nablaH[self.n_cell - 1, j]/ (3 * self.dz)
+        )* self.T_aq[j]
+        
         # c += self.heat_source[:, j]
         return c
 
@@ -490,10 +494,10 @@ class T_stratified(Linear_system):
             * self.nablaH[self.n_cell - 1, j]
         )
 
-        diagonal = 1 / dt + 2 * self.ke_list * (1 - self.alpha) / self.dz**2
-        diagonal[0] = 1 / dt + 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2
+        diagonal = 1 / dt + 2 * self.ke_list * (1 - self.alpha) / self.dz**2 - self.heat_source/self.rho_mc_m_list
+        diagonal[0] = 1 / dt + 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2 - self.heat_source[0]/self.rho_mc_m_list[0]
         diagonal[-1] = (
-            1 / dt + 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
+            1 / dt + 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2 - self.heat_source[-1]/self.rho_mc_m_list[-1]
         )
 
         upper_diagonal = (
