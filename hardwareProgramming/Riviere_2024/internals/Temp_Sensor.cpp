@@ -13,8 +13,6 @@ TemperatureSensor::TemperatureSensor(int _dataPin, int _enablePin, float _offset
   // Attribute a pin to the temperature measurement and the power
   pinMode(enablePin, OUTPUT);
   pinMode(dataPin, INPUT);
-  pinMode(enablePin, OUTPUT);
-  pinMode(dataPin, INPUT);
   
   analogReadResolution(12);   // Set precision to 12 bit (maximum of this board)
 }
