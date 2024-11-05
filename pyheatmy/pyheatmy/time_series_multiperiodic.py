@@ -8,12 +8,19 @@ from datetime import datetime, timedelta
 
 
 class time_series_multiperiodic:
-    def __init__(self, type):
+    def __init__(self, type, verbose = True):
         assert type in [
             "ts",
             "multi_periodic",
         ], "type must be either ts or multi_periodic"
         self.type = type
+
+        if verbose:
+            print("To use methods from 'profile_temperature' to the end of the code, you should define 3 arguments :")
+            print("time_series_dict_user1, \n layers_list, \n and col_dict.")
+            print("To check how to define those, go to :")
+            print("MOLONARI1D/pyheatmy/research/Temp_ampl_ratio_diffusive_case.ipynb")
+            print("It will show you how to use this class, in general")
 
     def values_time_series(self, dates, T, depth_sensors):
         if self.type == "ts":
@@ -34,7 +41,7 @@ class time_series_multiperiodic:
                 print(
                     "Creating a multi-periodic signal, with the following period:",
                     periods,
-                    "and the following amplitude:",
+                    "and the respective following amplitude:",
                     amplitudes,
                 )
             for i in range(len(periods)):
@@ -57,8 +64,8 @@ class time_series_multiperiodic:
         else:
             return "This is not a multi-periodic type"
 
-    def plot_temp_river(self, time_unit="s"):
-        assert type(time_unit) == str, "time_unit must be of type str"
+    def plot_temp_river(self):
+        
         if self.type == "multi_periodic":
             a = self.multi_periodic #ok, as we have a multi-periodic signal (which already is a n*2 matrix, corresponding of the river temperature at a given time)
         if self.type == "ts":
@@ -66,6 +73,10 @@ class time_series_multiperiodic:
 
         dates = a[0]
         T = a[1]
+
+        assert dates.shape[0] == T.shape[0], 'there should be as many dates as temperature mesures for one depth'
+        assert dates.dtype == datetime, "dates should be of type datetime.datetime"
+
         plt.title("Temperature profile")
         plt.plot(dates, T) 
         plt.xlabel("date")
@@ -73,8 +84,8 @@ class time_series_multiperiodic:
         plt.ylabel("temperature : °C")
         plt.show()
 
-    def nb_per_day(self, Verbose = True): #method to get the number of points per day
-        if Verbose:
+    def nb_per_day(self, verbose = True): #method to get the number of points per day
+        if verbose:
             print('dt must be in seconds')
         return(int(NSECINDAY/self.dt))
     
@@ -84,14 +95,36 @@ class time_series_multiperiodic:
         elif self.type == "ts":
             return int(self.time_series[0].shape[0]/self.nb_per_day())
         
-    def create_matrix(self):
+    def create_matrix(self, verbose = True):
         if self.type == "ts":
             matrix = np.zeros((self.time_series[0].shape[0], self.nb_sensors))
             for i in range(self.time_series[0].shape[0]):
                 matrix[i,:] = self.time_series[i,1:]
             self.matrix = matrix
+        
         elif self.type == 'multi_periodic':
-            return 0 # to be implemented, must compute an analytical resolution of temperature diffusion problem to get the matrix...
+            # instanciation du simulateur de données
+            emu_observ_test_user1 = synthetic_MOLONARI.from_dict(self.time_series_dict_user1)
+
+            #On force la variable T_riv dans l'objet emu_observ_test_user1
+            emu_observ_test_user1._T_riv = self.multi_periodic[1][:]
+
+            #Puis on applique les méthodes _generate_Shaft_Temp_series et _generate_perturb_Shaft_Temp_series pour changer les valeurs dépendante du nouveau T_riv
+            emu_observ_test_user1._generate_Shaft_Temp_series(verbose = False)
+            emu_observ_test_user1._generate_perturb_Shaft_Temp_series()
+            emu_observ_test_user1._generate_perturb_T_riv_dH_series()
+
+            col = Column.from_dict(self.col_dict,verbose=False)
+            col._compute_solve_transi_multiple_layers(self.layers_list, nb_cells, verbose=False)
+
+            if verbose:
+                print(f"Layers list: {self.layers_list}")
+                #On vérifie que les températures ont bien été modifiées dans l'objet column (en particulier que la température à profondeur nulle est bien celle de la rivière)
+                plt.plot(emu_observ_test_user1._dates, col._temperatures[0,:])
+                plt.show()
+                print(f"La matrice de température a pour shape : {col._temperatures.shape}, abscisse = température aux 20 cellules, ordonnée = température à chaque pas de temps")
+
+            return col._temperatures
     
     def amplitude(self, day):
         amplitude_list = []
