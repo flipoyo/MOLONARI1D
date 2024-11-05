@@ -86,11 +86,10 @@ SENSOR_FILE_NAMES = {
 }
 
 # Coefficients of the Mu equation
-A = 1.856e-11 * 1e-3
-B = 4209
-C = 0.04527
-D = -3.376e-5
+MU_A = 1.856e-11 * 1e-3
+MU_B = 4209
+MU_C = 0.04527
+MU_D = -3.376e-5
 
 # VALEURS
-#HEAT_SOURCE = 
 NB_CELLS = 100
