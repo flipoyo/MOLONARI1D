@@ -116,6 +116,8 @@ def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
     # On considère que la phase de burn-in est terminée dès que R < threshold
     return all(R < threshold)
 
+# Les fonctions suivantes (compute_Mu, compute_H_stratified, compute_T_stratified, compute_HTK_stratified) ne sont plus utilisées dans le core, elles ont été déplacées et remises en forme dans le fichier linear_system.py
+# On les supprimera lorsque la nouvelle version sera validée (branche 2024-77-linear-system)
 
 # @njit
 # def compute_Mu(T):

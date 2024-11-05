@@ -624,7 +624,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             #     plt.show()
 
             ## zhan Nov8
-            T_res = T_stratified(
+            T_strat = T_stratified(
                 nablaH,
                 a,
                 Ss_list,
@@ -643,8 +643,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 T_aq,
                 alpha=ALPHA,
                 N_update_Mu=N_UPDATE_MU,
-            ).T_res
-
+            )
+            T_res = T_strat.compute_T_stratified()
             self._temperatures = T_res
 
             self._flows = flows  # calcul du débit spécifique

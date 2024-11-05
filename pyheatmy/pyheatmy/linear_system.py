@@ -139,7 +139,6 @@ class H_stratified(Linear_system):
             self.compute_H_constant_dt()
         else:
             self.compute_H_variable_dt()
-        print(self.H_res)
         return self.H_res
 
     def compute_H_constant_dt(self):
@@ -415,7 +414,6 @@ class T_stratified(Linear_system):
                     lower_diagonal_A, diagonal_A, upper_diagonal_A
                 )
                 self.T_res[:, j + 1] = solve(A, B_fois_T_plus_c)
-        print(self.T_res)
         return self.T_res
 
     def _compute_lower_diagonal(self, j):
