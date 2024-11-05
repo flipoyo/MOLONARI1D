@@ -729,7 +729,6 @@ def create_periodic_signal(dates : list[datetime]
     t_step_list = []
     for i in range(len(dates) - 1):
         t_step_list.append(dates[i+1] - dates[i])
-    print(t_step_list)
     assert len(set(t_step_list)) <= 1, "The time step between two consecutive dates should be constant."
     
     dt = t_step_list[0].total_seconds()
