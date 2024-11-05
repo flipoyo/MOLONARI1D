@@ -22,6 +22,7 @@ class time_series_multiperiodic:
             print("To check how to define those, go to :")
             print("MOLONARI1D/pyheatmy/research/Temp_ampl_ratio_diffusive_case.ipynb")
             print("It will show you how to use this class, in general")
+            # + if ts
 
     def values_time_series(self, dates, T, depth_sensors):
         if self.type == "ts":
@@ -190,7 +191,7 @@ class time_series_multiperiodic:
         for i in range(n_rows):
             for j in range(2):
                 if 2*i + j < len(list_k):
-                    self.layers_list[0].moinslog10K = list_k[2*i+j]
+                    self.layers_list[0].moinslog10K = list_k[2*i+j]  # considering only one layer
                     self.multi_periodic = self.profil_temperature(self, verbose = False)
                     Y = self.get_pearson_coef(self)
                     ax[i][j].scatter(X, Y, color="r", marker="o", s=30)
