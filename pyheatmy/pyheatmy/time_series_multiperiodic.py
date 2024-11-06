@@ -3,8 +3,12 @@ import matplotlib.pyplot as plt
 from pyheatmy.synthetic_MOLONARI import *
 from pyheatmy.config import *
 from pyheatmy.utils import create_periodic_signal
+from pyheatmy import *
+from pyheatmy.time_series_multiperiodic import *
 import scipy as sp
 from datetime import datetime, timedelta
+import os as os
+import csv as csv 
 
 
 class time_series_multiperiodic:
@@ -79,7 +83,7 @@ class time_series_multiperiodic:
         T = a[1]
 
         assert dates.shape[0] == T.shape[0], 'there should be as many dates as temperature mesures for one depth'
-        assert dates.dtype == datetime, "dates should be of type datetime.datetime"
+        # assert dates.dtype == datetime or dates.dtype == np.datetime64, "dates should be of type datetime.datetime and or of type" + str(dates.dtype)
 
         plt.title("Temperature profile")
         plt.plot(dates, T) 
@@ -91,7 +95,7 @@ class time_series_multiperiodic:
     def nb_per_day(self, verbose = True): #method to get the number of points per day
         if verbose:
             print('dt must be in seconds')
-        return(int(NSECINDAY/self.dt))
+        return(int(NSECINDAY/15*60))  # return(int(NSECINDAY/self.dt)) but self.dt undefined
     
     def nb_days_in_period(self): #method to get the number of days in the period
         if self.type == "multi_periodic":
@@ -155,7 +159,7 @@ class time_series_multiperiodic:
 
     # returns the list of pearson coefficients for the amplitudes along each day 
     def get_pearson_coef(self):
-        n_dt_in_day = self.nb_per_day(Verbose=False)
+        n_dt_in_day = self.nb_per_day(verbose=False)
         n_days = self.nb_days_in_period()
         pearson_coef = np.zeros(n_days)
         for i in range(n_days):
@@ -203,6 +207,90 @@ class time_series_multiperiodic:
 
         self.multi_periodic = T
         self.layers_list[0].moinslog10K = k
+    
+    # Real data analysis methods
+
+    #function to read the data
+    def read_csv (chemin_fichier):
+        #Detecter separateur
+        with open(chemin_fichier, 'r') as file:
+            sniffer = csv.Sniffer()
+            sample_data = file.read(1024)
+            detecter_separateur = (sniffer.sniff(sample_data).delimiter)
+
+        if "Titre" in open(chemin_fichier).readline():
+            data_frame = pd.read_csv(chemin_fichier, sep=detecter_separateur, skiprows=1)
+        else:
+            data_frame = pd.read_csv(chemin_fichier, sep=detecter_separateur)
+
+        return data_frame 
+
+    #Function to convert the dates
+
+    def convertDates(df: pd.DataFrame):
+        """
+        Convert dates from a list of strings by testing several different input formats
+        Try all date formats already encountered in data points
+        If none of them is OK, try the generic way (None)
+        If the generic way doesn't work, this method fails
+        (in that case, you should add the new format to the list)
+
+        This function works directly on the giving Pandas dataframe (in place)
+        This function assumes that the first column of the given Pandas dataframe
+        contains the dates as characters string type
+
+        For datetime conversion performance, see:
+        See https://stackoverflow.com/questions/40881876/python-pandas-convert-datetime-to-timestamp-effectively-through-dt-accessor
+        """
+        formats = ("%m/%d/%y %H:%M:%S", "%m/%d/%y %I:%M:%S %p",
+                   "%d/%m/%y %H:%M",    "%d/%m/%y %I:%M %p",
+                   "%m/%d/%Y %H:%M:%S", "%m/%d/%Y %I:%M:%S %p", 
+                   "%d/%m/%Y %H:%M",    "%d/%m/%Y %I:%M %p",
+                   "%y/%m/%d %H:%M:%S", "%y/%m/%d %I:%M:%S %p", 
+                   "%y/%m/%d %H:%M",    "%y/%m/%d %I:%M %p",
+                   "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %I:%M:%S %p", 
+                   "%Y/%m/%d %H:%M",    "%Y/%m/%d %I:%M %p",
+                   "%d-%m-%Y %H:%M",  "%m-%d-%Y %H:%M",
+
+                   None)
+        times = df[df.columns[0]]
+        for f in formats:
+            try:
+                # Convert strings to datetime objects
+                new_times = pd.to_datetime(times, format=f)
+                # Convert datetime series to numpy array of integers (timestamps)
+                new_ts = new_times.values.astype(np.int64)
+                # If times are not ordered, this is not the appropriate format
+                test = np.sort(new_ts) - new_ts
+                if np.sum(abs(test)) != 0 :
+                    #print("Order is not the same")
+                    raise ValueError()
+                # Else, the conversion is a success
+                #print("Found format ", f)
+                df[df.columns[0]] = new_times
+                return
+
+            except ValueError:
+                #print("Format ", f, " not valid")
+                continue
+            
+        # None of the known format are valid
+        raise ValueError("Cannot convert dates: No known formats match your data!")
+
+    # from 113
+    def plot_data(point_number, verbose = True):
+        url = 'dataAnalysis\data_traite\point' + str(point_number) + '_temperature_traité.csv'
+        df = pd.read_csv(url)
+        df.columns = ['Date_heure', 'T_Sensor0', 'T_Sensor1', 'T_Sensor2', 'T_Sensor3']
+        df['Date_heure'] = pd.to_datetime(df['Date_heure'], dayfirst = True)
+
+        # Tracer toutes les colonnes sauf 'Date_heure' en fonction de 'Date_heure'
+        df.set_index('Date_heure').plot(figsize=(10, 6), grid=True, title="Graphique des valeurs en fonction des dates")
+        plt.xlabel("Date")
+        plt.ylabel("Température (°C)")
+        plt.title("signal de température pour le capteur " + str(point_number))
+        plt.show()
+
         
 
 # testing
