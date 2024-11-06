@@ -31,7 +31,7 @@ std::queue<String> loadDataIntoQueue(int shift)
   std::queue<String> Queue;
   for (int i = 100 - shift; i <= 280; i++)
   {
-    String line = "hellor from riviere" + String(i);
+    String line = "hellor from riviere" + String(i+1);
     Queue.push(line);
     if (Queue.size() >= 200)
       break; // Limit queue size if necessary
@@ -49,7 +49,8 @@ void loop()
   if (lora.performHandshake(shift))
   {
     std::queue<String> sendQueue = loadDataIntoQueue(shift);
-    lora.sendPackets(sendQueue);
+    uint8_t last = lora.sendPackets(sendQueue);
+    lora.closeSession(last);
   }
 
   lora.stopLoRa();

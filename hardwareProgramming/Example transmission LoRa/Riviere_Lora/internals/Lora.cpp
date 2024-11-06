@@ -211,9 +211,9 @@ bool LoraCommunication::performHandshake(int &shift)
   return false;
 }
 
-int LoraCommunication::sendPackets(std::queue<String> &sendQueue)
+uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue)
 {
-  int packetNumber = 1;
+  uint8_t packetNumber = 1;
 
   String payload;
   RequestType requestType;
@@ -224,6 +224,7 @@ int LoraCommunication::sendPackets(std::queue<String> &sendQueue)
   {
     String message = sendQueue.front(); // Get the current message but don't pop yet
     sendPacket(packetNumber, DATA, message);
+    retries = 0;
 
     while (retries < 6)
     {
@@ -236,10 +237,13 @@ int LoraCommunication::sendPackets(std::queue<String> &sendQueue)
       }
       else if (requestType == FIN)
       {
+        Serial.println("FIN received for packet " + String(packetNumber));
         while (!sendQueue.empty())
         {
           sendQueue.pop();
         }
+        packetNumber++;
+        break;
       }
       else
       {
@@ -261,10 +265,10 @@ int LoraCommunication::sendPackets(std::queue<String> &sendQueue)
 
     delay(100);
   }
-  closeSession(packetNumber);
+  return packetNumber;
 }
 
-void LoraCommunication::closeSession(int lastPacket)
+void LoraCommunication::closeSession(uint8_t lastPacket)
 {
   sendPacket(lastPacket, FIN, "");
   Serial.println("FIN sent, waiting for final ACK...");
@@ -274,7 +278,7 @@ void LoraCommunication::closeSession(int lastPacket)
   RequestType requestType;
   int retries = 0;
 
-  while (retries < 6)
+  while (retries < 3)
   {
     if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket)
     {
@@ -288,6 +292,7 @@ void LoraCommunication::closeSession(int lastPacket)
       sendPacket(lastPacket, FIN, "");
       retries++;
     }
-    Serial.println("Session closure failed after retries.");
   }
+  Serial.println("Session closure failed after retries.");
+
 }

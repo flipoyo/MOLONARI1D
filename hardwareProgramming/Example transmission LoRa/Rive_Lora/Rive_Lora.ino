@@ -33,7 +33,7 @@ void PrintQueue(std::queue<String> receiveQueue) {
 LoraCommunication lora(868E6, MyAddres , defaultdestination);
 
 void loop() {
-  setdesttodefault();
+  lora.setdesttodefault();
   std::queue<String> receiveQueue;
   lora.startLoRa();
   if (lora.Handshake(rotate*20)){
