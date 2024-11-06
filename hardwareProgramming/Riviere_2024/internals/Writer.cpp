@@ -7,7 +7,7 @@
 
 #include "Writer.hpp"
 #include "Time.cpp"
-#include "Measure_Cache.cpp"
+
 #include <String.h>
 #include <SD.h>
 
@@ -90,9 +90,6 @@ void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, ME
     ApplyCurrentTime(&data);
     data.id = this->next_id;
 
-    // Add the measure to the cache
-    MeasureCache.AddMeasure(data);
-
     // Check if the connection is still established
     bool is_connected = SD.begin(this->CSPin) && this->file;
     if (!is_connected) {
@@ -107,8 +104,6 @@ void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, ME
         }
     }
 
-    // Save the data
-    MeasureCache.AddMeasure(data);
     if (is_connected) {
         this->WriteInNewLine(data);
     }
