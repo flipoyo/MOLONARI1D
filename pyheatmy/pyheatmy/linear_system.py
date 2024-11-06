@@ -9,6 +9,7 @@ import numpy as np
 from pyheatmy.solver import solver, tri_product
 from pyheatmy.config import *
 
+
 # Première classe qui définit et initie les paramètres physiques communs des systèmes linéaires de la classe H_stratified et T_stratified
 class Linear_system:
     def __init__(
@@ -94,7 +95,7 @@ class Linear_system:
         self.KsurSs_list = self.compute_KsurSs_list()
 
 
-# Classe qui définit le système linéaire pour l'équation de la chaleur
+# Classe qui définit le système linéaire pour l'équation de la diffusivité
 class H_stratified(Linear_system):
     def __init__(
         self,
@@ -340,7 +341,7 @@ class H_stratified(Linear_system):
         return c
 
 
-# Classe qui définit le système linéaire pour l'équation 
+# Classe qui définit le système linéaire pour l'équation de la chaleur
 class T_stratified(Linear_system):
     def __init__(
         self,
@@ -470,12 +471,22 @@ class T_stratified(Linear_system):
         ]
         c[-1] = (
             8 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
-            + 2* (1 - self.alpha)* self.ae_list[self.n_cell - 1]* self.nablaH[self.n_cell - 1, j]/ (3 * self.dz)
-        )* self.T_aq[j + 1] + (
-                8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
-                + 2 * self.alpha* self.ae_list[self.n_cell - 1]* self.nablaH[self.n_cell - 1, j]/ (3 * self.dz)
-        )* self.T_aq[j]
-        
+            + 2
+            * (1 - self.alpha)
+            * self.ae_list[self.n_cell - 1]
+            * self.nablaH[self.n_cell - 1, j]
+            / (3 * self.dz)
+        ) * self.T_aq[j + 1] + (
+            8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
+            + 2
+            * self.alpha
+            * self.ae_list[self.n_cell - 1]
+            * self.nablaH[self.n_cell - 1, j]
+            / (3 * self.dz)
+        ) * self.T_aq[
+            j
+        ]
+
         # c += self.heat_source[:, j]
         return c
 
@@ -492,10 +503,20 @@ class T_stratified(Linear_system):
             * self.nablaH[self.n_cell - 1, j]
         )
 
-        diagonal = 1 / dt + 2 * self.ke_list * (1 - self.alpha) / self.dz**2 - self.heat_source/self.rho_mc_m_list
-        diagonal[0] = 1 / dt + 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2 - self.heat_source[0]/self.rho_mc_m_list[0]
+        diagonal = (
+            1 / dt
+            + 2 * self.ke_list * (1 - self.alpha) / self.dz**2
+            - self.heat_source / self.rho_mc_m_list
+        )
+        diagonal[0] = (
+            1 / dt
+            + 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2
+            - self.heat_source[0] / self.rho_mc_m_list[0]
+        )
         diagonal[-1] = (
-            1 / dt + 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2 - self.heat_source[-1]/self.rho_mc_m_list[-1]
+            1 / dt
+            + 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
+            - self.heat_source[-1] / self.rho_mc_m_list[-1]
         )
 
         upper_diagonal = (
