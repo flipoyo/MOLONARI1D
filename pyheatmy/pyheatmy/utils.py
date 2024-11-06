@@ -116,6 +116,7 @@ def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
     # On considère que la phase de burn-in est terminée dès que R < threshold
     return all(R < threshold)
 
+
 # Les fonctions suivantes (compute_Mu, compute_H_stratified, compute_T_stratified, compute_HTK_stratified) ne sont plus utilisées dans le core, elles ont été déplacées et remises en forme dans le fichier linear_system.py
 # On les supprimera lorsque la nouvelle version sera validée (branche 2024-77-linear-system)
 
@@ -547,26 +548,31 @@ def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
 #     print("finition cal HTK")
 #     return H_res
 
-
-def create_periodic_signal(
-    dates, dt, params: list, signal_name="TBD", verbose=True
-):  # params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
+def create_periodic_signal(dates : list[datetime]
+,params : list,signal_name="TBD",verbose=True): #params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
+    
+    # check if the time step is constant
+    t_step_list = []
+    for i in range(len(dates) - 1):
+        t_step_list.append(dates[i+1] - dates[i])
+    print(t_step_list)
+    assert len(set(t_step_list)) <= 1, "The time step between two consecutive dates should be constant."
+    
+    dt = t_step_list[0].total_seconds()
     if verbose:
-        print(
-            f"Entering {signal_name} generation with amplitude {params[0]}, period of {params[1]}, offset {params[2]}, dt {dt} --> "
-        )
+        print(f"Entering {signal_name} generation with amplitude {params[0]}, period of {params[1]}, offset {params[2]}, dt {dt} --> ")
     t_range = arange(len(dates)) * dt
-    if params[1] != CODE_scalar:
+    if params[1] != CODE_scalar :
         if verbose:
             print(f"periodic signal\n")
-        signal = params[0] * sin(2 * pi * t_range / params[1]) + params[2]
+        signal = (params[0] * sin(2 * pi * t_range / params[1]) + params[2] )
         if verbose:
             plt.figure(figsize=(10, 5))
-            plt.plot(dates, signal, label="Signal")
+            plt.plot(dates, signal, label='Signal')
             # Add labels and title
-            plt.xlabel("Dates")
-            plt.ylabel("Signal")
-            plt.title("Signal as a Function of Dates")
+            plt.xlabel('Dates')
+            plt.ylabel('Signal')
+            plt.title('Signal as a Function of Dates')
             plt.legend()
             # Rotate date labels for better readability
             plt.xticks(rotation=45)
@@ -577,7 +583,7 @@ def create_periodic_signal(
         if verbose:
             print(f"constant signal\n")
         signal = full(len(dates), params[2])
-    return signal
+    return signal    
 
 
 def create_dir(rac, verbose=True):
