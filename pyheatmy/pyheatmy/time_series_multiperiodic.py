@@ -210,24 +210,8 @@ class time_series_multiperiodic:
     
     # Real data analysis methods
 
-    #function to read the data
-    def read_csv (chemin_fichier):
-        #Detecter separateur
-        with open(chemin_fichier, 'r') as file:
-            sniffer = csv.Sniffer()
-            sample_data = file.read(1024)
-            detecter_separateur = (sniffer.sniff(sample_data).delimiter)
-
-        if "Titre" in open(chemin_fichier).readline():
-            data_frame = pd.read_csv(chemin_fichier, sep=detecter_separateur, skiprows=1)
-        else:
-            data_frame = pd.read_csv(chemin_fichier, sep=detecter_separateur)
-
-        return data_frame 
-
     #Function to convert the dates
-
-    def convertDates(df: pd.DataFrame):
+    def convertDates(self, df: pd.DataFrame):
         """
         Convert dates from a list of strings by testing several different input formats
         Try all date formats already encountered in data points
@@ -277,7 +261,16 @@ class time_series_multiperiodic:
         # None of the known format are valid
         raise ValueError("Cannot convert dates: No known formats match your data!")
 
-    # from 113
+
+    #function to read and format the data
+    def read_csv(self, point_number):
+        root_path = os.getcwd()
+        file_path = os.path.join(root_path, '..', '..', 'dataAnalysis', 'data_traite', 'point' + str(point_number) + '_temperature_traité.csv')
+        df = pd.read_csv(file_path)
+        df.columns = ['Date_heure', 'T_Sensor0', 'T_Sensor1', 'T_Sensor2', 'T_Sensor3']
+        self.convertDates(df)
+        return df
+
     def plot_data(point_number, verbose = True):
         url = 'dataAnalysis\data_traite\point' + str(point_number) + '_temperature_traité.csv'
         df = pd.read_csv(url)
