@@ -1,6 +1,6 @@
 #
-# NF Ce fichier est un fichier 'poubelle', on ne comprend pas à quoi sont reliées les méthodes. Réorganiser dans les .py adhoc, éventuellement en créer de nouveaux 
-# 
+# NF Ce fichier est un fichier 'poubelle', on ne comprend pas à quoi sont reliées les méthodes. Réorganiser dans les .py adhoc, éventuellement en créer de nouveaux
+#
 from numpy import (
     float32,
     zeros,
@@ -19,11 +19,12 @@ from numpy import (
     arange,
     pi,
     sin,
-    full
+    full,
 )
 
 from numpy.linalg import solve
-#import numpy as np
+
+# import numpy as np
 from numba import njit
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
@@ -36,9 +37,11 @@ from pyheatmy.solver import solver, tri_product
 from pyheatmy.params import Prior, PARAM_LIST
 from pyheatmy.config import *
 
+
 def conv(layer):
     name, prof, priors = layer
     if isinstance(priors, dict):
+        print(priors)
         return (
             name,
             prof,
@@ -50,8 +53,9 @@ def conv(layer):
 
 def compute_energy(temp1, temp2, sigma2: float, remanence):
     remanence_step = int(remanence * 24 * 60 / 15)
-    norm2 = nansum((temp1[:,remanence_step:] - temp2[:,remanence_step:]) ** 2)
+    norm2 = nansum((temp1[:, remanence_step:] - temp2[:, remanence_step:]) ** 2)
     return 0.5 * norm2 / sigma2
+
 
 def compute_energy_with_distrib(temp1, temp2, sigma2, sigma2_distrib):
     norm2 = nansum((temp1 - temp2) ** 2)
@@ -60,6 +64,7 @@ def compute_energy_with_distrib(temp1, temp2, sigma2, sigma2_distrib):
         + size(temp2) * log(sigma2) / 2
         - log(sigma2_distrib(sigma2))
     )
+
 
 def compute_log_acceptance(current_energy: float, prev_energy: float):
     return prev_energy - current_energy
@@ -111,19 +116,381 @@ def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
     # On considère que la phase de burn-in est terminée dès que R < threshold
     return all(R < threshold)
 
-@njit
-def compute_Mu(T):
-    """ 
-    Paramètres : T : Température ou Tableau de températures
-    Résultat : mu : Viscosité à la température T selon l'approximation de ...
-    NF --> Retrouver les références et les unités SVP
-    """
-    A = 1.856e-11 * 1e-3
-    B = 4209
-    C = 0.04527
-    D = -3.376e-5
-    mu = A*exp(B*1./T + C*T + D*(T**2))
-    return mu
+
+# Les fonctions suivantes (compute_Mu, compute_H_stratified, compute_T_stratified, compute_HTK_stratified) ne sont plus utilisées dans le core, elles ont été déplacées et remises en forme dans le fichier linear_system.py
+# On les supprimera lorsque la nouvelle version sera validée (branche 2024-77-linear-system)
+
+# @njit
+# def compute_Mu(T):
+#     """
+#     Paramètres : T : Température ou Tableau de températures
+#     Résultat : mu : Viscosité à la température T selon l'approximation de ...
+#     NF --> Retrouver les références et les unités SVP
+#     """
+#     A = 1.856e-11 * 1e-3
+#     B = 4209
+#     C = 0.04527
+#     D = -3.376e-5
+#     mu = A * exp(B * 1.0 / T + C * T + D * (T**2))
+#     return mu
+
+
+# @njit
+# def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+#     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
+
+#     Parameters
+#     ----------
+#     moinslog10IntrinK_list : float array
+#         values of -log10(K) for each cell of the column, where K = permeability.
+#     Ss_list : float array
+#         specific emmagasinement for each cell of the column.
+#     all_dt : float array
+#         array temporal discretization steps.
+#     isdtconstant : bool
+#         True iff the temporal discretization step is constant.
+#     dz : float
+#         spatial discretization step.
+#     H_init : float array
+#         boundary condition H(z, t = 0).
+#     H_riv : float array
+#         boundary condition H(z = z_riv, t).
+#     H_aq : float array
+#         boundary condition H(z = z_aquifer, t).
+#     alpha : float, default: 0.3
+#         parameter of the semi-implicit scheme. Can cause instability if too big.
+
+#     Returns
+#     -------
+#     H_res : float array
+#         bidimensional array of H(z, t).
+#     """
+#     n_cell = len(H_init)
+#     n_times = len(all_dt) + 1
+
+#     H_res = zeros((n_cell, n_times), float32)
+#     H_res[:, 0] = H_init[:]
+
+#     ## case without div
+#     mu_list = compute_Mu(T_init)
+#     K_list = (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / mu_list
+#     # K_list = 10.0 ** -moinslog10IntrinK_list
+#     ## case without div
+#     KsurSs_list = K_list/Ss_list
+#     dK_list = zeros(n_cell, float32)
+#     dK_list[0] = (K_list[1] - K_list[0]) / dz
+#     dK_list[-1] = (K_list[-1] - K_list[-2]) / dz
+#     for idx in range(1, len(dK_list) - 1):
+#         dK_list[idx] = (K_list[idx+1] - K_list[idx-1]) / 2 / dz
+
+
+#     # Check if dt is constant :
+#     if isdtconstant:  # dt is constant so A and B are constant
+#         dt = all_dt[0]
+
+#         # Defining the 3 diagonals of B
+#         # on lower_diagonal and upper_diagonal we add the term of divK
+#         lower_diagonal_B = K_list[1:]*alpha/dz**2
+#         lower_diagonal_B[-1] = 4*K_list[n_cell - 1]*alpha/(3*dz**2)
+
+#         diagonal_B =  Ss_list * 1/dt - 2*K_list*alpha/dz**2
+#         diagonal_B[0] =  Ss_list[0] * 1/dt - 4*K_list[0]*alpha/dz**2
+#         diagonal_B[-1] =  Ss_list[n_cell - 1] * 1/dt - 4*K_list[n_cell - 1]*alpha/dz**2
+
+#         upper_diagonal_B = K_list[:-1]*alpha/dz**2
+#         upper_diagonal_B[0] = 4*K_list[0]*alpha/(3*dz**2)
+
+#         # Defining the 3 diagonals of A
+#         lower_diagonal_A = - K_list[1:]*(1-alpha)/dz**2
+#         lower_diagonal_A[-1] = - 4*K_list[n_cell - 1]*(1-alpha)/(3*dz**2)
+
+#         diagonal_A =  Ss_list * 1/dt + 2*K_list*(1-alpha)/dz**2
+#         diagonal_A[0] =  Ss_list[0] * 1/dt + 4*K_list[0]*(1-alpha)/dz**2
+#         diagonal_A[-1] =  Ss_list[n_cell - 1] * 1/dt + 4*K_list[n_cell - 1]*(1-alpha)/dz**2
+
+#         upper_diagonal_A = - K_list[:-1]*(1-alpha)/dz**2
+#         upper_diagonal_A[0] = - 4*K_list[0]*(1-alpha)/(3*dz**2)
+
+#         # correction of numerical schema on the interface of different layers
+
+#         for tup_idx in range(len(inter_cara)):
+#             K1 = array_K[tup_idx]
+#             K2 = array_K[tup_idx + 1]
+
+#             if inter_cara[tup_idx][1] == 0: # sampling point coincide with change of interface
+#                 pos_idx = int(inter_cara[tup_idx][0])
+#                 diagonal_B[pos_idx] = Ss_list[pos_idx] * 1/dt - (K1 + K2) *alpha/dz**2
+#                 lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
+#                 upper_diagonal_B[pos_idx] = K2*alpha/dz**2
+#                 diagonal_A[pos_idx] = Ss_list[pos_idx] * 1/dt + (K1 + K2) *(1-alpha)/dz**2
+#                 lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
+#                 upper_diagonal_A[pos_idx] = - K2*(1-alpha)/dz**2
+
+#             else: # sampling point are distributed on both sides of the interface with distance x*dz and (1-x)*dz
+#                 pos_idx = int(inter_cara[tup_idx][0])
+#                 x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])
+#                 Keq = (1 / (x/K1 + (1-x)/K2))
+#                 diagonal_B[pos_idx] = Ss_list[pos_idx]*1/dt - (K1 + Keq) *alpha/dz**2
+#                 lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
+#                 upper_diagonal_B[pos_idx] = Keq*alpha/dz**2
+#                 diagonal_A[pos_idx] = Ss_list[pos_idx]*1/dt + (K1 + Keq) *(1-alpha)/dz**2
+#                 lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
+#                 upper_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
+
+#                 diagonal_B[pos_idx + 1] = Ss_list[pos_idx]*1/dt - (K2 + Keq) *alpha/dz**2
+#                 lower_diagonal_B[pos_idx] = Keq*alpha/dz**2
+#                 upper_diagonal_B[pos_idx + 1] = K2*alpha/dz**2
+#                 diagonal_A[pos_idx + 1] = Ss_list[pos_idx]*1/dt + (K2 + Keq) *(1-alpha)/dz**2
+#                 lower_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
+#                 upper_diagonal_A[pos_idx + 1] = - K2*(1-alpha)/dz**2
+
+#         for j in range(n_times - 1):
+#             # Compute H at time times[j+1]
+
+#             # Defining c
+#             c = zeros(n_cell, float32)
+#             c[0] = (8*K_list[0] / (3*dz**2)) * \
+#                 ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
+#             c[-1] = (8*K_list[n_cell - 1] / (3*dz**2)) * \
+#                 ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
+#             B_fois_H_plus_c = tri_product(
+#                 lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j]) + c
+
+#             H_res[:, j+1] = solver(lower_diagonal_A, diagonal_A,
+#                                    upper_diagonal_A, B_fois_H_plus_c)
+
+
+#     else:  # dt is not constant so A and B and not constant
+#         for j, dt in enumerate(all_dt):
+#             # Compute H at time times[j+1]
+
+#             # Defining the 3 diagonals of B
+#             lower_diagonal_B = KsurSs_list[1:]*alpha/dz**2
+#             lower_diagonal_B[-1] = 4*KsurSs_list[n_cell - 1]*alpha/(3*dz**2)
+
+#             diagonal_B = 1/dt - 2*KsurSs_list*alpha/dz**2
+#             diagonal_B[0] = 1/dt - 4*KsurSs_list[0]*alpha/dz**2
+#             diagonal_B[-1] = 1/dt - 4*KsurSs_list[n_cell - 1]*alpha/dz**2
+
+#             upper_diagonal_B = KsurSs_list[:-1]*alpha/dz**2
+#             upper_diagonal_B[0] = 4*KsurSs_list[0]*alpha/(3*dz**2)
+
+#             # Defining the 3 diagonals of A
+#             lower_diagonal_A = - KsurSs_list[1:]*(1-alpha)/dz**2
+#             lower_diagonal_A[-1] = - 4 * \
+#                 KsurSs_list[n_cell - 1]*(1-alpha)/(3*dz**2)
+
+#             diagonal_A = 1/dt + 2*KsurSs_list*(1-alpha)/dz**2
+#             diagonal_A[0] = 1/dt + 4*KsurSs_list[0]*(1-alpha)/dz**2
+#             diagonal_A[-1] = 1/dt + 4*KsurSs_list[n_cell - 1]*(1-alpha)/dz**2
+
+#             upper_diagonal_A = - KsurSs_list[:-1]*(1-alpha)/dz**2
+#             upper_diagonal_A[0] = - 4*KsurSs_list[0]*(1-alpha)/(3*dz**2)
+
+#             for tup_idx in range(len(inter_cara)):
+#                 K1 = array_K[tup_idx]
+#                 K2 = array_K[tup_idx + 1]
+
+#                 if inter_cara[tup_idx][1] == 0: # sampling point coincide with change of interface
+#                     pos_idx = int(inter_cara[tup_idx][0])
+#                     diagonal_B[pos_idx] = Ss_list[pos_idx] * 1/dt - (K1 + K2) *alpha/dz**2
+#                     lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
+#                     upper_diagonal_B[pos_idx] = K2*alpha/dz**2
+#                     diagonal_A[pos_idx] = Ss_list[pos_idx] * 1/dt + (K1 + K2) *(1-alpha)/dz**2
+#                     lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
+#                     upper_diagonal_A[pos_idx] = - K2*(1-alpha)/dz**2
+
+#                 else: # sampling point are distributed on both sides of the interface with distance x*dz and (1-x)*dz
+#                     pos_idx = int(inter_cara[tup_idx][0])
+#                     x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])
+#                     Keq = (1 / (x/K1 + (1-x)/K2))
+#                     diagonal_B[pos_idx] = Ss_list[pos_idx]*1/dt - (K1 + Keq) *alpha/dz**2
+#                     lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
+#                     upper_diagonal_B[pos_idx] = Keq*alpha/dz**2
+#                     diagonal_A[pos_idx] = Ss_list[pos_idx]*1/dt + (K1 + Keq) *(1-alpha)/dz**2
+#                     lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
+#                     upper_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
+
+#                     diagonal_B[pos_idx + 1] = Ss_list[pos_idx]*1/dt - (K2 + Keq) *alpha/dz**2
+#                     lower_diagonal_B[pos_idx] = Keq*alpha/dz**2
+#                     upper_diagonal_B[pos_idx + 1] = K2*alpha/dz**2
+#                     diagonal_A[pos_idx + 1] = Ss_list[pos_idx]*1/dt + (K2 + Keq) *(1-alpha)/dz**2
+#                     lower_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
+#                     upper_diagonal_A[pos_idx + 1] = - K2*(1-alpha)/dz**2
+
+
+#             # Defining c
+#             c = zeros(n_cell, float32)
+#             c[0] = (8*KsurSs_list[0] / (3*dz**2)) * \
+#                 ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
+#             c[-1] = (8*KsurSs_list[n_cell - 1] / (3*dz**2)) * \
+#                 ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
+
+#             B_fois_H_plus_c = (
+#                 tri_product(lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j])
+#                 + c
+#             )
+
+
+#             H_res[:, j+1] = solver(lower_diagonal_A, diagonal_A,
+#                                    upper_diagonal_A, B_fois_H_plus_c)
+
+#     return H_res
+
+
+# @njit
+# def compute_T_stratified(
+#     Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu=N_UPDATE_MU
+# ):
+#     """Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an heterogeneous column.
+
+#     Parameters
+#     ----------
+#     moinslog10IntrinK_list : float array
+#         values of -log10(K) for each cell of the column, where K = permeability.
+#     n_list : float array
+#         porosity for each cell of the column.
+#     lambda_s_list : float array
+#         thermal conductivity for each cell of the column.
+#     rho_cs_list : float array
+#         density for each cell of the column.
+#     all_dt : float array
+#         array of temporal discretization steps.
+#     dz : float
+#         spatial discretization step.
+#     H_res : float array
+#         bidimensional array of H(z, t). Usually computed by compute_H_stratified.
+#     H_riv : float array
+#         boundary condition H(z = z_riv, t).
+#     H_aq : float array
+#         boundary condition H(z = z_aq, t).
+#     T_init : float array
+#         initial condition T(z, t=0).
+#     T_riv : float array
+#         boundary condition T(z = z_riv, t).
+#     T_aq : float array
+#         boundary condition T(z = z_aq, t).
+#     alpha : float, default: 0.3
+#         parameter of the semi-implicit scheme. Can cause instability if too big.
+
+#     Returns
+#     -------
+#     T_res : float array
+#         bidimensional array of T(z, t).
+#     """
+
+#     mu_list = compute_Mu(T_init)
+#     rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
+#     K_list = (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / mu_list
+#     lambda_m_list = (
+#         n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
+#     ) ** 2
+
+#     ke_list = lambda_m_list / rho_mc_m_list
+#     ae_list = RHO_W * C_W * K_list / rho_mc_m_list
+
+#     n_cell = len(T_init)
+#     n_times = len(all_dt) + 1
+
+#     # Now we can compute T(z, t)
+
+#     T_res = zeros((n_cell, n_times), float32)
+#     T_res[:, 0] = T_init
+
+#     for j, dt in enumerate(all_dt):
+#         # Update of Mu(T) after N_update_Mu iterations:
+#         if j % N_update_Mu == 1:
+#             mu_list = compute_Mu(T_res[:, j - 1])
+
+#         # Compute T at time times[j+1]
+
+#         # Defining the 3 diagonals of B
+#         lower_diagonal = (ke_list[1:] * alpha / dz**2) - (
+#             alpha * ae_list[1:] / (2 * dz)
+#         ) * nablaH[1:, j]
+#         lower_diagonal[-1] = (
+#             4 * ke_list[n_cell - 1] * alpha / (3 * dz**2)
+#             - (2 * alpha * ae_list[n_cell - 1] / (3 * dz)) * nablaH[n_cell - 1, j]
+#         )
+
+#         diagonal = 1 / dt - 2 * ke_list * alpha / dz**2
+#         diagonal[0] = 1 / dt - 4 * ke_list[0] * alpha / dz**2
+#         diagonal[-1] = 1 / dt - 4 * ke_list[n_cell - 1] * alpha / dz**2
+
+#         upper_diagonal = (ke_list[:-1] * alpha / dz**2) + (
+#             alpha * ae_list[:-1] / (2 * dz)
+#         ) * nablaH[:-1, j]
+#         upper_diagonal[0] = (
+#             4 * ke_list[0] * alpha / (3 * dz**2)
+#             + (2 * alpha * ae_list[0] / (3 * dz)) * nablaH[0, j]
+#         )
+
+#         # Defining c
+#         c = zeros(n_cell, float32)
+#         c[0] = (
+#             8 * ke_list[0] * (1 - alpha) / (3 * dz**2)
+#             - 2 * (1 - alpha) * ae_list[0] * nablaH[0, j] / (3 * dz)
+#         ) * T_riv[j + 1] + (
+#             8 * ke_list[0] * alpha / (3 * dz**2)
+#             - 2 * alpha * ae_list[0] * nablaH[0, j] / (3 * dz)
+#         ) * T_riv[
+#             j
+#         ]
+#         c[-1] = (
+#             8 * ke_list[n_cell - 1] * (1 - alpha) / (3 * dz**2)
+#             + 2 * (1 - alpha) * ae_list[n_cell - 1] * nablaH[n_cell - 1, j] / (3 * dz)
+#         ) * T_aq[j + 1] + (
+#             8 * ke_list[n_cell - 1] * alpha / (3 * dz**2)
+#             + 2 * alpha * ae_list[n_cell - 1] * nablaH[n_cell - 1, j] / (3 * dz)
+#         ) * T_aq[
+#             j
+#         ]
+
+#         B_fois_T_plus_c = (
+#             tri_product(lower_diagonal, diagonal, upper_diagonal, T_res[:, j]) + c
+#         )
+
+#         # Defining the 3 diagonals of A
+#         lower_diagonal = (
+#             -(ke_list[1:] * (1 - alpha) / dz**2)
+#             + ((1 - alpha) * ae_list[1:] / (2 * dz)) * nablaH[1:, j]
+#         )
+#         lower_diagonal[-1] = (
+#             -4 * ke_list[n_cell - 1] * (1 - alpha) / (3 * dz**2)
+#             + (2 * (1 - alpha) * ae_list[n_cell - 1] / (3 * dz)) * nablaH[n_cell - 1, j]
+#         )
+
+#         diagonal = 1 / dt + 2 * ke_list * (1 - alpha) / dz**2
+#         diagonal[0] = 1 / dt + 4 * ke_list[0] * (1 - alpha) / dz**2
+#         diagonal[-1] = 1 / dt + 4 * ke_list[n_cell - 1] * (1 - alpha) / dz**2
+
+#         upper_diagonal = (
+#             -(ke_list[:-1] * (1 - alpha) / dz**2)
+#             - ((1 - alpha) * ae_list[:-1] / (2 * dz)) * nablaH[:-1, j]
+#         )
+#         upper_diagonal[0] = (
+#             -4 * ke_list[0] * (1 - alpha) / (3 * dz**2)
+#             - (2 * (1 - alpha) * ae_list[0] / (3 * dz)) * nablaH[0, j]
+#         )
+
+#         try:
+#             T_res[:, j + 1] = solver(
+#                 lower_diagonal, diagonal, upper_diagonal, B_fois_T_plus_c
+#             )
+#         except Exception:
+#             A = zeros((n_cell, n_cell), float32)
+#             A[0, 0] = diagonal[0]
+#             A[0, 1] = upper_diagonal[0]
+#             for i in range(1, n_cell - 1):
+#                 A[i, i - 1] = lower_diagonal[i - 1]
+#                 A[i, i] = diagonal[i]
+#                 A[i, i + 1] = upper_diagonal[i]
+#             A[n_cell - 1, n_cell - 1] = diagonal[n_cell - 1]
+#             A[n_cell - 1, n_cell - 2] = lower_diagonal[n_cell - 2]
+#             T_res[:, j + 1] = solve(A, B_fois_T_plus_c)
+
+#     return T_res
+
 
 # @njit
 # def compute_HTK_stratified(array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
@@ -166,7 +533,7 @@ def compute_Mu(T):
 #     upper_diagonal_A[0] =  -4*K_list[0]*(1-alpha)/(3*dz**2) # + 4 * dK_list[0]*(1-alpha)/(3*2*dz)
 
 #     for j in range(n_times - 1):
- 
+
 #         c = zeros(n_cell, float32)
 #         c[0] = (8*K_list[0] / (3*dz**2)) * ((1-alpha)*H_riv[j+1] + alpha*H_riv[j]) # + 8/3 * (dK_list[0] * (-1) / 2 / dz) * ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
 #         c[-1] = (8*K_list[n_cell - 1] / (3*dz**2)) * ((1-alpha)*H_aq[j+1] + alpha*H_aq[j]) # + 8/3 * (dK_list[n_cell - 1] * (-1) / 2 / dz) * ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
@@ -180,547 +547,6 @@ def compute_Mu(T):
 #         print(H_res[:, j+1])
 #     print("finition cal HTK")
 #     return H_res
-
-
-@njit
-def compute_T_stratified(
-    Ss_list, moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, nablaH, T_init, T_riv, T_aq, alpha=ALPHA, N_update_Mu=N_UPDATE_MU
-):
-    """Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an heterogeneous column.
-
-    Parameters
-    ----------
-    moinslog10IntrinK_list : float array
-        values of -log10(K) for each cell of the column, where K = permeability.
-    n_list : float array
-        porosity for each cell of the column.
-    lambda_s_list : float array
-        thermal conductivity for each cell of the column.
-    rho_cs_list : float array
-        density for each cell of the column.
-    all_dt : float array
-        array of temporal discretization steps.
-    dz : float
-        spatial discretization step.
-    H_res : float array
-        bidimensional array of H(z, t). Usually computed by compute_H_stratified.
-    H_riv : float array
-        boundary condition H(z = z_riv, t).
-    H_aq : float array
-        boundary condition H(z = z_aq, t).
-    T_init : float array
-        initial condition T(z, t=0).
-    T_riv : float array
-        boundary condition T(z = z_riv, t).
-    T_aq : float array
-        boundary condition T(z = z_aq, t).
-    alpha : float, default: 0.3
-        parameter of the semi-implicit scheme. Can cause instability if too big.
-
-    Returns
-    -------
-    T_res : float array
-        bidimensional array of T(z, t).
-    """
-
-    mu_list = compute_Mu(T_init)
-    rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
-    K_list = (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / mu_list
-    lambda_m_list = (
-        n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
-    ) ** 2
-
-    ke_list = lambda_m_list / rho_mc_m_list
-    ae_list = RHO_W * C_W * K_list / rho_mc_m_list
-
-    n_cell = len(T_init)
-    n_times = len(all_dt) + 1
-
-    # Now we can compute T(z, t)
-
-    T_res = zeros((n_cell, n_times), float32)
-    T_res[:, 0] = T_init
-
-    for j, dt in enumerate(all_dt):
-        # Update of Mu(T) after N_update_Mu iterations:
-        if j % N_update_Mu == 1:
-            mu_list = compute_Mu(T_res[:, j - 1])
-
-        # Compute T at time times[j+1]
-
-        # Defining the 3 diagonals of B
-        lower_diagonal = (ke_list[1:] * alpha / dz**2) - (
-            alpha * ae_list[1:] / (2 * dz)
-        ) * nablaH[1:, j]
-        lower_diagonal[-1] = (
-            4 * ke_list[n_cell - 1] * alpha / (3 * dz**2)
-            - (2 * alpha * ae_list[n_cell - 1] / (3 * dz)) * nablaH[n_cell - 1, j]
-        )
-
-        diagonal = 1 / dt - 2 * ke_list * alpha / dz**2
-        diagonal[0] = 1 / dt - 4 * ke_list[0] * alpha / dz**2
-        diagonal[-1] = 1 / dt - 4 * ke_list[n_cell - 1] * alpha / dz**2
-
-        upper_diagonal = (ke_list[:-1] * alpha / dz**2) + (
-            alpha * ae_list[:-1] / (2 * dz)
-        ) * nablaH[:-1, j]
-        upper_diagonal[0] = (
-            4 * ke_list[0] * alpha / (3 * dz**2)
-            + (2 * alpha * ae_list[0] / (3 * dz)) * nablaH[0, j]
-        )
-
-        # Defining c
-        c = zeros(n_cell, float32)
-        c[0] = (
-            8 * ke_list[0] * (1 - alpha) / (3 * dz**2)
-            - 2 * (1 - alpha) * ae_list[0] * nablaH[0, j] / (3 * dz)
-        ) * T_riv[j + 1] + (
-            8 * ke_list[0] * alpha / (3 * dz**2)
-            - 2 * alpha * ae_list[0] * nablaH[0, j] / (3 * dz)
-        ) * T_riv[
-            j
-        ]
-        c[-1] = (
-            8 * ke_list[n_cell - 1] * (1 - alpha) / (3 * dz**2)
-            + 2 * (1 - alpha) * ae_list[n_cell - 1] * nablaH[n_cell - 1, j] / (3 * dz)
-        ) * T_aq[j + 1] + (
-            8 * ke_list[n_cell - 1] * alpha / (3 * dz**2)
-            + 2 * alpha * ae_list[n_cell - 1] * nablaH[n_cell - 1, j] / (3 * dz)
-        ) * T_aq[
-            j
-        ]
-
-        B_fois_T_plus_c = (
-            tri_product(lower_diagonal, diagonal, upper_diagonal, T_res[:, j]) + c
-        )
-
-        # Defining the 3 diagonals of A
-        lower_diagonal = (
-            -(ke_list[1:] * (1 - alpha) / dz**2)
-            + ((1 - alpha) * ae_list[1:] / (2 * dz)) * nablaH[1:, j]
-        )
-        lower_diagonal[-1] = (
-            -4 * ke_list[n_cell - 1] * (1 - alpha) / (3 * dz**2)
-            + (2 * (1 - alpha) * ae_list[n_cell - 1] / (3 * dz)) * nablaH[n_cell - 1, j]
-        )
-
-        diagonal = 1 / dt + 2 * ke_list * (1 - alpha) / dz**2
-        diagonal[0] = 1 / dt + 4 * ke_list[0] * (1 - alpha) / dz**2
-        diagonal[-1] = 1 / dt + 4 * ke_list[n_cell - 1] * (1 - alpha) / dz**2
-
-        upper_diagonal = (
-            -(ke_list[:-1] * (1 - alpha) / dz**2)
-            - ((1 - alpha) * ae_list[:-1] / (2 * dz)) * nablaH[:-1, j]
-        )
-        upper_diagonal[0] = (
-            -4 * ke_list[0] * (1 - alpha) / (3 * dz**2)
-            - (2 * (1 - alpha) * ae_list[0] / (3 * dz)) * nablaH[0, j]
-        )
-
-        try:
-            T_res[:, j + 1] = solver(
-                lower_diagonal, diagonal, upper_diagonal, B_fois_T_plus_c
-            )
-        except Exception:
-            A = zeros((n_cell, n_cell), float32)
-            A[0, 0] = diagonal[0]
-            A[0, 1] = upper_diagonal[0]
-            for i in range(1, n_cell - 1):
-                A[i, i - 1] = lower_diagonal[i - 1]
-                A[i, i] = diagonal[i]
-                A[i, i + 1] = upper_diagonal[i]
-            A[n_cell - 1, n_cell - 1] = diagonal[n_cell - 1]
-            A[n_cell - 1, n_cell - 2] = lower_diagonal[n_cell - 2]
-            T_res[:, j + 1] = solve(A, B_fois_T_plus_c)
-
-    return T_res 
-
-
-@njit
-def compute_H_stratified(array_K, array_Ss, list_zLow, z_solve, T_init, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
-    """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
-
-    Parameters
-    ----------
-    moinslog10IntrinK_list : float array
-        values of -log10(K) for each cell of the column, where K = permeability.
-    Ss_list : float array
-        specific emmagasinement for each cell of the column.
-    all_dt : float array
-        array temporal discretization steps.
-    isdtconstant : bool
-        True iff the temporal discretization step is constant.
-    dz : float
-        spatial discretization step.
-    H_init : float array
-        boundary condition H(z, t = 0).
-    H_riv : float array
-        boundary condition H(z = z_riv, t).
-    H_aq : float array
-        boundary condition H(z = z_aquifer, t).
-    alpha : float, default: 0.3
-        parameter of the semi-implicit scheme. Can cause instability if too big.
-
-    Returns
-    -------
-    H_res : float array
-        bidimensional array of H(z, t).
-    """
-    n_cell = len(H_init)
-    n_times = len(all_dt) + 1
-
-    H_res = zeros((n_cell, n_times), float32)
-    H_res[:, 0] = H_init[:]
-
-    ## case without div
-    mu_list = compute_Mu(T_init)
-    K_list = (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / mu_list
-    # K_list = 10.0 ** -moinslog10IntrinK_list
-    ## case without div
-    KsurSs_list = K_list/Ss_list
-    dK_list = zeros(n_cell, float32)
-    dK_list[0] = (K_list[1] - K_list[0]) / dz
-    dK_list[-1] = (K_list[-1] - K_list[-2]) / dz
-    for idx in range(1, len(dK_list) - 1):
-        dK_list[idx] = (K_list[idx+1] - K_list[idx-1]) / 2 / dz
-    
-
-    # Check if dt is constant :
-    if isdtconstant:  # dt is constant so A and B are constant
-        dt = all_dt[0]
-
-        # Defining the 3 diagonals of B
-        # on lower_diagonal and upper_diagonal we add the term of divK
-        lower_diagonal_B = K_list[1:]*alpha/dz**2  
-        lower_diagonal_B[-1] = 4*K_list[n_cell - 1]*alpha/(3*dz**2)  
-
-        diagonal_B =  Ss_list * 1/dt - 2*K_list*alpha/dz**2
-        diagonal_B[0] =  Ss_list[0] * 1/dt - 4*K_list[0]*alpha/dz**2
-        diagonal_B[-1] =  Ss_list[n_cell - 1] * 1/dt - 4*K_list[n_cell - 1]*alpha/dz**2
-
-        upper_diagonal_B = K_list[:-1]*alpha/dz**2 
-        upper_diagonal_B[0] = 4*K_list[0]*alpha/(3*dz**2) 
-
-        # Defining the 3 diagonals of A
-        lower_diagonal_A = - K_list[1:]*(1-alpha)/dz**2  
-        lower_diagonal_A[-1] = - 4*K_list[n_cell - 1]*(1-alpha)/(3*dz**2)  
-
-        diagonal_A =  Ss_list * 1/dt + 2*K_list*(1-alpha)/dz**2
-        diagonal_A[0] =  Ss_list[0] * 1/dt + 4*K_list[0]*(1-alpha)/dz**2
-        diagonal_A[-1] =  Ss_list[n_cell - 1] * 1/dt + 4*K_list[n_cell - 1]*(1-alpha)/dz**2
-
-        upper_diagonal_A = - K_list[:-1]*(1-alpha)/dz**2 
-        upper_diagonal_A[0] = - 4*K_list[0]*(1-alpha)/(3*dz**2)  
-
-        # correction of numerical schema on the interface of different layers
-         
-        for tup_idx in range(len(inter_cara)):
-            K1 = array_K[tup_idx]
-            K2 = array_K[tup_idx + 1]
-            
-            if inter_cara[tup_idx][1] == 0: # sampling point coincide with change of interface
-                pos_idx = int(inter_cara[tup_idx][0])
-                diagonal_B[pos_idx] = Ss_list[pos_idx] * 1/dt - (K1 + K2) *alpha/dz**2
-                lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
-                upper_diagonal_B[pos_idx] = K2*alpha/dz**2
-                diagonal_A[pos_idx] = Ss_list[pos_idx] * 1/dt + (K1 + K2) *(1-alpha)/dz**2
-                lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
-                upper_diagonal_A[pos_idx] = - K2*(1-alpha)/dz**2
-                
-            else: # sampling point are distributed on both sides of the interface with distance x*dz and (1-x)*dz
-                pos_idx = int(inter_cara[tup_idx][0])
-                x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])
-                Keq = (1 / (x/K1 + (1-x)/K2))
-                diagonal_B[pos_idx] = Ss_list[pos_idx]*1/dt - (K1 + Keq) *alpha/dz**2
-                lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
-                upper_diagonal_B[pos_idx] = Keq*alpha/dz**2
-                diagonal_A[pos_idx] = Ss_list[pos_idx]*1/dt + (K1 + Keq) *(1-alpha)/dz**2
-                lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
-                upper_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
-
-                diagonal_B[pos_idx + 1] = Ss_list[pos_idx]*1/dt - (K2 + Keq) *alpha/dz**2
-                lower_diagonal_B[pos_idx] = Keq*alpha/dz**2
-                upper_diagonal_B[pos_idx + 1] = K2*alpha/dz**2
-                diagonal_A[pos_idx + 1] = Ss_list[pos_idx]*1/dt + (K2 + Keq) *(1-alpha)/dz**2
-                lower_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
-                upper_diagonal_A[pos_idx + 1] = - K2*(1-alpha)/dz**2
-
-        for j in range(n_times - 1):
-            # Compute H at time times[j+1]
-
-            # Defining c
-            c = zeros(n_cell, float32)
-            c[0] = (8*K_list[0] / (3*dz**2)) * \
-                ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
-            c[-1] = (8*K_list[n_cell - 1] / (3*dz**2)) * \
-                ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
-            B_fois_H_plus_c = tri_product(
-                lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j]) + c
-
-            H_res[:, j+1] = solver(lower_diagonal_A, diagonal_A,
-                                   upper_diagonal_A, B_fois_H_plus_c)
-            
-        
-    else:  # dt is not constant so A and B and not constant
-        for j, dt in enumerate(all_dt):
-            # Compute H at time times[j+1]
-
-            # Defining the 3 diagonals of B
-            lower_diagonal_B = KsurSs_list[1:]*alpha/dz**2
-            lower_diagonal_B[-1] = 4*KsurSs_list[n_cell - 1]*alpha/(3*dz**2)
-
-            diagonal_B = 1/dt - 2*KsurSs_list*alpha/dz**2
-            diagonal_B[0] = 1/dt - 4*KsurSs_list[0]*alpha/dz**2
-            diagonal_B[-1] = 1/dt - 4*KsurSs_list[n_cell - 1]*alpha/dz**2
-
-            upper_diagonal_B = KsurSs_list[:-1]*alpha/dz**2
-            upper_diagonal_B[0] = 4*KsurSs_list[0]*alpha/(3*dz**2)
-
-            # Defining the 3 diagonals of A
-            lower_diagonal_A = - KsurSs_list[1:]*(1-alpha)/dz**2
-            lower_diagonal_A[-1] = - 4 * \
-                KsurSs_list[n_cell - 1]*(1-alpha)/(3*dz**2)
-
-            diagonal_A = 1/dt + 2*KsurSs_list*(1-alpha)/dz**2
-            diagonal_A[0] = 1/dt + 4*KsurSs_list[0]*(1-alpha)/dz**2
-            diagonal_A[-1] = 1/dt + 4*KsurSs_list[n_cell - 1]*(1-alpha)/dz**2
-
-            upper_diagonal_A = - KsurSs_list[:-1]*(1-alpha)/dz**2
-            upper_diagonal_A[0] = - 4*KsurSs_list[0]*(1-alpha)/(3*dz**2)
-
-            for tup_idx in range(len(inter_cara)):
-                K1 = array_K[tup_idx]
-                K2 = array_K[tup_idx + 1]
-        
-                if inter_cara[tup_idx][1] == 0: # sampling point coincide with change of interface
-                    pos_idx = int(inter_cara[tup_idx][0])
-                    diagonal_B[pos_idx] = Ss_list[pos_idx] * 1/dt - (K1 + K2) *alpha/dz**2
-                    lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
-                    upper_diagonal_B[pos_idx] = K2*alpha/dz**2
-                    diagonal_A[pos_idx] = Ss_list[pos_idx] * 1/dt + (K1 + K2) *(1-alpha)/dz**2
-                    lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
-                    upper_diagonal_A[pos_idx] = - K2*(1-alpha)/dz**2
-            
-                else: # sampling point are distributed on both sides of the interface with distance x*dz and (1-x)*dz
-                    pos_idx = int(inter_cara[tup_idx][0])
-                    x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])
-                    Keq = (1 / (x/K1 + (1-x)/K2))
-                    diagonal_B[pos_idx] = Ss_list[pos_idx]*1/dt - (K1 + Keq) *alpha/dz**2
-                    lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
-                    upper_diagonal_B[pos_idx] = Keq*alpha/dz**2
-                    diagonal_A[pos_idx] = Ss_list[pos_idx]*1/dt + (K1 + Keq) *(1-alpha)/dz**2
-                    lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
-                    upper_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
-
-                    diagonal_B[pos_idx + 1] = Ss_list[pos_idx]*1/dt - (K2 + Keq) *alpha/dz**2
-                    lower_diagonal_B[pos_idx] = Keq*alpha/dz**2
-                    upper_diagonal_B[pos_idx + 1] = K2*alpha/dz**2
-                    diagonal_A[pos_idx + 1] = Ss_list[pos_idx]*1/dt + (K2 + Keq) *(1-alpha)/dz**2
-                    lower_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
-                    upper_diagonal_A[pos_idx + 1] = - K2*(1-alpha)/dz**2
-
-
-            # Defining c
-            c = zeros(n_cell, float32)
-            c[0] = (8*KsurSs_list[0] / (3*dz**2)) * \
-                ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
-            c[-1] = (8*KsurSs_list[n_cell - 1] / (3*dz**2)) * \
-                ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
-
-            B_fois_H_plus_c = (
-                tri_product(lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j])
-                + c
-            )
-
-
-            H_res[:, j+1] = solver(lower_diagonal_A, diagonal_A,
-                                   upper_diagonal_A, B_fois_H_plus_c)
-
-    return H_res
-
-
-@njit
-def compute_HTK_stratified(lambda_s_list, rhos_cs_list, n_list, T_init, array_K, array_Ss, list_zLow, z_solve, inter_cara, moinslog10IntrinK_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
-    """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
-
-    Parameters
-    ----------
-    moinslog10IntrinK_list : float array
-        values of -log10(K) for each cell of the column, where K = permeability.
-    Ss_list : float array
-        specific emmagasinement for each cell of the column.
-    all_dt : float array
-        array temporal discretization steps.
-    isdtconstant : bool
-        True iff the temporal discretization step is constant.
-    dz : float
-        spatial discretization step.
-    H_init : float array
-        boundary condition H(z, t = 0).
-    H_riv : float array
-        boundary condition H(z = z_riv, t).
-    H_aq : float array
-        boundary condition H(z = z_aquifer, t).
-    alpha : float, default: 0.3
-        parameter of the semi-implicit scheme. Can cause instability if too big.
-
-    Returns
-    -------
-    H_res : float array
-        bidimensional array of H(z, t).
-    """
-    n_cell = len(H_init)
-    n_times = len(all_dt) + 1
-
-    H_res = zeros((n_cell, n_times), float32)
-    H_res[:, 0] = H_init[:]
-    ## case with div
-    mu_list = compute_Mu(T_init)
-    rho_mc_m_list = n_list * RHO_W * C_W + (1 - n_list) * rhos_cs_list
-    K_list = (RHO_W * G * 10.0 ** -moinslog10IntrinK_list) * 1./mu_list # ici k et K n'est pas le meme
-    lambda_m_list = (n_list * (LAMBDA_W) ** 0.5 +(1.0 - n_list) * (lambda_s_list) ** 0.5) ** 2
-    ke_list = lambda_m_list / rho_mc_m_list
-    ae_list = RHO_W * C_W * K_list / rho_mc_m_list
-    ## case with div
-
-    ## case without div
-    # K_list = 10.0 ** -moinslog10IntrinK_list
-    ## case without div
-    KsurSs_list = K_list/Ss_list
-    dK_list = zeros(n_cell, float32)
-    dK_list[0] = (K_list[1] - K_list[0]) / dz
-    dK_list[-1] = (K_list[-1] - K_list[-2]) / dz
-    for idx in range(1, len(dK_list) - 1):
-        dK_list[idx] = (K_list[idx+1] - K_list[idx-1]) / 2 / dz
-    
-
-    # Check if dt is constant :
-    if isdtconstant:  # dt is constant so A and B are constant
-        dt = all_dt[0]
-
-        # Defining the 3 diagonals of B
-        # on lower_diagonal and upper_diagonal we add the term of divK
-        lower_diagonal_B = K_list[1:]*alpha/dz**2   + dK_list[1:] * alpha / (2*dz)
-        lower_diagonal_B[-1] = 4*K_list[n_cell - 1]*alpha/(3*dz**2)    + 4*dK_list[n_cell - 1] * alpha / (3*2*dz)
-
-        diagonal_B =  Ss_list * 1/dt - 2*K_list*alpha/dz**2
-        diagonal_B[0] =  Ss_list[0] * 1/dt - 4*K_list[0]*alpha/dz**2
-        diagonal_B[-1] =  Ss_list[n_cell - 1] * 1/dt - 4*K_list[n_cell - 1]*alpha/dz**2
-
-        upper_diagonal_B = K_list[:-1]*alpha/dz**2   - dK_list[:-1]*alpha / (2*dz)
-        upper_diagonal_B[0] = 4*K_list[0]*alpha/(3*dz**2)   - 4*dK_list[0]*alpha / (3*2*dz)
-
-        # Defining the 3 diagonals of A
-        lower_diagonal_A = - K_list[1:]*(1-alpha)/dz**2   - dK_list[1:] * (1-alpha) / (2*dz)
-        lower_diagonal_A[-1] = - 4*K_list[n_cell - 1]*(1-alpha)/(3*dz**2)   - 4 * dK_list[n_cell - 1] * (1-alpha) / (3*2*dz)
-
-        diagonal_A =  Ss_list * 1/dt + 2*K_list*(1-alpha)/dz**2
-        diagonal_A[0] =  Ss_list[0] * 1/dt + 4*K_list[0]*(1-alpha)/dz**2
-        diagonal_A[-1] =  Ss_list[n_cell - 1] * 1/dt + 4*K_list[n_cell - 1]*(1-alpha)/dz**2
-
-        upper_diagonal_A = - K_list[:-1]*(1-alpha)/dz**2    + dK_list[:-1]*(1-alpha)/(2*dz)
-        upper_diagonal_A[0] = - 4*K_list[0]*(1-alpha)/(3*dz**2)    + 4 * dK_list[0]*(1-alpha)/(3*2*dz)
-
-        ## correction of numerical schema on the interface of different layers
-        # for tup_idx in range(len(inter_cara)):
-        #     array_KsurSs = array_K / array_Ss
-        #     K1 = array_K[tup_idx]
-        #     K2 = array_K[tup_idx + 1]
-            
-        #     if inter_cara[tup_idx][1] == 0: # sampling point coincide with change of interface
-        #         pos_idx = int(inter_cara[tup_idx][0])
-        #         diagonal_B[pos_idx] = Ss_list[pos_idx] * 1/dt - (K1 + K2) *alpha/dz**2
-        #         lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
-        #         upper_diagonal_B[pos_idx] = K2*alpha/dz**2
-        #         diagonal_A[pos_idx] = Ss_list[pos_idx] * 1/dt + (K1 + K2) *(1-alpha)/dz**2
-        #         lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
-        #         upper_diagonal_A[pos_idx] = - K2*(1-alpha)/dz**2
-                
-        #     else: # sampling point are distributed on both sides of the interface with distance x*dz and (1-x)*dz
-        #         pos_idx = int(inter_cara[tup_idx][0])
-        #         x = (list_zLow[tup_idx] - z_solve[pos_idx]) / (z_solve[pos_idx+1] - z_solve[pos_idx])
-        #         Keq = (1 / (x/K1 + (1-x)/K2))
-        #         diagonal_B[pos_idx] = Ss_list[pos_idx]*1/dt - (K1 + Keq) *alpha/dz**2
-        #         lower_diagonal_B[pos_idx - 1] = K1*alpha/dz**2
-        #         upper_diagonal_B[pos_idx] = Keq*alpha/dz**2
-        #         diagonal_A[pos_idx] = Ss_list[pos_idx]*1/dt + (K1 + Keq) *(1-alpha)/dz**2
-        #         lower_diagonal_A[pos_idx - 1] = - K1*(1-alpha)/dz**2
-        #         upper_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
-
-        #         diagonal_B[pos_idx + 1] = Ss_list[pos_idx]*1/dt - (K2 + Keq) *alpha/dz**2
-        #         lower_diagonal_B[pos_idx] = Keq*alpha/dz**2
-        #         upper_diagonal_B[pos_idx + 1] = K2*alpha/dz**2
-        #         diagonal_A[pos_idx + 1] = Ss_list[pos_idx]*1/dt + (K2 + Keq) *(1-alpha)/dz**2
-        #         lower_diagonal_A[pos_idx] = - Keq*(1-alpha)/dz**2
-        #         upper_diagonal_A[pos_idx + 1] = - K2*(1-alpha)/dz**2
-
-        for j in range(n_times - 1):
-            # Compute H at time times[j+1]
-
-            # Defining c
-            c = zeros(n_cell, float32)
-            c[0] = (8*K_list[0] / (3*dz**2)) * \
-                ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
-            c[-1] = (8*K_list[n_cell - 1] / (3*dz**2)) * \
-                ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
-            c = zeros(n_cell, float32)
-            c[0] = (8*K_list[0] / (3*dz**2)) * ((1-alpha)*H_riv[j+1] + alpha*H_riv[j]) + 8/3 * (dK_list[0] * (-1) / 2 / dz) * ((1-alpha)*H_riv[j+1] + alpha*H_riv[j])
-            c[-1] = (8*K_list[n_cell - 1] / (3*dz**2)) * ((1-alpha)*H_aq[j+1] + alpha*H_aq[j]) + 8/3 * (dK_list[n_cell - 1] * (-1) / 2 / dz) * ((1-alpha)*H_aq[j+1] + alpha*H_aq[j])
-
-            B_fois_H_plus_c = tri_product(
-                lower_diagonal_B, diagonal_B, upper_diagonal_B, H_res[:, j]) + c
-
-            H_res[:, j+1] = solver(lower_diagonal_A, diagonal_A,
-                                   upper_diagonal_A, B_fois_H_plus_c)
-            
-        
-    else:  # dt is not constant so A and B and not constant
-        for j, dt in enumerate(all_dt):
-            # Compute H at time times[j+1]
-
-            # Defining the 3 diagonals of B
-            lower_diagonal = KsurSs_list[1:] * alpha / dz**2
-            lower_diagonal[-1] = 4 * KsurSs_list[n_cell - 1] * alpha / (3 * dz**2)
-
-            diagonal = 1 / dt - 2 * KsurSs_list * alpha / dz**2
-            diagonal[0] = 1 / dt - 4 * KsurSs_list[0] * alpha / dz**2
-            diagonal[-1] = 1 / dt - 4 * KsurSs_list[n_cell - 1] * alpha / dz**2
-
-            upper_diagonal = KsurSs_list[:-1] * alpha / dz**2
-            upper_diagonal[0] = 4 * KsurSs_list[0] * alpha / (3 * dz**2)
-
-            # Defining c
-            c = zeros(n_cell, float32)
-            c[0] = (8 * KsurSs_list[0] / (3 * dz**2)) * (
-                (1 - alpha) * H_riv[j + 1] + alpha * H_riv[j]
-            )
-            c[-1] = (8 * KsurSs_list[n_cell - 1] / (3 * dz**2)) * (
-                (1 - alpha) * H_aq[j + 1] + alpha * H_aq[j]
-            )
-
-            B_fois_H_plus_c = (
-                tri_product(lower_diagonal, diagonal, upper_diagonal, H_res[:, j]) + c
-            )
-
-            # Defining the 3 diagonals of A
-            lower_diagonal = -KsurSs_list[1:] * (1 - alpha) / dz**2
-            lower_diagonal[-1] = (
-                -4 * KsurSs_list[n_cell - 1] * (1 - alpha) / (3 * dz**2)
-            )
-
-            diagonal = 1 / dt + 2 * KsurSs_list * (1 - alpha) / dz**2
-            diagonal[0] = 1 / dt + 4 * KsurSs_list[0] * (1 - alpha) / dz**2
-            diagonal[-1] = 1 / dt + 4 * KsurSs_list[n_cell - 1] * (1 - alpha) / dz**2
-
-            upper_diagonal = -KsurSs_list[:-1] * (1 - alpha) / dz**2
-            upper_diagonal[0] = -4 * KsurSs_list[0] * (1 - alpha) / (3 * dz**2)
-
-            H_res[:, j + 1] = solver(
-                lower_diagonal, diagonal, upper_diagonal, B_fois_H_plus_c
-            )
-
-    return H_res
-
 
 def create_periodic_signal(dates : list[datetime]
 ,params : list,signal_name="TBD",verbose=True): #params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
@@ -760,7 +586,7 @@ def create_periodic_signal(dates : list[datetime]
     return signal    
 
 
-def create_dir(rac,verbose=True):
+def create_dir(rac, verbose=True):
     # Directory path to print in
     dir_print = os.path.expanduser(rac)
     # Create the folder and subfolder
@@ -768,30 +594,43 @@ def create_dir(rac,verbose=True):
     return dir_print
 
 
-def open_printable_file(rac, dataType=None,classType=None ,verbose=True,fname=None,spname=None,ext=".csv"):
+def open_printable_file(
+    rac,
+    dataType=None,
+    classType=None,
+    verbose=True,
+    fname=None,
+    spname=None,
+    ext=".csv",
+):
     dir_print = rac
     if dataType != None and classType != None:
         dataname = DEVICE_FILE_NAMES[dataType]
         origin = CLASS_FILE_NAMES[classType]
-        fname = f"{dir_print}/{spname}_{dataname}_{origin}{ext}"  
+        fname = f"{dir_print}/{spname}_{dataname}_{origin}{ext}"
         if verbose:
             print(f"Creating {fname}")
 
-        fp = open(fname, 'w')
-        if dataType == DeviceType.PRESSURE:   
-            fp.write('“Date/heure”, “Hydraulic head differential in m, “Temperature in °C””\n')
+        fp = open(fname, "w")
+        if dataType == DeviceType.PRESSURE:
+            fp.write(
+                "“Date/heure”, “Hydraulic head differential in m, “Temperature in °C””\n"
+            )
         else:
-            fp.write('“time”,”T°C sensor 1”,”T°C sensor 2”,”T°C sensor 3”,”T°C sensor 4”\n')
+            fp.write(
+                "“time”,”T°C sensor 1”,”T°C sensor 2”,”T°C sensor 3”,”T°C sensor 4”\n"
+            )
     else:
-        if fname!= None:
-            fname=f"{dir_print}/{fname}{ext}"
+        if fname != None:
+            fname = f"{dir_print}/{fname}{ext}"
         else:
             fname = f"{dir_print}/pyheatmy_default{ext}"
         if verbose:
             print(f"Creating {fname}")
-        fp = open(fname, 'w')
+        fp = open(fname, "w")
 
     return fp
+
 
 def close_printable_file(fp, verbose=True):
     if not fp.closed:
@@ -802,16 +641,18 @@ def close_printable_file(fp, verbose=True):
         if verbose:
             print(f"File {fp.name} is already closed.")
 
+
 # # Conversion function
-def convert_to_timestamp(ts,tbt):
+def convert_to_timestamp(ts, tbt):
     if isinstance(ts[0], tuple):
         cts = [(pd.Timestamp(dt)) for dt in ts]
     else:
         cts = [(pd.Timestamp(ts[i])) for i in range(len(ts))]
     return cts
 
+
 # # Conversion function
-def convert_list_to_timestamp(ts,tbt):
+def convert_list_to_timestamp(ts, tbt):
     if isinstance(ts[0], tuple):
         cts = [(pd.Timestamp(dt), values) for dt, values in ts]
     else:
