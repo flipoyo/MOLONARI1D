@@ -38,9 +38,6 @@ DEFAULT_sigmaT = CODE_scalar
 DEFAULT_time_step = 15  # 15mn
 DEFAULT_period = 1  # 1j
 
-#  param par défaut dans pyheatmy.py
-DEFAULT_sensor_depth = [0.1, 0.2, 0.3, 0.4]
-
 # prior initialisation
 
 MOINSLOG10INTRINK_INTERVAL = (11, 15)
@@ -73,6 +70,11 @@ N_UPDATE_MU = 96
 MU = 1e-3
 MU_W = 1e-3
 ZERO_CELSIUS = 273.15
+QUANTILE_MIN = 0.05
+MEDIANE = 0.5
+QUANTILE_MAX = 0.95
+N_PARAM_MCMC = 5
+GAMMA_FACTOR = 2.38
 
 
 class DeviceType(Enum):
