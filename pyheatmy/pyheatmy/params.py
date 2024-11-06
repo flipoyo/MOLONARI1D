@@ -5,12 +5,12 @@ from numpy import inf
 from typing import Callable, Sequence
 from pyheatmy.config import *
 
-PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q")
+PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q", "heat_depth")
 
 Param = namedtuple("Parametres", PARAM_LIST)
 
-test_params = Param(moinslog10IntrinK=11, n=0.1, lambda_s=2, rhos_cs=4e6, q=0)
-print(test_params)
+#test_params = Param(moinslog10IntrinK=11, n=0.1, lambda_s=2, rhos_cs=4e6, q=0)
+#print(test_params)
 
 def cst(x):
     return 1.0  # fonction de densité par défaut
@@ -93,7 +93,8 @@ if __name__ == "__main__":
         "n": ((0.01, 0.25), 0.01),
         "lambda_s": ((1, 5), 0.1),
         "rhos_cs": ((1e6, 1e7), 1e5),
-        "q": ((0, 1), 1e2)
+        "q": ((-1, 1), 1e2),
+        "heat_depth": ((0,0.4),0.1)
     }
     priors1 = ParamsPriors(
         [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)]
@@ -114,10 +115,12 @@ if __name__ == "__main__":
             n: float,
             lambda_s: float,
             rhos_cs: float,
+            q: float,
+            heat_depth: float
         ):
             self.name = name
             self.zLow = zLow
-            self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs)
+            self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs, q, heat_depth),
 
         # The repr() function returns a printable representational string of the given object.
         # def __repr__(self) -> str:
@@ -125,8 +128,8 @@ if __name__ == "__main__":
 
     def layersListCreator(layersListInput):
         layersList = list()
-        for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs in layersListInput:
-            layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs))
+        for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, q, heat_depth in layersListInput:
+            layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, heat_depth))
         return layersList
 
 def calc_K(k):

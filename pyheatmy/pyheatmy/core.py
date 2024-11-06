@@ -245,7 +245,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10IntrinK, n, lambda_s, rhos_cs, q = layer.params
+            moinslog10IntrinK, n, lambda_s, rhos_cs, q, heat_depth = layer.params
             if verbose:
                 print(
                     "--- Compute Solve Transi ---",
@@ -265,12 +265,23 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             list_zLow = np.array([0.2])
             inter_cara = np.array([[nb_cells // 2, 0]])
             z_solve = self._z_solve.copy()
-            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_list = (
+            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_list, heat_depth_list = (
                 getListParameters(layersList, nb_cells)
             )
             Ss_list = n_list / heigth
+
+
+            nueva_q_list = [0] * len(q_list)
+
+            for idx in heat_depth_list:
+                pos = int(idx * 10)  
+                if 0 <= pos < len(nueva_q_list):
+                    nueva_q_list[pos] = q_list[int(idx)]
             ##
+            q_list = nueva_q_list
             a = 1  # à adapter
+
+            #print(q_list)
 
             H_strat = H_stratified(
                 Ss_list,
@@ -374,9 +385,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_list = (
+            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_list, heat_depth_list = (
                 getListParameters(layersList, nb_cells)
             )
+            
+            nueva_q_list = [0] * len(q_list)
+
+            for idx in heat_depth_list:
+                if 0 <= idx < len(nueva_q_list):  # Verificamos que el índice esté en el rango
+                    nueva_q_list[idx] = q_list[idx]
+
+            q_list = nueva_q_list
 
             array_moinslog10IntrinK = np.array(
                 [float(x.params.moinslog10IntrinK) for x in layersList]
@@ -669,6 +688,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     layersList[2],
                     layersList[3],
                     layersList[4],
+                    layersList[5],
                 )
             ]
             self.compute_solve_transi(layer, verbose)
@@ -783,7 +803,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         dz = self._z_solve[1] - self._z_solve[0]  # pas en profondeur
         nb_cells = len(self._z_solve)
 
-        _, n_list, lambda_s_list, _, _ = getListParameters(self._layersList, nb_cells)
+        _, n_list, lambda_s_list, _, _, _ = getListParameters(self._layersList, nb_cells)
 
         lambda_m_list = (
             n_list * (LAMBDA_W) ** 0.5 + (1.0 - n_list) * (lambda_s_list) ** 0.5
@@ -1108,7 +1128,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # quantités des différents paramètres
         nb_layer = len(all_priors)  # nombre de couches
-        nb_param = 5  # nombre de paramètres à estimer par couche
+        nb_param = 6  # nombre de paramètres à estimer par couche
         nb_accepted = 0  # nombre de propositions acceptées
         nb_burn_in_iter = 0  # nombre d'itération de burn-in
 
@@ -1467,7 +1487,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ],
         # les quantiles pour l'affichage de stats sur les valeurs de température
         quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
-        nb_chain: int = 5,
+        nb_chain: int = 6,
         delta=2,
         ncr=3,
         c=0.1,
@@ -2048,7 +2068,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     @compute_mcmc.needed
     def plot_all_param_pdf(self):
-        fig, axes = plt.subplots(2, 5, figsize=(30, 20))
+        fig, axes = plt.subplots(2, 6, figsize=(30, 20))
 
         for id_layer, layer_distribs in enumerate(self.get_all_params()):
             axes[id_layer, 0].hist(layer_distribs[::, 0])
@@ -2061,6 +2081,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             axes[id_layer, 3].set_title(f"Couche {id_layer + 1} : rhos_cs")
             axes[id_layer, 4].hist(layer_distribs[::, 4])
             axes[id_layer, 4].set_title(f"Couche {id_layer + 1} : q")
+            axes[id_layer, 5].hist(layer_distribs[::, 5])
+            axes[id_layer, 5].set_title(f"Couche {id_layer + 1} : heat_depth")
 
     @compute_mcmc.needed
     def plot_darcy_flow_quantile(self):

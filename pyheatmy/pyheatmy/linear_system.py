@@ -389,6 +389,8 @@ class T_stratified(Linear_system):
         self.alpha = alpha
         self.N_update_Mu = N_update_Mu
         self.heat_source = q_list
+        self.T = 20
+        self.heat_source_T = [value*self.T for value in self.heat_source]
 
     def compute_T_stratified(self):
         self.T_res = np.zeros((self.n_cell, self.n_times), np.float32)
@@ -470,6 +472,8 @@ class T_stratified(Linear_system):
         ) * self.T_riv[
             j
         ]
+
+        #c += self.heat_source_T/self.rho_mc_m_list
         c[-1] = (
             8 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
             + 2* (1 - self.alpha)* self.ae_list[self.n_cell - 1]* self.nablaH[self.n_cell - 1, j]/ (3 * self.dz)
@@ -494,10 +498,10 @@ class T_stratified(Linear_system):
             * self.nablaH[self.n_cell - 1, j]
         )
 
-        diagonal = 1 / dt + 2 * self.ke_list * (1 - self.alpha) / self.dz**2 - self.heat_source/self.rho_mc_m_list
-        diagonal[0] = 1 / dt + 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2 - self.heat_source[0]/self.rho_mc_m_list[0]
+        diagonal = 1 / dt + 2 * self.ke_list * (1 - self.alpha) / self.dz**2 - self.heat_source_T/self.rho_mc_m_list
+        diagonal[0] = 1 / dt + 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2 - self.heat_source_T[0]/self.rho_mc_m_list[0]
         diagonal[-1] = (
-            1 / dt + 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2 - self.heat_source[-1]/self.rho_mc_m_list[-1]
+            1 / dt + 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2 - self.heat_source_T[-1]/self.rho_mc_m_list[-1]
         )
 
         upper_diagonal = (
