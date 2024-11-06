@@ -122,6 +122,10 @@ class time_series_multiperiodic:
             emu_observ_test_user1._generate_perturb_T_riv_dH_series()
 
             emu_observ_test_user1._T_riv = self.multi_periodic[1]
+
+            self.col_dict["dH_measures"] = emu_observ_test_user1._molonariP_data
+            self.col_dict["T_measures"] = emu_observ_test_user1._molonariT_data
+
             plt.plot(emu_observ_test_user1._dates, self.multi_periodic[1])
             column = Column.from_dict(self.col_dict,verbose=False)
             column._compute_solve_transi_multiple_layers(self.layers_list, self.nb_cells, verbose=False)
@@ -187,18 +191,18 @@ class time_series_multiperiodic:
     def plot_mosaic_pearson(self, list_k):
         # To save the values of the attributes, so that the method doesn't change them
         T = self.multi_periodic
-        k = self.layers_list[0].moinslog10K
+        k = self.layers_list[0].params.moinslog10IntrinK
 
         n_rows = len(list_k)//2 + len(list_k)%2
         fig, ax = plt.subplots(n_rows, ncols=2, constrained_layout = True)
-        n_days = self.nb_days_in_period(self)
+        n_days = self.nb_days_in_period()
         X = np.arange(n_days)
         for i in range(n_rows):
             for j in range(2):
                 if 2*i + j < len(list_k):
-                    self.layers_list[0].moinslog10K = list_k[2*i+j]  # considering only one layer
-                    self.multi_periodic = self.profil_temperature(self, verbose = False)
-                    Y = self.get_pearson_coef(self)
+                    self.layers_list[0].params.moinslog10IntrinK = list_k[2*i+j]  # considering only one layer
+                    self.multi_periodic = self.profil_temperature(verbose = False)
+                    Y = self.get_pearson_coef()
                     ax[i][j].scatter(X, Y, color="r", marker="o", s=30)
                     ax[i][j].set_xlabel('day')
                     ax[i][j].set_ylabel('Pearson coefficient')
@@ -207,7 +211,7 @@ class time_series_multiperiodic:
         plt.show()
 
         self.multi_periodic = T
-        self.layers_list[0].moinslog10K = k
+        self.layers_list[0].params.moinslog10IntrinK = k
     
     # Real data analysis methods
 
