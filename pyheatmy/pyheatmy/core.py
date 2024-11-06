@@ -249,7 +249,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             if verbose:
                 print(
                     "--- Compute Solve Transi ---",
-                    f"One layer : moinslog10IntrinK = {moinslog10IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}, q = {q}",
+                    f"One layer : moinslog10IntrinK = {moinslog10IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}, q = {q}, heat_depth = {heat_depth}",
                     sep="\n",
                 )
 
@@ -272,6 +272,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
 
             nueva_q_list = [0] * len(q_list)
+            print(heat_depth_list)
 
             for idx in heat_depth_list:
                 pos = int(idx * 10)  
@@ -389,12 +390,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 getListParameters(layersList, nb_cells)
             )
             
+            
             nueva_q_list = [0] * len(q_list)
+            
 
             for idx in heat_depth_list:
-                if 0 <= idx < len(nueva_q_list):  # Verificamos que el índice esté en el rango
-                    nueva_q_list[idx] = q_list[idx]
-
+                pos = int(idx * 10)  
+                if 0 <= pos < len(nueva_q_list):
+                    nueva_q_list[pos] = q_list[int(idx)]
+            ##
             q_list = nueva_q_list
 
             array_moinslog10IntrinK = np.array(
