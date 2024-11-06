@@ -103,12 +103,6 @@ void setup() {
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 
   Serial.println("Initialisation complete !");
-  Waiter firstWaiter;
-  firstWaiter.startTimer();
-  unsigned long firstsleep = CalculateSleepTimeUntilNextMeasurement();
-  // Enter low power mode
-  Serial.end();
-  firstWaiter.sleepUntil(firstsleep);
 }
 
 // ----- Main Loop -----
@@ -131,14 +125,18 @@ void loop() {
   logger.EstablishConnection(CSPin);
   // Initialise RTC
   InitialiseRTC();
+  // Initialise the measurement times
+  InitializeMeasurementTimes();
+  InitializeMeasurementCount();
   // Disable the builtin LED
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
   Waiter waiter;
+  waiter.startTimer();
 
   Serial.println("");
   // Count and check that the number of daily measurements has been reached
-  if (measurementCount < TOTAL_MEASUREMENTS_PER_DAY) {
-    Serial.println("——Measurement " + String(NbMeasurements) + "——");
+  if (measurementCountFlash.read() < TOTAL_MEASUREMENTS_PER_DAY) {
+    Serial.println("——Measurement " + String(measurementCountFlash.read()) + "——");
     // Perform measurements
     TEMP_T temp1 = tempSensor1.MeasureTemperature();
     TEMP_T temp2 = tempSensor2.MeasureTemperature();
@@ -147,22 +145,14 @@ void loop() {
 
     logger.LogData(temp1, temp2, temp3, temp4);
 
-    // Increase count
-    measurementCount++;
-    NbMeasurements++;
-
-
     // Calculate the time to sleep until the next measurement
     unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
 
     // If all measurements for the day are complete, transmit data and reset the counter
-    if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
+    if (measurementCountFlash.read() >= TOTAL_MEASUREMENTS_PER_DAY) {
       Serial.println("Transmitting data via LoRa...");
       waiter.delayUntil(300000);
       Serial.println("Data transmitted. Resetting measurement count.");
-      // Reset the count and number for the next day's measurements
-      measurementCount = 0;
-      NbMeasurements = 1;
     }
 
     // Test code
