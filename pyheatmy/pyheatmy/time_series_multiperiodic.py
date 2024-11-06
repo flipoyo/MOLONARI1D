@@ -114,24 +114,26 @@ class time_series_multiperiodic:
             emu_observ_test_user1 = synthetic_MOLONARI.from_dict(self.time_series_dict_user1)
 
             #On force la variable T_riv dans l'objet emu_observ_test_user1
-            emu_observ_test_user1._T_riv = self.multi_periodic[1][:]
+            
 
             #Puis on applique les méthodes _generate_Shaft_Temp_series et _generate_perturb_Shaft_Temp_series pour changer les valeurs dépendante du nouveau T_riv
             emu_observ_test_user1._generate_Shaft_Temp_series(verbose = False)
             emu_observ_test_user1._generate_perturb_Shaft_Temp_series()
             emu_observ_test_user1._generate_perturb_T_riv_dH_series()
 
-            col = Column.from_dict(self.col_dict,verbose=False)
-            col._compute_solve_transi_multiple_layers(self.layers_list, self.nb_cells, verbose=False)
+            emu_observ_test_user1._T_riv = self.multi_periodic[1]
+            plt.plot(emu_observ_test_user1._dates, self.multi_periodic[1])
+            column = Column.from_dict(self.col_dict,verbose=False)
+            column._compute_solve_transi_multiple_layers(self.layers_list, self.nb_cells, verbose=False)
 
             if verbose:
                 print(f"Layers list: {self.layers_list}")
                 #On vérifie que les températures ont bien été modifiées dans l'objet column (en particulier que la température à profondeur nulle est bien celle de la rivière)
-                plt.plot(emu_observ_test_user1._dates, col._temperatures[0,:])
+                plt.plot(emu_observ_test_user1._dates, column._temperatures[0,:])
                 plt.show()
-                print(f"La matrice de température a pour shape : {col._temperatures.shape}, abscisse = température aux 20 cellules, ordonnée = température à chaque pas de temps")
+                print(f"La matrice de température a pour shape : {column._temperatures.shape}, abscisse = température aux 20 cellules, ordonnée = température à chaque pas de temps")
 
-            self.matrix = col._temperatures
+            self.matrix = column._temperatures
     
     def amplitude(self, day):
         amplitude_list = []
@@ -283,3 +285,28 @@ if __name__ == "__main__":
 
     mp_ts.create_multiperiodic_signal(
         [10, 5, 3], [[1, "y"], [2, "m"], [21, "d"]], dates, verbose = True)
+    
+
+
+'''
+    # Extract the data which is useful to create a T_riv signal
+    def extract_data_from_time_series_dict(self):
+        {
+    "offset":.0,
+    "depth_sensors":depth_sensors,
+	"param_time_dates": [t_debut, t_fin, dt], 
+    "param_dH_signal": [dH_amp, P_dh, dH_offset], #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
+	"param_T_riv_signal": [T_riv_day_amp, P_T_riv_day, T_riv_offset],
+    "param_T_aq_signal": [T_aq_amp, P_T_aq, T_aq_offset],
+    "sigma_meas_P": sigma_meas_P,
+    "sigma_meas_T": sigma_meas_T, #float
+    "verbose": False
+        } =
+        d = self.time_series_dict_user1
+        T_riv_year_amp = d[]
+        T_riv_day_amp =
+        P_T_riv_year =
+        P_T_riv_day =
+        T_riv_offset =
+        return [T_riv_year_amp, T_riv_day_amp], [[P_T_riv_year, 's'], [P_T_riv_day, 's']], emu_observ_test_user1._dates, T_riv_offset
+'''
