@@ -103,7 +103,8 @@ class time_series_multiperiodic:
             return int(self.multi_periodic[0].shape[0]/self.nb_per_day())
         elif self.type == "ts":
             return int(self.time_series[0].shape[0]/self.nb_per_day())
-        
+
+    # if create river signal = True, then 
     def profil_temperature(self, verbose = True):
         if self.type == "ts":
             self.matrix = self.time_series[1]
@@ -130,7 +131,7 @@ class time_series_multiperiodic:
                 plt.show()
                 print(f"La matrice de température a pour shape : {col._temperatures.shape}, abscisse = température aux 20 cellules, ordonnée = température à chaque pas de temps")
 
-            return col._temperatures
+            self.matrix = col._temperatures
     
     def amplitude(self, day):
         amplitude_list = []
@@ -177,7 +178,7 @@ class time_series_multiperiodic:
         plt.title('Evolution du coefficient de Pearson en fonction du temps')
         plt.show()
 
-    # Méthode pour tracer une mosaïque avec différentes valeurs de k
+    # Méthode pour tracer une mosaïque avec différentes valeurs de k (en -log(k))
     # des graphes (pearson coefficient day by day)
     # Pour avoir une vue d'ensemble
     # list_k = liste de ces valeurs)
