@@ -269,7 +269,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 getListParameters(layersList, nb_cells)
             )
             Ss_list = n_list / heigth
-            
+
             ##
 
             H_strat = H_stratified(
@@ -1692,7 +1692,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         temperatures[0] = self._T_riv
         temperatures[len(ids) + 1] = self._T_aq
         for id in range(len(ids)):
-            # print(self.get_temperatures_solve()) # mise en commentaire car on ne sait pas à quoi elle sert
+            # print(self.get_temperatures_solve()) # mise en commentaire car on ne sait pas à quoi sert ce print
             temperatures[id + 1] = self.get_temperatures_solve()[ids[id]]
             # print(f"printing extracted temperatures:{id+1}")
             # print(temperatures[id+1])
