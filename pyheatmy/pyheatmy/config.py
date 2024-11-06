@@ -15,6 +15,8 @@ ABSURD_DATE = "1999/09/09  09:09:09"
 CODE_Temp = 959595
 CODE_scalar = -9999
 
+# param par défaut dans prior
+PARAMBOUND = 1e7
 
 # param par défaut dans time_series.py
 DEFAULT_H_amp = 0.1
@@ -35,6 +37,9 @@ DEFAULT_sigmaT = CODE_scalar
 
 DEFAULT_time_step = 15  # 15mn
 DEFAULT_period = 1  # 1j
+
+#  param par défaut dans pyheatmy.py
+DEFAULT_sensor_depth = [0.1, 0.2, 0.3, 0.4]
 
 # prior initialisation
 
