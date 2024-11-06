@@ -9,10 +9,10 @@
 enum RequestType : uint8_t
 {
 
-  SYN = 0x01,
-  ACK = 0x51,
-  DATA = 0x10,
-  FIN = 0x92
+  SYN = 0xcc,
+  ACK = 0x33,
+  DATA = 0xc3,
+  FIN = 0x3c
 
 };
 const int MAX_QUEUE_SIZE = 255; // Queue size limit for the receiver

@@ -279,7 +279,7 @@ void LoraCommunication::closeSession(int lastPacket)
     RequestType requestType;
     int retries = 0;
 
-    while (retries < 6)
+    while (retries < 3)
     {
         if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket)
         {
@@ -294,6 +294,6 @@ void LoraCommunication::closeSession(int lastPacket)
             sendPacket(lastPacket, FIN, "");
             retries++;
         }
-        Serial.println("Session closure failed after retries.");
     }
+    Serial.println("Session closure failed after retries.");
 }
