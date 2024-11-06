@@ -676,22 +676,107 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for p in range(len(X[j, l])):
                 x_new[l][p] = all_priors[l][p].perturb(X[j, l][p])
         return x_new
+    
 
-    def burning_single_chain():
-        init_layers = all_priors.sample()
-        self.compute_solve_transi(init_layers, nb_cells, verbose=False)
-        self._states.append(
-            State(
-                layers=init_layers,
-                energy=compute_energy(self.temperatures_solve[ind_ref, :]),
-                ratio_accept=1,
-                sigma2_temp=sigma2,
+
+    def burning_DREAM(self,nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose):
+        for i in trange(nb_iter, desc="Burn in phase"):
+            std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
+            for j in range(nb_chain):
+                x_new = np.zeros((nb_layer, nb_param))
+                dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
+                if typealgo=="no sigma":
+                    new_sigma2_temp=sigma2
+                else :
+                    new_sigma2_temp=sigma2_temp_prior.perturb(current_sigma2[j])
+
+                x_new=self.sampling_DREAM(nb_chain,nb_layer, nb_param, X, dX,x_new, j, delta, ncr, c, c_star, cr_vec, pcr, ranges)[0]
+                id=self.sampling_DREAM(nb_chain,nb_layer, nb_param, X, dX,x_new, j, delta, ncr, c, c_star, cr_vec, pcr, ranges)[1]                                                                                                               
+
+                # Calcul du profil de température associé aux nouveaux paramètres
+                self.compute_solve_transi(
+                    convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                    nb_cells,
+                    verbose=False,
+                )
+                temp_new = (
+                    self.get_temperatures_solve()
+                )  # récupération du profil de température
+
+                energy_new = compute_energy_mcmc(
+                    temp_new[ind_ref], temp_ref, remanence, new_sigma2_temp, sigma2_distrib
+                )  # calcul de l'énergie
+
+                # calcul de la probabilité d'accpetation
+                log_ratio_accept = compute_log_acceptance(
+                    energy_new, _energy_burn_in[i][j]
+                )
+
+                # Acceptation ou non des nouveaux paramètres
+                if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
+                    X[j] = x_new  # actualisation des paramètres pour la chaine j
+                    _temp_iter[j] = temp_new  # actualisation du profil de température
+                    _flow_iter[j] = self.get_flows_solve()  # actualisation du débit
+                    _energy_burn_in[i + 1][j] = energy_new  # actualisation de l'énergie
+                    current_sigma2[j] = new_sigma2_temp  # actualisation de sigma2_temp
+                else:
+                    dX = np.zeros((nb_layer, nb_param))
+                    _energy_burn_in[i + 1][j] = _energy_burn_in[i][j]  # on garde la même énergie
+                    current_sigma2[j] = current_sigma2[j]  # on garde la même sigma2_temp
+
+                # Mise à jour des paramètres de la couche j pour DREAM
+                for l in range(nb_layer):
+                    J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
+                    n_id[l, id] += 1
+            
+            # Mise à jour du pcr pour chaque couche pour DREAM
+            for l in range(nb_layer):
+                pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
+                pcr[l] = pcr[l] / np.sum(pcr[l])
+
+            # Actualisation des paramètres à la fin de l'itération
+            _params[i + 1] = X
+            # Fin d'une itération, on check si on peut sortir du burn-in
+            if gelman_rubin(i + 2, nb_param, nb_layer, _params[: i + 2], threshold=threshold):
+                if verbose:
+                    print(f"Burn-in finished after : {nb_burn_in_iter} iterations")
+                break  # on sort du burn-in
+            nb_burn_in_iter += 1  # incrémentation du numbre d'itération de burn-in
+        self.nb_burn_in_iter = nb_burn_in_iter
+
+    def burning_single_chain(self,X,sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,ind_ref,_flows,typealgo):
+        for i in trange(nb_iter, desc="Burn in phase"): #nb_iter échantillonnage et n retient celui dnt l'energie est min
+            init_layers = all_priors.sample()
+            if typealgo=="no sigma":
+                init_sigma2_temp=sigma2
+            else :
+                init_sigma2_temp = sigma2_temp_prior.sample() #on a déjà intialisé une fois auparavant --> voir si on peut o^timiser
+            self.compute_solve_transi(init_layers, nb_cells, verbose=False)
+            self._states.append(
+                State(
+                    layers=init_layers,
+                    energy=compute_energy(
+                        self.temperatures_solve[ind_ref, :],
+                        sigma2=init_sigma2_temp,
+                        sigma2_distrib=sigma2_temp_prior.density,
+                    ),
+                    ratio_accept=1,
+                    sigma2_temp=init_sigma2_temp,
+                )
             )
-        )
         self._initial_energies = [state.energy for state in self._states]
         self._states = [min(self._states, key=attrgetter("energy"))]
         self._acceptance = np.zeros(nb_iter)
 
+        _temperatures[0] = self.get_temperatures_solve()
+        _flows[0] = self.get_flows_solve()
+
+        nb_accepted = 0
+
+        current_sigma2=[]        #def current_sigma2[j] et son state associé
+        X=[state.layers for state in self._states]
+        initial_state=self._states
+        #faut qu'en sortie j'ai mon X de défini
 
        
     @checker
@@ -712,8 +797,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             typealgo="no sigma",
             nb_iter=NITMCMC,
             nb_chain=10,
-            delta=3,
-            ncr=3,
+            delta=3,  #nombre de chaînes qu'on croise
+            ncr=3,    #nombre max de paramètres qu'on va perturber en même temps dans une itération de DREAM
             c=0.1,
             c_star=1e-12,
             remanence = 1,
@@ -796,7 +881,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             cr_vec = np.arange(1, ncr + 1) / ncr
             n_id = np.zeros((nb_layer, ncr), np.float32)
             J = np.zeros((nb_layer, ncr), np.float32)
-            pcr = np.ones((nb_layer, ncr)) / ncr
+            pcr = np.ones((nb_layer, ncr)) / ncr          #probabilité que ncr prenne la valeur 1, ou 2,... ou ncr
 
             if verbose:
                 print(
@@ -843,74 +928,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             current_sigma2=init_sigma2
             if verbose:
                 print("--- Begin Burn in phase ---")
-            for i in trange(nb_iter, desc="Burn in phase"):
-                # Initialisation pour les nouveaux paramètres
-                std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
-                for j in range(nb_chain):
-                    x_new = np.zeros((nb_layer, nb_param))
-                    dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
-                    if typealgo=="no sigma":
-                        new_sigma2_temp=sigma2
-                    else :
-                        new_sigma2_temp=sigma2_temp_prior.perturb(current_sigma2[j])
-                    if nb_chain>1:
-                        x_new=self.sampling_DREAM(nb_chain,nb_layer, nb_param, X, dX,x_new, j, delta, ncr, c, c_star, cr_vec, pcr, ranges)[0]
-                        id=self.sampling_DREAM(nb_chain,nb_layer, nb_param, X, dX,x_new, j, delta, ncr, c, c_star, cr_vec, pcr, ranges)[1]                                                                                                               
-                    else:
-                        x_new=self.sample_random_walk(nb_layer, X, x_new, j, all_priors)
-                    # Calcul du profil de température associé aux nouveaux paramètres
-                    self.compute_solve_transi(
-                        convert_to_layer(nb_layer, name_layer, z_low, x_new),
-                        nb_cells,
-                        verbose=False,
-                    )
-                    temp_new = (
-                        self.get_temperatures_solve()
-                    )  # récupération du profil de température
-
-                    energy_new = compute_energy_mcmc(
-                        temp_new[ind_ref], temp_ref, remanence, new_sigma2_temp, sigma2_distrib
-                    )  # calcul de l'énergie
-
-                    # calcul de la probabilité d'accpetation
-                    log_ratio_accept = compute_log_acceptance(
-                        energy_new, _energy_burn_in[i][j]
-                    )
-
-                    # Acceptation ou non des nouveaux paramètres
-                    if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
-                        X[j] = x_new  # actualisation des paramètres pour la chaine j
-                        _temp_iter[j] = temp_new  # actualisation du profil de température
-                        _flow_iter[j] = self.get_flows_solve()  # actualisation du débit
-                        _energy_burn_in[i + 1][j] = energy_new  # actualisation de l'énergie
-                        current_sigma2[j] = new_sigma2_temp  # actualisation de sigma2_temp
-                    else:
-                        dX = np.zeros((nb_layer, nb_param))
-                        _energy_burn_in[i + 1][j] = _energy_burn_in[i][j]  # on garde la même énergie
-                        current_sigma2[j] = current_sigma2[j]  # on garde la même sigma2_temp
-
-                    # Mise à jour des paramètres de la couche j pour DREAM
-                    if nb_chain>1:
-                        for l in range(nb_layer):
-                            J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
-                            n_id[l, id] += 1
-
-                # Mise à jour du pcr pour chaque couche pour DREAM
-                if nb_chain>1:
-                    for l in range(nb_layer):
-                        pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
-                        pcr[l] = pcr[l] / np.sum(pcr[l])
-
-                # Actualisation des paramètres à la fin de l'itération
-                _params[i + 1] = X
-                # Fin d'une itération, on check si on peut sortir du burn-in
-                if gelman_rubin(i + 2, nb_param, nb_layer, _params[: i + 2], threshold=threshold):
-                    if verbose:
-                        print(f"Burn-in finished after : {nb_burn_in_iter} iterations")
-                    break  # on sort du burn-in
-                nb_burn_in_iter += 1  # incrémentation du numbre d'itération de burn-in
-
-            self.nb_burn_in_iter = nb_burn_in_iter
+            if nb_chain=1:
+                self.burning_single_chain(self,X,sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,ind_ref,_flows,typealgo)
+            else:
+                self.burning_DREAM(nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose)
 
             # Transition après le burn in
             del _params  # la variable _params n'est plus utile
