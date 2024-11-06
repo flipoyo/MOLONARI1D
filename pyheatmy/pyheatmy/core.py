@@ -48,7 +48,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         heat_source=np.ndarray,
         nb_cells=NB_CELLS,
         rac="~/OUTPUT_MOLONARI1D/generated_data",  # printing directory by default,
-        verbose=False
+        verbose=False,
     ):
 
         self._dir_print = create_dir(
@@ -269,8 +269,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 getListParameters(layersList, nb_cells)
             )
             Ss_list = n_list / heigth
+            
             ##
-            a = 1  # à adapter
 
             H_strat = H_stratified(
                 Ss_list,
@@ -296,10 +296,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             H_res = H_strat.compute_H_stratified()
 
             nablaH = H_strat.nablaH()
-            
+
             T_strat = T_stratified(
                 nablaH,
-                a,
                 Ss_list,
                 moinslog10IntrinK_list,
                 n_list,
