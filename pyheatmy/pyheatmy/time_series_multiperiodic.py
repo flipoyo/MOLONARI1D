@@ -68,11 +68,11 @@ class time_series_multiperiodic:
                 )
             self.multi_periodic = [dates, T]
             if verbose:
-                self.plot_temp_river(self)
+                self.plot_temp()
         else:
             return "This is not a multi-periodic type"
 
-    def plot_temp_river(self):
+    def plot_temp(self):
         
         if self.type == "multi_periodic":
             a = self.multi_periodic #ok, as we have a multi-periodic signal (which already is a n*2 matrix, corresponding of the river temperature at a given time)
@@ -301,7 +301,7 @@ if __name__ == "__main__":
     date_0 = datetime.fromtimestamp(timestamp)
     step = timedelta(minutes=15)
     dates = [date_0 + i * step for i in range(4*24*30*6)]  # 6 months
+    dates = np.array(dates)  # dates must be an array
 
     mp_ts.create_multiperiodic_signal(
         [10, 5, 3], [[1, "y"], [2, "m"], [21, "d"]], dates, verbose = True)
-    mp_ts.plot_temp_river()
