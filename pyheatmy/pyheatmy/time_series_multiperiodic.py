@@ -89,13 +89,14 @@ class time_series_multiperiodic:
         plt.plot(dates, T) 
         plt.xlabel("date")
         plt.tight_layout()
+        plt.gcf().autofmt_xdate()
         plt.ylabel("temperature : °C")
         plt.show()
 
     def nb_per_day(self, verbose = True): #method to get the number of points per day
         if verbose:
             print('dt must be in seconds')
-        return(int(NSECINDAY/15*60))  # return(int(NSECINDAY/self.dt)) but self.dt undefined
+        return(int(NSECINDAY/(15*60)))  # return(int(NSECINDAY/self.dt)) but self.dt undefined
     
     def nb_days_in_period(self): #method to get the number of days in the period
         if self.type == "multi_periodic":
@@ -105,10 +106,7 @@ class time_series_multiperiodic:
         
     def profil_temperature(self, verbose = True):
         if self.type == "ts":
-            matrix = np.zeros((self.time_series[0].shape[0], self.nb_sensors))
-            for i in range(self.time_series[0].shape[0]):
-                matrix[i,:] = self.time_series[i,1:]
-            self.matrix = matrix
+            self.matrix = self.time_series[1]
         
         elif self.type == 'multi_periodic':
             # instanciation du simulateur de données
@@ -136,7 +134,7 @@ class time_series_multiperiodic:
     
     def amplitude(self, day):
         amplitude_list = []
-        n_dt_in_day = self.nb_per_day(Verbose=False)
+        n_dt_in_day = self.nb_per_day(verbose=False)
         if self.type == "multi_periodic":
             return "To be implemented..."
         elif self.type == "ts":
@@ -271,20 +269,6 @@ class time_series_multiperiodic:
         self.convertDates(df)
         return df
 
-    def plot_data(point_number, verbose = True):
-        url = 'dataAnalysis\data_traite\point' + str(point_number) + '_temperature_traité.csv'
-        df = pd.read_csv(url)
-        df.columns = ['Date_heure', 'T_Sensor0', 'T_Sensor1', 'T_Sensor2', 'T_Sensor3']
-        df['Date_heure'] = pd.to_datetime(df['Date_heure'], dayfirst = True)
-
-        # Tracer toutes les colonnes sauf 'Date_heure' en fonction de 'Date_heure'
-        df.set_index('Date_heure').plot(figsize=(10, 6), grid=True, title="Graphique des valeurs en fonction des dates")
-        plt.xlabel("Date")
-        plt.ylabel("Température (°C)")
-        plt.title("signal de température pour le capteur " + str(point_number))
-        plt.show()
-
-        
 
 # testing
 if __name__ == "__main__":
