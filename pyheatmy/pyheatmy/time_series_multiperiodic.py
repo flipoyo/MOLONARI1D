@@ -104,48 +104,85 @@ class time_series_multiperiodic:
         elif self.type == "ts":
             return int(self.time_series[0].shape[0]/self.nb_per_day())
 
-    # if create river signal = True, then 
-    def profil_temperature(self, verbose = True):
+    # if create river signal = True, then the multi periodic signal is auto generated
+    def create_profil_temperature(self, verbose = True, create_signal = True):
         if self.type == "ts":
             self.matrix = self.time_series[1]
         
         elif self.type == 'multi_periodic':
-            # instanciation du simulateur de données
-            emu_observ_test_user1 = synthetic_MOLONARI.from_dict(self.time_series_dict_user1)
+            # On regarde des variations de température sur une année, on définit une période journalière, et une période annuelle
+
+            """Reprise du code de dmo_genData pour créer un objet synthetic_MOLONARI"""
+
+            # modèle une couche
+            layers_list= layersListCreator([(self.name, self.Zbottom, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs)])
+            self.layers_list = layers_list
+
+            # un dictionnaire qui facilite le paramétrage avec des variables globales définies plus haut
+            time_series_dict_user1 = {
+                "offset":.0,
+                "depth_sensors":self.depth_sensors,
+            	"param_time_dates": [self.t_debut, self.t_fin, self.dt], 
+                "param_dH_signal": [self.dH_amp, self.P_dh, self.dH_offset], #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
+            	"param_T_riv_signal": [self.T_riv_day_amp, self.P_T_riv_day, self.T_riv_offset],
+                "param_T_aq_signal": [self.T_aq_amp, self.P_T_aq, self.T_aq_offset],
+                "sigma_meas_P": self.sigma_meas_P,
+                "sigma_meas_T": self.sigma_meas_T, #float
+                "verbose": False
+            }
+
+            self.time_series_dict_user1 = time_series_dict_user1
+
+            #on génère un objet colonne à partir de l'objet emu_observ_test_user1
+            emu_observ_test_user1 = synthetic_MOLONARI.from_dict(time_series_dict_user1)
+
+            if create_signal:
+                #On utilise le jeu de date précédent pour créer un signal de température multipériodique 
+                self.create_multiperiodic_signal([self.T_riv_year_amp, self.T_riv_day_amp], [[self.P_T_riv_year, 's'], [self.P_T_riv_day, 's']], emu_observ_test_user1._dates,
+                                                   offset=self.T_riv_offset, verbose = False)
+            # or any signal
+            else:
+                self.multi_periodic = self.entry_signal
 
             #On force la variable T_riv dans l'objet emu_observ_test_user1
-            
+            emu_observ_test_user1._T_riv = self.multi_periodic[1]
 
             #Puis on applique les méthodes _generate_Shaft_Temp_series et _generate_perturb_Shaft_Temp_series pour changer les valeurs dépendante du nouveau T_riv
             emu_observ_test_user1._generate_Shaft_Temp_series(verbose = False)
             emu_observ_test_user1._generate_perturb_Shaft_Temp_series()
             emu_observ_test_user1._generate_perturb_T_riv_dH_series()
 
-            emu_observ_test_user1._T_riv = self.multi_periodic[1]
+            col_dict = {
+            	"river_bed": self.river_bed, 
+                "depth_sensors": self.depth_sensors, #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
+            	"offset": .0,
+                "dH_measures": emu_observ_test_user1._molonariP_data,
+                "T_measures": emu_observ_test_user1._molonariT_data,
+                "sigma_meas_P": self.sigma_meas_P,
+                "sigma_meas_T": self.sigma_meas_T,
+            }
+            self.col_dict = col_dict
 
-            self.col_dict["dH_measures"] = emu_observ_test_user1._molonariP_data
-            self.col_dict["T_measures"] = emu_observ_test_user1._molonariT_data
-
-            plt.plot(emu_observ_test_user1._dates, self.multi_periodic[1])
             column = Column.from_dict(self.col_dict,verbose=False)
             column._compute_solve_transi_multiple_layers(self.layers_list, self.nb_cells, verbose=False)
+
+            self.matrix = np.transpose(column._temperatures)
 
             if verbose:
                 print(f"Layers list: {self.layers_list}")
                 #On vérifie que les températures ont bien été modifiées dans l'objet column (en particulier que la température à profondeur nulle est bien celle de la rivière)
-                plt.plot(emu_observ_test_user1._dates, column._temperatures[0,:])
+                plt.plot(emu_observ_test_user1._dates, self.matrix)
                 plt.show()
                 print(f"La matrice de température a pour shape : {column._temperatures.shape}, abscisse = température aux 20 cellules, ordonnée = température à chaque pas de temps")
 
-            self.matrix = column._temperatures
     
     def amplitude(self, day):
         amplitude_list = []
         n_dt_in_day = self.nb_per_day(verbose=False)
         if self.type == "multi_periodic":
-            return "To be implemented..."
+            T = self.matrix
         elif self.type == "ts":
-            self.profil_temperature()
+            self.create_profil_temperature()
             T = self.matrix
         else : 
             return "You can not compute the method before creating a time series or a multi-periodic signal"
@@ -169,7 +206,10 @@ class time_series_multiperiodic:
         pearson_coef = np.zeros(n_days)
         for i in range(n_days):
             ln_amp_i = self.ln_amp(i*n_dt_in_day)
-            Lr = sp.stats.linregress(self.depth_sensors, ln_amp_i)
+            # It's a model so we should reject the last values (close to the aquifere)
+            depth_cells = self.depth_cells[:self.last_cell]
+            ln_amp_i = ln_amp_i[:self.last_cell]
+            Lr = sp.stats.linregress(depth_cells, ln_amp_i)
             pearson_coef[i] = Lr.rvalue
         return pearson_coef
     
@@ -203,7 +243,7 @@ class time_series_multiperiodic:
                     # print(self.layers_list[0].params)
                     self.layers_list[0].params._replace(moinslog10IntrinK=list_k[2*i+j])
                     # self.layers_list[0].params.moinslog10IntrinK = list_k[2*i+j]  # considering only one layer
-                    self.multi_periodic = self.profil_temperature(verbose = False)
+                    self.create_profil_temperature(verbose = False)
                     Y = self.get_pearson_coef()
                     ax[i][j].scatter(X, Y, color="r", marker="o", s=30)
                     ax[i][j].set_xlabel('day')
@@ -291,28 +331,3 @@ if __name__ == "__main__":
 
     mp_ts.create_multiperiodic_signal(
         [10, 5, 3], [[1, "y"], [2, "m"], [21, "d"]], dates, verbose = True)
-    
-
-
-'''
-    # Extract the data which is useful to create a T_riv signal
-    def extract_data_from_time_series_dict(self):
-        {
-    "offset":.0,
-    "depth_sensors":depth_sensors,
-	"param_time_dates": [t_debut, t_fin, dt], 
-    "param_dH_signal": [dH_amp, P_dh, dH_offset], #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
-	"param_T_riv_signal": [T_riv_day_amp, P_T_riv_day, T_riv_offset],
-    "param_T_aq_signal": [T_aq_amp, P_T_aq, T_aq_offset],
-    "sigma_meas_P": sigma_meas_P,
-    "sigma_meas_T": sigma_meas_T, #float
-    "verbose": False
-        } =
-        d = self.time_series_dict_user1
-        T_riv_year_amp = d[]
-        T_riv_day_amp =
-        P_T_riv_year =
-        P_T_riv_day =
-        T_riv_offset =
-        return [T_riv_year_amp, T_riv_day_amp], [[P_T_riv_year, 's'], [P_T_riv_day, 's']], emu_observ_test_user1._dates, T_riv_offset
-'''
