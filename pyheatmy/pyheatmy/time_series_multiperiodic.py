@@ -115,7 +115,7 @@ class time_series_multiperiodic:
             """Reprise du code de dmo_genData pour créer un objet synthetic_MOLONARI"""
 
             # modèle une couche
-            layers_list= layersListCreator([(self.name, self.Zbottom, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs)])
+            layers_list= layersListCreator([(self.name, self.river_bed, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs)])
             self.layers_list = layers_list
 
             # un dictionnaire qui facilite le paramétrage avec des variables globales définies plus haut
@@ -198,6 +198,35 @@ class time_series_multiperiodic:
         amplitude_array = np.array(amplitude_list)
         ln_rapport_amplitude = np.log( amplitude_array / amplitude_array[0] )
         return ln_rapport_amplitude
+    
+    # Renvoie l'instance de régression linéaire des données (profondeur, ln(rapport amplitudes))
+    def linear_regression(self, day):
+        ln_amp_i = self.ln_amp(day)
+        # It's a model so we should reject the last values (close to the aquifere)
+        depth_cells = self.depth_cells[:self.last_cell]
+        ln_amp_i = ln_amp_i[:self.last_cell]
+        return sp.stats.linregress(depth_cells, ln_amp_i)
+
+
+    # Trace l'interpolation linéaire en imprimant le coefficient d'exactitude
+    def plot_linear_regression(self, day):
+        # assert len(T) == lent(depths), "a temperature measure must be assigned to a single depth"
+        depths_cells = self.depth_cells[:self.last_cell]
+        X = np.array(depths_cells).reshape(-1,1)
+        Y = self.ln_amp(day)[:self.last_cell]
+        Lr = self.linear_regression(day)
+        Pearson_coefficient = Lr.rvalue
+        slope = Lr.slope
+        intercept = Lr.intercept
+        plt.scatter(X, Y, color="r", marker="o", s=10)
+        y_pred = slope * X + intercept
+        plt.plot(X, y_pred, color="k")
+        plt.xlabel("profondeur (unit)")
+        plt.ylabel("ln(A_z / A_0)")
+        plt.title("Régression linéaire sur le rapport des logarithmes des amplitudes")
+        plt.figtext(.6, .8, "y = " + str(round(slope,2)) + "x + " + str(round(intercept,2)))
+        plt.figtext(.6, .7, "Pearson coefficient : " + str(round(Pearson_coefficient,2)))
+        plt.show()
 
     # returns the list of pearson coefficients for the amplitudes along each day 
     def get_pearson_coef(self):
@@ -205,11 +234,7 @@ class time_series_multiperiodic:
         n_days = self.nb_days_in_period()
         pearson_coef = np.zeros(n_days)
         for i in range(n_days):
-            ln_amp_i = self.ln_amp(i*n_dt_in_day)
-            # It's a model so we should reject the last values (close to the aquifere)
-            depth_cells = self.depth_cells[:self.last_cell]
-            ln_amp_i = ln_amp_i[:self.last_cell]
-            Lr = sp.stats.linregress(depth_cells, ln_amp_i)
+            Lr = self.linear_regression(i*n_dt_in_day)
             pearson_coef[i] = Lr.rvalue
         return pearson_coef
     
@@ -231,7 +256,7 @@ class time_series_multiperiodic:
     def plot_mosaic_pearson(self, list_k):
         # To save the values of the attributes, so that the method doesn't change them
         T = self.multi_periodic
-        k = self.layers_list[0].params.moinslog10IntrinK
+        k = self.moinslog10IntrinK
 
         n_rows = len(list_k)//2 + len(list_k)%2
         fig, ax = plt.subplots(n_rows, ncols=2, constrained_layout = True)
@@ -241,19 +266,18 @@ class time_series_multiperiodic:
             for j in range(2):
                 if 2*i + j < len(list_k):
                     # print(self.layers_list[0].params)
-                    self.layers_list[0].params._replace(moinslog10IntrinK=list_k[2*i+j])
-                    # self.layers_list[0].params.moinslog10IntrinK = list_k[2*i+j]  # considering only one layer
+                    self.moinslog10IntrinK = list_k[2*i + j]
                     self.create_profil_temperature(verbose = False)
                     Y = self.get_pearson_coef()
                     ax[i][j].scatter(X, Y, color="r", marker="o", s=30)
                     ax[i][j].set_xlabel('day')
-                    ax[i][j].set_ylabel('Pearson coefficient')
+                    ax[i][j].set_ylabel('Pearson')
                     ax[i][j].set_title('Pearson par jour avec -log(k) = ' + str(list_k[2*i + j]), size = 10)   
                     ax[i][j].set_ylim(-1,1) 
         plt.show()
 
         self.multi_periodic = T
-        self.layers_list[0].params._replace(moinslog10IntrinK=k)
+        self.moinslog10IntrinK = k
     
     # Real data analysis methods
 
