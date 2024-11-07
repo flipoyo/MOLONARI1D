@@ -10,7 +10,6 @@
 #include "Lora.hpp"
 #include "Low_Power.hpp"
 
-
 // A class to wait for a given amount of time after a timer has been started.
 // For exemple, you start the timer, do other stuff and then wait until the timer has reached a given amount of time.
 class Waiter {

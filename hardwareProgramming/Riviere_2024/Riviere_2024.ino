@@ -52,9 +52,9 @@ const char filename[] = "RIVIERE.CSV";
 
 // --- Sensors ---
 TemperatureSensor tempSensor1(A1, 1, 0.5277, 101.15);
-TemperatureSensor tempSensor2(A2, 2, 0.5, 100);
-TemperatureSensor tempSensor3(A3, 3, 0.5290, 101.50);
-TemperatureSensor tempSensor4(A4, 4, 0.5195, 101.92);
+TemperatureSensor tempSensor2(A2, 1, 0.5, 100);
+TemperatureSensor tempSensor3(A3, 1, 0.5290, 101.50);
+TemperatureSensor tempSensor4(A4, 1, 0.5195, 101.92);
 
 // ----- Main Setup -----
 
@@ -173,6 +173,7 @@ void loop() {
 
     // Enter low power mode
     Serial.end();
+    delay(4000);
     waiter.sleepUntil(sleepTime);
   }
 }
