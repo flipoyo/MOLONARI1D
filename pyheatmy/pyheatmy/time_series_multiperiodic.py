@@ -200,7 +200,9 @@ class time_series_multiperiodic:
         for i in range(n_rows):
             for j in range(2):
                 if 2*i + j < len(list_k):
-                    self.layers_list[0].params.moinslog10IntrinK = list_k[2*i+j]  # considering only one layer
+                    # print(self.layers_list[0].params)
+                    self.layers_list[0].params._replace(moinslog10IntrinK=list_k[2*i+j])
+                    # self.layers_list[0].params.moinslog10IntrinK = list_k[2*i+j]  # considering only one layer
                     self.multi_periodic = self.profil_temperature(verbose = False)
                     Y = self.get_pearson_coef()
                     ax[i][j].scatter(X, Y, color="r", marker="o", s=30)
@@ -211,7 +213,7 @@ class time_series_multiperiodic:
         plt.show()
 
         self.multi_periodic = T
-        self.layers_list[0].params.moinslog10IntrinK = k
+        self.layers_list[0].params._replace(moinslog10IntrinK=k)
     
     # Real data analysis methods
 
