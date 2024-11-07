@@ -211,8 +211,8 @@ class time_series_multiperiodic:
     # Trace l'interpolation linéaire en imprimant le coefficient d'exactitude
     def plot_linear_regression(self, day):
         # assert len(T) == lent(depths), "a temperature measure must be assigned to a single depth"
-        depths_cells = self.depth_cells[:self.last_cell]
-        X = np.array(depths_cells).reshape(-1,1)
+        depths_cell = self.depth_cells[:self.last_cell]
+        X = np.array(depths_cell).reshape(-1,1)
         Y = self.ln_amp(day)[:self.last_cell]
         Lr = self.linear_regression(day)
         Pearson_coefficient = Lr.rvalue
