@@ -116,7 +116,7 @@ class time_series_multiperiodic:
             return int(self.time_series[0].shape[0]/self.nb_per_day(verbose = False))
 
     # if create river signal = True, then the multi periodic signal is auto generated
-    def create_profil_temperature(self, verbose = True, create_signal = True):
+    def create_profil_temperature(self, verbose = True, create_signal = True, nb_layers = 1):
         if self.type == "ts":
             self.matrix = self.time_series[1]
         
@@ -126,7 +126,11 @@ class time_series_multiperiodic:
             """Reprise du code de dmo_genData pour créer un objet synthetic_MOLONARI"""
 
             # modèle une couche
-            layers_list= layersListCreator([(self.name, self.river_bed, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs)])
+            if nb_layers == 1:
+                layersListCreator([(self.name, self.river_bed, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs),
+            if nb_layers == 2:
+                layersListCreator([(self.name, self.river_bed, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs), = layersListCreator([(self.name, self.river_bed, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs), 
+                                            (self.name2, self.river_bed2, self.moinslog10IntrinK2, self.n2, self.lambda_s2, self.rhos_cs2)])
             self.layers_list = layers_list
 
             # un dictionnaire qui facilite le paramétrage avec des variables globales définies plus haut
