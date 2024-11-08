@@ -677,16 +677,21 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 x_new[l][p] = all_priors[l][p].perturb(X[j, l][p])
         return x_new
     
+    def compute_energy_mcmc(self,temp1,temp2, remanence,sigma2, sigma2_distrib):
+                    if sigma2_distrib is None:
+                        return(compute_energy(temp1,temp2,remanence, sigma2))
+                    else :
+                        return(compute_energy_with_distrib(temp1,temp2,sigma2,sigma2_distrib))
+            
 
-
-    def burning_DREAM(self,nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose):
+    def burning_DREAM(self,nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose):
         for i in trange(nb_iter, desc="Burn in phase"):
             std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
             for j in range(nb_chain):
                 x_new = np.zeros((nb_layer, nb_param))
                 dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
                 if typealgo=="no sigma":
-                    new_sigma2_temp=sigma2
+                    new_sigma2_temp=current_sigma2[0]
                 else :
                     new_sigma2_temp=sigma2_temp_prior.perturb(current_sigma2[j])
 
@@ -703,7 +708,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     self.get_temperatures_solve()
                 )  # récupération du profil de température
 
-                energy_new = compute_energy_mcmc(
+                energy_new = self.compute_energy_mcmc(
                     temp_new[ind_ref], temp_ref, remanence, new_sigma2_temp, sigma2_distrib
                 )  # calcul de l'énergie
 
@@ -745,21 +750,22 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self.nb_burn_in_iter = nb_burn_in_iter
         return(current_sigma2,X,nb_burn_in_iter,_energy_burn_in,_flow_iter,_temp_iter)
 
-    def burning_single_chain(self,X,sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,ind_ref,_flows,typealgo,_flow_iter,_temp_iter):
-        for i in trange(nb_iter, desc="Burn in phase"): #nb_iter échantillonnage et n retient celui dnt l'energie est min
+    def burning_single_chain(self,X,current_sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,sigma2_distrib,ind_ref,typealgo,_flow_iter,_temp_iter,temp_ref,remanence):
+        for i in trange(nb_iter): #nb_iter échantillonnage et n retient celui dnt l'energie est min
             init_layers = all_priors.sample()
             if typealgo=="no sigma":
-                init_sigma2_temp=sigma2
+                init_sigma2_temp=current_sigma2[0]
             else :
                 init_sigma2_temp = sigma2_temp_prior.sample() #on a déjà intialisé une fois auparavant --> voir si on peut o^timiser
             self.compute_solve_transi(init_layers, nb_cells, verbose=False)
+            temp_new = self.get_temperatures_solve()
             self._states.append(
                 State(
                     layers=init_layers,
-                    energy=compute_energy(
-                        self.temperatures_solve[ind_ref, :],
-                        sigma2=init_sigma2_temp,
-                        sigma2_distrib=sigma2_temp_prior.density,
+                    energy=self.compute_energy_mcmc(
+                        temp_new[ind_ref], temp_ref, remanence,
+                        init_sigma2_temp,
+                        sigma2_distrib,
                     ),
                     ratio_accept=1,
                     sigma2_temp=init_sigma2_temp,
@@ -772,8 +778,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _temp_iter[0] = self.get_temperatures_solve()
 
         nb_burn_in_iter= 1
-        initial_state=self._states
-        current_sigma2=initial_state.sigma2        #def current_sigma2[j] et son state associé
+        initial_state=self._states[0]
+        current_sigma2=[initial_state.sigma2_temp]        #def current_sigma2[j] et son state associé
         X=np.array([layer for layer in initial_state.layers])
         return(current_sigma2,X,nb_burn_in_iter,_energy_burn_in,_flow_iter,_temp_iter)
 
@@ -814,6 +820,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             if typealgo=="no sigma":
                 sigma2 = DEFAULT_SIGMA2_T
                 sigma2_distrib=None
+                sigma2_temp_prior=None
             else :
                 sigma2_temp_prior = Prior((SIGMA2_MIN_T, SIGMA2_MAX_T), RANDOMWALKSIGMAT, lambda x: 1 / x)
                 sigma2_distrib = sigma2_temp_prior.density
@@ -930,9 +937,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             if verbose:
                 print("--- Begin Burn in phase ---")
             if nb_chain==1:
-                burning=self.burning_single_chain(self,X,sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,ind_ref,_flows,typealgo,_flow_iter,_temp_iter)
+                burning=self.burning_single_chain(X,current_sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,sigma2_distrib,ind_ref,typealgo,_flow_iter,_temp_iter,temp_ref,remanence)
             else:
-                burning=self.burning_DREAM(self,nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose)
+                burning=self.burning_DREAM(nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose)
 
             #récupération des variables après le burn-in
             current_sigma2=burning[0]
