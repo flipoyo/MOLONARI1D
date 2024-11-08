@@ -200,21 +200,30 @@ class time_series_multiperiodic:
         return ln_rapport_amplitude
     
     # Renvoie l'instance de régression linéaire des données (profondeur, ln(rapport amplitudes))
-    def linear_regression(self, day):
+    def linear_regression(self, day, sensors_only = False):
         ln_amp_i = self.ln_amp(day)
-        # It's a model so we should reject the last values (close to the aquifere)
-        depth_cells = self.depth_cells[:self.last_cell]
-        ln_amp_i = ln_amp_i[:self.last_cell]
+        if sensors_only :
+            depth_cells = self.depth_sensors
+            ln_amp_i = ln_amp_i[0.1:0.5:0.1]
+        else :
+            # It's a model so we should reject the last values (close to the aquifere)
+            depth_cells = self.depth_cells[:self.last_cell]
+            ln_amp_i = ln_amp_i[:self.last_cell]
         return sp.stats.linregress(depth_cells, ln_amp_i)
 
-
     # Trace l'interpolation linéaire en imprimant le coefficient d'exactitude
-    def plot_linear_regression(self, day):
+    def plot_linear_regression(self, day, sensors_only = False):
         # assert len(T) == lent(depths), "a temperature measure must be assigned to a single depth"
-        depths_cell = self.depth_cells[:self.last_cell]
-        X = np.array(depths_cell).reshape(-1,1)
-        Y = self.ln_amp(day)[:self.last_cell]
-        Lr = self.linear_regression(day)
+        Y = self.ln_amp(day)
+        if sensors_only :
+            X = np.array(self.depth_sensors).reshape(-1,1)
+            Y = [Y[j] for j in self.depth_sensors / ( self.river_bed / (self.nb_cells - 1))]  # selecting only depth_sensors values. !!Note!! : river_bed / nb_cells must be a divisor of 0.1
+            Lr = self.linear_regression(day, sensors_only = True)
+        else :
+            depths_cell = self.depth_cells[:self.last_cell]
+            X = np.array(depths_cell).reshape(-1,1)
+            Y = Y[:self.last_cell]
+            Lr = self.linear_regression(day, sensors_only = False)
         Pearson_coefficient = Lr.rvalue
         slope = Lr.slope
         intercept = Lr.intercept
