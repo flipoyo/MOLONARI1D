@@ -241,12 +241,12 @@ class time_series_multiperiodic:
         plt.show()
 
     # returns the list of pearson coefficients for the amplitudes along each day 
-    def get_pearson_coef(self):
+    def get_pearson_coef(self, sensors_only = False):
         n_dt_in_day = self.nb_per_day(verbose=False)
         n_days = self.nb_days_in_period()
         pearson_coef = np.zeros(n_days)
         for i in range(n_days):
-            Lr = self.linear_regression(i*n_dt_in_day)
+            Lr = self.linear_regression(i*n_dt_in_day, sensors_only = sensors_only)
             pearson_coef[i] = Lr.rvalue
         return pearson_coef
     
@@ -265,7 +265,7 @@ class time_series_multiperiodic:
     # des graphes (pearson coefficient day by day)
     # Pour avoir une vue d'ensemble
     # list_k = liste de ces valeurs)
-    def plot_mosaic_pearson(self, list_k):
+    def plot_mosaic_pearson(self, list_k, sensors_only = False):
         # To save the values of the attributes, so that the method doesn't change them
         T = self.multi_periodic
         k = self.moinslog10IntrinK
@@ -281,7 +281,7 @@ class time_series_multiperiodic:
                     # print(self.layers_list[0].params)
                     self.moinslog10IntrinK = list_k[2*i + j]
                     self.create_profil_temperature(verbose = False)
-                    Y = self.get_pearson_coef()
+                    Y = self.get_pearson_coef(sensors_only = sensors_only)
                     ax[i][j].scatter(X, Y, color="r", marker="o", s=30)
                     ax[i][j].set_xlabel('day')
                     ax[i][j].set_ylabel('Pearson')
