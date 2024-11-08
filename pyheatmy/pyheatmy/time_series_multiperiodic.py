@@ -71,6 +71,14 @@ class time_series_multiperiodic:
                 self.plot_temp()
         else:
             return "This is not a multi-periodic type"
+        
+    def entry_signal(self, dates):
+        if self.entry_signal_type == 'linear' :
+            T = np.zeros(dates.shape[0])
+            T += self.T_riv_offset
+            linear_increase = np.array([i * self.T_riv_day_amp / self.nb_per_day(verbose = False) for i in range(dates.shape[0])])
+            T += linear_increase
+            self.entry_signal = [dates, T]
 
     def plot_temp(self):
         
@@ -142,7 +150,9 @@ class time_series_multiperiodic:
                                                    offset=self.T_riv_offset, verbose = False)
             # or any signal
             else:
+                self.entry_signal(np.array(emu_observ_test_user1._dates))
                 self.multi_periodic = self.entry_signal
+
 
             #On force la variable T_riv dans l'objet emu_observ_test_user1
             emu_observ_test_user1._T_riv = self.multi_periodic[1]
@@ -213,10 +223,10 @@ class time_series_multiperiodic:
         return sp.stats.linregress(depth_cells, ln_amp_i)
 
     # Trace l'interpolation linéaire en imprimant le coefficient d'exactitude
-    def plot_linear_regression(self, day, sensors_only = False):
+    def plot_linear_regression(self, day, sensors_only = False, create_signal = True):
         # assert len(T) == len(depths), "a temperature measure must be assigned to a single depth"
         # créer l'objet matrix
-        self.create_profil_temperature(verbose = False)
+        self.create_profil_temperature(verbose = False, create_signal=create_signal)
         Y = self.ln_amp(day)
         if sensors_only :
             X = np.array(self.depth_sensors).reshape(-1,1)
@@ -265,7 +275,7 @@ class time_series_multiperiodic:
     # des graphes (pearson coefficient day by day)
     # Pour avoir une vue d'ensemble
     # list_k = liste de ces valeurs)
-    def plot_mosaic_pearson(self, list_k, sensors_only = False):
+    def plot_mosaic_pearson(self, list_k, sensors_only = False, create_signal = True):
         # To save the values of the attributes, so that the method doesn't change them
         T = self.multi_periodic
         k = self.moinslog10IntrinK
@@ -280,7 +290,7 @@ class time_series_multiperiodic:
                 if 2*i + j < len(list_k):
                     # print(self.layers_list[0].params)
                     self.moinslog10IntrinK = list_k[2*i + j]
-                    self.create_profil_temperature(verbose = False)
+                    self.create_profil_temperature(verbose = False, create_signal = create_signal)
                     Y = self.get_pearson_coef(sensors_only = sensors_only)
                     ax[i][j].scatter(X, Y, color="r", marker="o", s=30)
                     ax[i][j].set_xlabel('day')
