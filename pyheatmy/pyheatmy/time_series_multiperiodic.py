@@ -72,7 +72,7 @@ class time_series_multiperiodic:
         else:
             return "This is not a multi-periodic type"
         
-    def entry_signal(self, dates):
+    def create_entry_signal(self, dates):
         if self.entry_signal_type == 'linear' :
             T = np.zeros(dates.shape[0])
             T += self.T_riv_offset
@@ -80,16 +80,19 @@ class time_series_multiperiodic:
             T += linear_increase
             self.entry_signal = [dates, T]
 
-    def plot_temp(self):
+    def plot_temp(self, all_depths = False):
         
         if self.type == "multi_periodic":
-            a = self.multi_periodic #ok, as we have a multi-periodic signal (which already is a n*2 matrix, corresponding of the river temperature at a given time)
+            dates = self.multi_periodic[0]
+            if all_depths :
+                T = self.matrix
+            else:
+                T = self.multi_periodic[1]
         if self.type == "ts":
             a = self.time_series #corresponding at the first sensor temperature, ie river temperature at a given time
-
-        dates = a[0]
-        T = a[1]
-
+            dates = a[0]
+            T = a[1]
+    
         assert dates.shape[0] == T.shape[0], 'there should be as many dates as temperature mesures for one depth'
         # assert dates.dtype == datetime or dates.dtype == np.datetime64, "dates should be of type datetime.datetime and or of type" + str(dates.dtype)
 
@@ -150,7 +153,7 @@ class time_series_multiperiodic:
                                                    offset=self.T_riv_offset, verbose = False)
             # or any signal
             else:
-                self.entry_signal(np.array(emu_observ_test_user1._dates))
+                self.create_entry_signal(np.array(emu_observ_test_user1._dates))
                 self.multi_periodic = self.entry_signal
 
 
