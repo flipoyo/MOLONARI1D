@@ -93,7 +93,7 @@ if __name__ == "__main__":
         "n": ((0.01, 0.25), 0.01),
         "lambda_s": ((1, 5), 0.1),
         "rhos_cs": ((1e6, 1e7), 1e5),
-        "q": ((-1, 1), 1e2),
+        "q": ((5, 9), 0.1),
         "heat_depth": ((0,0.4),0.1)
     }
     priors1 = ParamsPriors(
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     def layersListCreator(layersListInput):
         layersList = list()
         for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, q, heat_depth in layersListInput:
-            layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, heat_depth))
+            layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, q,heat_depth))
         return layersList
 
 def calc_K(k):

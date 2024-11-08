@@ -271,18 +271,20 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             Ss_list = n_list / heigth
 
 
-            nueva_q_list = [0] * len(q_list)
-            print(heat_depth_list)
+            q_list = [10 ** -q for q in q_list]
+
+            new_q_list = [0] * len(q_list)
 
             for idx in heat_depth_list:
-                pos = int(idx * 10)  
-                if 0 <= pos < len(nueva_q_list):
-                    nueva_q_list[pos] = q_list[int(idx)]
+                pos = int(idx*100/0.4)  
+                if 0 <= pos < len(new_q_list):
+                    new_q_list[pos] = q_list[int(idx)]
             ##
-            q_list = nueva_q_list
+            q_list = new_q_list
+            
             a = 1  # à adapter
 
-            #print(q_list)
+            
 
             H_strat = H_stratified(
                 Ss_list,
@@ -390,16 +392,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 getListParameters(layersList, nb_cells)
             )
             
-            
+            q_list = [10 **(-q) for q in q_list]
             nueva_q_list = [0] * len(q_list)
             
 
             for idx in heat_depth_list:
-                pos = int(idx * 10)  
+                pos = int(idx*100/0.4)  
                 if 0 <= pos < len(nueva_q_list):
                     nueva_q_list[pos] = q_list[int(idx)]
             ##
             q_list = nueva_q_list
+            
 
             array_moinslog10IntrinK = np.array(
                 [float(x.params.moinslog10IntrinK) for x in layersList]
@@ -416,6 +419,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             array_Hinter = np.zeros(
                 len(layersList) + 1
             )  # charge hydraulique de chaque interface
+            #########################################################
             array_Hinter[0] = self._dH[0]
             array_Hinter[-1] = 0.0
             N = len(array_Hinter) - 1
