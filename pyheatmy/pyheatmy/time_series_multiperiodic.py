@@ -154,7 +154,7 @@ class time_series_multiperiodic:
 
             col_dict = {
             	"river_bed": self.river_bed, 
-                "depth_sensors": self.depth_sensors, #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
+                "depth_sensors": list(self.depth_sensors), #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
             	"offset": .0,
                 "dH_measures": emu_observ_test_user1._molonariP_data,
                 "T_measures": emu_observ_test_user1._molonariT_data,
@@ -175,7 +175,7 @@ class time_series_multiperiodic:
                 plt.show()
                 print(f"La matrice de température a pour shape : {column._temperatures.shape}, abscisse = température aux 20 cellules, ordonnée = température à chaque pas de temps")
 
-    
+
     def amplitude(self, day):
         amplitude_list = []
         n_dt_in_day = self.nb_per_day(verbose=False)
@@ -204,20 +204,27 @@ class time_series_multiperiodic:
         ln_amp_i = self.ln_amp(day)
         if sensors_only :
             depth_cells = self.depth_sensors
-            ln_amp_i = ln_amp_i[0.1:0.5:0.1]
+            print(self.depth_sensors_index_list)
+            print(ln_amp_i)
+            ln_amp_i = [ln_amp_i[j] for j in self.depth_sensors_index_list]
+            print(ln_amp_i)
         else :
             # It's a model so we should reject the last values (close to the aquifere)
             depth_cells = self.depth_cells[:self.last_cell]
             ln_amp_i = ln_amp_i[:self.last_cell]
+            
         return sp.stats.linregress(depth_cells, ln_amp_i)
 
     # Trace l'interpolation linéaire en imprimant le coefficient d'exactitude
     def plot_linear_regression(self, day, sensors_only = False):
-        # assert len(T) == lent(depths), "a temperature measure must be assigned to a single depth"
+        # assert len(T) == len(depths), "a temperature measure must be assigned to a single depth"
+        # créer l'objet matrix
+        self.create_profil_temperature(verbose = False)
         Y = self.ln_amp(day)
+        print('Y : ', Y)
         if sensors_only :
             X = np.array(self.depth_sensors).reshape(-1,1)
-            Y = [Y[j] for j in self.depth_sensors / ( self.river_bed / (self.nb_cells - 1))]  # selecting only depth_sensors values. !!Note!! : river_bed / nb_cells must be a divisor of 0.1
+            Y = [Y[j] for j in self.depth_sensors_index_list]  # selecting only depth_sensors values. !!Note!! : river_bed / nb_cells must be a divisor of 0.1
             Lr = self.linear_regression(day, sensors_only = True)
         else :
             depths_cell = self.depth_cells[:self.last_cell]
@@ -265,7 +272,9 @@ class time_series_multiperiodic:
     def plot_mosaic_pearson(self, list_k):
         # To save the values of the attributes, so that the method doesn't change them
         T = self.multi_periodic
+        self.plot_temp()
         k = self.moinslog10IntrinK
+        print(k)
 
         n_rows = len(list_k)//2 + len(list_k)%2
         fig, ax = plt.subplots(n_rows, ncols=2, constrained_layout = True)
@@ -285,7 +294,10 @@ class time_series_multiperiodic:
                     ax[i][j].set_ylim(-1,1) 
         plt.show()
 
+        print(k)
+        self.plot_temp()
         self.multi_periodic = T
+        self.plot_temp()
         self.moinslog10IntrinK = k
     
     # Real data analysis methods
