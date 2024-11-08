@@ -100,9 +100,9 @@ class time_series_multiperiodic:
     
     def nb_days_in_period(self): #method to get the number of days in the period
         if self.type == "multi_periodic":
-            return int(self.multi_periodic[0].shape[0]/self.nb_per_day())
+            return int(self.multi_periodic[0].shape[0]/self.nb_per_day(verbose = False))
         elif self.type == "ts":
-            return int(self.time_series[0].shape[0]/self.nb_per_day())
+            return int(self.time_series[0].shape[0]/self.nb_per_day(verbose = False))
 
     # if create river signal = True, then the multi periodic signal is auto generated
     def create_profil_temperature(self, verbose = True, create_signal = True):
@@ -204,10 +204,7 @@ class time_series_multiperiodic:
         ln_amp_i = self.ln_amp(day)
         if sensors_only :
             depth_cells = self.depth_sensors
-            print(self.depth_sensors_index_list)
-            print(ln_amp_i)
             ln_amp_i = [ln_amp_i[j] for j in self.depth_sensors_index_list]
-            print(ln_amp_i)
         else :
             # It's a model so we should reject the last values (close to the aquifere)
             depth_cells = self.depth_cells[:self.last_cell]
@@ -221,7 +218,6 @@ class time_series_multiperiodic:
         # créer l'objet matrix
         self.create_profil_temperature(verbose = False)
         Y = self.ln_amp(day)
-        print('Y : ', Y)
         if sensors_only :
             X = np.array(self.depth_sensors).reshape(-1,1)
             Y = [Y[j] for j in self.depth_sensors_index_list]  # selecting only depth_sensors values. !!Note!! : river_bed / nb_cells must be a divisor of 0.1
@@ -272,9 +268,8 @@ class time_series_multiperiodic:
     def plot_mosaic_pearson(self, list_k):
         # To save the values of the attributes, so that the method doesn't change them
         T = self.multi_periodic
-        self.plot_temp()
         k = self.moinslog10IntrinK
-        print(k)
+        matrix = self.matrix
 
         n_rows = len(list_k)//2 + len(list_k)%2
         fig, ax = plt.subplots(n_rows, ncols=2, constrained_layout = True)
@@ -294,11 +289,9 @@ class time_series_multiperiodic:
                     ax[i][j].set_ylim(-1,1) 
         plt.show()
 
-        print(k)
-        self.plot_temp()
         self.multi_periodic = T
-        self.plot_temp()
         self.moinslog10IntrinK = k
+        self.matrix = matrix
     
     # Real data analysis methods
 
