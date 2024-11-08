@@ -743,8 +743,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 break  # on sort du burn-in
             nb_burn_in_iter += 1  # incrémentation du numbre d'itération de burn-in
         self.nb_burn_in_iter = nb_burn_in_iter
+        return(current_sigma2,X,nb_burn_in_iter,_energy_burn_in,_flow_iter,_temp_iter)
 
-    def burning_single_chain(self,X,sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,ind_ref,_flows,typealgo):
+    def burning_single_chain(self,X,sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,ind_ref,_flows,typealgo,_flow_iter,_temp_iter):
         for i in trange(nb_iter, desc="Burn in phase"): #nb_iter échantillonnage et n retient celui dnt l'energie est min
             init_layers = all_priors.sample()
             if typealgo=="no sigma":
@@ -764,19 +765,19 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     sigma2_temp=init_sigma2_temp,
                 )
             )
-        self._initial_energies = [state.energy for state in self._states]
+        
         self._states = [min(self._states, key=attrgetter("energy"))]
-        self._acceptance = np.zeros(nb_iter)
+        _energy_burn_in = np.array([state.energy for state in self._states])
+        _flow_iter[0] = self.get_flows_solve()
+        _temp_iter[0] = self.get_temperatures_solve()
 
-        _temperatures[0] = self.get_temperatures_solve()
-        _flows[0] = self.get_flows_solve()
-
-        nb_accepted = 0
-
-        current_sigma2=[]        #def current_sigma2[j] et son state associé
-        X=[state.layers for state in self._states]
+        nb_burn_in_iter= 1
         initial_state=self._states
-        #faut qu'en sortie j'ai mon X de défini
+        current_sigma2=initial_state.sigma2        #def current_sigma2[j] et son state associé
+        X=np.array([layer for layer in initial_state.layers])
+        return(current_sigma2,X,nb_burn_in_iter,_energy_burn_in,_flow_iter,_temp_iter)
+
+       
 
        
     @checker
@@ -928,11 +929,18 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             current_sigma2=init_sigma2
             if verbose:
                 print("--- Begin Burn in phase ---")
-            if nb_chain=1:
-                self.burning_single_chain(self,X,sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,ind_ref,_flows,typealgo)
+            if nb_chain==1:
+                burning=self.burning_single_chain(self,X,sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,ind_ref,_flows,typealgo,_flow_iter,_temp_iter)
             else:
-                self.burning_DREAM(nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose)
+                burning=self.burning_DREAM(self,nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose)
 
+            #récupération des variables après le burn-in
+            current_sigma2=burning[0]
+            X=burning[1]
+            nb_burn_in_iter=burning[2]
+            _energy_burn_in=burning[3]
+            _flow_iter=burning[4]
+            _temp_iter=burning[5]
             # Transition après le burn in
             del _params  # la variable _params n'est plus utile
 
