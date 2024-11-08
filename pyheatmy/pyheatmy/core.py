@@ -48,7 +48,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         heat_source=np.ndarray,
         nb_cells=NB_CELLS,
         rac="~/OUTPUT_MOLONARI1D/generated_data",  # printing directory by default,
-        verbose=False
+        verbose=False,
     ):
 
         self._dir_print = create_dir(
@@ -310,10 +310,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             H_res = H_strat.compute_H_stratified()
 
             nablaH = H_strat.nablaH()
-            
+
             T_strat = T_stratified(
                 nablaH,
-                a,
                 Ss_list,
                 moinslog10IntrinK_list,
                 n_list,
@@ -653,7 +652,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ## zhan Nov8
             T_strat = T_stratified(
                 nablaH,
-                a,
                 Ss_list,
                 moinslog10IntrinK_list,
                 n_list,
@@ -849,129 +847,60 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     flows_solve = property(get_flows_solve)
     # récupération des débits spécifiques au cours du temps à toutes les profondeurs (par défaut) ou bien à une profondeur donnée
 
-    def compute_mcmc_without_sigma2(
+    def sampling_DREAM(
         self,
-        nb_iter: int,
-        all_priors: Union[
-            AllPriors,
-            Sequence[
-                Union[
-                    LayerPriors,
-                    Sequence[Union[str, float, Sequence[Union[Prior, dict]]]],
-                ]
-            ],
-        ],
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
-        verbose=True,
-        sigma2=1.0,
+        nb_chain,
+        nb_layer,
+        nb_param,
+        X,
+        dX,
+        x_new,
+        j,
+        delta,
+        ncr,
+        c,
+        c_star,
+        cr_vec,
+        pcr,
+        ranges,
     ):
-        if isinstance(quantile, Number):
-            quantile = [quantile]
+        for l in range(nb_layer):
+            # actualiation des paramètres DREAM pour la couche l
+            id = np.random.choice(ncr, p=pcr[l])
+            z = np.random.uniform(0, 1, nb_param)
+            A = z <= cr_vec[id]
+            d_star = np.sum(A)
+            if d_star == 0:
+                A[np.argmin(z)] = True
+                d_star = 1
+            lambd = np.random.uniform(-c, c, d_star)
+            zeta = np.random.normal(0, c_star, d_star)
+            choose = np.delete(np.arange(nb_chain), j)
+            a = np.random.choice(choose, delta, replace=False)
+            choose = np.delete(np.arange(nb_chain), a)
+            b = np.random.choice(choose, delta, replace=False)
 
-        def conv(layer):
-            name, prof, priors = layer
-            if isinstance(priors, dict):
-                return (
-                    name,
-                    prof,
-                    [Prior(*args) for args in (priors[lbl] for lbl in PARAM_LIST)],
-                )
-            else:
-                return layer
-
-        if not isinstance(all_priors, AllPriors):
-            all_priors = AllPriors([LayerPriors(*conv(layer)) for layer in all_priors])
-
-        dz = self._real_z[-1] / self._nb_cells
-        _z_solve = dz / 2 + np.array([k * dz for k in range(self._nb_cells)])
-        ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-        temp_ref = self._T_measures[:, :].T
-
-        def compute_energy(temp: np.array):
-            norm2 = np.nansum((temp - temp_ref) ** 2)
-            return 0.5 * norm2 / sigma2
-
-        def compute_log_acceptance(actual_energy: float, prev_energy: float):
-            return prev_energy - actual_energy
-
-        if verbose:
-            print(
-                "--- Compute Mcmc ---",
-                "Priors :",
-                *(f"    {prior}" for prior in all_priors),
-                f"Number of cells : {self._nb_cells}",
-                f"Number of iterations : {nb_iter}",
-                "Launch Mcmc",
-                sep="\n",
+            gamma = 2.38 / np.sqrt(2 * d_star * delta)
+            gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
+            dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
+                X[a, l][:, A] - X[b, l][:, A], axis=0
             )
 
-        self._states = list()
-        _temperatures = np.zeros(
-            (nb_iter + 1, self._nb_cells, len(self._times)), np.float32
-        )
-        _flows = np.zeros((nb_iter + 1, self._nb_cells, len(self._times)), np.float32)
+            x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
+            x_new[l] = check_range(
+                x_new[l], ranges[l]
+            )  # vérification des bornes et réajustement si besoin
+        return (x_new, id)
 
-        for _ in trange(1000, desc="Init Mcmc ", file=sys.stdout):
-            init_layers = all_priors.sample()
-            self.compute_solve_transi(init_layers, False)  # verbose
-            self._states.append(
-                State(
-                    layers=init_layers,
-                    energy=compute_energy(self.temperatures_solve[ind_ref, :]),
-                    ratio_accept=1,
-                    sigma2_temp=sigma2,
-                )
-            )
+    def sample_random_walk(self, nb_layer, X, x_new, j, all_priors):
+        for l in range(nb_layer):
+            for p in range(len(X[j, l])):
+                x_new[l][p] = all_priors[l][p].perturb(X[j, l][p])
+        return x_new
 
-        self._initial_energies = [state.energy for state in self._states]
-        self._states = [min(self._states, key=attrgetter("energy"))]
-        self._acceptance = np.zeros(nb_iter)
-
-        _temperatures[0] = self.get_temperatures_solve()
-        _flows[0] = self.get_flows_solve()
-
-        nb_accepted = 0
-
-        for i in trange(nb_iter, desc="Mcmc Computation ", file=sys.stdout):
-            current_layers = all_priors.perturb(self._states[-1].layers)
-            self.compute_solve_transi(current_layers, False)  # verbose
-            energy = compute_energy(self.temperatures_solve[ind_ref, :])
-            log_ratio_accept = compute_log_acceptance(energy, self._states[-1].energy)
-            if np.log(random()) < log_ratio_accept:
-                nb_accepted += 1
-                self._states.append(
-                    State(
-                        layers=current_layers,
-                        energy=energy,
-                        ratio_accept=nb_accepted / (i + 1),
-                        sigma2_temp=sigma2,
-                    )
-                )
-            else:
-                self._states.append(self._states[-1])
-
-            _temperatures[i] = self.get_temperatures_solve()
-            _flows[i] = self.get_flows_solve()
-            self._acceptance[i] = nb_accepted / (i + 1)
-
-        self._quantiles_temperatures = {
-            quant: res
-            for quant, res in zip(
-                quantile, np.quantile(_temperatures, quantile, axis=0)
-            )
-        }
-        self._quantiles_flows = {
-            quant: res
-            for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
-        }
-        if verbose:
-            print("Quantiles Done.")
-
-        # self.compute_solve_transi.reset()
-
-    def compute_mcmc_with_sigma2(
+    @checker
+    def compute_mcmc(
         self,
-        nb_iter: int,
         all_priors: Union[
             AllPriors,
             Sequence[
@@ -981,132 +910,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 ]
             ],
         ],
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
-        verbose=True,
-        sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
-    ):
-        if isinstance(quantile, Number):
-            quantile = [quantile]
-
-        if not isinstance(all_priors, AllPriors):
-            all_priors = AllPriors([LayerPriors(*conv(layer)) for layer in all_priors])
-
-        dz = self._real_z[-1] / self._nb_cells
-        _z_solve = dz / 2 + np.array([k * dz for k in range(self._nb_cells)])
-        ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-        temp_ref = self._T_measures[:, :].T
-
-        def compute_energy(temp: np.array, sigma2, sigma2_distrib):
-            norm2 = np.nansum((temp - temp_ref) ** 2)
-            return (
-                0.5 * norm2 / sigma2
-                + np.size(self._T_measures) * np.log(sigma2) / 2
-                - np.log(sigma2_distrib(sigma2))
-            )
-
-        def compute_log_acceptance(actual_energy: float, prev_energy: float):
-            return prev_energy - actual_energy
-
-        if verbose:
-            print(
-                "--- Compute Mcmc ---",
-                "Priors :",
-                *(f"    {prior}" for prior in all_priors),
-                f"Number of cells : {self._nb_cells}",
-                f"Number of iterations : {nb_iter}",
-                "Launch Mcmc",
-                sep="\n",
-            )
-
-        self._states = list()
-        _temperatures = np.zeros(
-            (nb_iter + 1, self._nb_cells, len(self._times)), np.float32
-        )
-        _flows = np.zeros((nb_iter + 1, self._nb_cells, len(self._times)), np.float32)
-
-        for _ in trange(1000, desc="Init Mcmc ", file=sys.stdout):
-            init_layers = all_priors.sample()
-            init_sigma2_temp = sigma2_temp_prior.sample()
-            self.compute_solve_transi(init_layers, False)  # verbose
-            self._states.append(
-                State(
-                    layers=init_layers,
-                    energy=compute_energy(
-                        self.temperatures_solve[ind_ref, :],
-                        sigma2=init_sigma2_temp,
-                        sigma2_distrib=sigma2_temp_prior.density,
-                    ),
-                    ratio_accept=1,
-                    sigma2_temp=init_sigma2_temp,
-                )
-            )
-
-        self._initial_energies = [state.energy for state in self._states]
-        self._states = [min(self._states, key=attrgetter("energy"))]
-        self._acceptance = np.zeros(nb_iter)
-
-        _temperatures[0] = self.get_temperatures_solve()
-        _flows[0] = self.get_flows_solve()
-
-        nb_accepted = 0
-
-        for i in trange(nb_iter, desc="Mcmc Computation ", file=sys.stdout):
-            current_layers = all_priors.perturb(self._states[-1].layers)
-            current_sigma2_temp = sigma2_temp_prior.perturb(
-                self._states[-1].sigma2_temp
-            )
-            self.compute_solve_transi(current_layers, False)  # verbose
-            energy = compute_energy(
-                self.temperatures_solve[ind_ref, :],
-                sigma2=current_sigma2_temp,
-                sigma2_distrib=sigma2_temp_prior.density,
-            )
-            log_ratio_accept = compute_log_acceptance(energy, self._states[-1].energy)
-            if np.log(random()) < log_ratio_accept:
-                nb_accepted += 1
-                self._states.append(
-                    State(
-                        layers=current_layers,
-                        energy=energy,
-                        ratio_accept=nb_accepted / (i + 1),
-                        sigma2_temp=current_sigma2_temp,
-                    )
-                )
-            else:
-                self._states.append(self._states[-1])
-
-            _temperatures[i] = self.get_temperatures_solve()
-            _flows[i] = self.get_flows_solve()
-            self._acceptance[i] = nb_accepted / (i + 1)
-
-        self._quantiles_temperatures = {
-            quant: res
-            for quant, res in zip(
-                quantile, np.quantile(_temperatures, quantile, axis=0)
-            )
-        }
-        self._quantiles_flows = {
-            quant: res
-            for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
-        }
-        if verbose:
-            print("Quantiles Done.")
-
-    def compute_dream_mcmc_without_sigma2(
-        self,
-        nb_iter: int,
-        all_priors: Union[
-            AllPriors,
-            Sequence[
-                Union[
-                    LayerPriors,
-                    Sequence[Union[str, float, Sequence[Union[Prior, dict]]]],
-                ]
-            ],
-        ],
-        verbose,
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
-        sigma2=1.0,
+        quantile: Union[float, Sequence[float]] = (QUANTILE_MIN, MEDIANE, QUANTILE_MAX),
+        verbose=False,
+        typealgo="no sigma",
+        nb_iter=NITMCMC,
         nb_chain=10,
         delta=3,
         ncr=3,
@@ -1118,8 +925,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         n_sous_ech_time=1,
         threshold=1.2,
     ):
-
+        
         process = psutil.Process()
+
+        if typealgo == "no sigma":
+            sigma2 = DEFAULT_SIGMA2_T
+            sigma2_distrib = None
+        else:
+            sigma2_temp_prior = Prior(
+                (SIGMA2_MIN_T, SIGMA2_MAX_T), RANDOMWALKSIGMAT, lambda x: 1 / x
+            )
+            sigma2_distrib = sigma2_temp_prior.density
 
         # vérification des types des arguments
         if isinstance(quantile, Number):
@@ -1136,7 +952,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # quantités des différents paramètres
         nb_layer = len(all_priors)  # nombre de couches
-        nb_param = 6  # nombre de paramètres à estimer par couche
+        nb_param = N_PARAM_MCMC  # nombre de paramètres à estimer par couche
         nb_accepted = 0  # nombre de propositions acceptées
         nb_burn_in_iter = 0  # nombre d'itération de burn-in
 
@@ -1201,7 +1017,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 sep="\n",
             )
 
+        def compute_energy_mcmc(temp1, temp2, remanence, sigma2, sigma2_distrib):
+            if sigma2_distrib is None:
+                return compute_energy(temp1, temp2, remanence, sigma2)
+            else:
+                return compute_energy_with_distrib(temp1, temp2, sigma2, sigma2_distrib)
+
         # initialisation des chaines
+        init_sigma2 = []
         for j in range(nb_chain):
             self.compute_solve_transi(
                 convert_to_layer(nb_layer, name_layer, z_low, X[j]),
@@ -1209,60 +1032,89 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             )
             _temp_iter[j] = self.get_temperatures_solve()
             _flow_iter[j] = self.get_flows_solve()
-            _energy_burn_in[0][j] = compute_energy(
-                _temp_iter[j][ind_ref], temp_ref, sigma2, remanence
-            )
+            if typealgo == "no sigma":
+                init_sigma2.append(sigma2)
+                _energy_burn_in[0][j] = compute_energy_mcmc(
+                    _temp_iter[j][ind_ref], temp_ref, remanence, sigma2, sigma2_distrib
+                )
+            else:
+                init_sigma2_temp = sigma2_temp_prior.sample()
+                init_sigma2.append(init_sigma2_temp)
+                _energy_burn_in[0][j] = compute_energy_mcmc(
+                    _temp_iter[j][ind_ref],
+                    temp_ref,
+                    remanence,
+                    init_sigma2_temp,
+                    sigma2_distrib,
+                )
 
         print(
             f"Initialisation - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}"
         )
 
+        current_sigma2 = init_sigma2
         if verbose:
             print("--- Begin Burn in phase ---")
         for i in trange(nb_iter, desc="Burn in phase"):
             # Initialisation pour les nouveaux paramètres
             std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
-
             for j in range(nb_chain):
                 x_new = np.zeros((nb_layer, nb_param))
                 dX = np.zeros((nb_layer, nb_param))  # perturbation DREAM
-                for l in range(nb_layer):
-                    # actualiation des paramètres DREAM pour la couche l
-                    id = np.random.choice(ncr, p=pcr[l])
-                    z = np.random.uniform(0, 1, nb_param)
-                    A = z <= cr_vec[id]
-                    d_star = np.sum(A)
-                    if d_star == 0:
-                        A[np.argmin(z)] = True
-                        d_star = 1
-                    lambd = np.random.uniform(-c, c, d_star)
-                    zeta = np.random.normal(0, c_star, d_star)
-                    choose = np.delete(np.arange(nb_chain), j)
-                    a = np.random.choice(choose, delta, replace=False)
-                    choose = np.delete(np.arange(nb_chain), a)
-                    b = np.random.choice(choose, delta, replace=False)
-
-                    gamma = 2.38 / np.sqrt(2 * d_star * delta)
-                    gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
-                    dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
-                        X[a, l][:, A] - X[b, l][:, A], axis=0
-                    )
-
-                    x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
-                    x_new[l] = check_range(
-                        x_new[l], ranges[l]
-                    )  # vérification des bornes et réajustement si besoin
-
+                if typealgo == "no sigma":
+                    new_sigma2_temp = sigma2
+                else:
+                    new_sigma2_temp = sigma2_temp_prior.perturb(current_sigma2[j])
+                if nb_chain > 1:
+                    x_new = self.sampling_DREAM(
+                        nb_chain,
+                        nb_layer,
+                        nb_param,
+                        X,
+                        dX,
+                        x_new,
+                        j,
+                        delta,
+                        ncr,
+                        c,
+                        c_star,
+                        cr_vec,
+                        pcr,
+                        ranges,
+                    )[0]
+                    id = self.sampling_DREAM(
+                        nb_chain,
+                        nb_layer,
+                        nb_param,
+                        X,
+                        dX,
+                        x_new,
+                        j,
+                        delta,
+                        ncr,
+                        c,
+                        c_star,
+                        cr_vec,
+                        pcr,
+                        ranges,
+                    )[1]
+                else:
+                    x_new = self.sample_random_walk(nb_layer, X, x_new, j, all_priors)
                 # Calcul du profil de température associé aux nouveaux paramètres
                 self.compute_solve_transi(
                     convert_to_layer(nb_layer, name_layer, z_low, x_new),
-                    False,  # verbose
+                    verbose=False,
                 )
                 temp_new = (
                     self.get_temperatures_solve()
                 )  # récupération du profil de température
-                energy_new = compute_energy(
-                    temp_new[ind_ref], temp_ref, sigma2, remanence
+
+                energy_new = compute_energy_mcmc(
+                    temp_new[ind_ref],
+                    temp_ref,
+                    remanence,
+                    new_sigma2_temp,
+                    sigma2_distrib,
                 )  # calcul de l'énergie
 
                 # calcul de la probabilité d'accpetation
@@ -1276,21 +1128,27 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     _temp_iter[j] = temp_new  # actualisation du profil de température
                     _flow_iter[j] = self.get_flows_solve()  # actualisation du débit
                     _energy_burn_in[i + 1][j] = energy_new  # actualisation de l'énergie
+                    current_sigma2[j] = new_sigma2_temp  # actualisation de sigma2_temp
                 else:
                     dX = np.zeros((nb_layer, nb_param))
                     _energy_burn_in[i + 1][j] = _energy_burn_in[i][
                         j
                     ]  # on garde la même énergie
+                    current_sigma2[j] = current_sigma2[
+                        j
+                    ]  # on garde la même sigma2_temp
 
                 # Mise à jour des paramètres de la couche j pour DREAM
-                for l in range(nb_layer):
-                    J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
-                    n_id[l, id] += 1
+                if nb_chain > 1:
+                    for l in range(nb_layer):
+                        J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
+                        n_id[l, id] += 1
 
             # Mise à jour du pcr pour chaque couche pour DREAM
-            for l in range(nb_layer):
-                pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
-                pcr[l] = pcr[l] / np.sum(pcr[l])
+            if nb_chain > 1:
+                for l in range(nb_layer):
+                    pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
+                    pcr[l] = pcr[l] / np.sum(pcr[l])
 
             # Actualisation des paramètres à la fin de l'itération
             _params[i + 1] = X
@@ -1332,6 +1190,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # initialisation des états
         for j in range(nb_chain):
+            init_sigma2_temp = current_sigma2[j]
             self._states.append(
                 State(
                     layers=convert_to_layer(nb_layer, name_layer, z_low, X[j]),
@@ -1339,7 +1198,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
                     ][j],
                     ratio_accept=1,
-                    sigma2_temp=sigma2,
+                    sigma2_temp=init_sigma2_temp,
                 )
             )
 
@@ -1353,99 +1212,109 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for j in range(nb_chain):
                 x_new = np.zeros((nb_layer, nb_param), np.float32)
                 dX = np.zeros((nb_layer, nb_param), np.float32)  # perturbation DREAM
-                for l in range(nb_layer):
-                    # actualiation des paramètres DREAM pour la couche l
-                    id = np.random.choice(ncr, p=pcr[l])
-                    z = np.random.uniform(0, 1, nb_param)
-                    A = z <= cr_vec[id]
-                    d_star = np.sum(A)
-                    if d_star == 0:
-                        A[np.argmin(z)] = True
-                        d_star = 1
-                    lambd = np.random.uniform(-c, c, d_star)
-                    zeta = np.random.normal(0, c_star, d_star)
-                    choose = np.delete(np.arange(nb_chain), j)
-                    a = np.random.choice(choose, delta, replace=False)
-                    choose = np.delete(np.arange(nb_chain), a)
-                    b = np.random.choice(choose, delta, replace=False)
-                    gamma = 2.38 / np.sqrt(2 * d_star * delta)
-                    gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
-                    dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
-                        X[a, l][:, A] - X[b, l][:, A], axis=0
-                    )
-
-                    x_new[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
-                    x_new[l] = check_range(
-                        x_new[l], ranges[l]
-                    )  # vérifaication des bornes et réajustement si besoin
-
-                # Calcul du profil de température associé aux nouveaux paramètres
-                self.compute_solve_transi(
-                    convert_to_layer(nb_layer, name_layer, z_low, x_new),
-                    False,  # verbose
-                )
-                temp_new = (
-                    self.get_temperatures_solve()
-                )  # récupération du profil de température
-
-                energy_new = compute_energy(
-                    temp_new[ind_ref], temp_ref, sigma2, remanence
-                )  # calcul de l'énergie
-
-                # calcul de la probabilité d'accpetation
-                log_ratio_accept = compute_log_acceptance(
-                    energy_new, self._states[-nb_chain].energy
-                )
-
-                # Acceptation ou non des nouveaux paramètres
-                if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
-                    X[j] = x_new
-
-                    _temp_iter[j] = temp_new
-
-                    _flow_iter[j] = self.get_flows_solve()
-
-                    if (i + 1) % n_sous_ech_iter == 0:
-                        # Si i+1 est un multiple de n_sous_ech_iter, on stocke
-                        k = (i + 1) // n_sous_ech_iter
-                        _temp[k, j] = temp_new[::n_sous_ech_space, ::n_sous_ech_time]
-                        _flows[k, j] = _flow_iter[
-                            j, ::n_sous_ech_space, ::n_sous_ech_time
-                        ]
-
-                    nb_accepted += 1
-                    self._acceptance[j] += 1
-                    self._states.append(
-                        State(
-                            layers=convert_to_layer(nb_layer, name_layer, z_low, x_new),
-                            energy=energy_new,
-                            ratio_accept=nb_accepted / (i * nb_chain + j + 1),
-                            sigma2_temp=sigma2,
-                        )
-                    )
+                if typealgo == "no sigma":
+                    new_sigma2_temp = sigma2
                 else:
-                    dX = np.zeros((nb_layer, nb_param), np.float32)
+                    new_sigma2_temp = sigma2_temp_prior.perturb(current_sigma2[j])
+                if nb_chain > 1:
+                    x_new = self.sampling_DREAM(
+                        nb_chain,
+                        nb_layer,
+                        nb_param,
+                        X,
+                        dX,
+                        x_new,
+                        j,
+                        delta,
+                        ncr,
+                        c,
+                        c_star,
+                        cr_vec,
+                        pcr,
+                        ranges,
+                    )[0]
+                    id = self.sampling_DREAM(
+                        nb_chain,
+                        nb_layer,
+                        nb_param,
+                        X,
+                        dX,
+                        x_new,
+                        j,
+                        delta,
+                        ncr,
+                        c,
+                        c_star,
+                        cr_vec,
+                        pcr,
+                        ranges,
+                    )[1]
+                else:
+                    x_new = self.sample_random_walk(nb_layer, X, x_new, j, all_priors)
 
-                    if (i + 1) % n_sous_ech_iter == 0:
-                        # Si i+1 est un multiple de n_sous_ech_iter, on stocke
-                        k = (i + 1) // n_sous_ech_iter
-                        _temp[k][j] = _temp_iter[j][
-                            ::n_sous_ech_space, ::n_sous_ech_time
-                        ]
-                        _flows[k][j] = _flow_iter[j][
-                            ::n_sous_ech_space, ::n_sous_ech_time
-                        ]
+            # Calcul du profil de température associé aux nouveaux paramètres
+            self.compute_solve_transi(
+                convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                False,  # verbose
+            )
+            temp_new = (
+                self.get_temperatures_solve()
+            )  # récupération du profil de température
 
-                    self._states.append(
-                        State(
-                            layers=self._states[-nb_chain].layers,
-                            energy=self._states[-nb_chain].energy,
-                            ratio_accept=nb_accepted / (i * nb_chain + j + 1),
-                            sigma2_temp=sigma2,
-                        )
-                    )  # ajout de l'état à la liste des états
+            energy_new = compute_energy_mcmc(
+                temp_new[ind_ref], temp_ref, remanence, new_sigma2_temp, sigma2_distrib
+            )  # calcul de l'énergie
 
-                # Mise à jour des paramètres de la couche j pour DREAM
+            # calcul de la probabilité d'accpetation
+            log_ratio_accept = compute_log_acceptance(
+                energy_new, self._states[-nb_chain].energy
+            )
+
+            # Acceptation ou non des nouveaux paramètres
+            if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
+                X[j] = x_new
+                current_sigma2[j] = new_sigma2_temp
+
+                _temp_iter[j] = temp_new
+
+                _flow_iter[j] = self.get_flows_solve()
+
+                if (i + 1) % n_sous_ech_iter == 0:
+                    # Si i+1 est un multiple de n_sous_ech_iter, on stocke
+                    k = (i + 1) // n_sous_ech_iter
+                    _temp[k, j] = temp_new[::n_sous_ech_space, ::n_sous_ech_time]
+                    _flows[k, j] = _flow_iter[j, ::n_sous_ech_space, ::n_sous_ech_time]
+
+                nb_accepted += 1
+                self._acceptance[j] += 1
+                self._states.append(
+                    State(
+                        layers=convert_to_layer(nb_layer, name_layer, z_low, x_new),
+                        energy=energy_new,
+                        ratio_accept=nb_accepted / (i * nb_chain + j + 1),
+                        sigma2_temp=current_sigma2[j],
+                    )
+                )
+            else:
+                dX = np.zeros((nb_layer, nb_param), np.float32)
+                current_sigma2[j] = current_sigma2[j]
+                if (i + 1) % n_sous_ech_iter == 0:
+                    # Si i+1 est un multiple de n_sous_ech_iter, on stocke
+                    k = (i + 1) // n_sous_ech_iter
+                    _temp[k][j] = _temp_iter[j][::n_sous_ech_space, ::n_sous_ech_time]
+                    _flows[k][j] = _flow_iter[j][::n_sous_ech_space, ::n_sous_ech_time]
+
+                self._states.append(
+                    State(
+                        layers=self._states[-nb_chain].layers,
+                        energy=self._states[-nb_chain].energy,
+                        ratio_accept=nb_accepted / (i * nb_chain + j + 1),
+                        sigma2_temp=current_sigma2[j],
+                    )
+                )  # ajout de l'état à la liste des états
+
+            # Mise à jour des paramètres de la couche j pour DREAM
+            if nb_chain > 1:
                 for l in range(nb_layer):
                     J[l, id] += np.sum((dX[l] / std_X[l]) ** 2)
                     n_id[l, id] += 1
@@ -1479,67 +1348,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         if verbose:
             print("Quantiles computed")
-
-    @checker
-    def compute_mcmc(
-        self,  # la colonne
-        nb_iter: int,
-        all_priors: Union[
-            AllPriors,
-            Sequence[
-                Union[
-                    LayerPriors,
-                    Sequence[Union[str, float, Sequence[Union[Prior, dict]]]],
-                ]
-            ],
-        ],
-        # les quantiles pour l'affichage de stats sur les valeurs de température
-        quantile: Union[float, Sequence[float]] = (0.05, 0.5, 0.95),
-        nb_chain: int = 6,
-        delta=2,
-        ncr=3,
-        c=0.1,
-        c_star=1e-6,
-        verbose=True,  # affiche texte explicatifs ou non
-        sigma2=1.0,
-        sigma2_temp_prior: Prior = Prior((0.01, np.inf), 1, lambda x: 1 / x),
-        remanence=1,
-        n_sous_ech_iter=10,
-        n_sous_ech_space=1,
-        n_sous_ech_time=1,
-        threshold=1.2,
-    ):
-        if nb_chain < 2:
-            if sigma2 is None:
-                self.compute_mcmc_with_sigma2(
-                    nb_iter,
-                    all_priors,
-                    quantile,
-                    verbose,
-                    sigma2_temp_prior,
-                )
-            else:
-                self.compute_mcmc_without_sigma2(
-                    nb_iter, all_priors, self._nb_cells, quantile, verbose, sigma2
-                )
-        else:
-            self.compute_dream_mcmc_without_sigma2(
-                nb_iter,
-                all_priors,
-                quantile,
-                verbose,
-                sigma2,
-                nb_chain,
-                delta,
-                ncr,
-                c,
-                c_star,
-                remanence,
-                n_sous_ech_iter,
-                n_sous_ech_space,
-                n_sous_ech_time,
-                threshold,
-            )
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
@@ -1721,7 +1529,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         temperatures[0] = self._T_riv
         temperatures[len(ids) + 1] = self._T_aq
         for id in range(len(ids)):
-            # print(self.get_temperatures_solve()) # mise en commentaire car on ne sait pas à quoi elle sert
+            # print(self.get_temperatures_solve()) # mise en commentaire car on ne sait pas à quoi sert ce print
             temperatures[id + 1] = self.get_temperatures_solve()[ids[id]]
             # print(f"printing extracted temperatures:{id+1}")
             # print(temperatures[id+1])

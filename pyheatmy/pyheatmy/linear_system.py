@@ -10,6 +10,7 @@ from pyheatmy.solver import solver, tri_product
 from pyheatmy.config import *
 
 
+# Première classe qui définit et initie les paramètres physiques communs des systèmes linéaires de la classe H_stratified et T_stratified
 class Linear_system:
     def __init__(
         self,
@@ -90,12 +91,11 @@ class Linear_system:
         self.ke_list = self.compute_ke_list()
         self.ae_list = self.compute_ae_list()
         self.H_res = self.compute_H_res()
-        # self.dK_list = self.compute_dK_list(self.K_list, self.n_cell, self.dz)
-        self.dK_list = np.gradient(self.K_list, self.dz)
-        self.dK_list = zeros(self.n_cell, float32)
+        self.dK_list = self.compute_dK_list(self.K_list, self.n_cell, self.dz)
         self.KsurSs_list = self.compute_KsurSs_list()
 
 
+# Classe qui définit le système linéaire pour l'équation de la diffusivité
 class H_stratified(Linear_system):
     def __init__(
         self,
@@ -341,11 +341,11 @@ class H_stratified(Linear_system):
         return c
 
 
+# Classe qui définit le système linéaire pour l'équation de la chaleur
 class T_stratified(Linear_system):
     def __init__(
         self,
         nablaH,
-        a,
         Ss_list,
         moinslog10IntrinK_list,
         n_list,
@@ -374,7 +374,6 @@ class T_stratified(Linear_system):
             H_init,
             T_init,
         )
-        self.a = a
         self.Ss_list = Ss_list
         self.moinslog10IntrinK_list = moinslog10IntrinK_list
         self.n_list = n_list
