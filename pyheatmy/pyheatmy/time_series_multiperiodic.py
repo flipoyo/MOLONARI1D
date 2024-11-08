@@ -127,10 +127,10 @@ class time_series_multiperiodic:
 
             # modèle une couche
             if nb_layers == 1:
-                self.layers_list = layersListCreator([(self.name, self.river_bed, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs)])
+                self.layers_list = layersListCreator([(self.name, self.river_bed, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs, self.q)])
             if nb_layers == 2:
-                self.layers_list = layersListCreator([(self.name, self.river_bed, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs), 
-                                            (self.name2, self.river_bed2, self.moinslog10IntrinK2, self.n2, self.lambda_s2, self.rhos_cs2)])
+                self.layers_list = layersListCreator([(self.name, self.river_bed, self.moinslog10IntrinK, self.n, self.lambda_s, self.rhos_cs, self.q), 
+                                            (self.name2, self.river_bed2, self.moinslog10IntrinK2, self.n2, self.lambda_s2, self.rhos_cs2, self.q)])
 
             # un dictionnaire qui facilite le paramétrage avec des variables globales définies plus haut
             time_series_dict_user1 = {
@@ -180,11 +180,7 @@ class time_series_multiperiodic:
             self.col_dict = col_dict
 
             column = Column.from_dict(self.col_dict,verbose=False)
-
-            print(self.layers_list)
-
-            column._compute_solve_transi_multiple_layers(self.layers_list, self.nb_cells, verbose=False)
-
+            column._compute_solve_transi_multiple_layers(self.layers_list, self.nb_cells)
             self.matrix = np.transpose(column._temperatures)
 
             if verbose:
