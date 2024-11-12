@@ -19,7 +19,8 @@ class TemperatureSensor {
         
         // Measure the temperature
         TEMP_T MeasureTemperature();
-
+        TEMP_T MeasureTemperature2();
+        
     private :
         // Pin to read data from (Analog pin)
         const int dataPin;
