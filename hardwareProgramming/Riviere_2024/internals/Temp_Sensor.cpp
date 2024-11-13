@@ -6,7 +6,7 @@
 #define TEMP_SENSOR
 
 #include "Temp_Sensor.hpp"
-
+#include <cmath>
 
 // Initialise the temperature sensor for the first time. 
 TemperatureSensor::TemperatureSensor(int _dataPin, int _enablePin, float _offset, float _scale) : dataPin(_dataPin), enablePin(_enablePin), offset(_offset), scale(_scale) {
@@ -25,6 +25,16 @@ TEMP_T TemperatureSensor::MeasureTemperature() {
   TEMP_T temp = analogRead(dataPin);
   digitalWrite(enablePin, LOW);
   return (temp*3.3/4096-offset)*scale;
+}
+
+TEMP_T TemperatureSensor::MeasureTemperature2() {
+  //Power the sensor only when we measure
+  digitalWrite(enablePin, HIGH);
+  delay(200);
+  TEMP_T temp = analogRead(dataPin);
+  digitalWrite(enablePin, LOW);
+  // founction of the temperature sensor 2
+  return 1/(1/298.15+log(4096/temp-1)/scale)-273.15+offset; // calculation of the temperature
 }
 
 #endif
