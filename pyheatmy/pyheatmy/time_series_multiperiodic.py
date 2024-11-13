@@ -29,8 +29,9 @@ class time_series_multiperiodic:
             print("It will show you how to use this class, in general")
             # + if ts
 
-    def values_time_series(self, dates, T, depth_sensors):
+    def values_time_series(self, dates, T, depth_sensors, dt = 15*NSECINMIN):
         if self.type == "ts":
+            self.dt = dt
             self.time_series = [dates, T]
             self.nb_sensors = len(T[0, :])
             self.depth_sensors = depth_sensors
@@ -97,7 +98,7 @@ class time_series_multiperiodic:
     def nb_per_day(self, verbose = True): #method to get the number of points per day
         if verbose:
             print('dt must be in seconds')
-        return(int(NSECINDAY/(15*60)))  # return(int(NSECINDAY/self.dt)) but self.dt undefined
+        return(int(NSECINDAY/(self.dt)))  # ok if dt in seconds, maybe should add a verbose to class attribute initialization 
     
     def nb_days_in_period(self): #method to get the number of days in the period
         if self.type == "multi_periodic":
