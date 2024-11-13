@@ -90,7 +90,7 @@ unsigned long GetSecondsSinceMidnight() {
 
 // --- Measurement Control ---
 // Manage the timing and intervals of measurements taken throughout the day
-const int MEASURE_INTERVAL_MINUTES = 3 ; // Measurement interval in minutes
+const int MEASURE_INTERVAL_MINUTES = 1 ; // Measurement interval in minutes
 const int TOTAL_MEASUREMENTS_PER_DAY = 1440/MEASURE_INTERVAL_MINUTES ; // 96 measurements in a day
 unsigned int measurementTimes[TOTAL_MEASUREMENTS_PER_DAY]; // Array to store measurement times
 int measurementCount = 0;

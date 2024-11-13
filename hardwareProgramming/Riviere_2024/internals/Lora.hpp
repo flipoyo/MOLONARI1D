@@ -7,10 +7,10 @@
 #include <unordered_set>
 enum RequestType : uint8_t {
 
-  SYN = 0x01,
-  ACK = 0x51,
-  DATA = 0x10,
-  FIN = 0x92
+  SYN = 0xcc,
+  ACK = 0x33,
+  DATA = 0xc3,
+  FIN = 0x3c
 
 };
 class LoraCommunication {
@@ -35,9 +35,9 @@ public:
 
     bool performHandshake(int &shift);
     
-    int sendPackets(std::queue<String> &sendQueue);
+    uint8_t sendPackets(std::queue<String> &sendQueue);
 
-    void closeSession(int lastPacket);
+    void closeSession(uint8_t lastPacket);
 
     // Method to check if LoRa is active
     bool isLoRaActive();

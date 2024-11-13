@@ -40,8 +40,9 @@ void MyLowPowerClass::Sleep(uint32_t millis) {
   // Disable all power-consuming features
   // DisableAllIOPins();
 
-  // Wait
+  delay(2000);
   LowPower.deepSleep(millis);
+  delay(2000);
   
   // Enable back all the features that werer disabled.
   // EnableAllIOPins();
