@@ -749,6 +749,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             nb_burn_in_iter += 1  # incrémentation du numbre d'itération de burn-in
         self.nb_burn_in_iter = nb_burn_in_iter
         return(current_sigma2,X,nb_burn_in_iter,_energy_burn_in,_flow_iter,_temp_iter)
+    
+
 
     def burning_single_chain(self,X,current_sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,sigma2_distrib,ind_ref,typealgo,_flow_iter,_temp_iter,temp_ref,remanence):
         for i in trange(nb_iter): #nb_iter échantillonnage et n retient celui dnt l'energie est min
@@ -780,7 +782,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_burn_in_iter= 1
         initial_state=self._states[0]
         current_sigma2=[initial_state.sigma2_temp]        #def current_sigma2[j] et son state associé
-        X=np.array([layer for layer in initial_state.layers])
+        X = np.array([layer for layer in initial_state.layers])
         return(current_sigma2,X,nb_burn_in_iter,_energy_burn_in,_flow_iter,_temp_iter)
 
        
