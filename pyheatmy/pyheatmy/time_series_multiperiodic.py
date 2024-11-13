@@ -5,6 +5,7 @@ from pyheatmy.config import *
 from pyheatmy.utils import create_periodic_signal
 from pyheatmy import *
 from pyheatmy.time_series_multiperiodic import *
+from pyheatmy.layers import layersListCreator
 import scipy as sp
 from datetime import datetime, timedelta
 import os as os
