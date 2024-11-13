@@ -27,6 +27,8 @@ class Reader
         // The cursor can only be moved forward.
         void UpdateCursor(unsigned int lineId);
 
+        void writetomyrecourdfile();
+
         std::queue<String> loadDataIntoQueue();
 
         // Returns the Measure located at the cursor's line.

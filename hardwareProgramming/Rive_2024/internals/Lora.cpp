@@ -235,7 +235,7 @@ int LoraCommunication::receivePackets(std::queue<String> &receiveQueue)
     uint8_t packetNumber = 0;
     String payload;
     RequestType requestType;
-    uint8_t previous_packetNumber = 0;
+    uint8_t previous_packetNumber = -1;
 
     int ackTimeout = 300000;
     unsigned long startTime = millis();

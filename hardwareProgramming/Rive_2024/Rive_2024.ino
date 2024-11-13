@@ -63,7 +63,7 @@ void setup()
   digitalWrite(LED_BUILTIN, LOW);
 }
 
-void PrintQueue(std::queue<String> receiveQueue)
+void PrintQueue(std::queue<String> &receiveQueue)
 {
   LOG_LN("Session ended. Printing all received data:");
   while (!receiveQueue.empty())
@@ -94,6 +94,6 @@ void loop()
     rotate = rotate % 3;
     rotate++;
     if (rotate == 3)
-      waiter.sleepUntil(300000);
+      waiter.sleepUntil(70000);
   }
 }
