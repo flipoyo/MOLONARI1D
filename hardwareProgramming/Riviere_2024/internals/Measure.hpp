@@ -1,4 +1,4 @@
-// This file defines the Measure class, which is used to store measurements. from all 4 sensors at a time.  
+// This file defines the Measure class, which stores readings from all 4 sensors at a specific time.  
 
 // Check that the file has not been imported before
 #ifndef MEASURE_CLASS
@@ -6,7 +6,7 @@
 
 class Measure {
   public:
-    // Measure number
+    // Unique ID for each measurement
     unsigned int id;
     // Date with the format "dd/mm/yyyy"
     char date[11];
