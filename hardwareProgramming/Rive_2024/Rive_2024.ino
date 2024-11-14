@@ -72,7 +72,7 @@ void PrintQueue(std::queue<String> &receiveQueue)
   while (!receiveQueue.empty())
   {
     delay(500);
-    LOG_LN(receiveQueue.front()); // Print the front item in the queue
+    Serial.println(receiveQueue.front()); // Print the front item in the queue
     receiveQueue.pop();           // Remove item from the queue
   }
   LOG_LN("All data printed. Queue is now empty.");
@@ -84,17 +84,20 @@ bool SendQueue()
   LOG_LN("Session ended. Sending to the server all received data:");
   while (!sendingQueue.empty())
   {
-    Serial.print("Sent: ");
+    //Serial.print("Sent: ");
+  
 
     String payload = sendingQueue.front();
     int err;
     int counter = 0;
+    LOG_LN(payload);
     do
     {
       counter++;
       modem.beginPacket();
       modem.print(payload);
       err = modem.endPacket(true);
+      
       if (err <= 0)
       {
         Serial.println("Error in sending !");
@@ -104,7 +107,7 @@ bool SendQueue()
         return false;
     } while (err <= 0);
     delay(10000);
-    LOG_LN(payload);    // Print the front item in the queue
+        // Print the front item in the queue
     sendingQueue.pop(); // Remove item from the queue
   }
   LOG_LN("All data sended. Queue is now empty.");
@@ -122,19 +125,22 @@ void loop()
   lora.startLoRa();
   if (lora.Handshake(0))
   {
+    LOG_LN("-----------Handshake done----------");
     int last = lora.receivePackets(receiveQueue);
     lora.closeSession(last);
 
     lora.stopLoRa();
+    LOG_LN("-----------Lora Stop------------");
     //PrintQueue(receiveQueue);
+    
      while (!receiveQueue.empty()) {
         sendingQueue.push(receiveQueue.front());  // Add elements to mainQueue
         receiveQueue.pop();                    // Remove them from tempQueue
     }
     
-    rotate++;
-    if (rotate == 1)
-    {
+    //rotate++;
+    //if (rotate == 1)
+    //{
       rotate = 0;
 
       while (!SetUpLoRaWAN())
@@ -146,7 +152,7 @@ void loop()
 
       waiter.sleepUntil(60000);
 
-    }
+   // }
   }
 }
 
@@ -154,7 +160,7 @@ bool SetUpLoRaWAN()
 {
   // Enter the appEUI  and appKey from the TTN server
   String appEui = "0000000000000000";
-  String appKey = "387BC5DEF778168781DDE361D4407953";
+  String appKey = "72C5FBBF2AB954D3316A1EE13AA3F141";
   // change this to your regional band (eg. US915, AS923, ...)
   if (!modem.begin(EU868))
   {
