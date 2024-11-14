@@ -139,8 +139,8 @@ void loop() {
 
   // Count and check that the number of daily measurements has been reached
 
-  if (count < 5) {
-    //Serial.println("——Measurement " + String(measurementCountFlash.read()) + "——");
+  if (measurementCount <= TOTAL_MEASUREMENTS_PER_DAY) {
+    Serial.println("——Measurement " + String(measurementCount) + "——");
 
     // Perform measurements
     TEMP_T temp1 = tempSensor1.MeasureTemperature();
@@ -151,38 +151,30 @@ void loop() {
     logger.LogData(temp1, temp2, temp3, temp4);
   }
 
-    count++;
-    count = count % 5;
-    // Calculate the time to sleep until the next measurement
-    //unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
-
   // If all measurements for the day are complete, transmit data and reset the counter
-    if (count == 0) {
-      Serial.println("Transmitting data via LoRa...");
-      waiter.delayUntil(300000);
-      Serial.println("Data transmitted. Resetting measurement count.");
-      waiter.startTimer();
-    }
+  if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
+    Serial.println("Transmitting data via LoRa...");
+    waiter.delayUntil(300000);
+    Serial.println("Data transmitted. Resetting measurement count.");
+  }
 
-    // Test code
-    /*
-    Serial.print("year: ");
-    Serial.println(internalRtc.getYear());
-    Serial.print("Month: "); 
-    Serial.println(internalRtc.getMonth());
-    Serial.print("Day: ");
-    Serial.println(internalRtc.getDay());
-    Serial.print("Hour: "); 
-    Serial.println(internalRtc.getHours());
-    Serial.print("Minute: "); 
-    Serial.println(internalRtc.getMinutes());
-    Serial.print("Second: "); 
-    Serial.println(internalRtc.getSeconds());
-    */
+  // Test code
+  /*
+  Serial.print("year: ");
+  Serial.println(internalRtc.getYear());
+  Serial.print("Month: "); 
+  Serial.println(internalRtc.getMonth());
+  Serial.print("Day: ");
+  Serial.println(internalRtc.getDay());
+  Serial.print("Hour: "); 
+  Serial.println(internalRtc.getHours());
+  Serial.print("Minute: "); 
+  Serial.println(internalRtc.getMinutes());
+  Serial.print("Second: "); 
+  Serial.println(internalRtc.getSeconds());
+  */
 
-    // Enter low power mode
-    Serial.end();
-    delay(4000);
-    waiter.sleepUntil(30000);
-
+  // Enter low power mode
+  Serial.end();
+  waiter.sleepUntil(sleepTime);
 }
