@@ -8,7 +8,6 @@
 
 #include <RTCZero.h>
 #include <RTClib.h>
-#include <FlashStorage.h>
 
 
 RTCZero internalRtc;
@@ -94,8 +93,7 @@ unsigned long GetSecondsSinceMidnight() {
 const int MEASURE_INTERVAL_MINUTES = 1 ; // Measurement interval in minutes
 const int TOTAL_MEASUREMENTS_PER_DAY = 1440/MEASURE_INTERVAL_MINUTES ; // 96 measurements in a day
 unsigned int measurementTimes[TOTAL_MEASUREMENTS_PER_DAY]; // Array to store measurement times
-uint32_t measurementCount = 0;
-FlashStorage(measurementCountFlash, uint32_t);
+int measurementCount = 0;
 
 // Function to initialize the measurement time intervals
 void InitializeMeasurementTimes() {
@@ -115,7 +113,6 @@ void InitializeMeasurementCount() {
       measurementCount++;
     }
     else {
-      measurementCountFlash.write(measurementCount);
       break; // If the current time is less than the next measurement time, break the loop
     }
   }

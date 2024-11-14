@@ -52,7 +52,7 @@ const char filename[] = "RIVIERE.CSV";
 
 // --- Sensors ---
 TemperatureSensor tempSensor1(A1, 1, 0.5277, 101.15);
-TemperatureSensor tempSensor2(A2, 1, 0.5, 100);
+TemperatureSensor tempSensor2(A6, 1, 0.5, 3450);
 TemperatureSensor tempSensor3(A3, 1, 0.5290, 101.50);
 TemperatureSensor tempSensor4(A4, 1, 0.5195, 101.92);
 int count = 0;
@@ -134,17 +134,23 @@ void loop() {
   waiter.startTimer();
 
   Serial.println("");
+  // Calculate the time to sleep until the next measurement
+  unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
+
   // Count and check that the number of daily measurements has been reached
+
   if (count < 5) {
     //Serial.println("——Measurement " + String(measurementCountFlash.read()) + "——");
+
     // Perform measurements
     TEMP_T temp1 = tempSensor1.MeasureTemperature();
-    TEMP_T temp2 = tempSensor2.MeasureTemperature();
+    TEMP_T temp2 = tempSensor2.MeasureTemperature2();
     TEMP_T temp3 = tempSensor3.MeasureTemperature();
     TEMP_T temp4 = tempSensor4.MeasureTemperature();
 
     logger.LogData(temp1, temp2, temp3, temp4);
   }
+
     count++;
     count = count % 5;
     // Calculate the time to sleep until the next measurement
@@ -178,5 +184,5 @@ void loop() {
     Serial.end();
     delay(4000);
     waiter.sleepUntil(30000);
-  
+
 }
