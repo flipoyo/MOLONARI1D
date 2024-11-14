@@ -10,7 +10,18 @@
 #include "Low_Power.hpp"
 #include "Lora.hpp"
 #include <queue>
-
+////////////
+void PrintQueue(std::queue<String> &receiveQueue)
+{
+  Serial.println("Session ended. Printing all received data:");
+  while (!receiveQueue.empty())
+  {
+    Serial.println(receiveQueue.front()); // Print the front item in the queue
+    receiveQueue.pop();           // Remove item from the queue
+  }
+  Serial.println("All data printed. Queue is now empty.");
+}
+///////////
 // A class to wait for a given amount of time after a timer has been started.
 // For example, you start the timer, do other stuff and then wait until the timer has reached a given amount of time.
 class Waiter
@@ -57,11 +68,15 @@ public:
              // If all goes well, send the data
             if ( handshake && readerConnected)
             {
-                std::queue<String> sendQueue = reader.loadDataIntoQueue();  // Get the data ready to send
-                int nbofACK = lora.sendPackets(sendQueue); // Send it and count acknowledgments
-                lora.closeSession(nbofACK); // End LoRa session
-                reader.UpdateCursor(nbofACK); // Move the reader's cursor forward based on the data sent
-                
+                std::queue<String> sendQueue = reader.loadDataIntoQueue();
+                int nbofACK = lora.sendPackets(sendQueue);
+                //reader.UpdateCursor((int)sendQueue.size());
+                //PrintQueue(sendQueue);
+                lora.closeSession(nbofACK);
+                reader.UpdateCursor(nbofACK);
+                lora.stopLoRa();
+                reader.Dispose();
+                return;
 
             }
 

@@ -55,7 +55,7 @@ TemperatureSensor tempSensor1(A1, 1, 0.5277, 101.15);
 TemperatureSensor tempSensor2(A6, 1, 0.5, 3450);
 TemperatureSensor tempSensor3(A3, 1, 0.5290, 101.50);
 TemperatureSensor tempSensor4(A4, 1, 0.5195, 101.92);
-
+int count = 0;
 // ----- Main Setup -----
 
 void setup() {
@@ -95,8 +95,8 @@ void setup() {
 
   // Initialise the measurement times
   Serial.print("Initialising measurement control");
-  InitializeMeasurementTimes();
-  InitializeMeasurementCount();
+  //InitializeMeasurementTimes();
+  //InitializeMeasurementCount();
   Serial.println(" Done");
 
   // Disable the builtin LED
@@ -126,8 +126,8 @@ void loop() {
   // Initialise RTC
   InitialiseRTC();
   // Initialise the measurement times
-  InitializeMeasurementTimes();
-  InitializeMeasurementCount();
+  //InitializeMeasurementTimes();
+  //InitializeMeasurementCount();
   // Disable the builtin LED
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
   Waiter waiter;
@@ -138,8 +138,10 @@ void loop() {
   unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
 
   // Count and check that the number of daily measurements has been reached
-  if (measurementCount <= TOTAL_MEASUREMENTS_PER_DAY) {
-    Serial.println("——Measurement " + String(measurementCount) + "——");
+
+  if (count < 5) {
+    //Serial.println("——Measurement " + String(measurementCountFlash.read()) + "——");
+
     // Perform measurements
     TEMP_T temp1 = tempSensor1.MeasureTemperature();
     TEMP_T temp2 = tempSensor2.MeasureTemperature2();
@@ -149,30 +151,38 @@ void loop() {
     logger.LogData(temp1, temp2, temp3, temp4);
   }
 
+    count++;
+    count = count % 5;
+    // Calculate the time to sleep until the next measurement
+    //unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
+
   // If all measurements for the day are complete, transmit data and reset the counter
-  if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
-    Serial.println("Transmitting data via LoRa...");
-    waiter.delayUntil(300000);
-    Serial.println("Data transmitted. Resetting measurement count.");
-  }
+    if (count == 0) {
+      Serial.println("Transmitting data via LoRa...");
+      waiter.delayUntil(300000);
+      Serial.println("Data transmitted. Resetting measurement count.");
+      waiter.startTimer();
+    }
 
-  // Test code
-  /*
-  Serial.print("year: ");
-  Serial.println(internalRtc.getYear());
-  Serial.print("Month: "); 
-  Serial.println(internalRtc.getMonth());
-  Serial.print("Day: ");
-  Serial.println(internalRtc.getDay());
-  Serial.print("Hour: "); 
-  Serial.println(internalRtc.getHours());
-  Serial.print("Minute: "); 
-  Serial.println(internalRtc.getMinutes());
-  Serial.print("Second: "); 
-  Serial.println(internalRtc.getSeconds());
-  */
+    // Test code
+    /*
+    Serial.print("year: ");
+    Serial.println(internalRtc.getYear());
+    Serial.print("Month: "); 
+    Serial.println(internalRtc.getMonth());
+    Serial.print("Day: ");
+    Serial.println(internalRtc.getDay());
+    Serial.print("Hour: "); 
+    Serial.println(internalRtc.getHours());
+    Serial.print("Minute: "); 
+    Serial.println(internalRtc.getMinutes());
+    Serial.print("Second: "); 
+    Serial.println(internalRtc.getSeconds());
+    */
 
-  // Enter low power mode
-  Serial.end();
-  waiter.sleepUntil(sleepTime);
+    // Enter low power mode
+    Serial.end();
+    delay(4000);
+    waiter.sleepUntil(30000);
+
 }
