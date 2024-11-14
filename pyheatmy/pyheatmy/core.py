@@ -752,7 +752,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     
 
 
-    def burning_single_chain(self,X,current_sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,sigma2_distrib,ind_ref,typealgo,_flow_iter,_temp_iter,temp_ref,remanence):
+    def burning_single_chain(self,X,current_sigma2,nb_iter,nb_layer,nb_cells,all_priors,sigma2_temp_prior,sigma2_distrib,ind_ref,typealgo,_flow_iter,_temp_iter,temp_ref,remanence):
         for i in trange(nb_iter): #nb_iter échantillonnage et n retient celui dnt l'energie est min
             init_layers = all_priors.sample()
             if typealgo=="no sigma":
@@ -783,6 +783,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         initial_state=self._states[0]
         current_sigma2=[initial_state.sigma2_temp]        #def current_sigma2[j] et son state associé
         X = np.array([layer for layer in initial_state.layers])
+        X=np.array([np.array([X[l].params for l in range(nb_layer)])])
+
         return(current_sigma2,X,nb_burn_in_iter,_energy_burn_in,_flow_iter,_temp_iter)
 
        
@@ -939,7 +941,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             if verbose:
                 print("--- Begin Burn in phase ---")
             if nb_chain==1:
-                burning=self.burning_single_chain(X,current_sigma2,nb_iter,nb_cells,all_priors,sigma2_temp_prior,sigma2_distrib,ind_ref,typealgo,_flow_iter,_temp_iter,temp_ref,remanence)
+                burning=self.burning_single_chain(X,current_sigma2,nb_iter,nb_layer,nb_cells,all_priors,sigma2_temp_prior,sigma2_distrib,ind_ref,typealgo,_flow_iter,_temp_iter,temp_ref,remanence)
             else:
                 burning=self.burning_DREAM(nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose)
 
@@ -950,6 +952,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             _energy_burn_in=burning[3]
             _flow_iter=burning[4]
             _temp_iter=burning[5]
+            print(X)
             # Transition après le burn in
             del _params  # la variable _params n'est plus utile
 
@@ -974,12 +977,16 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             # initialisation des états
             for j in range(nb_chain):
                 init_sigma2_temp = current_sigma2[j]
+                if nb_chain==1:
+                    energy_init=_energy_burn_in[0]
+                else:
+                    energy_init=_energy_burn_in[
+                            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+                        ][j]
                 self._states.append(
                     State(
                         layers=convert_to_layer(nb_layer, name_layer, z_low, X[j]),
-                        energy=_energy_burn_in[
-                            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
-                        ][j],
+                        energy=energy_init,
                         ratio_accept=1,
                         sigma2_temp=init_sigma2_temp,
                     )
