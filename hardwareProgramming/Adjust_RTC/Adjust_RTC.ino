@@ -21,17 +21,17 @@ void AdjustRTC(int secondsOffset) {
 }
 
 void setup() {
-    Serial.begin(9600);
+  Serial.begin(9600);
     
-    // Initialize RTC
-    internalRtc.begin();
-    if (!externalRtc.begin()) {
-        Serial.println("Can't find RTC!");
-        while (1); // Stop the program
-    }
+  // Initialize RTC
+  internalRtc.begin();
+  if (!externalRtc.begin()) {
+    Serial.println("Can't find RTC!");
+    while (1); // Stop the program
+  }
 
-    // Adjust RTC in seconds
-    AdjustRTC(0);
+  // Adjust RTC in seconds
+  AdjustRTC(0);
 }
 
 void loop() {
