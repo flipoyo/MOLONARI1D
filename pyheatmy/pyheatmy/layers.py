@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Sequence
+from collections import namedtuple
 
 from pyheatmy.params import Param, Prior, ParamsPriors
 
@@ -8,15 +9,16 @@ class Layer:
     def __init__(
         self,
         name: str,
-        zLow: float,  #profondeur en m du bas de la couche (>0)
+        zLow: float,
         moinslog10IntrinK: float,
         n: float,
         lambda_s: float,
         rhos_cs: float,
+        q: float,
     ):
         self.name = name
         self.zLow = zLow
-        self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs)
+        self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs, q)
 
     def __repr__(self) -> str:
         return self.name + f" : ends at {self.zLow} m. " + self.params.__repr__()
@@ -68,8 +70,8 @@ class AllPriors:
 
 def layersListCreator(layersListInput):
     layersList = list()
-    for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs in layersListInput:
-        layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs))
+    for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, q in layersListInput:
+        layersList.append(Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs, q))
     return layersList
 
 
@@ -92,6 +94,7 @@ def getListParameters(layersList, nbCells: int):
                     layer.params.n,
                     layer.params.lambda_s,
                     layer.params.rhos_cs,
+                    layer.params.q,
                 ]
             )
             currentAltitude += dz
@@ -101,4 +104,5 @@ def getListParameters(layersList, nbCells: int):
         listParameters[:, 1],
         listParameters[:, 2],
         listParameters[:, 3],
+        listParameters[:, 4],
     )
