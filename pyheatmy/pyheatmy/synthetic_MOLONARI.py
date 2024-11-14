@@ -215,8 +215,8 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
         plt.show()
 
 
-    def _measures_column_one_layer(self, column, layer_list, nb_cell,verbose=False):
-        column.compute_solve_transi(layer_list, nb_cell,verbose=verbose)
+    def _measures_column_one_layer(self, column, layer_list, verbose=False):
+        column.compute_solve_transi(layer_list,verbose=verbose)
         self._set_Shaft_Temp_series(column.get_temperature_at_sensors(verbose=verbose),column.get_id_sensors())        
         self._generate_perturb_Shaft_Temp_series()
 

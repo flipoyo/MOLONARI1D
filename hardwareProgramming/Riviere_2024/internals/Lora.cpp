@@ -26,16 +26,16 @@ void LoraCommunication::startLoRa()
       if (LoRa.begin(freq))
       {
         active = true;
-        Serial.println("LoRa started.");
+        LORA_LOG_LN("LoRa started.");
         return;
       }
       else
       {
-        Serial.println("LoRa failed to start, retrying...");
+        LORA_LOG_LN("LoRa failed to start, retrying...");
         delay(1000); // Delay before retrying
       }
     }
-    Serial.println("Starting LoRa failed after retries.");
+    LORA_LOG_LN("Starting LoRa failed after retries.");
   }
 }
 
@@ -49,7 +49,7 @@ void LoraCommunication::stopLoRa()
     pinMode(LORA_RESET, OUTPUT);
     digitalWrite(LORA_RESET, LOW);
     active = false;
-    Serial.println("LoRa stopped.");
+    LORA_LOG_LN("LoRa stopped.");
   }
 }
 
@@ -77,12 +77,12 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 
     LoRa.endPacket();
 
-    Serial.print("Packet sent: ");
-    Serial.println(payload);
+    LORA_LOG("Packet sent: ");
+    LORA_LOG_LN(payload);
   }
   else
   {
-    Serial.println("LoRa is not active, cannot send packet.");
+    LORA_LOG_LN("LoRa is not active, cannot send packet.");
   }
 }
 
@@ -116,14 +116,14 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
       /*// Verify length
       if (incomingLength != payload.length())
       {
-        Serial.println("Error: message length mismatch. Expected: " + String(incomingLength) + ", Actual: " + String(payload.length()));
+        LORA_LOG_LN("Error: message length mismatch. Expected: " + String(incomingLength) + ", Actual: " + String(payload.length()));
         return false;
       }*/
 
       // Verify destination
       if (!isValidDestination(recipient, dest, requestType))
       {
-        Serial.println("Message is not for this device or is out of session.");
+        LORA_LOG_LN("Message is not for this device or is out of session.");
         return false;
       }
 
@@ -131,20 +131,20 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
       uint8_t calculatedChecksum = calculateChecksum(recipient, dest, packetNumber, requestType, payload);
       if (calculatedChecksum != receivedChecksum)
       {
-        Serial.println("Checksum mismatch: packet discarded.");
+        LORA_LOG_LN("Checksum mismatch: packet discarded.");
         return false;
       }
 
       // Log received packet details
-      Serial.println("Received from: 0x" + String(dest, HEX));
-      Serial.println("Sent to: 0x" + String(recipient, HEX));
-      Serial.println("Packet Number ID: " + String(packetNumber));
-      Serial.println("Packet requestType: " + String(requestType));
+      LORA_LOG_LN("Received from: 0x" + String(dest, HEX));
+      LORA_LOG_LN("Sent to: 0x" + String(recipient, HEX));
+      LORA_LOG_LN("Packet Number ID: " + String(packetNumber));
+      LORA_LOG_LN("Packet requestType: " + String(requestType));
       //Serial.println("Message length: " + String(incomingLength));
-      Serial.println("Message: " + payload);
-      Serial.println("RSSI: " + String(LoRa.packetRssi()));
-      Serial.println("SNR: " + String(LoRa.packetSnr()));
-      Serial.println();
+      LORA_LOG_LN("Message: " + payload);
+      LORA_LOG_LN("RSSI: " + String(LoRa.packetRssi()));
+      LORA_LOG_LN("SNR: " + String(LoRa.packetSnr()));
+      LORA_LOG_LN();
 
       return true;
     }
@@ -186,7 +186,7 @@ bool LoraCommunication::isLoRaActive()
 bool LoraCommunication::performHandshake(int &shift)
 {
   sendPacket(0, SYN, "");
-  Serial.println("SYN sent, waiting for SYN-ACK...");
+  LORA_LOG_LN("SYN sent, waiting for SYN-ACK...");
 
   String payload;
   uint8_t packetNumber;
@@ -197,7 +197,7 @@ bool LoraCommunication::performHandshake(int &shift)
     if (receivePacket(packetNumber, requestType, payload) && requestType == SYN)
     {
       shift = packetNumber;
-      Serial.println("SYN-ACK received, sending final ACK...");
+      LORA_LOG_LN("SYN-ACK received, sending final ACK...");
       sendPacket(packetNumber, ACK, "");
       delay(1000);
       return true;
@@ -209,7 +209,7 @@ bool LoraCommunication::performHandshake(int &shift)
       sendPacket(0, SYN, "");
       retries++;
     }
-  Serial.println("Handshake failed.");
+  LORA_LOG_LN("Handshake failed.");
   return false;
 }
 
@@ -232,14 +232,14 @@ uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue)
     {
       if (receivePacket(receivedPacketNumber, requestType, payload) && requestType == ACK && receivedPacketNumber == packetNumber)
       {
-        Serial.println("ACK received for packet " + String(packetNumber));
+        LORA_LOG_LN("ACK received for packet " + String(packetNumber));
         sendQueue.pop(); // Only pop after receiving ACK
         packetNumber++;
         break;
       }
       else if (requestType == FIN)
       {
-        Serial.println("FIN received for packet " + String(packetNumber));
+        LORA_LOG_LN("FIN received for packet " + String(packetNumber));
         while (!sendQueue.empty())
         {
           sendQueue.pop();
@@ -249,7 +249,7 @@ uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue)
       }
       else
       {
-        Serial.println("No ACK received, retrying for packet " + String(packetNumber));
+        LORA_LOG_LN("No ACK received, retrying for packet " + String(packetNumber));
         uint8_t b = LoRa.random();
         delay(int(b) * (retries + 1));
         sendPacket(packetNumber, DATA, message);
@@ -258,7 +258,7 @@ uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue)
     }
     if (retries == 6)
     {
-      Serial.println("Packet send failed after retries for packet " + String(packetNumber));
+      LORA_LOG_LN("Packet send failed after retries for packet " + String(packetNumber));
       while (!sendQueue.empty())
       {
         sendQueue.pop();
@@ -274,7 +274,7 @@ uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue)
 void LoraCommunication::closeSession(uint8_t lastPacket)
 {
   sendPacket(lastPacket, FIN, "");
-  Serial.println("FIN sent, waiting for final ACK...");
+  LORA_LOG_LN("FIN sent, waiting for final ACK...");
 
   String payload;
   uint8_t packetNumber;
@@ -285,18 +285,18 @@ void LoraCommunication::closeSession(uint8_t lastPacket)
   {
     if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket)
     {
-      Serial.println("Final ACK received, session closed.");
+      LORA_LOG_LN("Final ACK received, session closed.");
       return;
     }
     else
     {
-      Serial.println("No final ACK, retrying...");
+      LORA_LOG_LN("No final ACK, retrying...");
       uint8_t b = LoRa.random();
       delay(int(b) * (retries + 1));
       sendPacket(lastPacket, FIN, "");
       retries++;
     }
   }
-  Serial.println("Session closure failed after retries.");
+  LORA_LOG_LN("Session closure failed after retries.");
 
 }
