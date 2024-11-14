@@ -215,7 +215,7 @@ bool LoraCommunication::performHandshake(int &shift)
 
 uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue)
 {
-  uint8_t packetNumber = 1;
+  uint8_t packetNumber = 0;
 
   String payload;
   RequestType requestType;

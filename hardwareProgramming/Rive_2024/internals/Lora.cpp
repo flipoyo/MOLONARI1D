@@ -239,6 +239,7 @@ int LoraCommunication::receivePackets(std::queue<String> &receiveQueue)
 
     int ackTimeout = 300000;
     unsigned long startTime = millis();
+    receiveQueue.push(String(destination));
 
     while (millis() - startTime < ackTimeout)
     {

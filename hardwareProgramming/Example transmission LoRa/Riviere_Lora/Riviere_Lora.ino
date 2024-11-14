@@ -1,7 +1,7 @@
 #include "internals/Lora.hpp"
 #include <queue> // Using standard library queue
 
-uint8_t MyAddress = 0xbb;
+uint8_t MyAddress = 0xcc;
 uint8_t RelayAdd = 0xaa;
 
 void setup()
