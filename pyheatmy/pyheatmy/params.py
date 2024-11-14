@@ -24,7 +24,10 @@ class Prior:
         new_val = val + gauss(0, self.sigma)
         lower_bound, upper_bound = self.range
         range_span = upper_bound - lower_bound
-        new_val = (new_val - lower_bound) % range_span + lower_bound
+        if range_span != 0:
+            new_val = (new_val - lower_bound) % range_span + lower_bound
+        else:   # Disjonction de cas pour gérer la perturbation dans le cas où sigma2 est fixé (dans ce cas l'intervalle est réduit à un point)
+            new_val = val
         return new_val
 
     def sample(self):  # retourne de manière uniforme un nombre de l'intervalle
@@ -33,7 +36,7 @@ class Prior:
 
     def __repr__(self) -> str:
         return (
-            f"Prior sur une valeure qui évolue entre {self.range[RangeType.MIN.value]} et {self.range[RangeType.MAX.value]} avec un écart type de {self.sigma}"
+            f"Prior sur une valeure qui évolue entre {self.range[0]} et {self.range[1]} avec un écart type de {self.sigma}"
         )
 
 

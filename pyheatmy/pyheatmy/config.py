@@ -121,7 +121,7 @@ SENSOR_FILE_NAMES = {
 }
 
 # MCMC parametrization
-NITMCMC = 500
+NITMCMC = 150
 
 # Coefficients of the Mu equation
 MU_A = 1.856e-11 * 1e-3

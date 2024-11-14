@@ -62,11 +62,34 @@ class Layer:
         self.Prior_n = Prior(*priors_dict['Prior_n'])
         self.Prior_lambda_s = Prior(*priors_dict['Prior_lambda_s'])
         self.Prior_rhos_cs = Prior(*priors_dict['Prior_rhos_cs'])
-        self.q = Prior(*priors_dict['Prior_q'])
+        self.Prior_q = Prior(*priors_dict['Prior_q'])
         self.Prior_list = [self.Prior_moinslog10IntrinK, self.Prior_n, self.Prior_lambda_s, self.Prior_rhos_cs, self.Prior_q]
     
 
     @classmethod
     def from_dict(cls, monolayer_dict):
         return cls(**monolayer_dict)
+    
+def getListParameters(layersList, nbCells: int):
+    dz = layersList[-1].zLow / nbCells
+    cell_centers = np.linspace(dz / 2, layersList[-1].zLow - dz / 2, nbCells)
+    listParameters = np.zeros((nbCells, 5))
+    zLow_prev = 0
+    for layer in layersList:
+        mask = (cell_centers > zLow_prev) & (cell_centers <= layer.zLow)
+        listParameters[mask, :] = [
+            layer.params.moinslog10IntrinK,
+            layer.params.n,
+            layer.params.lambda_s,
+            layer.params.rhos_cs,
+            layer.params.q,
+        ]
+        zLow_prev = layer.zLow
+    return (
+        listParameters[:, 0],
+        listParameters[:, 1],
+        listParameters[:, 2],
+        listParameters[:, 3],
+        listParameters[:, 4],
+    )
 
