@@ -45,7 +45,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         inter_mode: str = "linear",
         eps=10**-9,
-        heat_source=np.ndarray,
         nb_cells=NB_CELLS,
         rac="~/OUTPUT_MOLONARI1D/generated_data",  # printing directory by default,
         verbose=False,
@@ -1412,7 +1411,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
     def get_all_lambda_s(self):
-        # retourne toutes les valeurs de lambda_s (lambda_s : conductivité thermique du solide) par lesquels est passé la MCMC
+        # retourne toutes les valeurs de lambda_s (lambda_s : conductivité thermique du solide) par lesquelles est passé la MCMC
         return [
             [layer.params.lambda_s for layer in state.layers] for state in self._states
         ]
@@ -1422,7 +1421,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
     def get_all_rhos_cs(self):
-        # retourne toutes les valeurs de rho_cs (rho_cs : produite de la densité par la capacité calorifique spécifique du solide) par lesquels est passé la MCMC
+        # retourne toutes les valeurs de rho_cs (rho_cs : produite de la densité par la capacité calorifique spécifique du solide) par lesquelles est passé la MCMC
         return [
             [layer.params.rhos_cs for layer in state.layers] for state in self._states
         ]
@@ -1430,7 +1429,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     all_rhos_cs = property(get_all_rhos_cs)
 
     def get_all_q(self):
-        # retourne toutes les valeurs de rho_cs (rho_cs : produite de la densité par la capacité calorifique spécifique du solide) par lesquels est passé la MCMC
+        # retourne toutes les valeurs de q (q : flux latéral) par lesquelles est passé la MCMC
         return [[layer.params.q for layer in state.layers] for state in self._states]
 
     all_q = property(get_all_q)
