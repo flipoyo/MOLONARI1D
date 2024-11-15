@@ -11,3 +11,9 @@ Thus, we will need to solve this rather tricky problem. Don't panic—we still h
 * The second solution is to figure out why this darn SD card is failing (Is the card obsolete? A code issue? A connection problem? A module issue? We tried two: the Adalogger Featherwing and another Arduino-related module, and the same thing happens every time. Is it a problem with the `SD.h` library?). We are fairly confident in the robustness of our code, but it's not a possibility that should be dismissed outright. This is an investigation to carry out if you choose to explore this path. After all, we spent the entire term trying this route without success.
 
 It’s essential to keep in mind that recording is **the most important part of the process**. We need to ensure that every piece of data is recorded because we cannot rely on data transmission alone to offload the data from the card.
+
+# Progress
+
+Para asegurar la transmisión de datos entre el relay y el sensor este año implementamos una nueva forma de leer datos de la tarjeta SD: el uso de la librería Queue. Esta librería permite trabajar con colas de datos en sistemas embebidos y va a sostener nuestra data durante la comunicación con el relay a través de una cola en la que los elementos se almacenan y se procesan en el orden en que se agregan, siguiendo la metodología FIFO (First In, First Out). Esta cola es guardada o retenida en la memoria RAM del Arduino y es despejada cada vez que se recibe la confirmación de que el relay tiene toda la data. Un atributo importante de esta cola
+
+Evitar entrar al SD card para sacar cada medicion
