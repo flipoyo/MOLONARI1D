@@ -1,6 +1,19 @@
 #include "internals/Lora.hpp"
 #include <queue>
 
+// Uncomment this line to enable dignostics log on serial about the main loop
+#define DEBUG
+// Uncomment this line to enable diagnostics log on serial for lora operations
+// #define LORA_DEBUG
+
+#ifdef DEBUG
+#define LOG(x) Serial.print(x)
+#define LOG_LN(x) Serial.println(x)
+#else
+#define LOG(x)
+#define LOG_LN(x)
+#endif
+
 uint8_t MyAddres = 0xaa;
 uint8_t defaultdestination = 0xff;
 uint8_t rotate = 0;

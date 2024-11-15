@@ -37,13 +37,18 @@ void setup() {
 void loop() {
     // Example: Print the current time every second
     DateTime now = externalRtc.now();
-    
+
+    // Format the date as YYYY-MM-DD
+    String dateString = String(now.year()) + "/" +
+                        UIntTo2DigitString(now.month()) + "/" +
+                        UIntTo2DigitString(now.day());
+
     // Format the output using the helper function
     String timeString = UIntTo2DigitString(now.hour()) + ":" +
                         UIntTo2DigitString(now.minute()) + ":" +
                         UIntTo2DigitString(now.second());
     
-    Serial.println(timeString);
+    Serial.println(dateString + " " + timeString);
     
     delay(5000); // Wait for 5 seconds
 }
