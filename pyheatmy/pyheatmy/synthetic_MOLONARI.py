@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-class Time_series:  # on simule un tableau de mesures
+class synthetic_MOLONARI:  # on simule un tableau de mesures
     def __init__(
         self,
         offset: float = CODE_scalar,
@@ -29,6 +29,7 @@ class Time_series:  # on simule un tableau de mesures
         param_T_aq_signal: list = DEFAULT_T_aq_signal,  # liste [amplitude (°C), période (en seconde), offset (°C)] pour un variation sinusoïdale
         sigma_meas_P: float = None,  # (m) écart type de l'incertitude sur les valeurs de pression capteur
         sigma_meas_T: float = None,  # (°C) écart type de l'incertitude sur les valeurs de température capteur
+        verbose: bool = True,
     ):
                 
         self._classType = ClassType.TIME_SERIES
@@ -39,13 +40,15 @@ class Time_series:  # on simule un tableau de mesures
         self._param_T_aq = param_T_aq_signal
         self._sigma_P = sigma_meas_P
         self._sigma_T = sigma_meas_T
-        print("Initializing time series")
-        print("param_time_dates:", self._param_dates)
-        print("param_dH_signal:", self._param_dH)
-        print("param_T_riv_signal:", self._param_T_riv)
-        print("param_T_aq_signal:", self._param_T_aq)
-        print("sigma_meas_P:", self._sigma_P)
-        print("sigma_meas_T:", self._sigma_T)
+        self.verbose = verbose
+        if self.verbose :
+            print("Initializing time series of synthetic_MOLONARI")
+            print("param_time_dates:", self._param_dates)
+            print("param_dH_signal:", self._param_dH)
+            print("param_T_riv_signal:", self._param_T_riv)
+            print("param_T_aq_signal:", self._param_T_aq)
+            print("sigma_meas_P:", self._sigma_P)
+            print("sigma_meas_T:", self._sigma_T)
 
         self._depth_sensors = np.array(depth_sensors)
         self._real_z = np.array([0] + depth_sensors) + offset
@@ -91,7 +94,7 @@ class Time_series:  # on simule un tableau de mesures
                 datetime(*self._param_dates[0]),
                 datetime(*self._param_dates[1]),
                 timedelta(seconds=self._param_dates[2]),
-            )# dt is tini
+            )# dt is tiny
             times_vir1 = []
             times_list = []
             S = 0
@@ -104,18 +107,18 @@ class Time_series:  # on simule un tableau de mesures
             self._time_array = np.array(times_list)
 
     def _generate_dH_series(self,verbose=True):
-        ts = create_periodic_signal(self._dates,self._param_dates[2],self._param_dH,"Hydraulic head differential",verbose=verbose)
+        ts = create_periodic_signal(self._dates,self._param_dH,"Hydraulic head differential",verbose=verbose)
         self._dH = ts
 
     def _generate_Temp_riv_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature rivière
-        ts = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_riv,"T_riv",verbose=verbose)
+        ts = create_periodic_signal(self._dates,self._param_T_riv,"T_riv",verbose=verbose)
         self._T_riv = ts
 
     def _generate_Temp_aq_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature aquifère
-        ts = create_periodic_signal(self._dates,self._param_dates[2],self._param_T_aq,"T_aq",verbose=verbose)
+        ts = create_periodic_signal(self._dates,self._param_T_aq,"T_aq",verbose=verbose)
         self._T_aq = ts
 
-    def _generate_Shaft_Temp_series(self,verbose=True):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
+    def _generate_Shaft_Temp_series(self, verbose = True):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
         # The initialisation of the sensors of the shaft is made by last sensor = aquifer temperature, the intermediaite ones are linearly interpolated function of their distance to the river bottom between Triv and Taq
         n_sens_vir = len(self._depth_sensors)
         if verbose:
@@ -161,18 +164,18 @@ class Time_series:  # on simule un tableau de mesures
         self._molonariP_data = list(zip(self._dates, list(zip(self._dH_perturb, self._T_riv_perturb)))) #emulates what comes from a pressure sensor
 
         # self._molonariP_data = list(zip(convert_to_timestamp(self._dates,self), list(zip(self._dH_perturb, self._T_riv_perturb)))) #emulates what comes from a pressure sensor
-    def _generate_all_series(self,verbose=True):
+    def _generate_all_series(self):
         self._generate_dates_series()
-        self._generate_dH_series(verbose=verbose)
-        self._generate_Temp_riv_series(verbose=verbose)
-        self._generate_Temp_aq_series(verbose=verbose)
-        self._generate_Shaft_Temp_series(verbose=verbose)   
+        self._generate_dH_series(verbose=self.verbose)
+        self._generate_Temp_riv_series(verbose=self.verbose)
+        self._generate_Temp_aq_series(verbose=self.verbose)
+        self._generate_Shaft_Temp_series(verbose=self.verbose)   
 
         #now generating perturbated measurments and emulating what comes from molonari devices
         self._generate_perturb_T_riv_dH_series()
         self._generate_perturb_Shaft_Temp_series()
 
-    def _set_Shaft_Temp_series(self,temperatures,id_sensors,verbose=True):
+    def _set_Shaft_Temp_series(self,temperatures,id_sensors):
         for i in range(len(id_sensors)+1):
             self._T_Shaft[:, i] = temperatures[i+1,:]
         #self._generate_Shaft_Temp_series()
@@ -212,9 +215,9 @@ class Time_series:  # on simule un tableau de mesures
         plt.show()
 
 
-    def _measures_column_one_layer(self, column, layer_list, nb_cell,verbose=False):
-        column.compute_solve_transi(layer_list, nb_cell,verbose=verbose)
-        self._set_Shaft_Temp_series(column.get_temperature_at_sensors(verbose=verbose),column.get_id_sensors(),verbose=verbose)        
+    def _measures_column_one_layer(self, column, layer_list, verbose=False):
+        column.compute_solve_transi(layer_list,verbose=verbose)
+        self._set_Shaft_Temp_series(column.get_temperature_at_sensors(verbose=verbose),column.get_id_sensors())        
         self._generate_perturb_Shaft_Temp_series()
 
 # # method not finished, can be erased
@@ -232,7 +235,23 @@ class Time_series:  # on simule un tableau de mesures
 #         else:
 #             print("Type not recognized")
 
+#Ajout d'une fonction pour convertir une période d'unité donnée en secondes
 
+def convert_period_in_second(period, unit):
+    if unit == 's':
+        return period
+    elif unit == 'min':
+        return period * NSECINMIN
+    elif unit == 'h':
+        return period * NSECINHOUR
+    elif unit == 'd':
+        return period * NSECINDAY
+    elif unit == 'm':
+        return period * NDAYINMONTH * NSECINDAY
+    elif unit == 'y':
+        return period * NDAYINYEAR * NSECINDAY
+    else:
+        raise ValueError(f"Unit {unit} not recognized. Please use 's' for seconds, 'min' for minutes, 'h' for hours, 'd' for days, 'm' for month or 'y' for year.")
 
 
 
