@@ -28,7 +28,7 @@ public:
 
     // Receive and parse a structured packet
     bool receivePacket(uint8_t &packetNumber,RequestType &requestType, String &payload);
-    
+
     bool isValidDestination(int recipient, int dest, RequestType requestType);
 
     uint8_t calculateChecksum(int recipient, int dest, uint8_t packetNumber, RequestType requestType, const String &payload);

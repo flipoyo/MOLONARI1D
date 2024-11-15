@@ -85,7 +85,7 @@ void loop()
   lora.setdesttodefault();
   std::queue<String> receiveQueue;
   lora.startLoRa();
-  if (lora.Handshake(rotate*5))
+  if (lora.Handshake(0))
   {
     LOG_LN("-----------Handshake done----------");
     int last = lora.receivePackets(receiveQueue);

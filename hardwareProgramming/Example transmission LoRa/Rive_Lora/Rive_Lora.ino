@@ -21,26 +21,42 @@ void setup() {
   Serial.println("Receiver ready...");
 }
 
-void PrintQueue(std::queue<String> receiveQueue) {
-  Serial.println("Session ended. Printing all received data:");
-  while (!receiveQueue.empty()) {
-    Serial.println(receiveQueue.front());  // Print the front item in the queue
-    receiveQueue.pop();                    // Remove item from the queue
+void PrintQueue(std::queue<String> &receiveQueue)
+{
+  LOG_LN("Session ended. Printing all received data:");
+  while (!receiveQueue.empty())
+  {
+    delay(500);
+    Serial.println(receiveQueue.front()); // Print the front item in the queue
+    receiveQueue.pop();           // Remove item from the queue
   }
-  Serial.println("All data printed. Queue is now empty.");
+  LOG_LN("All data printed. Queue is now empty.");
 }
 
-LoraCommunication lora(868E6, MyAddres , defaultdestination);
+// ----- Main loop -----
 
-void loop() {
+void loop()
+{
+  Waiter waiter;
+  waiter.startTimer();
   lora.setdesttodefault();
   std::queue<String> receiveQueue;
   lora.startLoRa();
-  if (lora.Handshake(rotate*20)){
+  if (lora.Handshake(0))
+  {
+    LOG_LN("-----------Handshake done----------");
     int last = lora.receivePackets(receiveQueue);
     lora.closeSession(last);
+
+    lora.stopLoRa();
+    LOG_LN("-----------Lora Stop------------");
+    PrintQueue(receiveQueue);
+
+    
+    rotate++;
+    if (rotate == 3)
+    {
+      rotate = 0;
+    }
   }
-  lora.stopLoRa();
-  PrintQueue(receiveQueue);
-  rotate=rotate ^ 1;
 }
