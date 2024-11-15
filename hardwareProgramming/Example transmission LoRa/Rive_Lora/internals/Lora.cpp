@@ -1,5 +1,5 @@
 #include "Lora.hpp"
-
+#define LORA_DEBUG
 #ifdef LORA_DEBUG
 #define LORA_LOG(msg) Serial.print(msg);
 #define LORA_LOG_HEX(msg) Serial.print(msg, HEX);
