@@ -39,8 +39,8 @@ void loop() {
     DateTime now = externalRtc.now();
 
     // Format the date as YYYY-MM-DD
-    String dateString = String(now.year()) + "-" +
-                        UIntTo2DigitString(now.month()) + "-" +
+    String dateString = String(now.year()) + "/" +
+                        UIntTo2DigitString(now.month()) + "/" +
                         UIntTo2DigitString(now.day());
 
     // Format the output using the helper function
