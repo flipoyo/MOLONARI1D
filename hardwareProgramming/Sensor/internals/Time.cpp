@@ -104,8 +104,9 @@ void InitializeMeasurementCount() {
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
     if (currentTime > measurementTimes[i]) {
       measurementCount++;
-    } else {
-      break; // Stop once the current time is less than the next measurement time
+    }
+    else {
+      break; // If the current time is less than the next measurement time, break the loop
     }
   }
 }
