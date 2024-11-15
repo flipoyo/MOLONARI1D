@@ -216,7 +216,7 @@ class H_stratified(Linear_system):
                     upper_diagonal_A,
                 )
 
-            c = self.compute_c(j, dt)
+            c = self.compute_c(j)
             B_fois_H_plus_c = (
                 tri_product(
                     lower_diagonal_B, diagonal_B, upper_diagonal_B, self.H_res[:, j]
