@@ -113,7 +113,6 @@ void InitializeMeasurementCount() {
       measurementCount++;
     }
     else {
-      measurementCount = 96;
       break; // If the current time is less than the next measurement time, break the loop
     }
   }

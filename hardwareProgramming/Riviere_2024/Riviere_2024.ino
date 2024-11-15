@@ -95,8 +95,8 @@ void setup() {
 
   // Initialise the measurement times
   Serial.print("Initialising measurement control");
-  //InitializeMeasurementTimes();
-  //InitializeMeasurementCount();
+  InitializeMeasurementTimes();
+  InitializeMeasurementCount();
   Serial.println(" Done");
 
   // Disable the builtin LED
@@ -126,8 +126,8 @@ void loop() {
   // Initialise RTC
   InitialiseRTC();
   // Initialise the measurement times
-  //InitializeMeasurementTimes();
-  //InitializeMeasurementCount();
+  InitializeMeasurementTimes();
+  InitializeMeasurementCount();
   // Disable the builtin LED
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
   Waiter waiter;
@@ -138,7 +138,6 @@ void loop() {
   unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
 
   // Count and check that the number of daily measurements has been reached
-
   if (measurementCount <= TOTAL_MEASUREMENTS_PER_DAY) {
     Serial.println("——Measurement " + String(measurementCount) + "——");
 
