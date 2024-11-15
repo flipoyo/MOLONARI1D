@@ -51,17 +51,17 @@ def conv(layer):
         return layer
 
 
-def compute_energy(temp1, temp2, sigma2: float, remanence):
+def compute_energy(temp_simul, temp_ref, sigma2: float, remanence):
     remanence_step = int(remanence * 24 * 60 / 15)
-    norm2 = nansum((temp1[:, remanence_step:] - temp2[:, remanence_step:]) ** 2)
+    norm2 = nansum((temp_simul[:, remanence_step:] - temp_ref[:, remanence_step:]) ** 2)
     return 0.5 * norm2 / sigma2
 
 
-def compute_energy_with_distrib(temp1, temp2, sigma2, sigma2_distrib):
-    norm2 = nansum((temp1 - temp2) ** 2)
+def compute_energy_with_distrib(temp_simul, temp_ref, sigma2, sigma2_distrib):
+    norm2 = nansum((temp_simul - temp_ref) ** 2)
     return (
         0.5 * norm2 / sigma2
-        + size(temp2) * log(sigma2) / 2
+        + size(temp_ref) * log(sigma2) / 2
         - log(sigma2_distrib(sigma2))
     )
 
