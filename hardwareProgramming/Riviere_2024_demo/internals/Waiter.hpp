@@ -31,7 +31,8 @@ public:
     Waiter() {}
 
 //Use this at the start to record the current time. This way, we can check later how long other tasks (like measurements or data saving) actually take.
-    void startTimer(){
+    void startTimer()
+    {
         starting_time = millis();
     }
 

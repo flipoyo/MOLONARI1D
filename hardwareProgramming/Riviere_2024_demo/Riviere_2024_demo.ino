@@ -52,9 +52,7 @@ const char filename[] = "RIVIERE.CSV";
 
 // --- Sensors ---
 TemperatureSensor tempSensor1(A1, 1, 0.5277, 101.15);
-TemperatureSensor tempSensor2(A6, 1, 0.5, 3450);
-TemperatureSensor tempSensor3(A3, 1, 0.5290, 101.50);
-TemperatureSensor tempSensor4(A4, 1, 0.5195, 101.92);
+PressureSensor PressureSensor(A3, 1);
 
 // ----- Main Setup -----
 
@@ -95,8 +93,8 @@ void setup() {
 
   // Initialise the measurement times
   Serial.print("Initialising measurement control");
-  //InitializeMeasurementTimes();
-  //InitializeMeasurementCount();
+  InitializeMeasurementTimes();
+  InitializeMeasurementCount();
   Serial.println(" Done");
 
   // Disable the builtin LED
@@ -144,11 +142,9 @@ void loop() {
 
     // Perform measurements
     TEMP_T temp1 = tempSensor1.MeasureTemperature();
-    TEMP_T temp2 = tempSensor2.MeasureTemperature2();
-    TEMP_T temp3 = tempSensor3.MeasureTemperature();
-    TEMP_T temp4 = tempSensor4.MeasureTemperature();
+    PRESSURE_T pressure = PressureSensor.MeasurePressure();
 
-    logger.LogData(temp1, temp2, temp3, temp4);
+    logger.LogData(temp1, pressure);
   }
 
   // If all measurements for the day are complete, transmit data and reset the counter
