@@ -1013,13 +1013,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         
         process = psutil.Process()
 
-            if typealgo=="no sigma":
-                sigma2 = DEFAULT_SIGMA2_T
-                sigma2_distrib=None
-                sigma2_temp_prior=None
-            else :
-                sigma2_temp_prior = Prior((SIGMA2_MIN_T, SIGMA2_MAX_T), RANDOMWALKSIGMAT, lambda x: 1 / x)
-                sigma2_distrib = sigma2_temp_prior.density
+        if typealgo=="no sigma":
+            sigma2 = DEFAULT_SIGMA2_T
+            sigma2_distrib=None
+            sigma2_temp_prior=None
+        else :
+            sigma2_temp_prior = Prior((SIGMA2_MIN_T, SIGMA2_MAX_T), RANDOMWALKSIGMAT, lambda x: 1 / x)
+            sigma2_distrib = sigma2_temp_prior.density
 
         # vérification des types des arguments
         if isinstance(quantile, Number):
@@ -1083,11 +1083,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         )  # stockage des paramètres
         _params[0] = X  # initialisation des paramètres
 
-            # objets liés à DREAM
-            cr_vec = np.arange(1, ncr + 1) / ncr
-            n_id = np.zeros((nb_layer, ncr), np.float32)
-            J = np.zeros((nb_layer, ncr), np.float32)
-            pcr = np.ones((nb_layer, ncr)) / ncr          #probabilité que ncr prenne la valeur 1, ou 2,... ou ncr
+        # objets liés à DREAM
+        cr_vec = np.arange(1, ncr + 1) / ncr
+        n_id = np.zeros((nb_layer, ncr), np.float32)
+        J = np.zeros((nb_layer, ncr), np.float32)
+        pcr = np.ones((nb_layer, ncr)) / ncr          #probabilité que ncr prenne la valeur 1, ou 2,... ou ncr
 
         if verbose:
             print(
@@ -1107,46 +1107,46 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             else:
                 return compute_energy_with_distrib(temp1, temp2, sigma2, sigma2_distrib)
 
-            # initialisation des chaines
-            init_sigma2=[]
-            for j in range(nb_chain):
-                self.compute_solve_transi(
-                    convert_to_layer(nb_layer, name_layer, z_low, X[j]),
-                    verbose=False,
+        # initialisation des chaines
+        init_sigma2=[]
+        for j in range(nb_chain):
+            self.compute_solve_transi(
+                convert_to_layer(nb_layer, name_layer, z_low, X[j]),
+                verbose=False,
+            )
+            _temp_iter[j] = self.get_temperatures_solve()
+            _flow_iter[j] = self.get_flows_solve()
+            if typealgo=="no sigma":
+                init_sigma2.append(sigma2)
+                _energy_burn_in[0][j] = compute_energy_mcmc(
+                _temp_iter[j][ind_ref], temp_ref, remanence, sigma2,sigma2_distrib
                 )
-                _temp_iter[j] = self.get_temperatures_solve()
-                _flow_iter[j] = self.get_flows_solve()
-                if typealgo=="no sigma":
-                    init_sigma2.append(sigma2)
-                    _energy_burn_in[0][j] = compute_energy_mcmc(
-                    _temp_iter[j][ind_ref], temp_ref, remanence, sigma2,sigma2_distrib
-                    )
-                else:
-                    init_sigma2_temp = sigma2_temp_prior.sample()
-                    init_sigma2.append(init_sigma2_temp)
-                    _energy_burn_in[0][j] = compute_energy_mcmc(_temp_iter[j][ind_ref], temp_ref, remanence, init_sigma2_temp,sigma2_distrib)
-
-
-            print(f"Initialisation - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
-
-            current_sigma2=init_sigma2
-            if verbose:
-                print("--- Begin Burn in phase ---")
-            if nb_chain==1:
-                burning=self.burning_single_chain(X,current_sigma2,nb_iter,nb_layer,nb_cells,all_priors,sigma2_temp_prior,sigma2_distrib,ind_ref,typealgo,_flow_iter,_temp_iter,temp_ref,remanence)
             else:
-                burning=self.burning_DREAM(nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose)
+                init_sigma2_temp = sigma2_temp_prior.sample()
+                init_sigma2.append(init_sigma2_temp)
+                _energy_burn_in[0][j] = compute_energy_mcmc(_temp_iter[j][ind_ref], temp_ref, remanence, init_sigma2_temp,sigma2_distrib)
 
-            #récupération des variables après le burn-in
-            current_sigma2=burning[0]
-            X=burning[1]
-            nb_burn_in_iter=burning[2]
-            _energy_burn_in=burning[3]
-            _flow_iter=burning[4]
-            _temp_iter=burning[5]
-            print(X)
-            # Transition après le burn in
-            del _params  # la variable _params n'est plus utile
+
+        print(f"Initialisation - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
+
+        current_sigma2=init_sigma2
+        if verbose:
+            print("--- Begin Burn in phase ---")
+        if nb_chain==1:
+            burning=self.burning_single_chain(X,current_sigma2,nb_iter,nb_layer,nb_cells,all_priors,sigma2_temp_prior,sigma2_distrib,ind_ref,typealgo,_flow_iter,_temp_iter,temp_ref,remanence)
+        else:
+            burning=self.burning_DREAM(nb_iter,X,nb_chain,nb_cells,nb_layer,nb_param,nb_burn_in_iter,_params,typealgo,current_sigma2,sigma2_temp_prior,ind_ref,temp_ref,_energy_burn_in,_temp_iter, _flow_iter,remanence,sigma2_distrib,name_layer,z_low,delta,ncr,c,c_star,cr_vec,pcr,J,n_id,ranges,threshold,verbose)
+
+        #récupération des variables après le burn-in
+        current_sigma2=burning[0]
+        X=burning[1]
+        nb_burn_in_iter=burning[2]
+        _energy_burn_in=burning[3]
+        _flow_iter=burning[4]
+        _temp_iter=burning[5]
+        
+        # Transition après le burn in
+        del _params  # la variable _params n'est plus utile
 
         # Préparation du sous-échantillonnage
         nb_iter_sous_ech = int(np.ceil((nb_iter + 1) / n_sous_ech_iter))
@@ -1170,23 +1170,23 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             :, ::n_sous_ech_space, ::n_sous_ech_time
         ]  # initialisation des températures sous-échantillonnées
 
-            # initialisation des états
-            for j in range(nb_chain):
-                init_sigma2_temp = current_sigma2[j]
-                if nb_chain==1:
-                    energy_init=_energy_burn_in[0]
-                else:
-                    energy_init=_energy_burn_in[
-                            min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
-                        ][j]
-                self._states.append(
-                    State(
-                        layers=convert_to_layer(nb_layer, name_layer, z_low, X[j]),
-                        energy=energy_init,
-                        ratio_accept=1,
-                        sigma2_temp=init_sigma2_temp,
-                    )
+        # initialisation des états
+        for j in range(nb_chain):
+            init_sigma2_temp = current_sigma2[j]
+            if nb_chain==1:
+                energy_init=_energy_burn_in[0]
+            else:
+                energy_init=_energy_burn_in[
+                        min(nb_burn_in_iter + 1, len(_energy_burn_in) - 1)
+                    ][j]
+            self._states.append(
+                State(
+                    layers=convert_to_layer(nb_layer, name_layer, z_low, X[j]),
+                    energy=energy_init,
+                    ratio_accept=1,
+                    sigma2_temp=init_sigma2_temp,
                 )
+            )
 
         print(
             f"Initialisation post burn-in - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}"
