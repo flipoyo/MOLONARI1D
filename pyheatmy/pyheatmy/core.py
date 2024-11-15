@@ -1006,7 +1006,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         n_sous_ech_iter=10,
         n_sous_ech_space=1,
         n_sous_ech_time=1,
-        threshold=1.2,
+        threshold=GELMANRCRITERIA,
     ):
         
         process = psutil.Process()
