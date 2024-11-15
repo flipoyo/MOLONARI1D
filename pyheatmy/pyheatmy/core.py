@@ -1511,11 +1511,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         temperatures = np.zeros(
             (len(ids) + 2, self.get_timelength())
         )  # adding the boundary conditions
-        temperatures[0] = self._T_riv
-        temperatures[len(ids) + 1] = self._T_aq
+        temperatures[0] = self._T_riv - ZERO_CELSIUS
+        temperatures[len(ids) + 1] = self._T_aq - ZERO_CELSIUS
         for id in range(len(ids)):
             # print(self.get_temperatures_solve()) # mise en commentaire car on ne sait pas à quoi sert ce print
-            temperatures[id + 1] = self.get_temperatures_solve()[ids[id]]
+            temperatures[id + 1] = self.get_temperatures_solve()[ids[id]] - ZERO_CELSIUS
             # print(f"printing extracted temperatures:{id+1}")
             # print(temperatures[id+1])
             # for j in range(len(temperatures[id+1])):
@@ -1626,7 +1626,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         plt.show()
 
     @compute_solve_transi.needed
-    def plot_compare_temperatures_sensors(self, tunits="K", fontsize=15):
+    def plot_compare_temperatures_sensors(self, tunits="C", fontsize=15):
         zoomSize = 2
         titleSize = fontsize + zoomSize
         fig, axes = plt.subplots(1, 3, figsize=(20, 5), sharey=True)
@@ -1645,7 +1645,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 label="Measurement",
             )
             axes[i].plot(
-                temps_en_jours, temperatures[i + 1] - ZERO_CELSIUS, label="Simulated"
+                temps_en_jours, temperatures[i + 1], label="Simulated"
             )
             axes[i].legend()
             axes[i].set_title(f"Sensor {i+1}")
@@ -1653,14 +1653,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         plt.subplots_adjust(wspace=0.05)
 
     @compute_mcmc.needed
-    def plot_quantile_temperatures_sensors(self, tunits="K", fontsize=15):
+    def plot_quantile_temperatures_sensors(self, tunits="C", fontsize=15):
         temps_en_jours = self.create_time_in_day()
 
         fig, axes = plt.subplots(1, 3, figsize=(20, 5), sharey=True)
 
         axes[0].set_ylabel(f"Temperature in {tunits}")
+        
+        
 
         for i, id in enumerate(self.get_id_sensors()):
+            
             axes[i].set_xlabel("Time in days")
             axes[i].plot(
                 temps_en_jours,
@@ -1680,6 +1683,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     @compute_solve_transi.needed
     def plot_temperatures_umbrella(self, dplot=1, K_offset=0, fontsize=15):
+        K_offset = ZERO_CELSIUS
         fig, ax = plt.subplots(figsize=(10, 5), facecolor="w")
         nt = len(self._times)
 
