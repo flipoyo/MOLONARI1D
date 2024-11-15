@@ -6,7 +6,7 @@ Before putting the sensors into river, one necessary thing is to correctly calib
 
 ## How to calibrate the pressure sensor
 
-![Pressure](./Images/pressure_%20sensor.png)
+![Pressure](./Images/pressuresensor.png)
 
 Above image is the pressure sensor we use. We first keep temperature stable and change the pressure by adding water into each of the two tubes at different heights. And we obtain a fitting line between pressure and the tension measured.
 
@@ -15,4 +15,6 @@ Above image is the pressure sensor we use. We first keep temperature stable and 
 Measurement of tension is also affected by temperature,as there’s is a phase difference between tension and temperature. We need to eliminate the influence of temperature on the pressure. So we will keep pressure stable and change the temperature by using the climate chamber.
 ![dephasage](./Images/dephasage.png)
 
-The temperature change within 24 hours usually follows a sinusoidal curve fluctuation.However, the climate chamber can only program a straight line, so it is necessary to calculate the temperature and duration of each stage of rising, steady and falling. We write a program. Input delta T you'll get the above data.
+The temperature change within 24 hours usually follows a sinusoidal curve fluctuation.However, the climate chamber can only program a straight line, so it is necessary to calculate the temperature and duration of each stage of rising, steady and falling. We write a program. Input delta T max you'll get the above data.
+
+....
