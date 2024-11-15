@@ -3,7 +3,7 @@ from typing import Sequence
 
 from pyheatmy.core import Column
 from pyheatmy.synthetic_MOLONARI import synthetic_MOLONARI
-from pyheatmy.layers import Layer, layersListCreator
+from pyheatmy.layers import Layer
 from pyheatmy.config import *
 
 class Analy_Sol:
