@@ -1,35 +1,31 @@
-// This file will contain all the code to track time using the integrated Real Time Clock (RTC) of the MKR board and the external one.
+// This file contains all the code to manage time using the MKR board's integrated Real Time Clock (RTC) and an external RTC.
 
-
-// Check that the file has not been imported before
 #ifndef MY_TIME
 #define MY_TIME
-
 
 #include <RTCZero.h>
 #include <RTClib.h>
 
-
+// Declare the RTC objects: internal (MKR) and external
 RTCZero internalRtc;
 RTC_PCF8523 externalRtc;
 
-
+// Helper function to convert an integer to a 2-digit string (e.g., 7 -> "07")
 String UIntTo2DigitString(uint8_t x) {
   String str = String(x);
 
   if (x < 10) {
-    str = "0" + str;
+    str = "0" + str; // Add leading zero for single digits
   }
 
   if (x >= 100) {
-    str.remove(2);
+    str.remove(2); // Keep only the first two digits if it's 100 or more
   }
 
   return str;
 }
 
-
-// Initialise the RTC module for the first time.
+// Initialize both the internal and external RTCs
 void InitialiseRTC() {
   // Start the internal RTC
   internalRtc.begin();
@@ -37,19 +33,19 @@ void InitialiseRTC() {
   // Start communication with the external RTC
   bool success = externalRtc.begin();
   if (!success) {
-    return;
+    return; // Stop if the external RTC is not available
   }
   
-  // If the external RTC has lost power (even its battery), then set its time to the date at which the code was compiled.
+  // If the external RTC lost power, set its time to the compile time of this code
   if (externalRtc.lostPower()) {
     externalRtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
   
-  // Set the time of the internal RTC to the time of the external one
+  // Sync the internal RTC with the external RTC
   DateTime startingDate = externalRtc.now();
   uint8_t day = startingDate.day();
   uint8_t month = startingDate.month();
-  uint8_t year = startingDate.year() % 100;
+  uint8_t year = startingDate.year() % 100; // Get the last two digits of the year
   uint8_t hour = startingDate.hour();
   uint8_t minute = startingDate.minute();
   uint8_t second = startingDate.second();
@@ -57,7 +53,7 @@ void InitialiseRTC() {
   internalRtc.setTime(hour, minute, second);
 }
 
-// Return the current date (JJ/MM/AAAA)
+// Get the current date in "DD/MM/YYYY" format
 String GetCurrentDate() {
   return 
     UIntTo2DigitString(internalRtc.getDay()) +
@@ -67,7 +63,7 @@ String GetCurrentDate() {
     "20" + UIntTo2DigitString(internalRtc.getYear());
 }
 
-// Return the current hour (HH:MM:SS)
+// Get the current time in "HH:MM:SS" format
 String GetCurrentHour() {
   return 
     UIntTo2DigitString(internalRtc.getHours()) +
@@ -75,71 +71,60 @@ String GetCurrentHour() {
     UIntTo2DigitString(internalRtc.getMinutes()) +
     ":" +
     UIntTo2DigitString(internalRtc.getSeconds());  
-
 }
 
-
-// Function to get the current time in minutes since midnight
+// Get the current time in seconds since midnight
 unsigned long GetSecondsSinceMidnight() {
-    uint8_t hour = internalRtc.getHours();
-    uint8_t minute = internalRtc.getMinutes();
-    uint8_t second = internalRtc.getSeconds();
-    return hour * 3600 + minute * 60 + second; // Return the current time in seconds since midnight
+  uint8_t hour = internalRtc.getHours();
+  uint8_t minute = internalRtc.getMinutes();
+  uint8_t second = internalRtc.getSeconds();
+  return hour * 3600 + minute * 60 + second; // Convert hours and minutes to seconds
 }
-
 
 // --- Measurement Control ---
-// Manage the timing and intervals of measurements taken throughout the day
-const int MEASURE_INTERVAL_MINUTES = 15 ; // Measurement interval in minutes
-const int TOTAL_MEASUREMENTS_PER_DAY = 1440/MEASURE_INTERVAL_MINUTES ; // 96 measurements in a day
-unsigned int measurementTimes[TOTAL_MEASUREMENTS_PER_DAY]; // Array to store measurement times
+// Handles intervals and timing for periodic measurements throughout the day
+const int MEASURE_INTERVAL_MINUTES = 15; // Interval between measurements
+const int TOTAL_MEASUREMENTS_PER_DAY = 1440 / MEASURE_INTERVAL_MINUTES; // Total measurements in a day
+unsigned int measurementTimes[TOTAL_MEASUREMENTS_PER_DAY]; // Store times for each measurement
 int measurementCount = 0;
 
-// Function to initialize the measurement time intervals
+// Initialize the array with all the measurement times (in seconds from midnight)
 void InitializeMeasurementTimes() {
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
-    measurementTimes[i] = i * MEASURE_INTERVAL_MINUTES * 60; // Store times in seconds from midnight
+    measurementTimes[i] = i * MEASURE_INTERVAL_MINUTES * 60;
   }
 }
 
-// Function to initialize the measurement count
+// Determine how many measurements have already been done today
 void InitializeMeasurementCount() {
-  // Get current time from the RTC in minutes since midnight (00:00)
-  unsigned long currentTime = GetSecondsSinceMidnight();
-  measurementCount = 0; // Counter for measurements
-  // Find the current measurement count
+  unsigned long currentTime = GetSecondsSinceMidnight(); // Current time in seconds
+  measurementCount = 0;
+  
+  // Find the first measurement that hasn't been done yet
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
     if (currentTime > measurementTimes[i]) {
       measurementCount++;
-    }
-    else {
-      measurementCount = 96;
-      break; // If the current time is less than the next measurement time, break the loop
+    } else {
+      break; // Stop once the current time is less than the next measurement time
     }
   }
 }
 
-// Function to calculate the sleep time until the next measurement time
+// Calculate the time (in ms) until the next measurement
 unsigned long CalculateSleepTimeUntilNextMeasurement() {
-  // Get current time from the RTC in minutes since midnight (00:00)
-  unsigned long currentTime = GetSecondsSinceMidnight();
-
-  // Test code
-  // Serial.println("Current time: " + String(currentTime));
-
+  unsigned long currentTime = GetSecondsSinceMidnight(); // Current time in seconds
+  
   // Find the next measurement time
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
     if (currentTime < measurementTimes[i]) {
       unsigned long nextTime = measurementTimes[i];
-      // Calculate the time difference in milliseconds
-      unsigned long sleepTime = (nextTime - currentTime) * 1000; // Convert minutes to milliseconds
-      return sleepTime;
+      return (nextTime - currentTime) * 1000; // Convert seconds to milliseconds
     }
   }
-  // If no upcoming time found (current time is beyond the last time slot), calculate time until the next day's first measurement
-  unsigned long nextDayFirstTime = measurementTimes[0] + 24 * 3600; // Add 24 hours to the first time slot (start of the next day)
-  unsigned long sleepTime = (nextDayFirstTime - currentTime) * 1000;
-  return sleepTime;
+  
+  // If no measurement is left today, calculate the time until the next day's first measurement
+  unsigned long nextDayFirstTime = measurementTimes[0] + 24 * 3600; // First time of the next day
+  return (nextDayFirstTime - currentTime) * 1000;
 }
 
-#endif
+#endif // MY_TIME
