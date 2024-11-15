@@ -927,7 +927,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             _flow_iter_chain = np.zeros((nb_chain, self._nb_cells, len(self._times)), np.float32)  # dernier débit accepté pour chaque chaine
             _temp = np.zeros((nb_iter_sous_ech, nb_chain, nb_cells_sous_ech, nb_times_sous_ech),np.float32) # stockage des températures sous échantillonées pendant la mcmc
             _flows = np.zeros((nb_iter_sous_ech, nb_chain, nb_cells_sous_ech, nb_times_sous_ech),np.float32) # stockage des débits sous échantillonées pendant la mcmc
-            self._acceptance = np.zeros((nb_chain), np.float32)  # taux d'acceptation pour chaque paramètre de chaque couche
 
             # création de la matrice des bornes des paramètres (sert à s'assurer que la proposition de paramètres est dans les bornes)
             ranges = np.empty((nb_layer, nb_param, 2))
@@ -949,8 +948,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             ### initialisation des énergie
             
-            # lancement du modèle direct et stockage de tous les paramètres initiaux dans l'attribut _state de la colonne et dans la matrice X
-            # qui stocke l'ensemble des paramètres de l'ensemble des colonnes et Energy qui stocke l'énergie associée à chaque colonne
+            # lancement du modèle direct et mise à jours de tous les paramètres dans la matrice X, les énergies dans la matrice Energy 
+            # et on les stocke dans l'attribut _state de la colonne qui ne sert qu'à plot les distribution et à récupérer les paramètres qui minimisent l'énergie
 
             self._states = list()
             X = np.zeros((nb_chain, nb_layer, nb_param), np.float32)
@@ -976,7 +975,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             # XBurnIn va servir à stocker les paramètres pour toutes les itérations de chaque couche de chaque chaîne pendant le Burn In
             # Sert uniquement pour le calcul du critère de Gelman-Rubin
 
-            XBurnIn = np.zeros((2 * nb_iter + 1, nb_chain, nb_layer, nb_param), np.float32)
+            XBurnIn = np.zeros((nb_iter + 1, nb_chain, nb_layer, nb_param), np.float32)
 
             # en particulier la première instance de XBurnIn est égale à X :
 
@@ -988,11 +987,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             if verbose:
                 print("--- Begin Burn in phase ---")
 
-            for i in trange(NITMCMC, desc="Burn in phase"):
+            for i in trange(10, desc="Burn in phase"):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
                 id_layer = np.zeros(nb_layer, np.int32)
-                
 
                 for j, column in enumerate(multi_chain):
 
@@ -1060,6 +1058,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             self.nb_burn_in_iter = nb_burn_in_iter
 
+            # On suit les taux d'acceptation pour chaque chaîne grâce à un vecteur de taille nb_chain qu'on incrémente à chaque itération
+            self._acceptance = np.zeros(nb_chain, np.float32)
+
             # Transition après le burn in
 
             # La variable XBurnIn n'est plus utile
@@ -1091,18 +1092,20 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                     # Acceptation ou non des nouveaux paramètres
                     if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
-                        nb_accepted += 1
+
                         # on met à jour l'état de la colonne
                         X[j] = X_proposal
                         Energy[j] = Energy_Proposal
+                        _temp_iter_chain[j] = temp_proposal
+                        _flow_iter_chain[j] = column.get_flows_solve()
+                        self._acceptance[j] += 1
+
                         self._states.append(State(
                             layers = X[j],
                             energy = Energy[j],
-                            ratio_accept= nb_accepted / (i + 1),
+                            ratio_accept=1,
                             sigma2_temp=sigma2_temp_proposal
                         ))
-                        _temp_iter_chain[j] = temp_proposal
-                        _flow_iter_chain[j] = column.get_flows_solve()
 
                     else:
 
@@ -1112,16 +1115,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         # On remet les anciens paramètres pour la colonne :
                         for l, layer in enumerate(column.all_layers):
                             layer.params = Param(*X[j][l])
-                        # L'état 
 
                     
-                    if (i + 1) % n_sous_ech_iter == 0:
+                    if (i + 1) % n_sous_ech_iter == 0:  # sous échantillonnage
                         # Si i+1 est un multiple de n_sous_ech_iter, on stocke
                         k = (i + 1) // n_sous_ech_iter
                         _temp[k, j] = _temp_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
                         _flows[k, j] = _flow_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
 
-                    for l in range(nb_layer):
+                    for l in range(nb_layer):   # Mise à jour des vecteurs J et n_id
                         J[l, id_layer[l]] += np.sum((dX[l] / std_X[l]) ** 2)
                         n_id[l, id_layer[l]] += 1
                             
@@ -1130,6 +1132,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
                     pcr[l] = pcr[l] / np.sum(pcr[l])
 
+            # Calcul des taux d'acceptation:
+            self._acceptance = self._acceptance / nb_iter
 
             # Calcul des quantiles pour la température
             _temp = _temp.reshape(
@@ -1138,25 +1142,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             _flows = _flows.reshape(
                 nb_iter_sous_ech * nb_chain, nb_cells_sous_ech, nb_times_sous_ech
             )
-
-            print(
-                f"Fin itérations MCMC, avant le calcul des quantiles - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}"
-            )
-
-            self._quantiles_temperatures = {
-                quant: res
-                for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
-            }
-
-            self._quantiles_flows = {
-                quant: res
-                for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
-            }
-
-            self._acceptance = self._acceptance / nb_iter
-
-            if verbose:
-                print("Quantiles computed")
 
         else :  # cas single chain
             
@@ -1185,7 +1170,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
             temp_ref = self._T_measures[:, :].T # ce sont les températures mesurées auxquelles on va confronter les profils simulés pour les différents jeux de paramètres
 
-            for i in trange(NITMCMC, desc="Init Mcmc ", file=sys.stdout):
+            for i in trange(nb_iter, desc="Init Mcmc ", file=sys.stdout):
                 
                 # on tire un jeu de paramètres aléatoires selon les priors
                 self.sample_params_from_priors()
@@ -1234,7 +1219,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 # on calcule l'énergie pour les nouveaux paramètres
                 self.compute_solve_transi(verbose=False)
 
-                ### Gros doute : est-ce que temperature_solve est bien mise à jour ?
                 Energy_Proposal = compute_energy_mcmc(
                     self.temperatures_solve[ind_ref, :],
                     temp_ref,
@@ -1273,24 +1257,24 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                 self._acceptance[i] = nb_accepted / (i + 1)
 
-            print(
-                f"Fin itérations MCMC, avant le calcul des quantiles - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}"
-            )
+        print(
+            f"Fin itérations MCMC, avant le calcul des quantiles - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}"
+        )
 
-            self._quantiles_temperatures = {
-                quant: res
-                for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
-            }
+        self._quantiles_temperatures = {
+            quant: res
+            for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
+        }
 
-            self._quantiles_flows = {
-                quant: res
-                for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
-            }
+        self._quantiles_flows = {
+            quant: res
+            for quant, res in zip(quantile, np.quantile(_flows, quantile, axis=0))
+        }
 
-            self._acceptance = self._acceptance / nb_iter
+        self._acceptance = self._acceptance / nb_iter
 
-            if verbose:
-                print("Quantiles computed")
+        if verbose:
+            print("Quantiles computed")
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
