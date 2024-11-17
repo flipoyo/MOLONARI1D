@@ -392,15 +392,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             )
             
             q_list = [10 **(-q) for q in q_list]
-            nueva_q_list = [0] * len(q_list)
+            new_q_list = [0] * len(q_list)
             
 
             for idx in heat_depth_list:
                 pos = int(idx*100/0.4)  
-                if 0 <= pos < len(nueva_q_list):
-                    nueva_q_list[pos] = q_list[int(idx)]
+                if 0 <= pos < len(new_q_list):
+                    new_q_list[pos] = q_list[int(idx)]
             ##
-            q_list = nueva_q_list
+            q_list = new_q_list
             
 
             array_moinslog10IntrinK = np.array(
