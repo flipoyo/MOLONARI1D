@@ -1607,7 +1607,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         plt.subplots_adjust(wspace=0.05)
 
     @compute_mcmc.needed
-    def plot_quantile_temperatures_sensors(self, tunits="C", fontsize=15):
+    def plot_quantile_temperatures_sensors(self, tunits="K", fontsize=15):
+        zeroT=self.set_zeroT(tunits)
         temps_en_jours = self.create_time_in_day()
 
         fig, axes = plt.subplots(1, 3, figsize=(20, 5), sharey=True)
@@ -1621,13 +1622,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             axes[i].set_xlabel("Time in days")
             axes[i].plot(
                 temps_en_jours,
-                self._T_measures[:, i] - ZERO_CELSIUS,
+                self._T_measures[:, i] - zeroT,
                 label="Measurement",
             )
             for q in self.get_quantiles():
                 axes[i].plot(
                     temps_en_jours,
-                    self.get_temperatures_quantile(q)[id] - ZERO_CELSIUS,
+                    self.get_temperatures_quantile(q)[id] - zeroT,
                     label=f"Quantile {q}",
                 )
             axes[i].legend()
