@@ -1449,7 +1449,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         return np.append(list_RMSE, total_RMSE)
 
     @compute_solve_transi.needed
-    def get_temperature_at_sensors(self, verbose=False):
+    def get_temperature_at_sensors(self, zero=0,verbose=False):#possibility to translate temperature with zero=ZERO_CELSIUS. as is temperature in Kelvin
         depths = self.get_depths_solve()
         ids = self.get_id_sensors()
         if verbose:
@@ -1457,11 +1457,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         temperatures = np.zeros(
             (len(ids) + 2, self.get_timelength())
         )  # adding the boundary conditions
-        temperatures[0] = self._T_riv - ZERO_CELSIUS
-        temperatures[len(ids) + 1] = self._T_aq - ZERO_CELSIUS
+        temperatures[0] = self._T_riv - zero
+        temperatures[len(ids) + 1] = self._T_aq - zero
         for id in range(len(ids)):
             # print(self.get_temperatures_solve()) # mise en commentaire car on ne sait pas à quoi sert ce print
-            temperatures[id + 1] = self.get_temperatures_solve()[ids[id]] - ZERO_CELSIUS
+            temperatures[id + 1] = self.get_temperatures_solve()[ids[id]] - zero
             # print(f"printing extracted temperatures:{id+1}")
             # print(temperatures[id+1])
             # for j in range(len(temperatures[id+1])):
@@ -1571,23 +1571,31 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         plt.show()
 
+    def set_zeroT(self, tunits="K"):
+        if tunits == "K":
+            zeroT = 0
+        else:
+            zeroT=ZERO_CELSIUS
+        return zeroT
+
     @compute_solve_transi.needed
-    def plot_compare_temperatures_sensors(self, tunits="C", fontsize=15):
+    def plot_compare_temperatures_sensors(self, tunits="K", fontsize=15):
+        zeroT=self.set_zeroT(tunits)
         zoomSize = 2
         titleSize = fontsize + zoomSize
-        fig, axes = plt.subplots(1, 3, figsize=(20, 5), sharey=True)
         nd = self.get_dt_in_days()
         temps_en_jours = self.create_time_in_day()
         ids = self.get_id_sensors()
-        temperatures = self.get_temperature_at_sensors()
-
+        temperatures = self.get_temperature_at_sensors() - zeroT
+        nsensors = len(ids)
+        fig, axes = plt.subplots(1, nsensors, figsize=(20, 5), sharey=True)
         axes[0].set_ylabel(f"Temperature in {tunits}")
 
-        for i in range(len(ids)):
+        for i in range(nsensors):
             axes[i].set_xlabel("time in days", fontsize=fontsize)
             axes[i].plot(
                 temps_en_jours,
-                self._T_measures[:, i] - ZERO_CELSIUS,
+                self._T_measures[:, i] - zeroT,
                 label="Measurement",
             )
             axes[i].plot(
