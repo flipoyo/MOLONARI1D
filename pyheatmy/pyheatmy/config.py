@@ -120,8 +120,6 @@ SENSOR_FILE_NAMES = {
     SensorType.temperature_sensors: "Tvirtual",
 }
 
-# MCMC parametrization
-NITMCMC = 150
 
 # Coefficients of the Mu equation
 MU_A = 1.856e-11 * 1e-3
@@ -134,3 +132,8 @@ DEFAULT_MU = 1e-3
 NB_CELLS = 100
 GELMANRCRITERIA = 1.2
 PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q") #a priori sigma2 a un statut particulier
+NBCHAINS = 10
+# MCMC parametrization
+NITMCMC = 150
+NBBURNING = 25
+NSAMPLEMIN = 200 #200 is the minimal number of sample for a proper calculation of the quantiles, pb of initialisation

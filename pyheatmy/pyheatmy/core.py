@@ -850,7 +850,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         return (X_proposal, dX, id_layer)
 
 
-
     @checker
     def compute_mcmc(
         self,
@@ -859,18 +858,25 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         typealgo="no sigma",
         sigma2=1.0,
         nb_iter=NITMCMC,
-        nb_chain=10,
+        nb_chain=NBCHAINS,
+        nitmaxburning=NBBURNING,
         delta=3,     
         n_CR=3,
         c=0.1,
         c_star=1e-12,
         remanence=1,
-        n_sous_ech_iter=10,
-        n_sous_ech_space=1,
         n_sous_ech_time=1,
+        n_sous_ech_space=1,
         threshold=GELMANRCRITERIA,
     ):
         
+        n_sous_ech_iter = max(1,int(np.floor(nb_chain*nb_iter/NSAMPLEMIN))) 
+        sizesubsampling = max(int(np.floor(nb_iter / n_sous_ech_iter)),1)+1 
+
+        if verbose ==True:
+            print(f"Subsampling for Quantile computation every {n_sous_ech_iter} iterations")
+            print(f"Size of the subsampling per chain : {sizesubsampling} iterations among {nb_iter} iterations")  
+
         process = psutil.Process()
 
         if typealgo == "no sigma":  # Dans ce cas là sigma2 est une sorte de Dirac
@@ -925,8 +931,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             # Voir si ces variables ne peuvent pas devenir des attributs de State
             _temp_iter_chain = np.zeros((nb_chain, self._nb_cells, len(self._times)), np.float32)  # dernière température acceptée pour chaque chaine
             _flow_iter_chain = np.zeros((nb_chain, self._nb_cells, len(self._times)), np.float32)  # dernier débit accepté pour chaque chaine
-            _temp = np.zeros((nb_iter_sous_ech, nb_chain, nb_cells_sous_ech, nb_times_sous_ech),np.float32) # stockage des températures sous échantillonées pendant la mcmc
-            _flows = np.zeros((nb_iter_sous_ech, nb_chain, nb_cells_sous_ech, nb_times_sous_ech),np.float32) # stockage des débits sous échantillonées pendant la mcmc
+
+            # nombre d'itérations sous-échantillonnées avec initialisation
+            _temp = np.zeros((sizesubsampling, nb_chain, nb_cells_sous_ech, nb_times_sous_ech),np.float32) # stockage des températures sous échantillonées pendant la mcmc
+            _flows = np.zeros((sizesubsampling, nb_chain, nb_cells_sous_ech, nb_times_sous_ech),np.float32) # stockage des débits sous échantillonées pendant la mcmc
 
             # création de la matrice des bornes des paramètres (sert à s'assurer que la proposition de paramètres est dans les bornes)
             ranges = np.empty((nb_layer, nb_param, 2))
@@ -975,7 +983,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             # XBurnIn va servir à stocker les paramètres pour toutes les itérations de chaque couche de chaque chaîne pendant le Burn In
             # Sert uniquement pour le calcul du critère de Gelman-Rubin
 
-            XBurnIn = np.zeros((nb_iter + 1, nb_chain, nb_layer, nb_param), np.float32)
+            XBurnIn = np.zeros((nitmaxburning + 1, nb_chain, nb_layer, nb_param), np.float32)
 
             # en particulier la première instance de XBurnIn est égale à X :
 
@@ -987,7 +995,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             if verbose:
                 print("--- Begin Burn in phase ---")
 
-            for i in trange(10, desc="Burn in phase"):
+            for i in trange(nitmaxburning, desc="Burn in phase"):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
                 id_layer = np.zeros(nb_layer, np.int32)
@@ -1134,13 +1142,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             # Calcul des taux d'acceptation:
             self._acceptance = self._acceptance / nb_iter
+            if verbose==True:
+                print(f"Acceptance rate : {self._acceptance}")
 
             # Calcul des quantiles pour la température
             _temp = _temp.reshape(
-                nb_iter_sous_ech * nb_chain, nb_cells_sous_ech, nb_times_sous_ech
+                sizesubsampling * nb_chain, nb_cells_sous_ech, nb_times_sous_ech
             )
             _flows = _flows.reshape(
-                nb_iter_sous_ech * nb_chain, nb_cells_sous_ech, nb_times_sous_ech
+                sizesubsampling * nb_chain, nb_cells_sous_ech, nb_times_sous_ech
             )
 
         else :  # cas single chain
@@ -1158,8 +1168,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             _temp_iter = np.zeros((self._nb_cells, len(self._times)), np.float32)  # dernière température acceptée pour la colonne
             _flow_iter = np.zeros((self._nb_cells, len(self._times)), np.float32)  # dernier débit accepté pour la colonne
-            _temp = np.zeros((nb_iter_sous_ech, self._nb_cells, len(self._times)),np.float32) # stockage des températures sous échantillonées pendant la mcmc
-            _flows = np.zeros((nb_iter_sous_ech, self._nb_cells, len(self._times)),np.float32) # stockage des débits sous échantillonées pendant la mcmc
+            _temp = np.zeros((sizesubsampling, self._nb_cells, len(self._times)),np.float32) # stockage des températures sous échantillonées pendant la mcmc
+            _flows = np.zeros((sizesubsampling, self._nb_cells, len(self._times)),np.float32) # stockage des débits sous échantillonées pendant la mcmc
             self._acceptance = 0  # taux d'acceptation
         
             if isinstance(quantile, Number):
@@ -1170,7 +1180,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
             temp_ref = self._T_measures[:, :].T # ce sont les températures mesurées auxquelles on va confronter les profils simulés pour les différents jeux de paramètres
 
-            for i in trange(nb_iter, desc="Init Mcmc ", file=sys.stdout):
+            for i in trange(NBBURNING, desc="Init Mcmc ", file=sys.stdout):
                 
                 # on tire un jeu de paramètres aléatoires selon les priors
                 self.sample_params_from_priors()
