@@ -1,5 +1,7 @@
 # The SD card: a bad idea?
 
+Work of MOLONARI2023 team, not updated yet by MOLONARI2024 team
+
 This year, we decided to abandon the *data loggers* (i.e., the "data recorders") called "Hobbos" in favor of SD storage (as part of a broader effort to implement data transmission).
 
 To put it simply: for some rather obscure reason, writing to the SD card is **VERY** unpredictable. So, at <u>random</u> moments, the connection with the SD card is lost, and data is not recorded. BUT, there's a problem: we built the code in such a way that data transmission happens from the data stored in memory. So, if we lose data, we also lose the ability to transmit it.
