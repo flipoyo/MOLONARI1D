@@ -1,10 +1,9 @@
 # THE setup tutorial for a MOLONARI sensor
 
+Work of MOLONARI2023 team, not updated yet by MOLONARI2024 team
+
 ## 1. Prerequisites
 
-### 1.0. Before that
-
-*To carry out this setup, you will need a degree in nuclear physics OR (exclusive) two functional hands (at least one) (or feet).*
 
 ### 1.1. Equipment
 
@@ -26,6 +25,7 @@ In Arduino IDE, make sure to install the following libraries:
 - ``RTCLib`` (External real-time clock management)
 - ``RTCZero`` (Internal real-time clock management for MKR WAN 1310)
 - ``SD`` (SD card communication)
+- ``Queue`` (Data packet transfer)
 
 ## 2. Connections
 
@@ -45,8 +45,9 @@ Each step is detailed below, but here is a diagram that summarizes everything:
 
 Make sure the battery power goes well to the *Featherwing*. This means connecting, as indicated on *diagram 1*:
 
-* the grounds (GND). It is recommended to reserve a line of the breadboard for the use of a common ground (this is a common practice that facilitates wiring and its revision)
-* the VCC pin (A) to the 3.3V port (B). Same remark as for the ground: reserve an entire line
+* the grounds (GND). It is recommended to reserve a line of the breadboard for the use of a common ground (this is a common practice that facilitates wiring and its revision). In the case of the first prototype realized, the red line was reserved as ground. 
+* the VCC pin (A) to the 3.3V port (B). Since the SD card needs to be connected to the VCC port all the time we recommend to asign a whole line in one of the bread boards (the one where is the *Featherwing*).
+* the sensors. We asigned one digital port (pin 1) to feed the sensors only when the Arduino is not sleep (when it has to take the mesurementes), we reserved a whole line for that in the breadboard where the Arduino is.
 
 ### 2.2. SD part
 
@@ -75,8 +76,8 @@ This part applies to temperature sensors (rod with 4 thermistors). If you use a 
 * The blue cable → 3.3V power supply (VCC)
 * the white cable → board pin (we took A1, A2, A3, and A4)
 
-**Alternative:**  
-To save energy, you can cut off the power to the sensors when not in use. This is a feature already provided in the code. To do this, simply connect the + of the sensor power supply (blue cable) to pins 1, 2, 3, and 4.
+**Note:**  
+To save energy, we cut off the power to the sensors when not in use, as we mentioned before. To do this, we simply connected the + of the sensor power supply (blue cable) to pin 2 which is connected to the black line in the breadboard.
 
 ## 3. The code to insert into the boards.
 
@@ -121,7 +122,7 @@ Here too, if everything goes well the orange LED should light up and then turn o
 
 Additional options:  
 - **Curve on Arduino IDE**: If you want the data to appear on a curve, connect `pin 1` to `VCC` (+3V) on the receiving Arduino, and launch the `Serial Plotter` of `Arduino IDE`.
-- **Memory mode**: Currently, when the receiver restarts it re-requests all the sensor measurements, even those it had already requested before being turned off. If you want it to resume where it left off, connect `pin 0` of the receiver to `VCC` (+3V). (If you clear the contents of the SD card, you will need to reset the receiver's memory by disconnecting pin 0)
+- **Memory mode**: Currently, when the receiver restarts it re-requests all the sensor measurements, even those it had already requested before being turned off. If you want it to resume where it left off, connect `pin 0` of the receiver to `VCC` (+3V). (If you clear the contents of the SD card, you will need to reset the receiver's memory by disconnecting pin 0).
 
 ## Heuuu why doesn't it work?
 

@@ -37,7 +37,9 @@ class Linear_system:
 
     # @njit
     def compute_Mu(self, T):
-        mu = MU_A * np.exp(MU_B * 1.0 / T + MU_C * T + MU_D * (T**2))
+        # mu = MU_A * np.exp(MU_B * 1.0 / T + MU_C * T + MU_D * (T**2)) # Error when executing the MCMC : RuntimeWarning: overflow encountered in exp
+        # mu = MU_A * np.exp(MU_B * 1.0 / T + MU_C * T + MU_D * (T**2))
+        mu = DEFAULT_MU
         return mu
 
     # @njit
@@ -216,7 +218,7 @@ class H_stratified(Linear_system):
                     upper_diagonal_A,
                 )
 
-            c = self.compute_c(j, dt)
+            c = self.compute_c(j)
             B_fois_H_plus_c = (
                 tri_product(
                     lower_diagonal_B, diagonal_B, upper_diagonal_B, self.H_res[:, j]
