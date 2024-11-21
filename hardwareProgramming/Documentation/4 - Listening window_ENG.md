@@ -1,6 +1,6 @@
 # Listening Window for LoRa
 
-Work of MOLONARI2023 team #, updated by MOLONARI2024 team
+Work of MOLONARI2023 team, not updated yet by MOLONARI2024 team
 
 ## Intro
 
