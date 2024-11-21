@@ -1,5 +1,7 @@
 # Listening Window for LoRa
 
+Work of MOLONARI2023 team #, updated by MOLONARI2024 team
+
 ## Intro
 
 When sending a message via LoRa, the receiver must have its radio turned on and be listening for messages. The problem is that listening consumes energy—too much to do it continuously (it already represents 70% of our emissions if we listen for 10 seconds every 15 minutes).  
