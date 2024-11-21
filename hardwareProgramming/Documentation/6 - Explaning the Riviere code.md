@@ -1,5 +1,7 @@
 # Understanding our sensor code
 
+Work of MOLONARI2024 team but the folders are not up-to-date, merge what need to be merged in files 1 to 5, and reorganize
+
 ## Introduction
 Since this project is intended to be developed and improved each year by a new group of students, we created this document to explain the structure and functionality of the main sensor code and its associated classes. This document serves as a general guide to understanding the sensor code (.ino), detailing the organization and purpose of each file, class (.cpp and .hpp), and main function. The aim is to make future modifications or improvements easier to implement and understand.
 
