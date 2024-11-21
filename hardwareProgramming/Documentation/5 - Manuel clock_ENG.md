@@ -1,5 +1,7 @@
 # Timestamping Data and Using Clocks
 
+Work of MOLONARI2023 team, not updated yet by MOLONARI2024 team
+
 ## Why?
 
 The Arduino board used has an internal RTC that allows access to the time elapsed SINCE the board was powered on, which means it tracks relative time, not absolute time. To obtain the real date and time, we use an external clock that is part of the Adalogger.
