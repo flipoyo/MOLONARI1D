@@ -1,5 +1,7 @@
 # THE setup tutorial for a MOLONARI sensor
 
+Work of MOLONARI2023 team, not updated yet by MOLONARI2024 team
+
 ## 1. Prerequisites
 
 
