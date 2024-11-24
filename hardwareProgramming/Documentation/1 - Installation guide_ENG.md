@@ -1,10 +1,9 @@
 # THE setup tutorial for a MOLONARI sensor
 
+Work of MOLONARI2023 team, not updated yet by MOLONARI2024 team
+
 ## 1. Prerequisites
 
-### 1.0. Before that
-
-*To carry out this setup, you will need a degree in nuclear physics OR (exclusive) two functional hands (at least one) (or feet).*
 
 ### 1.1. Equipment
 

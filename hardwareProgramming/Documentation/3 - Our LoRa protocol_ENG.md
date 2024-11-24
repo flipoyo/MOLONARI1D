@@ -1,5 +1,8 @@
 # Our LoRa Protocol
 
+Work of MOLONARI2023 team, not updated yet by MOLONARI2024 team
+
+
 ## Introduction
 
 We focus on the communication between the sensor and the relay (the green arrow in the diagram). The main objective is to transmit the measurements made by the sensor, although eventually, we might have other data flows.
