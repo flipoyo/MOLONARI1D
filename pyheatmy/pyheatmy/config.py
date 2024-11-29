@@ -62,7 +62,7 @@ SIGMA2_MIN_T = 0.001
 SIGMA2_MAX_T = 1.0
 RANDOMWALKSIGMAT = 0.01
 
-Q_INTERVAL = (1e-9, 1e-5)
+Q_INTERVAL = (1e-12, 1e-5)
 Q_SIGMA = 1e-10
 Q_DEFAULT = 0
 
@@ -129,11 +129,11 @@ MU_D = -3.376e-5
 DEFAULT_MU = 1e-3
 
 # VALEURS
-NB_CELLS = 100
+NB_CELLS = 60
 GELMANRCRITERIA = 1.2
 PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q") #a priori sigma2 a un statut particulier
 NBCHAINS = 10
 # MCMC parametrization
-NITMCMC = 150
+NITMCMC = 200
 NBBURNING = 25
 NSAMPLEMIN = 200 #200 is the minimal number of sample for a proper calculation of the quantiles, pb of initialisation
