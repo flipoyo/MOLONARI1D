@@ -300,7 +300,7 @@ Once inside, we will choose the option "Enter end device specifics manually". An
 Then, within the "Provisioning information" section:
 
 - JoinEUI: 00 00 00 00 00 00 00 00
-- DevEUI: the value obtained by using the "DevEUI" code (found in the "Relay_LoraWan" folder) on the Arduino that will be our Relay.
+- DevEUI: the value obtained by using the "DevEUI" code (found in the "Test Codes" folder, inside "testArduinoLoRaWAN") on the Arduino that will be our Relay.
 - AppKey: we will generate it by clicking on "Generate"
 - End device ID: we will give it the name we want (for example: Molonari-relay)
 
