@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyheatmy"
-version = "0.1.0"
+version = "0.4.0"
 readme = "README.md"
 license =  {file = "LICENSE"}
 authors = [
@@ -18,11 +18,14 @@ dependencies = [
     "tqdm",
     "numba>=0.60",
     "psutil",
+    "nbformat",
+    "nbconvert",
+    "IPython"
 ]
 requires-python = ">= 3.9"
 
 [project.urls]
-Homepage = "https://github.com/mathisbrdn/pyheatmy"
+Homepage = "https://github.com/flipoyo/MOLONARI1D/pyheatmy"
 
 [tool.setuptools]
 packages = ["pyheatmy"]

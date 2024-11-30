@@ -869,7 +869,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         n_sous_ech_space=1,
         threshold=GELMANRCRITERIA,
     ):
-        
+
         n_sous_ech_iter = max(1,int(np.floor(nb_chain*nb_iter/NSAMPLEMIN))) 
         sizesubsampling = max(int(np.floor(nb_iter / n_sous_ech_iter)),1)+1 
 
@@ -907,7 +907,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         temp_proposal = np.zeros((self._nb_cells, len(self._times)), np.float32)
 
         # variables liées au sous-échantillonnage
-        nb_iter_sous_ech = int(np.ceil((nb_iter + 1) / n_sous_ech_iter))
         nb_cells_sous_ech = int(np.ceil(self._nb_cells / n_sous_ech_space))
         nb_times_sous_ech = int(np.ceil(len(self._times) / n_sous_ech_time))
 
@@ -1092,6 +1091,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     # Calcul du profil de température associé aux nouveaux paramètres
                     column.compute_solve_transi(verbose=False)
                     temp_proposal = column.get_temperatures_solve()  # récupération du profil de température
+                    _temp_iter_chain[j] = temp_proposal
+                    _flow_iter_chain[j] = column.get_flows_solve()
 
                     Energy_Proposal = compute_energy_mcmc(temp_proposal[ind_ref], temp_ref, remanence, sigma2_temp_proposal, sigma2_distrib)  # calcul de l'énergie
 
@@ -1104,8 +1105,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         # on met à jour l'état de la colonne
                         X[j] = X_proposal
                         Energy[j] = Energy_Proposal
-                        _temp_iter_chain[j] = temp_proposal
-                        _flow_iter_chain[j] = column.get_flows_solve()
                         self._acceptance[j] += 1
 
                         self._states.append(State(
@@ -1175,12 +1174,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             if isinstance(quantile, Number):
                 quantile = [quantile]
 
-            dz = self._real_z[-1] / self._nb_cells
-            _z_solve = dz / 2 + np.array([k * dz for k in range(self._nb_cells)])
-            ind_ref = [np.argmin(np.abs(z - _z_solve)) for z in self._real_z[1:-1]]
-            temp_ref = self._T_measures[:, :].T # ce sont les températures mesurées auxquelles on va confronter les profils simulés pour les différents jeux de paramètres
-
-            for i in trange(NBBURNING, desc="Init Mcmc ", file=sys.stdout):
+            for i in trange(nitmaxburning, desc="Init Mcmc ", file=sys.stdout):
                 
                 # on tire un jeu de paramètres aléatoires selon les priors
                 self.sample_params_from_priors()
@@ -1228,6 +1222,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                 # on calcule l'énergie pour les nouveaux paramètres
                 self.compute_solve_transi(verbose=False)
+                _temp_iter = self.get_temperatures_solve()
+                _flow_iter = self.get_flows_solve()
 
                 Energy_Proposal = compute_energy_mcmc(
                     self.temperatures_solve[ind_ref, :],
@@ -1263,13 +1259,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     _temp[k] = _temp_iter[::n_sous_ech_space, ::n_sous_ech_time]
                     _flows[k] = _flow_iter[::n_sous_ech_space, ::n_sous_ech_time]
 
+            self._acceptance = nb_accepted / (nb_iter + 1)
 
-
-                self._acceptance[i] = nb_accepted / (i + 1)
-
-        print(
-            f"Fin itérations MCMC, avant le calcul des quantiles - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}"
-        )
+            if verbose==True:
+                print(f"Acceptance rate : {self._acceptance}")
+                print(
+                f"Fin itérations MCMC, avant le calcul des quantiles - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}"
+                )
 
         self._quantiles_temperatures = {
             quant: res
@@ -1283,7 +1279,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         self._acceptance = self._acceptance / nb_iter
 
-        if verbose:
+        if verbose==True:
             print("Quantiles computed")
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
