@@ -871,7 +871,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     ):
         
         n_sous_ech_iter = max(1,int(np.floor(nb_chain*nb_iter/NSAMPLEMIN))) 
-        sizesubsampling = max(int(np.floor(nb_iter / n_sous_ech_iter)),1)+1 
+        sizesubsampling = max(int(np.floor(nb_iter / n_sous_ech_iter)),1)
 
         if verbose ==True:
             print(f"Subsampling for Quantile computation every {n_sous_ech_iter} iterations")
@@ -907,7 +907,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         temp_proposal = np.zeros((self._nb_cells, len(self._times)), np.float32)
 
         # variables liées au sous-échantillonnage
-        nb_iter_sous_ech = int(np.ceil((nb_iter + 1) / n_sous_ech_iter))
         nb_cells_sous_ech = int(np.ceil(self._nb_cells / n_sous_ech_space))
         nb_times_sous_ech = int(np.ceil(len(self._times) / n_sous_ech_time))
 
@@ -1125,15 +1124,19 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                             layer.params = Param(*X[j][l])
 
                     
-                    if (i + 1) % n_sous_ech_iter == 0:  # sous échantillonnage
-                        # Si i+1 est un multiple de n_sous_ech_iter, on stocke
-                        k = (i + 1) // n_sous_ech_iter
+                if (i + 1) % n_sous_ech_iter == 0:  # sous échantillonnage
+                    print(f'on stocke les résultats à l\'itération {i+1}')
+                    print(f"taille des matrices _temp et _flows : {_temp.shape} et {_flows.shape}")
+                    # Si i+1 est un multiple de n_sous_ech_iter, on stocke
+                    k = (i) // n_sous_ech_iter
+                    for j in range(nb_chain):
                         _temp[k, j] = _temp_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
                         _flows[k, j] = _flow_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
 
-                    for l in range(nb_layer):   # Mise à jour des vecteurs J et n_id
-                        J[l, id_layer[l]] += np.sum((dX[l] / std_X[l]) ** 2)
-                        n_id[l, id_layer[l]] += 1
+
+                for l in range(nb_layer):   # Mise à jour des vecteurs J et n_id
+                    J[l, id_layer[l]] += np.sum((dX[l] / std_X[l]) ** 2)
+                    n_id[l, id_layer[l]] += 1
                             
                 # Mise à jour du pcr pour chaque couche pour DREAM
                 for l in range(nb_layer):
@@ -1259,7 +1262,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                 if (i + 1) % n_sous_ech_iter == 0:
                     # Si i+1 est un multiple de n_sous_ech_iter, on stocke
-                    k = (i + 1) // n_sous_ech_iter
+                    k = i // n_sous_ech_iter
                     _temp[k] = _temp_iter[::n_sous_ech_space, ::n_sous_ech_time]
                     _flows[k] = _flow_iter[::n_sous_ech_space, ::n_sous_ech_time]
 
@@ -1273,7 +1276,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         self._quantiles_temperatures = {
             quant: res
-            for quant, res in zip(quantile, np.quantile(_temp, quantile, axis=0))
+            for quant, res in zip(
+                quantile, 
+                np.quantile(_temp, quantile, axis=0)
+            )
         }
 
         self._quantiles_flows = {
@@ -2020,3 +2026,26 @@ def compute_energy_mcmc(temp_simul, temp_ref, remanence, sigma2, sigma2_distrib)
         return compute_energy(temp_simul, temp_ref, remanence, sigma2)
     else:
         return compute_energy_with_distrib(temp_simul, temp_ref, sigma2, sigma2_distrib)
+
+    @compute_mcmc.needed
+    def compute_quantiles(self, quantiles=[0.05, 0.5, 0.95]):
+        """
+        Compute quantiles of temperatures and flows over the MCMC samples.
+        """
+        # Collect temperatures and flows from all accepted states
+        temperatures_samples = np.array([state._temperatures for state in self._states])
+        flows_samples = np.array([state._flows for state in self._states])
+
+        # Compute quantiles over the samples axis (0)
+        self._quantiles_temperatures = {
+            q: np.quantile(temperatures_samples, q, axis=0) for q in quantiles
+        }
+        self._quantiles_flows = {
+            q: np.quantile(flows_samples, q, axis=0) for q in quantiles
+        }
+
+    def get_quantiles_temperatures(self):
+        return self._quantiles_temperatures
+
+    def get_quantiles_flows(self):
+        return self._quantiles_flows
