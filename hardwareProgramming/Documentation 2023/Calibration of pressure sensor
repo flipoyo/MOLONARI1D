@@ -1,0 +1,89 @@
+## Why calibration
+
+Before putting the sensors into river, one necessary thing is to correctly calibrate them, because for the same data, different calibration parameters leads to completely different results. Here are porosity results of 4 different calibration sets calculated by méthode inversion.
+
+![Calibration parameters](./Images/inver.png)
+
+## How to calibrate the pressure sensor
+
+![Pressure](./Images/pressure.png)
+
+Above image is the pressure sensor we use. We first keep temperature stable and change the pressure by adding water into each of the two tubes at different heights. And we obtain a fitting line between pressure and the tension measured.
+
+![P-U](./Images/PUformule.png)
+
+Measurement of tension is also affected by temperature,as there’s is a phase difference between tension and temperature. We need to eliminate the influence of temperature on the pressure. So we will keep pressure stable and change the temperature by using the climate chamber.
+![dephasage](./Images/depha.png)
+
+The temperature change within 24 hours usually follows a sinusoidal curve fluctuation.However, the climate chamber can only program a straight line, so it is necessary to calculate the temperature and duration of each stage of rising, steady and falling. We write a program. Input delta T max you'll get the above data.
+
+## Experiment in climate chamber
+
+We developed a program using the software **AtmoCONTROL** (check AtomCONTROL_userguide.md for detailed information) and conducted simulations in a climate chamber. By varying the maximum temperature difference, we obtained several sets of data for the ambient temperature and sensor temperature, and plotted them to reveal a linear relationship. 
+
+$$\phi=-0.342x+61.05$$
+
+At this point, the maximum temperature difference was treated as a fixed constant.
+
+![Relationphi_deltaTmax](./Images/Relationphi_deltaTmax.png)
+
+## Validation of the Phase Difference Formula with fixed maximum temperature difference
+
+To test the validity of our formula, we wrote a Python program. The red line in the plot represents the simulated temperature change curve inside the climate chamber, while the green line shows the actual temperature curve of the sensor. These two lines represent the real data. The blue line, on the other hand, is the sensor temperature curve simulated using the phase difference formula we derived.
+
+As seen in the plot, the simulated blue curve aligns well with the actual data, confirming that the phase difference formula is valid.
+
+![tempchangemodel](./Images/tempchangemodel.png)
+
+## Illustration of phase difference
+
+The phase difference is clearly visible in the plot. It means that, at time 𝑛, the sensor temperature corresponds to the external temperature at time 𝑛−𝜙, where 𝜙 is the phase difference.
+
+![phasediff](./Images/phasediff.png)
+
+## Identifying the Relationship Between Phase Difference and Local Temperature Change Rate (real environment)
+
+In real-world environments, we observed that the maximum temperature difference is not a fixed value. To better handle data from real-world conditions, we explored the relationship between the phase difference 𝜙 and the **local temperature change rate**. By fitting four different data sets, we established a linear relationship that is applicable to the specific sensor system under study.
+The phase difference fomula is written as follows:
+
+$$\phi=-156.64\frac{\partial T}{\partial t}+61.05$$
+
+![localtempchange](./Images/localtempchange.png)
+
+## Voltage and Temperature Relationship
+
+To find the relationship between voltage and temperature, we plotted the data obtained from the climate chamber experiments. The resulting curve approximates a parallelogram. However, an issue arose: the same external temperature corresponds to two different voltage values. This discrepancy is due to the phase difference, which introduces a delay in the system's response.
+
+After eliminating the phase difference, we expect the voltage and sensor temperature to follow a linear relationship. To achieve this, we derived a correction formula that removes the influence of the phase difference. This formula is written as follows:
+
+$$U_{n} = T_{\text{ext}}^{n-\phi}$$
+
+Where $U_n$ represents the voltage at time $n$, and $T_{\text{ext}}^{n-\phi}$ represents the external temperature at time $n - \phi$.
+
+![relationU_T](./Images/relationU_T.png)
+
+## Combination of previous equations
+
+By combining previous equations, we relate the voltage at time $n$ to the external temperature at time $n - \phi$. Using a reference temperature of 25°C, we calculated the temperature difference $\Delta T_{\text{ext}}^{n-\phi}$ and the voltage difference $\Delta U_n$, leading to a correction formula that accounts for the phase shift:
+
+$$\Delta U_n = \alpha \cdot \Delta T_{\text{ext}}^{n - \phi}$$
+
+This allows us to correct for the phase difference and derive the corrected voltage at the reference temperature.
+
+$$\boxed{
+    \begin{aligned}
+    & U_c=U_n-\alpha \cdot \Delta T_{\text{ext}}^{n - \phi}\\
+    & \phi=-156.64\frac{\partial T}{\partial t}+61.05 \\
+    & a=-0.002 \\
+    \end{aligned}
+}$$
+
+## Verification of the Corrected Formula
+
+To verify the correction formula, we applied it to the experimental data obtained from the climate chamber. The corrected result is shown below. As demonstrated, the correction formula effectively mitigates the influence of temperature on the pressure sensor’s output. This confirms that our approach successfully compensates for temperature-induced errors and provides a reliable method for processing real-world data.
+
+![verification](./Images/verification.png)
+
+## Conclusion
+
+The findings from our simulations and the verification of the phase difference formula allow us to confidently process data from temperature sensors in varying environmental conditions. By considering the phase difference and its impact on sensor readings, we developed a correction formula that removes the effect of temperature on the sensor output. This method provides a robust framework for accurately interpreting sensor data in both controlled and real-world environments, ensuring more precise measurements for applications where temperature fluctuation is a concern.
