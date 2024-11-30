@@ -83,8 +83,8 @@ bool SendQueue(String* d) {
 // Function to setup the LoRaWAN connection
 bool SetUpLoRaWAN() {
   // Enter the appEUI and appKey from the TTN server
-  String appEui = "0000000000000000";
-  String appKey = "387BC5DEF778168781DDE361D4407953";
+  String appEui = "0000000000000000"; \\This must be the same value that we put in the server
+  String appKey = "387BC5DEF778168781DDE361D4407953"; \\This value is an example, you should replace it with the appKey of your Server
   
   // Initialize the modem with the regional band (e.g., EU868)
   if (!modem.begin(EU868)) {

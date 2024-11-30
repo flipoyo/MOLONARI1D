@@ -114,8 +114,8 @@ This section provides a clear picture of the system’s architecture, the roles 
   - The design supports transitioning to a tree topology, where:
   - Multiple relays act as intermediate nodes.
   - One gateway collects data from several connected networks.
-  ![Proposed-generic-tree-topology-compared-with-the-conventional-star-network-of-LoRa]("Images\Proposed-generic-tree-topology-compared-with-the-conventional-star-network-of-LoRa.png")
 
+  ![Visualisation 1](Images\tree_topology.png)
 
 This flexibility ensures the system can grow while maintaining reliability and minimizing costs.
 
@@ -184,9 +184,8 @@ The handshake also provides the opportunity to confirm whether data from the pre
 
 This streamlined process ensures reliable communication while allowing flexibility for future enhancements.
 
----
-
 ## 5. **Problems Faced During Implementation**  
+
 
 1. **Understanding the 2023 Codebase**:  
    - **Issue**: The inherited code was difficult to comprehend due to condensed functions, poor modularization, and a lack of task separation.  
@@ -229,6 +228,7 @@ This streamlined process ensures reliable communication while allowing flexibili
    - **Issue**: Addressing lacked a structured approach, complicating downlink (server-to-sensor) communication in a tree topology.  
    - **Solution**: Developed an address-masking scheme similar to IP addressing. While not implemented in the prototype, the system was designed to accommodate this feature for future scalability.  
 
+
 ---
 
 #### **Quirks and Workarounds**  
@@ -254,14 +254,10 @@ This streamlined process ensures reliable communication while allowing flexibili
 5. **Power Efficiency for the Relay**
   -Interrupt Mode for the Relay: Fixing or implementing interrupt-based reception for the relay is a high-priority task for future teams.
 
----
-
 This iterative process of problem-solving has improved the protocol’s reliability and efficiency while laying a solid foundation for future development and scalability.
 
-### **7. Testing and Results**
-
-
-
+---
+### **6. Testing and Results**
 ---
 
 #### **How the System Was Tested**  
