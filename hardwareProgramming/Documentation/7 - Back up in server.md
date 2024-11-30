@@ -110,26 +110,7 @@ Si vemos valores, como en la siguiente imágen:
 
 ![Interior view](Images/internet_connection.jpg)
 
-Significa que la conexión está realizada. 
-
-# Verificación utilizando Ping
-
-Realizaremos la siguiente verificación por seguridad:
-
-Iremos a la sección "System", sub-sección "Tools", y en la venta "Ping", debemos ingresar en IP Address el valor de: 8.8.8.8
-Luego hacer click en "Start".
-
-Si el mensaje que obtenemos es como el siguiente:
-
-![Interior view](Images/ping_try.jpg)
-
-Significa que la conexión no fue realizada con éxito, es necesario hablar con Riaz SYED, porque hay un problema de conexión y probablemente sea el Firewall de la escuela.
-
-Si el mensaje que obtenemos es como el siguiente:
-
-![Interior view](Images/ping_works.jpg)
-
-La conexión fue realizada con éxito, no es necesario modificar ninguna configuración, se puede pasar a la siguiente sección.
+Significa que la conexión está realizada. Podemos saltear la siguiente sección e ir directamente a la Verificación utilizando Ping
 
 # Configuración de la conexión
 
@@ -162,7 +143,26 @@ Al hacer esto el gateway perdera la conexión a la computadora. Lo que debemos h
 
 Una vez realizado esto, volveríamos a tener conexión a la interfaz online del Gateway, y conexión a internet. 
 
-Para verificarlo, simplmenete por seguridad, pueden realizarse los pasos indicados anteriormente en la Verificación utilizando Ping.
+Para verificarlo, por seguridad, deben realizarse los pasos indicados en la Verificación utilizando Ping.
+
+# Verificación utilizando Ping
+
+Realizaremos la siguiente verificación por seguridad:
+
+Iremos a la sección "System", sub-sección "Tools", y en la venta "Ping", debemos ingresar en IP Address el valor de: 8.8.8.8
+Luego hacer click en "Start".
+
+Si el mensaje que obtenemos es como el siguiente:
+
+![Interior view](Images/ping_try.jpg)
+
+Significa que la conexión no fue realizada con éxito, es necesario hablar con Riaz SYED, porque hay un problema de conexión y probablemente sea el Firewall de la escuela.
+
+Si el mensaje que obtenemos es como el siguiente:
+
+![Interior view](Images/ping_works.jpg)
+
+La conexión fue realizada con éxito, no es necesario modificar ninguna configuración, se puede pasar a la siguiente sección.
 
 # Paso 3 - Configurar el tipo de conexión
 
@@ -205,7 +205,12 @@ Con estos dos archivos descargados/generados, podemos subirlos a nuestro Gateway
 
 Y finalizar haciendo click en "Save & Apply", luego en "Reboot".
 
-Para finalizar y que funcione, es necesario comunicarse 
+Finalmente, es necesario comunicarse con Riaz SYED para solicitar que habilite el puerto seleccionado asociado a la dirección IP del server. Por lo tanto, debemos enviarle un mail con:
+
+ -Server Address:eu1.cloud.thethings.network
+ -Server Port: 8887
+
+Y una vez que Riaz SYED confirmo que fue habilitado, daremos por finalizada la sección.
 
 # Paso 4 - Configuraciones extras
 
