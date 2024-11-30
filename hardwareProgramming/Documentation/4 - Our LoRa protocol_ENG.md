@@ -143,7 +143,7 @@ A typical packet from a sensor might look like this:
 - **Local Address**: `0x05` (sensor address).
 - **Packet Number**: `0x02` (second packet in the sequence).
 - **Request Type**: `0xc3` (data transfer request).
-- **Payload**: the data.
+- **Payload**: ("2024-11-07,10:00:12,21.55,22.11,21.99,21") the data.
 
 Each field is processed sequentially during transmission, ensuring reliability and traceability.
 
@@ -247,7 +247,8 @@ This streamlined process ensures reliable communication while allowing flexibili
    - Currently, sensors manage their own schedules. A more efficient system would involve the relay taking over scheduling responsibilities.  
 
 3. **Flood Recovery**:  
-   - The system needs strategies for recovering from extended outages caused by floods or other natural disasters.  
+   - The system needs strategies for recovering from extended outages caused by floods or other natural disasters.
+   - Maybe by increasing the number of sessions per day.   
 
 4. **Address Masking in Practice**:  
    - Although the addressing scheme supports masking for tree topology, it remains untested and requires validation in a real-world setup.  
@@ -355,7 +356,7 @@ Here’s a quick recap of key tasks to tackle:
   - Long-range transmission optimization.  
 
 And one more question I didn’t cover earlier—**How does the server differentiate sensor data?**  
-It’s simple. When sending data to the server, include each sensor’s address in the packet. The server will maintain a translation table, mapping sensor addresses to relay IDs and then to the relevant dataset points.
+It’s simple. When sending data to the server, include each sensor’s address in the packet. The server will maintain a translation table, mapping sensor addresses concatenated with relay IDs to the relevant dataset points.
 
 ---
 
