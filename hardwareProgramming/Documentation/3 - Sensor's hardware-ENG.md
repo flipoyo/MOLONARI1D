@@ -25,12 +25,6 @@ We tested two modules—the Adalogger Featherwing and another Arduino-compatible
 
 It’s essential to keep in mind that recording is **the most important part of the process**. We need to ensure that every piece of data is recorded because we cannot rely on data transmission alone to offload the data from the card. Even if this problem arrives once in a while it is importand to understand why.
 
-# Progress
-
-To ensure data transmission between the relay and the sensor this year we implemented a new way of reading data from the SD card: the use of the `Queue` library. This library allows working with data queues in embedded systems and will hold our data during the communication with the relay through a queue in which the elements are stored and processed in the order in which they are added, following the FIFO (First In, First Out) methodology. This queue is stored or retained in the Arduino's RAM and is cleared each time confirmation is received that the relay has all the data. 
-
-Evitar entrar al SD card para sacar cada medicion
-
 
 ## Timestamping Data and Using Clocks
 
