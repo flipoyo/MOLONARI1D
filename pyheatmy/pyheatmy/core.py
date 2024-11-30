@@ -1000,7 +1000,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 id_layer = np.zeros(nb_layer, np.int32)
 
                 for j, column in enumerate(multi_chain):
-
+                    
                     # On lance la perturbation DREAM pour cette colonne, on en tire un nouveau jeu de paramètre X_proposal, 
                     # l'ensemble des indices de crossover choisis et la perturbation dX_colonne
                     X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges)                    
@@ -1041,13 +1041,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         for l, layer in enumerate(column.all_layers):
                             layer.params = Param(*X[j][l])
 
-                    # Mise à jour du vecteur saut pour chaque couche
-                    for l in range(len(column.all_layers)):
-                        J[l, id_layer[l]] += np.sum((dX[l] / std_X[l]) ** 2)
-                        n_id[l, id_layer[l]] += 1
-
-                # Mise à jour du pcr pour chaque couche pour DREAM
+                # Mise à jour du vecteur saut et du pcr pour chaque couche
                 for l in range(nb_layer):
+                    J[l, id_layer[l]] += np.sum((dX[l] / std_X[l]) ** 2)
+                    n_id[l, id_layer[l]] += 1
+
                     pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
                     pcr[l] = pcr[l] / np.sum(pcr[l])
 
@@ -1125,21 +1123,18 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                     
                 if (i + 1) % n_sous_ech_iter == 0:  # sous échantillonnage
-                    print(f'on stocke les résultats à l\'itération {i+1}')
-                    print(f"taille des matrices _temp et _flows : {_temp.shape} et {_flows.shape}")
                     # Si i+1 est un multiple de n_sous_ech_iter, on stocke
-                    k = (i) // n_sous_ech_iter
+                    k = i // n_sous_ech_iter
                     for j in range(nb_chain):
                         _temp[k, j] = _temp_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
                         _flows[k, j] = _flow_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
 
 
-                for l in range(nb_layer):   # Mise à jour des vecteurs J et n_id
+                # Mise à jour du vecteur saut et du pcr pour chaque couche
+                for l in range(nb_layer):
                     J[l, id_layer[l]] += np.sum((dX[l] / std_X[l]) ** 2)
                     n_id[l, id_layer[l]] += 1
-                            
-                # Mise à jour du pcr pour chaque couche pour DREAM
-                for l in range(nb_layer):
+
                     pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
                     pcr[l] = pcr[l] / np.sum(pcr[l])
 
