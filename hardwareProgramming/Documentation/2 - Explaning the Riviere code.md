@@ -52,19 +52,25 @@ To understand better the logic behind the main loop, we recommend you to take a 
 ## Classes: What we need to make this code work
 
 **Lora:**
-
+This class handles LoRa communication. Its main functions include LoRa initialization, sending and receiving packets with integrity control through checksums, and managing the communication session (start, close, and data transmission). It is also responsible for performing a handshake process (SYN-ACK) to establish reliable communication between devices.
 **Low_power:**
-**Mesure_Cache:**
+This class is designed to control and manage low-power mode on an Arduino-based device, helping to reduce power consumption by disabling non-essential features during periods of inactivity.
 **Measure:**
+This class is designed to store a measurement with the values obtained from the 4 sensors at a particular time. In addition, it has a method that allows converting the measurement data to a readable format.
 **Pressure_Sensor:**
+The PressureSensor class is responsible for initializing the sensor and taking pressure readings via a data pin. It also handles the activation and deactivation of the sensor via an enable pin.
 **Reader:**
+The Reader class is used to read a series of measurements from a CSV file and handle the cursor within the file. 
 **SD_Initializer:**
-
+This file contains functions related to initializing the SD card and verifying whether the CSV file already exists and has data.
 **Temp_Sensor:**
+This file manages the temperature measurement using a temperature sensor. The TemperatureSensor class defines two methods to measure the temperature, and provides the necessary functions to initialize and read the sensor.
 **Time:**
+This file contains all the necessary code to manage the time in your system using two RTC modules: the internal RTC of the Arduino MKR and an external RTC (PCF8523). It also manages the taking of temperature or pressure measurements in 15-minute intervals throughout the day, with the possibility to calculate and program the time to wait between measurements.
 **Waiter:**
+This file defines a class called Waiter that manages wait time efficiently, using low-power modes and the ability to perform LoRa communications during wait periods. In addition, it allows you to measure the time it takes to perform tasks (such as measurements or data saving) based on a timer that you can start and use throughout the main program cycle.
 **Writer:**
-
+This file defines the Writer class, which is responsible for recording measurement data in a CSV file on an SD card. 
 
 
 
