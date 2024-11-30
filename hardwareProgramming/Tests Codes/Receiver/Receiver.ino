@@ -1,3 +1,7 @@
+/*This script demonstrates a basic LoRa receiver using the LoRa library. 
+It initializes the LoRa module, listens for incoming packets, and prints the received 
+data along with RSSI (Received Signal Strength Indicator) and SNR (Signal-to-Noise Ratio)
+ to the Serial Monitor.*/
 #include <SPI.h>
 #include <LoRa.h>
 

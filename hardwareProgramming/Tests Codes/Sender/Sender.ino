@@ -1,3 +1,8 @@
+/*This script is a basic **LoRa Sender** using the LoRa library. It transmits packets 
+containing a "hello" message along with a counter value over the LoRa network. 
+The built-in LED toggles on during transmission for visual feedback.
+After sending a packet, it waits for 5 seconds before sending the next one.
+Perfect for testing LoRa communication with a corresponding receiver script.*/
 #include <SPI.h>
 #include <LoRa.h>
 

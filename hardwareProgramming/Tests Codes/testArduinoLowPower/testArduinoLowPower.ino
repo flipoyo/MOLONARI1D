@@ -1,3 +1,7 @@
+/*This test code evaluates the compatibility of the **ArduinoLowPower** library with 
+the device by implementing a counter and deep sleep functionality. 
+It helped in understanding the library's features, such as entering and exiting deep 
+sleep while preserving functionality like serial communication.*/
 #include "ArduinoLowPower.h"
 
 class count{

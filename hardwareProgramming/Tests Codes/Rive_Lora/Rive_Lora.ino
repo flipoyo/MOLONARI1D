@@ -1,3 +1,6 @@
+/*This is a small, focused test script using the LoraCommunication class,
+ simulating scenarios with non-real data to quickly debug and refine the protocol
+ without deploying the entire system.*/
 #include "internals/Lora.hpp"
 #include <queue>
 

@@ -1,3 +1,7 @@
+/*This test code verifies the functionality of the **MKRWAN** library by simulating 
+data transmission to a LoRaWAN server using OTAA authentication. It includes features 
+like payload retries, low-power modem mode, and adaptive data rate configuration.*/
+
 #include <MKRWAN.h>
 #include <queue>
 LoRaModem modem;
