@@ -92,6 +92,8 @@ Before uploading the code, make sure the pins (CSPin and sensor pins) match what
 
 Then it's Upload (the button with the arrow). If the Arduino does not appear when you are asked to choose the board while it is properly connected, press the reset button on the Arduino twice. Then, reselect the COM port to the right of the upload button. If after that it still doesn't work: google and good luck :)
 
+In order to better understand the sensor code, you can see the file *2 - Explaining the sensor code* which explains each section of the code and the classes necessary for its operation.
+
 ### 3.2. Relay code (on the shore)
 
 It's the same, but with the right code ([Relay.ino](../Relay/Relay.ino)). Simple, right?
