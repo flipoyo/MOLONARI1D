@@ -159,8 +159,8 @@ void loop()
 bool SetUpLoRaWAN()
 {
   // Enter the appEUI  and appKey from the TTN server
-  String appEui = "0000000000000000";
-  String appKey = "72C5FBBF2AB954D3316A1EE13AA3F141";
+  String appEui = "0000000000000000"; \\This must be the same value that we put in the server
+  String appKey = "72C5FBBF2AB954D3316A1EE13AA3F141"; \\This value is an example, you should replace it with the appKey of your Server
   // change this to your regional band (eg. US915, AS923, ...)
   if (!modem.begin(EU868))
   {

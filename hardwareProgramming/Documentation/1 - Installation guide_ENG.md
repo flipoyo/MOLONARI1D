@@ -25,6 +25,7 @@ In Arduino IDE, make sure to install the following libraries:
 - ``RTCZero`` (Internal real-time clock management for MKR WAN 1310)
 - ``SD`` (SD card communication)
 - ``Queue`` (Data packet transfer)
+- ``MKRWAN`` (LoRaWAN communication)
 
 ## 2. Connections
 
