@@ -16,6 +16,8 @@ But LoRa is just the foundation. While it solves the problem of transmitting dat
 
 This document is your guide to understanding how this protocol works, why it’s designed the way it is, and how future developers can build on it to continue our vision.
 
+![Communication view](Images\Chaine_informations.jpg)
+
 ## 2. **Project Goals**
 
 The primary goal of this part of the project is simple: **design a reliable and efficient local communication network protocol** that works seamlessly in challenging environments like rivers. However, achieving this required meeting a few specific objectives:
@@ -99,6 +101,8 @@ This section provides a clear picture of the system’s architecture, the roles 
 - **Extends Coverage**: Enables the use of intermediate relays (repeaters) to connect distant sensors, especially in hard-to-reach locations.
 - **Scalable**: Easily integrates new sensors or relays into the structure, making it ideal for larger deployments.
 
+![Visualisation 1](Images\download.png)
+
 ### **Current Implementation**
 
 - Currently, the system uses a **star topology**, a simplified case of the tree structure:
@@ -107,9 +111,11 @@ This section provides a clear picture of the system’s architecture, the roles 
 
 ### **Future Scalability**
 
-- The design supports transitioning to a tree topology, where:
+  - The design supports transitioning to a tree topology, where:
   - Multiple relays act as intermediate nodes.
   - One gateway collects data from several connected networks.
+  ![Proposed-generic-tree-topology-compared-with-the-conventional-star-network-of-LoRa]("Images\Proposed-generic-tree-topology-compared-with-the-conventional-star-network-of-LoRa.png")
+
 
 This flexibility ensures the system can grow while maintaining reliability and minimizing costs.
 
@@ -268,6 +274,8 @@ We can’t stress enough how valuable this technique is for development. It kept
 
 #### **Field Testing: Signal Through Water**  
 
+![Signal Through Water](Images\Screenshot2024-11-30.png)
+
 In 2023, the team conducted a fascinating test: trying to send and receive LoRa signals through water, across the challenging water-air boundary. This test aimed to simulate real-world deployment conditions where sensors might be submerged. Unfortunately, the results weren’t promising. You can refer to the image below for details. 
 
 We hypothesize several reasons for the poor performance:  
@@ -286,6 +294,8 @@ We hypothesize several reasons for the poor performance:
 ---
 
 #### **Field Testing: Long-Range Communication**  
+
+![Long-Range Communication](Images\field-test.png)
 
 Fast forward to 2024, when our team performed a long-range communication test. The goal was simple: push the boundaries of LoRa's advertised 2 km range or more. Our test maxed out at around **800 meters**, far short of expectations. This was another wake-up call, showing that ideal conditions in datasheets don’t always translate to the field.
 
