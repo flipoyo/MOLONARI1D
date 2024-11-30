@@ -52,17 +52,17 @@ Next, we need to log in to the Gateway's online interface, for which the usernam
 Username: admin
 Password: admin
 
-![Interior view](Images/Robustel_login.jpg)
+![Interior view](Images/Robustel_login.png)
 
 Once inside, we will look for the Firmware and applications version:
 
 - The Firmware version is in the "Status" section, which opens by default when entering the online interface. Therefore, in the "System Information" section, we can read "Firmware Version".
 
-![Interior view](Images/Firmware_version.jpg)
+![Interior view](Images/Firmware_version.png)
 
 - The applications version is in the "System" section, in the "App Center" sub-section. There we will see a table called "Installed Apps", where one of the columns is "Version".
 
-![Interior view](Images/App_version.jpg)
+![Interior view](Images/App_version.png)
 
 Now that we know the versions installed on our device, we need to go to the following provider page:
 
@@ -72,13 +72,13 @@ Where we need to create an account (with the MINES email it is possible).
 
 Once logged in to the page, in the top bar there is a section called "App Center".
 
-![Interior view](Images/Robustel_page.jpg)
+![Interior view](Images/Robustel_page.png)
 
 Inside there, we have three sections, of which the ones we are interested in are: Firmware and RobustOS App.
 
 In both sections of interest, we must filter by "Series", choosing the "R3000 LG Series" option. And what we will do, whether in Firmware or RobustOS App, is to see what the latest available version compatible with our device is.
 
-![Interior view](Images/Uses_app_robustel.jpg)
+![Interior view](Images/Uses_app_robustel.png)
 
 If the installed version we saw before matches the latest available version compatible with our Gateway, this section ends here, you can move on to the next one.
 
@@ -86,29 +86,29 @@ If the installed version we saw before does not match the latest available versi
 
 For the Firmware case, we will go to the "System" section, "Update" sub-section. Inside there, we will go to the "Firmware Update" tab, where we will upload the file we downloaded, by clicking on "Browse.." and then update by clicking on "Update".
 
-![Interior view](Images/update_firmware.jpg)
+![Interior view](Images/update_firmware.png)
 
 For the applications case, we will go again to the "System" section, "App Center" sub-section, and there in the "Installed Apps" table we need to do the following:
 
 First, click on the cross on the right to delete the installed versions.
 
-![Interior view](Images/delete_apps.jpg)
+![Interior view](Images/delete_apps.png)
 
 Then, upload the downloaded files to install them. To do this, click on "Browse.." and then install by clicking on "Install".
 
-![Interior view](Images/put_apps.jpg)
+![Interior view](Images/put_apps.png)
 
 # Step 2 - Connect to the internet
 
 To verify internet access, we need to go back to the "Status" section of the Gateway's online interface and observe the "Internet Status" part. If it is blank as in the following image:
 
-![Interior view](Images/status_internet.jpg)
+![Interior view](Images/status_internet.png)
 
 We need to configure the connection as indicated below.
 
 If we see values, as in the following image:
 
-![Interior view](Images/internet_connection.jpg)
+![Interior view](Images/internet_connection.png)
 
 It means the connection is made. We can skip the next section and go directly to Verification using Ping.
 
@@ -118,7 +118,7 @@ To configure the internet connection, we need to go to the "Interface" section, 
 
 Once there, we will see a table called "Port Settings", where each row indicates the characteristics of each ethernet port. This table should look like the following image:
 
-![Interior view](Images/port_ethernet.jpg)
+![Interior view](Images/port_ethernet.png)
 
 Where the most important thing is what the "Port Assignment" column indicates for each of the ports.
 
@@ -126,15 +126,15 @@ If we do not see an identical table to the one above, what we need to do is:
 
 In the row of the "eth0" port, click on the pencil symbol on the right:
 
-![Interior view](Images/pencil_eth0.jpg)
+![Interior view](Images/pencil_eth0.png)
 
 This will open a window called "Port Settings", where what we are interested in is modifying the "Port Assignment", for which we need to drop down the list of options and choose "wan".
 
-![Interior view](Images/port_assignement.jpg)
+![Interior view](Images/port_assignement.png)
 
 Then, click on "Submit", and to finish, we need to click on "Save & Apply" which we will see in yellow.
 
-![Interior view](Images/save_apply.jpg)
+![Interior view](Images/save_apply.png)
 
 By doing this, the gateway will lose the connection to the computer. What we need to do is reverse the connection of the ethernet cables in the ports, being the new connection as follows:
 
@@ -154,13 +154,13 @@ Then click on "Start".
 
 If the message we get is like the following:
 
-![Interior view](Images/ping_try.jpg)
+![Interior view](Images/ping_try.png)
 
 It means the connection was not successful, it is necessary to talk to Riaz SYED, because there is a connection problem and it is probably the school's Firewall.
 
 If the message we get is like the following:
 
-![Interior view](Images/ping_works.jpg)
+![Interior view](Images/ping_works.png)
 
 The connection was successful, no configuration modification is necessary, you can move on to the next section.
 
@@ -170,13 +170,13 @@ Here we will configure the type of connection that will be established between t
 
 To do this, we need to go to the "Packet Forwarders" section, and the first thing we need to do is disable both "Loriot" and "Semtech UDP Forwarder" which we will not use. To do this, we will enter the corresponding sub-sections, and where it says "Enable" we need to verify that it is indicated "OFF".
 
-![Interior view](Images/off_semtech.jpg)
+![Interior view](Images/off_semtech.png)
 
-![Interior view](Images/loriot_off.jpg)
+![Interior view](Images/loriot_off.png)
 
 Once this is done, we will go to the "Basic Station" section which is of interest. And there the necessary configuration is as follows:
 
-![Interior view](Images/basic_station.jpg)
+![Interior view](Images/basic_station.png)
 
 The information to complete is:
 
@@ -193,7 +193,7 @@ https://letsencrypt.org/certificates/
 
 And download the file provided by the page by clicking on "pem", as indicated in the following image:
 
-![Interior view](Images/root_pem.jpg)
+![Interior view](Images/root_pem.png)
 
 And to generate the "Client Key", we need to follow the steps indicated in the following tutorial:
 
@@ -201,7 +201,7 @@ https://www.thethingsindustries.com/docs/gateways/concepts/lora-basics-station/l
 
 With these two files downloaded/generated, we can upload them to our Gateway. To do this, we need to click on "Browse" and then on "Import".
 
-![Interior view](Images/Cert_manager.jpg)
+![Interior view](Images/Cert_manager.png)
 
 And finish by clicking on "Save & Apply", then on "Reboot".
 
