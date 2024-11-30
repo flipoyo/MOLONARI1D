@@ -1,6 +1,6 @@
 # Backup on the server
 
-Here we will explain the configuration for the final instance of communication:
+After having understood the Lora communication and managed to receive the data in our relay, we must continue with the following communication stages: *communicate with the gateway and send the information to the server*.
 
 First, the configuration of the Gateway, the device we will use to connect our Relay (which is next to the river) with the Server (on the internet).
 
