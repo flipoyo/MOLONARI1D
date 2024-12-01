@@ -51,24 +51,6 @@ def conv(layer):
         return layer
 
 
-def compute_energy(temp_simul, temp_ref, sigma2: float, remanence):
-    remanence_step = int(remanence * 24 * 60 / 15)
-    norm2 = nansum((temp_simul[:, remanence_step:] - temp_ref[:, remanence_step:]) ** 2)
-    return 0.5 * norm2 / sigma2
-
-
-def compute_energy_with_distrib(temp_simul, temp_ref, sigma2, sigma2_distrib):
-    norm2 = nansum((temp_simul - temp_ref) ** 2)
-    return (
-        0.5 * norm2 / sigma2
-        + size(temp_ref) * log(sigma2) / 2
-        - log(sigma2_distrib(sigma2))
-    )
-
-
-def compute_log_acceptance(current_energy: float, prev_energy: float):
-    return prev_energy - current_energy
-
 
 def convert_to_layer(nb_layer, name_layer, z_low, params):
     return [Layer(name_layer[i], z_low[i], *params[i]) for i in range(nb_layer)]
@@ -84,7 +66,7 @@ def check_range(x, ranges):
     return x
 
 
-def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.1):
+def gelman_rubin(nb_current_iter, nb_param, nb_layer, chains, threshold=1.2):
     R = zeros((nb_layer, nb_param))
     for l in range(nb_layer):
         chains_layered = chains[:, :, l, :]
