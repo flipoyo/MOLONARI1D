@@ -40,5 +40,5 @@ jobs:
       run: |
         pytest --nbmake --nbmake-timeout=600 \
           pyheatmy/demoPyheatmy.ipynb \
-          pyheatmy/research/synthetic_cases_generator/demo_genData.ipynb
+          pyheatmy/demo_genData.ipynb
       shell: bash
