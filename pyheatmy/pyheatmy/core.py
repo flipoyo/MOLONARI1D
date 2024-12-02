@@ -868,10 +868,23 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         threshold=GELMANRCRITERIA,
     ):
 
+
+        if verbose:
+            print(
+                "--- Compute MCMC ---",
+                "Priors :",
+                *(f"    {prior}" for prior in [layer.Prior_list for layer in self.all_layers]),
+                f"Number of cells : {self._nb_cells}",
+                f"Number of iterations : {nb_iter}",
+                f"Number of chains : {nb_chain}",
+                "--------------------",
+                sep="\n",
+            )
+
         n_sous_ech_iter = max(1,int(np.floor(nb_chain*nb_iter/NSAMPLEMIN))) 
         sizesubsampling = max(int(np.floor(nb_iter / n_sous_ech_iter)),1)
 
-        if verbose ==True:
+        if verbose:
             print(f"Subsampling for Quantile computation every {n_sous_ech_iter} iterations")
             print(f"Size of the subsampling per chain : {sizesubsampling} iterations among {nb_iter} iterations")  
 
@@ -911,19 +924,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         # Obligation de faire une disjonction de cas selon le nombre de chaînes, en effet l'algorithme DREAM fonctionne selon une perturbation différentielles entre les 
         # différentes chaînes, ce qui ne peut pas être vu comme un cas particulier du Random Walk Metropolis qui est basé lui sur le principe d'une perturbation gaussienne symétrique
 
+
         if nb_chain > 1:
-            
-            if verbose:
-                print(
-                    "--- Compute DREAM MCMC ---",
-                    "Priors :",
-                    *(f"    {prior}" for prior in [layer.Prior_list for layer in self.all_layers]),
-                    f"Number of cells : {self._nb_cells}",
-                    f"Number of iterations : {nb_iter}",
-                    f"Number of chains : {nb_chain}",
-                    "--------------------",
-                    sep="\n",
-                )
+                     
 
             # Voir si ces variables ne peuvent pas devenir des attributs de State
             _temp_iter_chain = np.zeros((nb_chain, self._nb_cells, len(self._times)), np.float32)  # dernière température acceptée pour chaque chaine
@@ -1157,17 +1160,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             )
 
         else :  # cas single chain
-            
-            if verbose:
-                print(
-                    "--- Compute Random Walk Metropolis MCMC ---",
-                    "Priors :",
-                    *(f"    {prior}" for prior in [layer.Prior_list for layer in self.all_layers]),
-                    f"Number of cells : {self._nb_cells}",
-                    f"Number of iterations : {nb_iter}",
-                    "--------------------",
-                    sep="\n",
-                )
 
             _temp_iter = np.zeros((self._nb_cells, len(self._times)), np.float32)  # dernière température acceptée pour la colonne
             _flow_iter = np.zeros((self._nb_cells, len(self._times)), np.float32)  # dernier débit accepté pour la colonne
