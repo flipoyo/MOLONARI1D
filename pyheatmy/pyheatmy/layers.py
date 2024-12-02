@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 from typing import Sequence, Callable
 from random import uniform, gauss
 from collections import namedtuple
@@ -37,8 +38,6 @@ class Layer:
         self.Prior_q = Prior_q
         self.Prior_list = [Prior_moinslog10IntrinK, Prior_n, Prior_lambda_s, Prior_rhos_cs, Prior_q]
 
-    
-
 
     def sample(self):
         return Param(*(prior.sample() for prior in self.Prior_list))
@@ -65,10 +64,10 @@ class Layer:
         self.Prior_q = Prior(*priors_dict['Prior_q'])
         self.Prior_list = [self.Prior_moinslog10IntrinK, self.Prior_n, self.Prior_lambda_s, self.Prior_rhos_cs, self.Prior_q]
     
-
     @classmethod
     def from_dict(cls, monolayer_dict):
         return cls(**monolayer_dict)
+
     
 def getListParameters(layersList, nbCells: int):
     dz = layersList[-1].zLow / nbCells
