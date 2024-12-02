@@ -1,13 +1,14 @@
 from collections import namedtuple
+from copy import deepcopy
 from dataclasses import dataclass
 from random import uniform, gauss
 from numpy import inf
 from typing import Callable, Sequence
 from pyheatmy.config import *
 
-PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q")
+PARAM_LIST = ["moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q"]
 
-Param = namedtuple("Parametres", PARAM_LIST)
+Param = namedtuple("Param", PARAM_LIST)
 
 def cst(x):
     return 1.0  # fonction de densité par défaut
@@ -38,14 +39,6 @@ class Prior:
         return (
             f"Prior sur une valeure qui évolue entre {self.range[0]} et {self.range[1]} avec un écart type de {self.sigma}"
         )
-
-
-
-
-# The repr() function returns a printable representational string of the given object.
-
-if __name__ == "__main__":
-    import numpy as np
 
     def reciprocal(x):
         return 1 / x

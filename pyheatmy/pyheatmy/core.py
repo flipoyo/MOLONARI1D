@@ -5,6 +5,7 @@ from numbers import Number
 from datetime import datetime
 import sys
 import psutil
+import types
 
 import numpy as np
 import copy
@@ -50,8 +51,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         )  # once validated verbose=False
 
         self._classType = ClassType.COLUMN
-
-        # 
 
         # ! Pour l'instant on suppose que les temps matchent
         self._times = [t for t, _ in dH_measures]
@@ -864,7 +863,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         n_CR=3,
         c=0.1,
         c_star=1e-12,
-        remanence=1,
         n_sous_ech_time=1,
         n_sous_ech_space=1,
         threshold=GELMANRCRITERIA,
@@ -948,6 +946,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             n_id = np.zeros((nb_layer, n_CR), np.float32)    # Nombre de fois où chaque crossover est utilisé
             J = np.zeros((nb_layer, n_CR), np.float32)   # Matrice des sauts
             pcr = np.ones((nb_layer, n_CR)) / n_CR    # Probabilité de choisir un crossover, initialisé de manière uniforme
+            id_layer = np.zeros(nb_layer, np.int32) # Vecteur qui recense les indices de crossover choisis pour chaque couche
 
             # Création d'autant d'instance de colonnes que de chaines
 
@@ -965,9 +964,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for j, column in enumerate(multi_chain):
                 column.sample_params_from_priors()
                 X[j] = column.get_list_current_params()
-                Energy[j] = compute_energy_mcmc(
-                        _temp_iter_chain[j][ind_ref], temp_ref, remanence, sigma2, sigma2_distrib
+                Energy[j] = compute_energy(
+                        _temp_iter_chain[j][ind_ref], temp_ref, sigma2, sigma2_distrib
                     )
+                
+                # Redéfinition de l'appel du modèle direct, c'est un quick fix dû au wrapper @checker qui manipule mal les deepcopies
+                column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
+
                 column.compute_solve_transi(verbose=False)
                 _temp_iter_chain[j] = column.get_temperatures_solve()
                 _flow_iter_chain[j] = column.get_flows_solve()
@@ -997,7 +1000,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for i in trange(nitmaxburning, desc="Burn in phase"):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
-                id_layer = np.zeros(nb_layer, np.int32)
 
                 for j, column in enumerate(multi_chain):
                     
@@ -1009,23 +1011,25 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     # On met à jour les paramètres de la colonne j selon X_proposal pour appeler le modèle direct et calculer l'énergie:
                     for l, layer in enumerate(column.all_layers):
                         layer.params = Param(*X_proposal[l])
+
                     
                     # Calcul du profil de température associé aux nouveaux paramètres
+                    # Redéfinition de l'appel du modèle direct, c'est un quick fix dû au wrapper @checker qui manipule mal les deepcopies
+                    column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
                     column.compute_solve_transi(verbose=False)
 
                     # On récupère les températures et les débits associés aux nouveaux paramètres
-                    temp_proposal = column.get_temperatures_solve()
+                    temp_proposal = column._temperatures
 
-                    Energy_Proposal = compute_energy_mcmc(
+                    Energy_Proposal = compute_energy(
                         temp_proposal[ind_ref],
                         temp_ref,
-                        remanence,
                         sigma2_temp_proposal,
                         sigma2_distrib,
                     )  # calcul de l'énergie
 
                     # calcul de la probabilité d'accpetation
-                    log_ratio_accept = compute_log_acceptance(Energy_Proposal, Energy[j])
+                    log_ratio_accept = Energy[j] - Energy_Proposal
 
                     # Acceptation ou non des nouveaux paramètres
 
@@ -1041,11 +1045,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         for l, layer in enumerate(column.all_layers):
                             layer.params = Param(*X[j][l])
 
-                # Mise à jour du vecteur saut et du pcr pour chaque couche
+                    # Mise à jour du vecteur saut pour chaque couche
+                    for l in range(nb_layer):
+                        J[l, id_layer[l]] += np.sum((dX[l] / std_X[l]) ** 2)
+                        n_id[l, id_layer[l]] += 1
+                        
+                # Mise à jour du pcr pour chaque couche pour DREAM
                 for l in range(nb_layer):
-                    J[l, id_layer[l]] += np.sum((dX[l] / std_X[l]) ** 2)
-                    n_id[l, id_layer[l]] += 1
-
                     pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
                     pcr[l] = pcr[l] / np.sum(pcr[l])
 
@@ -1077,69 +1083,68 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for i in trange(nb_iter, desc="DREAM MCMC Computation", file=sys.stdout):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
-                
-                for j, column in enumerate(multi_chain):
-                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges)
-                    sigma2_temp_proposal = sigma2_temp_prior.perturb(self._states[j].sigma2_temp)  # On tire un nouveau sigma2
-                    
-                    # Mise à jour des paramètres de la colonne j :
-                    for l, layer in enumerate(column.all_layers):
-                        layer.params = Param(*X_proposal[l])
-                    
-                    # Calcul du profil de température associé aux nouveaux paramètres
-                    column.compute_solve_transi(verbose=False)
-                    temp_proposal = column.get_temperatures_solve()  # récupération du profil de température
-                    _temp_iter_chain[j] = temp_proposal
-                    _flow_iter_chain[j] = column.get_flows_solve()
 
-                    Energy_Proposal = compute_energy_mcmc(temp_proposal[ind_ref], temp_ref, remanence, sigma2_temp_proposal, sigma2_distrib)  # calcul de l'énergie
+                NaN_Presence = True
 
-                    # calcul de la probabilité d'accpetation
-                    log_ratio_accept = compute_log_acceptance(Energy_Proposal, Energy[j])
+                while NaN_Presence == True:
 
-                    # Acceptation ou non des nouveaux paramètres
-                    if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
-
-                        # on met à jour l'état de la colonne
-                        X[j] = X_proposal
-                        Energy[j] = Energy_Proposal
-                        self._acceptance[j] += 1
-
-                        self._states.append(State(
-                            layers = X[j],
-                            energy = Energy[j],
-                            ratio_accept=1,
-                            sigma2_temp=sigma2_temp_proposal
-                        ))
-
-                    else:
-
-                        dX = np.zeros((nb_layer, nb_param), np.float32)
-                        # On ne met pas à jour l'état : 
-                        self._states.append(self._states[-nb_chain])
-                        # On remet les anciens paramètres pour la colonne :
+                    for j, column in enumerate(multi_chain):
+                        X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges)
+                        sigma2_temp_proposal = sigma2_temp_prior.perturb(self._states[j].sigma2_temp)  # On tire un nouveau sigma2
+                        
+                        # Mise à jour des paramètres de la colonne j :
                         for l, layer in enumerate(column.all_layers):
-                            layer.params = Param(*X[j][l])
+                            layer.params = Param(*X_proposal[l])
+                        
+                        # Calcul du profil de température associé aux nouveaux paramètres
+                        # Redéfinition de l'appel du modèle direct, c'est un quick fix dû au wrapper @checker qui manipule mal les deepcopies
+                        column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
+                        column.compute_solve_transi(verbose=False)
+                        temp_proposal = column.get_temperatures_solve()  # récupération du profil de température
+                        _temp_iter_chain[j] = temp_proposal
+                        _flow_iter_chain[j] = column.get_flows_solve()
 
+                        Energy_Proposal = compute_energy(temp_proposal[ind_ref], temp_ref, sigma2_temp_proposal, sigma2_distrib)  # calcul de l'énergie
+                        # calcul de la probabilité d'accpetation
+                        log_ratio_accept = compute_log_acceptance(Energy_Proposal, Energy[j])
+
+                        # Acceptation ou non des nouveaux paramètres
+                        if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
+                            # on met à jour l'état de la colonne
+                            X[j] = X_proposal
+                            Energy[j] = Energy_Proposal
+                            self._acceptance[j] += 1
+
+                            self._states.append(State(
+                                layers = X[j],
+                                energy = Energy[j],
+                                ratio_accept=1,
+                                sigma2_temp=sigma2_temp_proposal
+                            ))
+
+                        else:
+                            dX = np.zeros((nb_layer, nb_param), np.float32)
+                            # On ne met pas à jour l'état : 
+                            self._states.append(self._states[-nb_chain])
+                            # On remet les anciens paramètres pour la colonne :
+                            for l, layer in enumerate(column.all_layers):
+                                layer.params = Param(*X[j][l])
                     
-                if (i + 1) % n_sous_ech_iter == 0:  # sous échantillonnage
-                    # Si i+1 est un multiple de n_sous_ech_iter, on stocke
+                    NaN_Presence = (np.isnan(_temp_iter_chain).any() or np.isnan(_flow_iter_chain).any())
+                    
+                if i % n_sous_ech_iter == 0:  # sous échantillonnage
+                    # Si le numéro de l'itération i est un multiple de n_sous_ech_iter, on stocke
                     k = i // n_sous_ech_iter
-                    for j in range(nb_chain):
-                        _temp[k, j] = _temp_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
-                        _flows[k, j] = _flow_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
+                    for j in range(nb_chain):  
+                        if np.isnan(_temp_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]).any():                        
+                            _temp[k, j] = _temp[(k-1),j]
+                            _flows[k, j] = _flows[(k-1),j]
+                        else : 
+                            _temp[k, j] = _temp_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
+                            _flows[k, j] = _flow_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
 
-
-                # Mise à jour du vecteur saut et du pcr pour chaque couche
-                for l in range(nb_layer):
-                    J[l, id_layer[l]] += np.sum((dX[l] / std_X[l]) ** 2)
-                    n_id[l, id_layer[l]] += 1
-
-                    pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
-                    pcr[l] = pcr[l] / np.sum(pcr[l])
 
             # Calcul des taux d'acceptation:
-            self._acceptance = self._acceptance / nb_iter
             if verbose==True:
                 print(f"Acceptance rate : {self._acceptance}")
 
@@ -1184,10 +1189,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 self._states.append(
                     State(
                         layers=self.get_list_current_params(),
-                        energy=compute_energy_mcmc(
+                        energy=compute_energy(
                             self.temperatures_solve[ind_ref, :],
                             temp_ref,
-                            remanence,
                             sigma2=init_sigma2_temp,
                             sigma2_distrib=sigma2_distrib,
                         ),
@@ -1224,10 +1228,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 _temp_iter = self.get_temperatures_solve()
                 _flow_iter = self.get_flows_solve()
 
-                Energy_Proposal = compute_energy_mcmc(
+                Energy_Proposal = compute_energy(
                     self.temperatures_solve[ind_ref, :],
                     temp_ref,
-                    remanence,
                     sigma2_temp_proposal,
                     sigma2_distrib=sigma2_temp_prior.density,
                 )
@@ -1252,7 +1255,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     for l, layer in enumerate(self.all_layers):
                         layer.params = Param(*X[l])
 
-                if (i + 1) % n_sous_ech_iter == 0:
+                if i % n_sous_ech_iter == 0:
                     # Si i+1 est un multiple de n_sous_ech_iter, on stocke
                     k = i // n_sous_ech_iter
                     _temp[k] = _temp_iter[::n_sous_ech_space, ::n_sous_ech_time]
@@ -1626,7 +1629,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         
 
         for i, id in enumerate(self.get_id_sensors()):
-            
             axes[i].set_xlabel("Time in days")
             axes[i].plot(
                 temps_en_jours,
@@ -2011,33 +2013,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 layer.Prior_rhos_cs.perturb(layer.params.rhos_cs),
                 layer.Prior_q.perturb(layer.params.q)
             )
-        
 
-def compute_energy_mcmc(temp_simul, temp_ref, remanence, sigma2, sigma2_distrib):   # À vérifier
-    if sigma2_distrib is None:
-        return compute_energy(temp_simul, temp_ref, remanence, sigma2)
-    else:
-        return compute_energy_with_distrib(temp_simul, temp_ref, sigma2, sigma2_distrib)
+def compute_energy(temp_simul, temp_ref, sigma2, sigma2_distrib):
+    norm2 = np.linalg.norm(temp_ref - temp_simul) ** 2
+    return (size(temp_ref) * log(sigma2)) + norm2 / (2*sigma2) - log(sigma2_distrib(sigma2))
 
-    @compute_mcmc.needed
-    def compute_quantiles(self, quantiles=[0.05, 0.5, 0.95]):
-        """
-        Compute quantiles of temperatures and flows over the MCMC samples.
-        """
-        # Collect temperatures and flows from all accepted states
-        temperatures_samples = np.array([state._temperatures for state in self._states])
-        flows_samples = np.array([state._flows for state in self._states])
 
-        # Compute quantiles over the samples axis (0)
-        self._quantiles_temperatures = {
-            q: np.quantile(temperatures_samples, q, axis=0) for q in quantiles
-        }
-        self._quantiles_flows = {
-            q: np.quantile(flows_samples, q, axis=0) for q in quantiles
-        }
+def compute_log_acceptance(current_energy: float, prev_energy: float):
+    return prev_energy - current_energy
 
-    def get_quantiles_temperatures(self):
-        return self._quantiles_temperatures
 
-    def get_quantiles_flows(self):
-        return self._quantiles_flows
