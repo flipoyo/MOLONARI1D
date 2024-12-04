@@ -1149,6 +1149,9 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                             _temp[k, j] = _temp_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
                             _flows[k, j] = _flow_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
 
+            for j in range(nb_chain):
+                self._acceptance[j] /= nb_iter
+
             # Calcul des taux d'acceptation:
             if verbose==True:
                 print(f"Acceptance rate : {self._acceptance}")
