@@ -962,6 +962,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             multi_chain = [copy.deepcopy(self) for _ in range(nb_chain)]  
 
+            # Redéfinition du modèle direct pour les deep copies. Raison inconnue
+            # Peut-être liée au wrapper @checker qui manipule mal les deepcopies
+            for column in multi_chain:
+                column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
+                    
+
             ### initialisation des énergie
             
             # lancement du modèle direct et mise à jours de tous les paramètres dans la matrice X, les énergies dans la matrice Energy 
@@ -978,9 +984,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         _temp_iter_chain[j][ind_ref], temp_ref, sigma2, sigma2_distrib
                     )
                 
-                # Redéfinition de l'appel du modèle direct, c'est un quick fix dû au wrapper @checker qui manipule mal les deepcopies
-                column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
-
                 column.compute_solve_transi(verbose=False)
                 _temp_iter_chain[j] = column.get_temperatures_solve()
                 _flow_iter_chain[j] = column.get_flows_solve()
@@ -1024,8 +1027,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                     
                     # Calcul du profil de température associé aux nouveaux paramètres
-                    # Redéfinition de l'appel du modèle direct, c'est un quick fix dû au wrapper @checker qui manipule mal les deepcopies
-                    column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
                     column.compute_solve_transi(verbose=False)
 
                     # On récupère les températures et les débits associés aux nouveaux paramètres
@@ -1104,8 +1105,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         layer.params = Param(*X_proposal[l])
                     
                     # Calcul du profil de température associé aux nouveaux paramètres
-                    # Redéfinition de l'appel du modèle direct, c'est un quick fix dû au wrapper @checker qui manipule mal les deepcopies
-                    column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
                     column.compute_solve_transi(verbose=False)
                     temp_proposal = column.get_temperatures_solve()  # récupération du profil de température
                     _temp_iter_chain[j] = temp_proposal
