@@ -955,6 +955,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             multi_chain = [copy.deepcopy(self) for _ in range(nb_chain)]  
 
+            # On redéfinit l'appel du modèle direct sur les deep copies sinon le modèle direct s'exécute sur les paramètre de la colonne self
+            # Raisons inconnues peut-être liées au décorateur @checker
+
+            for column in multi_chain:
+                column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
+            
+
+
             ### initialisation des énergie
             
             # lancement du modèle direct et mise à jours de tous les paramètres dans la matrice X, les énergies dans la matrice Energy 
@@ -970,9 +978,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 Energy[j] = compute_energy(
                         _temp_iter_chain[j][ind_ref], temp_ref, sigma2, sigma2_distrib
                     )
-                
-                # Redéfinition de l'appel du modèle direct, c'est un quick fix dû au wrapper @checker qui manipule mal les deepcopies
-                column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
 
                 column.compute_solve_transi(verbose=False)
                 _temp_iter_chain[j] = column.get_temperatures_solve()
@@ -1017,8 +1022,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                     
                     # Calcul du profil de température associé aux nouveaux paramètres
-                    # Redéfinition de l'appel du modèle direct, c'est un quick fix dû au wrapper @checker qui manipule mal les deepcopies
-                    column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
                     column.compute_solve_transi(verbose=False)
 
                     # On récupère les températures et les débits associés aux nouveaux paramètres
@@ -1088,7 +1091,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
 
                 NaN_Presence = True
-
+                
                 while NaN_Presence == True:
 
                     for j, column in enumerate(multi_chain):
@@ -1100,8 +1103,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                             layer.params = Param(*X_proposal[l])
                         
                         # Calcul du profil de température associé aux nouveaux paramètres
-                        # Redéfinition de l'appel du modèle direct, c'est un quick fix dû au wrapper @checker qui manipule mal les deepcopies
-                        column.compute_solve_transi = types.MethodType(Column.compute_solve_transi, column)
                         column.compute_solve_transi(verbose=False)
                         temp_proposal = column.get_temperatures_solve()  # récupération du profil de température
                         _temp_iter_chain[j] = temp_proposal
