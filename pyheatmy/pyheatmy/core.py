@@ -81,6 +81,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self._id_sensors = None
         # le tableau contenant les températures à tout temps et à toute profondeur (lignes : températures) (colonnes : temps)
         self._temperatures = None
+
         # le tableau contenant les charges à tout temps et à toute profondeur (lignes : charges) (colonnes : temps)
         self._H_res = None
         # le tableau contenant le débit spécifique à tout temps et à toute profondeur (lignes : débit) (colonnes : temps)
@@ -645,6 +646,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             #     plt.scatter(range(len(KT_list)), KT_list, s = 0.7)
             #     plt.show()
 
+            if np.isnan(self._temperatures).any() or np.isnan(self._flows).any():
+                print(f"Issue for the following parameters : {self.get_list_current_params()}")
+                print(f"Issue for the follwing number of layers : {len(self.all_layers)}")
+                raise ValueError("NaN values in compute_solve_transi")
+
+
 
 
     @compute_solve_transi.needed
@@ -1086,55 +1093,50 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             print(f"Initialisation post burn-in - Utilisation de la mémoire (en Mo) : {process.memory_info().rss /1e6}")
 
+
             for i in trange(nb_iter, desc="DREAM MCMC Computation", file=sys.stdout):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
 
-                NaN_Presence = True
-                
-                while NaN_Presence == True:
-
-                    for j, column in enumerate(multi_chain):
-                        X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges)
-                        sigma2_temp_proposal = sigma2_temp_prior.perturb(self._states[j].sigma2_temp)  # On tire un nouveau sigma2
-                        
-                        # Mise à jour des paramètres de la colonne j :
-                        for l, layer in enumerate(column.all_layers):
-                            layer.params = Param(*X_proposal[l])
-                        
-                        # Calcul du profil de température associé aux nouveaux paramètres
-                        column.compute_solve_transi(verbose=False)
-                        temp_proposal = column.get_temperatures_solve()  # récupération du profil de température
-                        _temp_iter_chain[j] = temp_proposal
-                        _flow_iter_chain[j] = column.get_flows_solve()
-
-                        Energy_Proposal = compute_energy(temp_proposal[ind_ref], temp_ref, sigma2_temp_proposal, sigma2_distrib)  # calcul de l'énergie
-                        # calcul de la probabilité d'accpetation
-                        log_ratio_accept = compute_log_acceptance(Energy_Proposal, Energy[j])
-
-                        # Acceptation ou non des nouveaux paramètres
-                        if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
-                            # on met à jour l'état de la colonne
-                            X[j] = X_proposal
-                            Energy[j] = Energy_Proposal
-                            self._acceptance[j] += 1
-
-                            self._states.append(State(
-                                layers = X[j],
-                                energy = Energy[j],
-                                ratio_accept=1,
-                                sigma2_temp=sigma2_temp_proposal
-                            ))
-
-                        else:
-                            dX = np.zeros((nb_layer, nb_param), np.float32)
-                            # On ne met pas à jour l'état : 
-                            self._states.append(self._states[-nb_chain])
-                            # On remet les anciens paramètres pour la colonne :
-                            for l, layer in enumerate(column.all_layers):
-                                layer.params = Param(*X[j][l])
+                for j, column in enumerate(multi_chain):
+                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges)
+                    sigma2_temp_proposal = sigma2_temp_prior.perturb(self._states[j].sigma2_temp)  # On tire un nouveau sigma2
                     
-                    NaN_Presence = (np.isnan(_temp_iter_chain).any() or np.isnan(_flow_iter_chain).any())
+                    # Mise à jour des paramètres de la colonne j :
+                    for l, layer in enumerate(column.all_layers):
+                        layer.params = Param(*X_proposal[l])
+                    
+                    # Calcul du profil de température associé aux nouveaux paramètres
+                    column.compute_solve_transi(verbose=False)
+                    temp_proposal = column.get_temperatures_solve()  # récupération du profil de température
+                    _temp_iter_chain[j] = temp_proposal
+                    _flow_iter_chain[j] = column.get_flows_solve()
+
+                    Energy_Proposal = compute_energy(temp_proposal[ind_ref], temp_ref, sigma2_temp_proposal, sigma2_distrib)  # calcul de l'énergie
+                    # calcul de la probabilité d'accpetation
+                    log_ratio_accept = compute_log_acceptance(Energy_Proposal, Energy[j])
+
+                    # Acceptation ou non des nouveaux paramètres
+                    if np.log(np.random.uniform(0, 1)) < log_ratio_accept:
+                        # on met à jour l'état de la colonne
+                        X[j] = X_proposal
+                        Energy[j] = Energy_Proposal
+                        self._acceptance[j] += 1
+
+                        self._states.append(State(
+                            layers = X[j],
+                            energy = Energy[j],
+                            ratio_accept=1,
+                            sigma2_temp=sigma2_temp_proposal
+                        ))
+
+                    else:
+                        dX = np.zeros((nb_layer, nb_param), np.float32)
+                        # On ne met pas à jour l'état : 
+                        self._states.append(self._states[-nb_chain])
+                        # On remet les anciens paramètres pour la colonne :
+                        for l, layer in enumerate(column.all_layers):
+                            layer.params = Param(*X[j][l])
                     
                 if i % n_sous_ech_iter == 0:  # sous échantillonnage
                     # Si le numéro de l'itération i est un multiple de n_sous_ech_iter, on stocke
@@ -1146,7 +1148,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         else : 
                             _temp[k, j] = _temp_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
                             _flows[k, j] = _flow_iter_chain[j, ::n_sous_ech_space, ::n_sous_ech_time]
-
 
             # Calcul des taux d'acceptation:
             if verbose==True:
@@ -1243,16 +1244,18 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     
                 else:   # le saut est rejeté
                     self._states.append(self._states[-1])
-          
+        
                     # On remet les paramètres précédent pour la colonne
                     for l, layer in enumerate(self.all_layers):
                         layer.params = Param(*X[l])
+                            
 
                 if i % n_sous_ech_iter == 0:
                     # Si i+1 est un multiple de n_sous_ech_iter, on stocke
                     k = i // n_sous_ech_iter
                     _temp[k] = _temp_iter[::n_sous_ech_space, ::n_sous_ech_time]
                     _flows[k] = _flow_iter[::n_sous_ech_space, ::n_sous_ech_time]
+
 
             self._acceptance = nb_accepted / (nb_iter + 1)
 
