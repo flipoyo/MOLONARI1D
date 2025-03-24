@@ -2,7 +2,7 @@
 // simulating scenarios with non-real data to quickly debug and refine the protocol
 // without deploying the entire system.
 
-#include "internals/Lora.hpp"
+#include "./internals/Lora.hpp"
 #include <queue> // Using standard library queue for managing data packets
 
 // Define device and relay addresses for communication
