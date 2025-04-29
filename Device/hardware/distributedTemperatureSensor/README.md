@@ -2,7 +2,8 @@
 
 Find the component list in XXXX
 
-Drawings for printing the thermometer shaft
+Dimensions and 3D printing files of the thermometer shaft in folder shaft 
+
 
 
 
