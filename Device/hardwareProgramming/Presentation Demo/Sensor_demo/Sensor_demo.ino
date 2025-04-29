@@ -16,6 +16,8 @@ Required hardware :
 
 // Define the data-type of a measurement
 #define MEASURE_T double
+// Define the data-type of a measurement
+#define MEASURE_P unsigned short
 // Define a function to parse a measurement (i.e. to convert a string to a MEASURE_T)
 #define TO_MEASURE_T toDouble
 
@@ -48,11 +50,18 @@ const int CSPin = 5;
 // The SD logger to write measurements into a csv file
 Writer logger;
 // The name of the csv file where the measurements will be saved
-const char filename[] = "RIVIERE.CSV";
+const char filename[] = "MOLONARIrecords.CSV";
 
-// --- Sensors ---
-TemperatureSensor tempSensor1(A1, 1, 0.5277, 101.15);
-PressureSensor PressureSensor(A3, 1);
+// --- Sensors Set up---
+
+int npressure = 1; //number of pressure sensors
+int ntemp = 5; //number of temperature sensors
+
+// NF 29/4/2025 Adding temperature Shaft in MOLONARI 2025
+PressureSensor *pressureSensors;
+TemperatureSensor *tempSensors;
+
+
 
 // ----- Main Setup -----
 
@@ -72,7 +81,7 @@ void setup() {
 
   // Initialise SD Card
   Serial.print("Initialising SD card ...");
-  bool success = InitialiseLog(CSPin);
+  bool success = InitialiseLog(CSPin,npressure,ntemp);
   if (success) {
     Serial.println(" Done");
   } else {
@@ -96,6 +105,47 @@ void setup() {
   InitializeMeasurementTimes();
   InitializeMeasurementCount();
   Serial.println(" Done");
+
+  int nanalogical = 1; //initialise number of analogical sensors to 1;
+  int pin = nanalogical ;
+  // Initialise the pressure sensors
+  Serial.println("Initialising pressure sensors...");
+  pressureSensors = new PressureSensor[npressure];
+  for (int i = 0; i < npressure; i++) {
+    pin = nanalogical++; // Use the analog pin number directly
+    pressureSensors[i] = PressureSensor(pin, 1); // Initialize the object
+    Serial.print("Pressure sensor ");
+    Serial.print(nanalogical++);
+    Serial.print("on pin");
+    Serial.print(pin);
+    Serial.println(" initialised.");
+  }
+
+  // Initialise the temperature sensors
+  Serial.println("Initialising temperature sensors...");
+  tempSensors = new TemperatureSensor[ntemp];
+  for (int i = 0; i < ntemp; i++) {
+    pin = nanalogical++; // Use the analog pin number directly
+    tempSensors[i] = TemperatureSensor(pin, 1, 0.5277, 101.15); // A2, A3, A4, etc.
+    Serial.print("Temperature sensor ");
+    Serial.print(i +1);
+    Serial.print("on pin");
+    Serial.print(pin);
+    Serial.println(" initialised.");
+  }
+
+  // Allocate memory for pressure and temperature arrays
+  pressure = new MEASURE_P[npressure];
+  temperature = new MEASURE_T[ntemp];
+
+  // Initialize the arrays to 0
+  for (int i = 0; i < npressure; i++) {
+    pressure[i] = 0;
+  }
+  for (int i = 0; i < ntemp; i++) {
+    temperature[i] = 0;
+  }
+
 
   // Disable the builtin LED
   pinMode(LED_BUILTIN, INPUT_PULLDOWN);
@@ -141,10 +191,14 @@ void loop() {
     Serial.println("——Measurement " + String(measurementCount) + "——");
 
     // Perform measurements
-    TEMP_T temp1 = tempSensor1.MeasureTemperature();
-    PRESSURE_T pressure = PressureSensor.MeasurePressure();
+    for(int i = 0; i < npressure; i++) {
+      pressure[i] = pressureSensors[i].MeasurePressure();
+    }
+    for(int i = 0; i < ntemp; i++) {
+      temperature[i]= tempSensors[i].MeasureTemperature();
+    }
 
-    logger.LogData(temp1, pressure);
+    logger.LogData(npressure,pressure,ntemp,temperature);
   }
 
   // If all measurements for the day are complete, transmit data and reset the counter

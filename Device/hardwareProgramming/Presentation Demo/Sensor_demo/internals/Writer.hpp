@@ -23,7 +23,7 @@ class Writer
         void WriteInNewLine(Measure data);
 
         // Populate a Measure object using the raw data provided
-        void ApplyContent(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4);
+        void ApplyContent(Measure* measure, int npressure, double *pressure, int ntemp, double *temp);
 
         // Attempt to reconnect to the SD card if the connection is lost
         bool Reconnect();
@@ -33,7 +33,8 @@ class Writer
         void EstablishConnection(const int CSpin);
 
         // Process raw data and append it as a new entry in the CSV file
-        void LogData(MEASURE_T mesure1, MEASURE_T mesure2 = 0, MEASURE_T mesure3 = 0, MEASURE_T mesure4 = 0);
+        // NF 29/4/2025 modification to pass 
+        void LogData(int npressure, double *pressure, int ntemp, double *temperature);
 
         // Safely close the connection with the SD card
         void Dispose();

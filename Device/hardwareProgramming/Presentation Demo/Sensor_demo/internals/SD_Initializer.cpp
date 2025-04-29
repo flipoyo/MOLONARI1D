@@ -7,15 +7,13 @@
 
 #include <SD.h>
 #include <SPI.h>
-#include <String.h>
+#include <Arduino.h>
 #include "Measure.hpp"
 
 
 // The name of the csv file
 extern const char filename[];
 
-// Header row for the CSV file
-const char header[] = "Id,Date,Time,Capteur1,Capteur2,Capteur3,Capteur4";
 
 // Checks if the SD card has already been initialized and the file is there.
 // Returns true if the file already has content; false if it doesn’t.
@@ -33,17 +31,31 @@ bool AlreadyInitialised() {
 
 // Generate a CSV file with a header IF it doesn’t exist yet.
 // Returns true if the initialisation was successful.
-bool InitialiseLog(const int CSpin) {
+bool InitialiseLog(const int CSpin,int npressure,int ntemp) {
+    int i;
+
     if (!SD.begin(CSpin)) {
       return false; // SD initialization failed
     }
 
     else if (!AlreadyInitialised()) {
-      // If the file isn’t initialized, open it and add the header
-        File file = SD.open(filename, FILE_WRITE);
-        bool success = file; // Check if file opened successfully
-        if (success) {
-            file.println(header); // Write header to the file
+      char* header;
+      // Par defaut si le fichier existe déjà, on l'efface
+      if (SD.exists(filename)) {
+        SD.remove(filename); // Supprime le fichier existant
+      }
+      File file = SD.open(filename, FILE_WRITE); // Crée un nouveau fichier. Attention, open ouvre en mode APPEND!
+      bool success = file; // Check if file opened successfully
+      if (success) {
+          String header = "Id,Date,Time,"    ;                    // Add ID
+          for (i = 0; i < npressure ; i++) {
+            header += "pressure" + String(i+1) + ", ";                             // Add sensor i data
+          }                        // Add ID
+          for (i = 0; i < ntemp-1 ; i++) {
+            header += "temperature" + String(i+1) + ", ";                             // Add sensor i data
+          }  
+          header += "temperature" + String(i+1);                                        // Add last sensor data
+          file.println(header); // Write header to the file
         }
         file.close();
 

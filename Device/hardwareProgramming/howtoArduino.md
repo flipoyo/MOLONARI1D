@@ -81,6 +81,17 @@ VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=moozzyk
       git clone https://github.com/sandeepmistry/arduino-LoRa.git ~/Arduino/libraries/LoRa
       ```
 
+      For another library, such as ArduinoLowPower or SD:
+      ```bash
+      git clone https://github.com/arduino-libraries/ArduinoLowPower.git ~/Arduino/libraries/ArduinoLowPower
+      git clone https://github.com/arduino-libraries/SD.git ~/Arduino/libraries/SD
+      ```
+
+      For another library, such as RTCZero.h and Adafruit_I2CDevice.h:
+      ```bash
+      git clone https://github.com/adafruit/RTClib.git ~/Arduino/libraries/RTClib
+      git clone https://github.com/adafruit/Adafruit_BusIO.git ~/Arduino/libraries/Adafruit_BusIO
+      ```
    4. **Verify the installation**:
       You can verify that the library has been correctly added by listing the installed libraries with `arduino-cli`:
       ```bash

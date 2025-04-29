@@ -8,19 +8,22 @@
 
 
 #include "Pressure_Sensor.hpp"
-
+PressureSensor::PressureSensor() : dataPin(-1), enablePin(-1) {
+  // Default constructor body (if needed)
+}
 
 PressureSensor::PressureSensor(const int _dataPin, const int _enablePin) : dataPin(_dataPin), enablePin(_enablePin) {
   pinMode(enablePin, OUTPUT);
+  pinMode(dataPin, INPUT);
 
   analogReadResolution(12);   // Set precision to 12 bit (maximum of this board)
 }
 
-PRESSURE_T PressureSensor::MeasurePressure() {
+double PressureSensor::MeasurePressure() {
   digitalWrite(enablePin, HIGH);    // Enable the sensor
   delay(50);    // Wait for it to enable
 
-  PRESSURE_T pressure = analogRead(dataPin);  // Read data
+  double pressure = analogRead(dataPin);  // Read data
 
   digitalWrite(enablePin, LOW);   // Disable the sensor back
 

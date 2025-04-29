@@ -3,8 +3,6 @@
 #ifndef MEASURE_CLASS
 #define MEASURE_CLASS
 
-// Data type for the sensor measurements
-#define MEASURE_T double
 
 class Measure {
   public:
@@ -17,26 +15,40 @@ class Measure {
     // Time in the format "hh:mm:ss"
     char time[9];
 
-    // Values read from each of the 4 sensors
-    MEASURE_T chanel1; // Sensor 1 reading
-    MEASURE_T chanel2; // Sensor 2 reading
-    MEASURE_T chanel3; // Sensor 3 reading
-    MEASURE_T chanel4; // Sensor 4 reading
+    int npressure; // number of sensors
+    int ntemp; // number of sensors
+
+    double *chanelP; // pointer to the value of all the analogical sensors 
+    double *chanelT; // pointer to the value of all the analogical sensors 
+
+
+
+ 
+    String oneLine() {
+      int i;
+      String str = String(id);                        // Add ID
+      str += " (" + String(date) + " " + String(time) + ") : ";      // Add timestamp
+      for (i = 0; i < npressure ; i++) {
+        str += String(chanelP[i]) + ", ";                             // Add sensor i data
+      }  
+      for (i = 0; i < ntemp-1 ; i++) {
+        str += String(chanelT[i]) + ", ";                             // Add sensor i data
+      }                             // Add sensor 3 data
+    str += String(chanelT[i]);                                        // Add last sensor data
+    
+    return str; // Return the constructed string
+    }
 
     /**
      * Convert the measurement details into a string representation.
      * @return A string summarizing the measurement details.
      */
     String ToString() {
-      String str = "Measure n°" + String(id);                        // Add ID
-      str += " (" + String(date) + " " + String(time) + ") : ";      // Add timestamp
-      str += String(chanel1) + ", " ;                                // Add sensor 1 data
-      str += String(chanel2) + ", " ;                                // Add sensor 2 data
-      str += String(chanel3) + ", " ;                                // Add sensor 3 data
-      str += String(chanel4);                                        // Add sensor 4 data
-      
-      return str; // Return the constructed string
-    }
+      int i;
+      String str = "Measure n°" + oneLine();                                      // Add last sensor data
+    
+    return str; // Return the constructed string
+    }  
 };
 
 #endif
