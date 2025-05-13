@@ -58,10 +58,11 @@ int npressure = 1; //number of pressure sensors
 int ntemp = 5; //number of temperature sensors
 
 // NF 29/4/2025 Adding temperature Shaft in MOLONARI 2025
-PressureSensor *pressureSensors;
-TemperatureSensor *tempSensors;
+PressureSensor **pSens;
+TemperatureSensor **tempSensors;
 
-
+double *pressure;
+double *temperature;
 
 // ----- Main Setup -----
 
@@ -110,10 +111,10 @@ void setup() {
   int pin = nanalogical ;
   // Initialise the pressure sensors
   Serial.println("Initialising pressure sensors...");
-  pressureSensors = new PressureSensor[npressure];
+  pSens = new PressureSensor*[npressure];
   for (int i = 0; i < npressure; i++) {
     pin = nanalogical++; // Use the analog pin number directly
-    pressureSensors[i] = PressureSensor(pin, 1); // Initialize the object
+    pSens[i] = new PressureSensor(pin, 1); // Initialize the object
     Serial.print("Pressure sensor ");
     Serial.print(nanalogical++);
     Serial.print("on pin");
@@ -123,10 +124,10 @@ void setup() {
 
   // Initialise the temperature sensors
   Serial.println("Initialising temperature sensors...");
-  tempSensors = new TemperatureSensor[ntemp];
+  tempSensors = new TemperatureSensor*[ntemp];
   for (int i = 0; i < ntemp; i++) {
     pin = nanalogical++; // Use the analog pin number directly
-    tempSensors[i] = TemperatureSensor(pin, 1, 0.5277, 101.15); // A2, A3, A4, etc.
+    tempSensors[i] = new TemperatureSensor(pin, 1, 0.5277, 101.15); // A2, A3, A4, etc.
     Serial.print("Temperature sensor ");
     Serial.print(i +1);
     Serial.print("on pin");
@@ -135,8 +136,8 @@ void setup() {
   }
 
   // Allocate memory for pressure and temperature arrays
-  pressure = new MEASURE_P[npressure];
-  temperature = new MEASURE_T[ntemp];
+  pressure = new double[npressure];
+  temperature = new double[ntemp];
 
   // Initialize the arrays to 0
   for (int i = 0; i < npressure; i++) {
@@ -168,7 +169,7 @@ void loop() {
   }
 
   // Initialise SD Card
-  InitialiseLog(CSPin);
+  InitialiseLog(CSPin,npressure,ntemp);
   // Initialise the SD logger
   logger.EstablishConnection(CSPin);
   // Initialise RTC
@@ -192,10 +193,10 @@ void loop() {
 
     // Perform measurements
     for(int i = 0; i < npressure; i++) {
-      pressure[i] = pressureSensors[i].MeasurePressure();
+      pressure[i] = pSens[i]->MeasurePressure();
     }
     for(int i = 0; i < ntemp; i++) {
-      temperature[i]= tempSensors[i].MeasureTemperature();
+      temperature[i]= tempSensors[i]->MeasureTemperature();
     }
 
     logger.LogData(npressure,pressure,ntemp,temperature);

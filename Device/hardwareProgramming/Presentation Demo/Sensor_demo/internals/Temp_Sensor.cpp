@@ -35,7 +35,7 @@ double TemperatureSensor::MeasureTemperature2() {
   //Power the sensor only when we measure
   digitalWrite(enablePin, HIGH);
   delay(200);
-  double temp = analogRead(dataPin);
+  double temp = (double) analogRead(dataPin);
   digitalWrite(enablePin, LOW);
   // founction of the temperature sensor 2
   return 1/(1/298.15+log(4096/temp-1)/scale)-273.15+offset; // calculation of the temperature
