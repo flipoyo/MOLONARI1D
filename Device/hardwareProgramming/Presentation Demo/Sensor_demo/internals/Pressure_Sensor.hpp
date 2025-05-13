@@ -6,19 +6,17 @@
 #ifndef PRESSURE_SENSOR_H
 #define PRESSURE_SENSOR_H
 
-// The data type of a pressure measurement
-#define PRESSURE_T unsigned short
-
 
 class PressureSensor {
     public :
+        PressureSensor(); // Default constructor
         // Initialise the pressure sensor for the first time. 
         // dataPin -> Analog input to read data from (Analog pin)
         // enablePin -> Digital output to enable/disable the sensor 
         PressureSensor(int dataPin, int enablePin);
         
         // Measure the pressure
-        PRESSURE_T MeasurePressure();
+        double MeasurePressure();
 
     private :
         // Pin to read data from (Analog pin)

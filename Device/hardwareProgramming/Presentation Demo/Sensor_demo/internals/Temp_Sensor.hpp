@@ -6,20 +6,17 @@
 #ifndef TEMP_SENSOR_H
 #define TEMP_SENSOR_H
 
-// The data type of a temperature measurement
-#define TEMP_T double
-
-
 class TemperatureSensor {
     public :
+        TemperatureSensor();//Default constructor
         // Initialise the temperature sensor for the first time. 
         // dataPin -> Analog input to read data from (Analog pin)
         // enablePin -> Digital output to enable/disable the sensor 
         TemperatureSensor(int dataPin, int enablePin, float offset, float scale);
         
         // Measure the temperature
-        TEMP_T MeasureTemperature();
-        TEMP_T MeasureTemperature2();
+        double MeasureTemperature();
+        double MeasureTemperature2();
         
     private :
         // Pin to read data from (Analog pin)
@@ -33,4 +30,4 @@ class TemperatureSensor {
 
 #include "Temp_Sensor.cpp"
 
-#endif
+#endif //TEMP_SENSOR_H

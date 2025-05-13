@@ -8,7 +8,7 @@
 #include "Writer.hpp"
 #include "Time.cpp"
 
-#include <String.h>
+#include <Arduino.h>
 #include <SD.h>
 
 #ifdef SD_DEBUG
@@ -54,7 +54,8 @@ void Writer::WriteInNewLine(Measure data){
     
     SD_LOG("Writing data ..."); // Debug log
     // Write measurement data as a single CSV line
-    this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.chanel1) + COMA + String(data.chanel2) + COMA + String(data.chanel3) + COMA + String(data.chanel4));
+    //this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.chanel1) + COMA + String(data.chanel2) + COMA + String(data.chanel3) + COMA + String(data.chanel4));
+    this->file.println(data.ToString()); // Write the string representation of the measurement
     SD_LOG_LN(" Done");
 
     SD_LOG("Flushing ..."); // Ensure data is saved immediately
@@ -63,11 +64,14 @@ void Writer::WriteInNewLine(Measure data){
 }
 
 // ApplyContent: Fills a Measure object with raw data values for each channel
-void Writer::ApplyContent(Measure* measure, MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4) {
-    measure->chanel1 = mesure1;
-    measure->chanel2 = mesure2;
-    measure->chanel3 = mesure3;
-    measure->chanel4 = mesure4;
+void Writer::ApplyContent(Measure* measure, int npressure,double  *pressure, int ntemp,double *temp) {
+    
+    for(int i = 0; i < npressure; i++) {
+        measure->chanelP[i] = pressure[i]; // Assign pressure values
+    }
+    for(int i = 0; i < ntemp; i++) {
+        measure->chanelT[i] = temp[i]; // Assign temperature values
+    }
 }
 
 // Reconnect: Attempts to re-establish connection to the SD card and reopen the CSV file in write mode
@@ -89,11 +93,11 @@ void Writer::EstablishConnection(const int CSpin) {
 }
 
 // LogData: Processes raw data, applies a timestamp, and writes it to the CSV file as a new entry
-void Writer::LogData(MEASURE_T mesure1, MEASURE_T mesure2, MEASURE_T mesure3, MEASURE_T mesure4) {
+void Writer::LogData(int npressure, double *pressure, int ntemp, double *temperature) {
 
     // Create a new Measure object
     Measure data;
-    this->ApplyContent(&data, mesure1, mesure2, mesure3, mesure4); // Assign channel values
+    this->ApplyContent(&data,npressure,pressure,ntemp,temperature); // Assign channel values
     ApplyCurrentTime(&data); // Assign current time and date
     data.id = this->next_id; // Set unique ID for the measurement
 
