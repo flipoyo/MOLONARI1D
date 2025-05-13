@@ -122,7 +122,7 @@ Put the roof back on and screw it (tightly) for sealing (note in the photo the s
 If you want to do a demo, connect the antenna to the Arduino, and connect the Arduino to a computer via USB. On the computer, open software that will read what the Arduino sends on the Serial port. (For example, the `Serial Monitor` of `Arduino IDE`)  
 Here too, if everything goes well the orange LED should light up and then turn off. If it does not turn off, it is probably because there is no software using the Serial port on the computer.  
 
-This year we placed a box on the ground where it should be placed in relay in case we put the whole system in the river ready to take and send data. The arduino must be connected to an antenna and a battery. As proposed improvements for future editions, it is recommended to place a second arduino in the box that is ready to take control in case the first arduino stops communicating with the sensor for any reason.
+This year we placed a box on the ground where it should be placed in relay in case we put the whole system in the river ready to take and send data. The Arduino must be connected to an antenna and a battery. As proposed improvements for future editions, it is recommended to place a second Arduino in the box that is ready to take control in case the first Arduino stops communicating with the sensor for any reason.
 
 ![Relay box](Images/relay_box.jpeg)
 
