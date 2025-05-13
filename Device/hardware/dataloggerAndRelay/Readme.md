@@ -46,8 +46,8 @@ Each step is detailed below, but here is a diagram that summarizes everything:
 Make sure the battery power goes well to the *Featherwing*. This means connecting, as indicated on *diagram 1*:
 
 * the grounds (GND). It is recommended to reserve a line of the breadboard for the use of a common ground (this is a common practice that facilitates wiring and its revision). In the case of the first prototype realized, the red line was reserved as ground. 
-* the VCC pin (A) to the 3.3V port (B). Since the SD card needs to be connected to the VCC port all the time we recommend to asign a whole line in the bread board where is the *Featherwing* to the VCC.
-* the sensors. We asigned one digital port (pin 1) to feed the sensors only when the Arduino is not sleep (when it has to take the mesurementes), we reserved a whole line for that in the breadboard where the Arduino is.
+* the VCC pin (A) to the 3.3V port (B). Since the SD card needs to be connected to the VCC port all the time we recommend to assign a whole line in the bread board where is the *Featherwing* to the VCC.
+* the sensors. We assigned one digital port (pin 1) to feed the sensors only when the Arduino is not sleep (when it has to take the measurements), we reserved a whole line for that in the breadboard where the Arduino is.
 
 ### 2.2. SD part
 
