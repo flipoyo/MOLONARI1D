@@ -123,7 +123,7 @@ VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=moozzyk
    arduino-cli compile --fqbn arduino:samd:mkrwan1310 --output-dir ~/Arduino/build --verbose /home/nflipo/MOLONARI1D/Device/hardwareProgramming/Presentation\ Demo/Sensor_demo/Sensor_demo.ino
    arduino-cli upload --fqbn arduino:samd:mkrwan1310 --port /dev/ttyACM0 --input-dir ~/Arduino/build 
    ```
-   Replace `arduino:samd:mkrwan1310` with the Fully Qualified Board Name (FQBN) of your board and `/dev/ttyUSB0` with the appropriate serial port. In VScode on ubuntu22.04, axess to your port for a nonsudo user must be granted first. With a sudo user please do the following:
+   Replace `arduino:samd:mkrwan1310` with the Fully Qualified Board Name (FQBN) of your board and `/dev/ttyUSB0` with the appropriate serial port. In VScode on ubuntu22.04, access to your port for a nonsudo user must be granted first. With a sudo user please do the following:
    ```bash
    sudo usermod -aG dialout $USER
    ```
