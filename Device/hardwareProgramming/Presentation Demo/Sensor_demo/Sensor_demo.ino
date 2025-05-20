@@ -50,7 +50,7 @@ const int CSPin = 5;
 // The SD logger to write measurements into a csv file
 Writer logger;
 // The name of the csv file where the measurements will be saved
-const char filename[] = "RECORDS.CSV"; // WARNING Format 8.3, no more than 8 caracters on SD FAT32 Files
+const char filename[] = "RECORDS.CSV"; // WARNING Format 8.3, no more than 8 characters on SD FAT32 Files
 
 // --- Sensors Set up---
 
