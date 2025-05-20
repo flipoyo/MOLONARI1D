@@ -48,13 +48,13 @@ void ApplyCurrentTime(Measure* measure) {
 //Class methods
 
 // WriteInNewLine: Writes a new line to the CSV file with all the fields from a Measure object
-void Writer::WriteInNewLine(Measure data){
+void Writer::WriteInNewLine(Measure *data){
     
     SD_LOG("Writing data ..."); // Debug log
     // Write measurement data as a single CSV line
     //this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.chanel1) + COMA + String(data.chanel2) + COMA + String(data.chanel3) + COMA + String(data.chanel4));
-    this->file.println(data.oneLine()); // Write the string representation of the measurement
-    SD_LOG_LN(data.ToString()); // Log the measurement details
+    this->file.println(data->oneLine()); // Write the string representation of the measurement
+    SD_LOG_LN(data->ToString()); // Log the measurement details
 
     SD_LOG("Flushing ..."); // Ensure data is saved immediately
     this->file.flush();
@@ -63,8 +63,10 @@ void Writer::WriteInNewLine(Measure data){
 
 // ApplyContent: Fills a Measure object with raw data values for each channel
 void Writer::ApplyContent(Measure* measure, int npressure,double  *pressure, int ntemp,double *temp) {
-    
-    for(int i = 0; i < npressure; i++) {
+    String str;
+    str = "Applying content ..." + String(measure->id) + " with " + String(npressure) + " pressure and " + String(ntemp) + " temperature";
+    SD_LOG_LN(str); // Log the number of pressure and temperature sensors
+     for(int i = 0; i < npressure; i++) {
         measure->chanelP[i] = pressure[i]; // Assign pressure values
     }
     for(int i = 0; i < ntemp; i++) {
@@ -94,12 +96,13 @@ void Writer::EstablishConnection(const int CSpin) {
 void Writer::LogData(int npressure, double *pressure, int ntemp, double *temperature) {
 
     // Create a new Measure object
-    Measure data;
+    Measure *data;
     String str;
+    data = new Measure(npressure,ntemp); // Initialize the Measure object
 
-    this->ApplyContent(&data,npressure,pressure,ntemp,temperature); // Assign channel values
-    ApplyCurrentTime(&data); // Assign current time and date
-    data.id = this->next_id; // Set unique ID for the measurement
+    this->ApplyContent(data,npressure,pressure,ntemp,temperature); // Assign channel values
+    ApplyCurrentTime(data); // Assign current time and date
+    data->id = this->next_id; // Set unique ID for the measurement
 
     // Check if the connection is still established
     SD_LOG_LN("Trying to LogData ...");
@@ -112,22 +115,28 @@ void Writer::LogData(int npressure, double *pressure, int ntemp, double *tempera
         is_connected = this->Reconnect();
         if (!is_connected) {
             SD_LOG_LN("Connection could not be established."); // Log failure if reconnect fails
+            delete data; // Free the Measure object
+            SD_LOG_LN("Exiting ...");
             return; // Exit if reconnection fails
         }
     }
 
 // Write data if connected
     if (is_connected) {
-        str = "Writing a new line with " + String(data.id) + " ...";
+        str = "Writing a new line with " + String(data->id) + " ...";
         SD_LOG_LN(str); // Log the ID of the measurement being written
         this->WriteInNewLine(data); // Write data to a new CSV line
     }
     this->next_id++; // Increment ID for next measurement
+    delete data; // Free the Measure object
+
 }
 
 // Dispose: Closes the connection to the CSV file, releasing the file resource
 void Writer::Dispose() {
     this->file.close();
 }
+
+
 
 #endif

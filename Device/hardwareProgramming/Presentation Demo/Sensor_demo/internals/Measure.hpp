@@ -15,15 +15,36 @@ class Measure {
     // Time in the format "hh:mm:ss"
     char time[9];
 
-    int npressure; // number of sensors
+    int npressure; // number of pressure sensors
     int ntemp; // number of sensors
 
-    double *chanelP; // pointer to the value of all the analogical sensors 
-    double *chanelT; // pointer to the value of all the analogical sensors 
+    double *chanelP; // pointer to the value of the pressure analogical sensors 
+    double *chanelT; // pointer to the value of the temperature analogical sensors 
 
+    // Constructor
+    Measure(int npressure, int ntemp) : npressure(npressure), ntemp(ntemp) {
+      // Allocate memory for pressure and temperature channels
+      this->npressure = npressure; // Assign number of pressure sensors
+      this->ntemp = ntemp; // Assign number of temperature sensors
+      this->chanelP = new double[npressure]; // Allocate memory for pressure values
+      this->chanelT = new double[ntemp]; // Allocate memory for temperature values
+      // Initialize the channels with default values (e.g., 0.0)
+      for (int i = 0; i < npressure; i++) {
+        this->chanelP[i] = 0.0;
+      }
+      for (int i = 0; i < ntemp; i++) {
+        this->chanelT[i] = 0.0;
+      }
+    }
 
+    // Destructor
+    ~Measure() {
+      // Free the allocated memory
+      delete[] chanelP;
+      delete[] chanelT;
+    }
 
- 
+     // Method to generate a one-line string representation of the measurement
     String oneLine() {
       int i;
       String str = String(id);                        // Add ID

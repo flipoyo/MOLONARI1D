@@ -16,11 +16,10 @@ class Writer
 {
     private:
         File file; // File object for handling CSV file operations
-        unsigned int next_id; // ID to keep track of the next measurement
         int CSPin; // Pin number for Chip Select (CS) to control the SD card
 
         // Append a measurement (of type Measure) to a new line in the CSV file
-        void WriteInNewLine(Measure data);
+        void WriteInNewLine(Measure *data);
 
         // Populate a Measure object using the raw data provided
         void ApplyContent(Measure* measure, int npressure, double *pressure, int ntemp, double *temp);
@@ -29,6 +28,7 @@ class Writer
         bool Reconnect();
 
     public:
+        unsigned int next_id; // ID to keep track of the next measurement
         // Initialize connection with the SD card using the specified Chip Select (CS) pin
         void EstablishConnection(const int CSpin);
 

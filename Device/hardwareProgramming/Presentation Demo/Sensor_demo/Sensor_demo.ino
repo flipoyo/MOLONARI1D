@@ -170,7 +170,7 @@ void loop() {
 
   // Initialise SD Card
   //InitialiseLog(CSPin,npressure,ntemp);//Already Done in setup
-  
+
   // Initialise the SD logger
   logger.EstablishConnection(CSPin);
   // Initialise RTC
@@ -189,7 +189,7 @@ void loop() {
   unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
 
   // Count and check that the number of daily measurements has been reached
-
+  measurementCount = logger.next_id;
   if (measurementCount <= TOTAL_MEASUREMENTS_PER_DAY) {
     Serial.println("——Measurement " + String(measurementCount) + "——");
 
@@ -202,6 +202,7 @@ void loop() {
     }
 
     logger.LogData(npressure,pressure,ntemp,temperature);
+    measurementCount= logger.next_id;
   }
 
   // If all measurements for the day are complete, transmit data and reset the counter
