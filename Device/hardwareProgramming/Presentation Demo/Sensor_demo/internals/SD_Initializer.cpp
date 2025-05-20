@@ -34,6 +34,10 @@ bool AlreadyInitialised() {
 bool InitialiseLog(const int CSpin,int npressure,int ntemp) {
     int i;
 
+    String str = "Connecting To SD Card on CSpin" + String(CSpin) + "where the file" + filename + "may be stored";
+    Serial.println(str);
+
+    
     if (!SD.begin(CSpin)) {
       Serial.println("SD card initialization failed in  SD.begin(CSpin)");
       return false; // SD initialization failed
