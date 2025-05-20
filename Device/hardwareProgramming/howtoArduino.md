@@ -120,8 +120,8 @@ VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=moozzyk
 
    Use `arduino-cli` to compile and upload your code to your Arduino board. For example:
    ```bash
-   arduino-cli compile --fqbn arduino:samd:mkrwan1310 --output-dir ~/Arduino/build --verbose /home/nflipo/MOLONARI1D/hardwareProgramming/Tests\ Codes/Sensor_Lora
-   arduino-cli upload --fqbn arduino:samd:mkrwan1310 --port /dev/ttyACM0 --input-dir ~/Arduino/build /home/nflipo/MOLONARI1D/hardwareProgramming/Tests\ Codes/Sensor_Lora
+   arduino-cli compile --fqbn arduino:samd:mkrwan1310 --output-dir ~/Arduino/build --verbose /home/nflipo/MOLONARI1D/Device/hardwareProgramming/Presentation\ Demo/Sensor_demo/Sensor_demo.ino
+   arduino-cli upload --fqbn arduino:samd:mkrwan1310 --port /dev/ttyACM0 --input-dir ~/Arduino/build /home/nflipo/Device/hardwareProgramming/Presentation\ Demo/Sensor_demo/
    ```
    Replace `arduino:samd:mkrwan1310` with the Fully Qualified Board Name (FQBN) of your board and `/dev/ttyUSB0` with the appropriate serial port.
 

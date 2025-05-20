@@ -35,6 +35,7 @@ bool InitialiseLog(const int CSpin,int npressure,int ntemp) {
     int i;
 
     if (!SD.begin(CSpin)) {
+      Serial.println("SD card initialization failed in  SD.begin(CSpin)");
       return false; // SD initialization failed
     }
 
