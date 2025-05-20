@@ -87,15 +87,30 @@ unsigned long GetSecondsSinceMidnight() {
 
 // --- Measurement Control ---
 // Handles intervals and timing for periodic measurements throughout the day
-const int MEASURE_INTERVAL_MINUTES = 15; // Interval between measurements
-const int TOTAL_MEASUREMENTS_PER_DAY = 1440 / MEASURE_INTERVAL_MINUTES; // Total measurements in a day
-unsigned int measurementTimes[TOTAL_MEASUREMENTS_PER_DAY]; // Store times for each measurement
+const int NSEC_PER_MIN = 60; // Total seconds in a day
+const int NMIN_PER_DAY = 1440; // Total minutes in a day
+const int NSEC_PER_DAY = 86400; // Total seconds in a day
+const int NSEC_PER_HOUR = 3600; // Total seconds in an hour
+const int NMIN_PER_HOUR = 60; // Total minutes in an hour
+
+
+const int NTRANSMIT_PER_DAY = 1440; // Number of times to transmit data in a day
+
+//const int TIME_STEP_IN_MIN = 15; // Interval between measurements
+const int TIME_STEP_IN_SEC = 10 ; // Interval in seconds
+
+
+const int NDT_PER_DAY = NSEC_PER_DAY / TIME_STEP_IN_SEC ; // Number of measurements per day
+
+
+const int TOTAL_MEASUREMENTS_PER_TRANSMIT = NDT_PER_DAY / NTRANSMIT_PER_DAY; // Number of measurements per transmit
+unsigned int measurementTimes[TOTAL_MEASUREMENTS_PER_TRANSMIT]; // Store times for each measurement
 int measurementCount = 0;
 
 // Initialize the array with all the measurement times (in seconds from midnight)
 void InitializeMeasurementTimes() {
-  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
-    measurementTimes[i] = i * MEASURE_INTERVAL_MINUTES * 60;
+  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_TRANSMIT; i++) {
+    measurementTimes[i] = i * TIME_STEP_IN_SEC ;
   }
 }
 
@@ -105,7 +120,7 @@ void InitializeMeasurementCount() {
   measurementCount = 0;
   
   // Find the first measurement that hasn't been done yet
-  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
+  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_TRANSMIT; i++) {
     if (currentTime > measurementTimes[i]) {
       measurementCount++;
     } else {
@@ -119,16 +134,17 @@ unsigned long CalculateSleepTimeUntilNextMeasurement() {
   unsigned long currentTime = GetSecondsSinceMidnight(); // Current time in seconds
   
   // Find the next measurement time
-  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
+  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_TRANSMIT; i++) {
     if (currentTime < measurementTimes[i]) {
       unsigned long nextTime = measurementTimes[i];
       return (nextTime - currentTime) * 1000; // Convert seconds to milliseconds
     }
   }
   
-  // If no measurement is left today, calculate the time until the next day's first measurement
-  unsigned long nextDayFirstTime = measurementTimes[0] + 24 * 3600; // First time of the next day
+  // If no measurement is left today, calculate the time until the next transmission first measurement
+  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_TRANSMIT; i++) {
+  unsigned long nextDayFirstTime = measurementTimes[0] + TOTAL_MEASUREMENTS_PER_TRANSMIT * TIME_STEP_IN_SEC ; // First time of the next day
   return (nextDayFirstTime - currentTime) * 1000;
 }
-
+}
 #endif // MY_TIME
