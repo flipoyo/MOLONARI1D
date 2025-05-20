@@ -94,10 +94,11 @@ const int NSEC_PER_HOUR = 3600; // Total seconds in an hour
 const int NMIN_PER_HOUR = 60; // Total minutes in an hour
 
 
-const int NTRANSMIT_PER_DAY = 1440; // Number of times to transmit data in a day
+//const int NTRANSMIT_PER_DAY = 1440; // Number of times to transmit data in a day
+const int NTRANSMIT_PER_DAY = 1; // Number of times to transmit data in a day
 
 //const int TIME_STEP_IN_MIN = 15; // Interval between measurements
-const int TIME_STEP_IN_SEC = 10 ; // Interval in seconds
+const int TIME_STEP_IN_SEC = 60 ; // Interval in seconds
 
 
 const int NDT_PER_DAY = NSEC_PER_DAY / TIME_STEP_IN_SEC ; // Number of measurements per day
