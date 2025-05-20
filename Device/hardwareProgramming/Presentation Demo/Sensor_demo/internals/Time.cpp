@@ -33,6 +33,7 @@ void InitialiseRTC() {
   // Start communication with the external RTC
   bool success = externalRtc.begin();
   if (!success) {
+    Serial.println("RTC not found!"); // Log if the external RTC is not found
     return; // Stop if the external RTC is not available
   }
   
@@ -51,6 +52,9 @@ void InitialiseRTC() {
   uint8_t second = startingDate.second();
   internalRtc.setDate(day, month, year);
   internalRtc.setTime(hour, minute, second);
+  String str = "RTC set to: "  + String(day) + "/" + String(month) + "/20" + String(year) + " " +
+    String(hour) + ":" + String(minute) + ":" + String(second);
+  Serial.println(str);
 }
 
 // Get the current date in "DD/MM/YYYY" format

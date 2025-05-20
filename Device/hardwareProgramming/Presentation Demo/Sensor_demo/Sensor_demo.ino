@@ -116,7 +116,7 @@ void setup() {
     pin = nanalogical++; // Use the analog pin number directly
     pSens[i] = new PressureSensor(pin, 1); // Initialize the object
     Serial.print("Pressure sensor ");
-    Serial.print(nanalogical++);
+    Serial.print(nanalogical);
     Serial.print("on pin");
     Serial.print(pin);
     Serial.println(" initialised.");
@@ -169,10 +169,12 @@ void loop() {
   }
 
   // Initialise SD Card
-  InitialiseLog(CSPin,npressure,ntemp);
+  //InitialiseLog(CSPin,npressure,ntemp);//Already Done in setup
+  
   // Initialise the SD logger
   logger.EstablishConnection(CSPin);
   // Initialise RTC
+
   InitialiseRTC();
   // Initialise the measurement times
   //InitializeMeasurementTimes();
