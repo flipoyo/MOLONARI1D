@@ -34,14 +34,23 @@ bool AlreadyInitialised() {
 bool InitialiseLog(const int CSpin,int npressure,int ntemp) {
     int i;
 
+    String str = "Connecting To SD Card on CSpin " + String(CSpin) + " where the file " + String(filename) + " may be stored ";
+    Serial.println(str);
+
+    
     if (!SD.begin(CSpin)) {
+      Serial.println("SD card initialization failed in  SD.begin(CSpin)");
       return false; // SD initialization failed
     }
 
     else if (!AlreadyInitialised()) {
-      char* header;
+     // char* header;
       // Par defaut si le fichier existe déjà, on l'efface
+      str = "Entering Initialisation of the SD card and the file " + String(filename);
+      Serial.println(str);
       if (SD.exists(filename)) {
+        str = String(filename) + " exists, deleting it";
+        Serial.println(str);
         SD.remove(filename); // Supprime le fichier existant
       }
       File file = SD.open(filename, FILE_WRITE); // Crée un nouveau fichier. Attention, open ouvre en mode APPEND!
@@ -56,8 +65,14 @@ bool InitialiseLog(const int CSpin,int npressure,int ntemp) {
           }  
           header += "temperature" + String(i+1);                                        // Add last sensor data
           file.println(header); // Write header to the file
+          file.close();
         }
-        file.close();
+        else {
+          str = "Failed to create file " + String(filename);
+          Serial.println(str);
+          return false; // File creation failed
+        }
+      
 
         return success; // File already initialized!!
     }

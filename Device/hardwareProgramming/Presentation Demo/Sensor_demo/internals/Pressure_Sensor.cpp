@@ -23,7 +23,7 @@ double PressureSensor::MeasurePressure() {
   digitalWrite(enablePin, HIGH);    // Enable the sensor
   delay(50);    // Wait for it to enable
 
-  double pressure = analogRead(dataPin);  // Read data
+  double pressure = (double) analogRead(dataPin);  // Read data
 
   digitalWrite(enablePin, LOW);   // Disable the sensor back
 
