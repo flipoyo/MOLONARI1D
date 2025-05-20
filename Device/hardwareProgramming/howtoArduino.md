@@ -121,9 +121,49 @@ VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=moozzyk
    Use `arduino-cli` to compile and upload your code to your Arduino board. For example:
    ```bash
    arduino-cli compile --fqbn arduino:samd:mkrwan1310 --output-dir ~/Arduino/build --verbose /home/nflipo/MOLONARI1D/Device/hardwareProgramming/Presentation\ Demo/Sensor_demo/Sensor_demo.ino
-   arduino-cli upload --fqbn arduino:samd:mkrwan1310 --port /dev/ttyACM0 --input-dir ~/Arduino/build /home/nflipo/Device/hardwareProgramming/Presentation\ Demo/Sensor_demo/
+   arduino-cli upload --fqbn arduino:samd:mkrwan1310 --port /dev/ttyACM0 --input-dir ~/Arduino/build 
    ```
-   Replace `arduino:samd:mkrwan1310` with the Fully Qualified Board Name (FQBN) of your board and `/dev/ttyUSB0` with the appropriate serial port.
+   Replace `arduino:samd:mkrwan1310` with the Fully Qualified Board Name (FQBN) of your board and `/dev/ttyUSB0` with the appropriate serial port. In VScode on ubuntu22.04, axess to your port for a nonsudo user must be granted first. With a sudo user please do the following:
+   ```bash
+   sudo usermod -aG dialout $USER
+   ```
+   Utiliser ```arduino-cli``` pour détecter les ports : 
+   ```bash
+   arduino-cli board list
+   ```
+
+
+Open the Serial Monitor, either with
+```bash
+arduino-cli monitor -p /dev/ttyACM0 -c baudrate=115200
+```
+
+Remplace ```115200``` by the speed declared in the sketch (via ```Serial.begin(115200)``` for instance).
+
+Other method: Open the Serial Monitor in VS Code
+
+1. Plug in your Arduino board.
+2. Open your project folder in VS Code.
+3. Make sure the correct port is selected (e.g., `/dev/ttyACM0`):
+   - Open the command palette (`Ctrl+Shift+P`) > `Arduino: Select Serial Port`
+4. Open the command palette again (`Ctrl+Shift+P`) and type:
+`Arduino: Open Serial Monitor`
+5. Choose the appropriate **baud rate** (e.g., `9600`, `115200`, depending on your sketch).
+
+The serial monitor will appear in the **Terminal** panel at the bottom.
+
+Tip :  Automatically Open Serial Monitor After Upload
+
+To automatically open the serial monitor after uploading your sketch:
+
+1. Go to **File > Preferences > Settings**
+2. Search for: `Arduino: Open Serial Monitor After Upload`
+3. Enable this option.
+
+This will save time when testing sketches that output data via `Serial.print()`.
+
+
+
 
 ### Create a Project with Makefile
 
