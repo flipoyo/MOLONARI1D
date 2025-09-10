@@ -1,0 +1,2 @@
+# Requirements for LoRa Communication Emulation
+paho-mqtt>=1.6.0
