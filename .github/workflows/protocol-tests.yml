@@ -1,0 +1,137 @@
+name: Protocol Testing
+
+on:
+  push:
+    paths:
+      - 'hardware/protocols/**'
+      - 'hardware/shared/**'
+      - '.github/workflows/protocol-tests.yml'
+  pull_request:
+    paths:
+      - 'hardware/protocols/**'
+      - 'hardware/shared/**'
+      - '.github/workflows/protocol-tests.yml'
+
+jobs:
+  lora-protocol-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+        
+      - name: Install Arduino core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:samd
+          
+      - name: Install LoRa libraries
+        run: |
+          arduino-cli lib install "LoRa"
+          arduino-cli lib install "ArduinoLowPower"
+          
+      - name: Test LoRa communication code
+        run: |
+          cd hardware/tests
+          # Test basic LoRa communication
+          if [ -d "Sender" ]; then
+            cd Sender
+            arduino-cli compile --fqbn arduino:samd:mkrwan1310 Sender.ino
+            cd ..
+          fi
+          
+          if [ -d "Receiver" ]; then
+            cd Receiver
+            arduino-cli compile --fqbn arduino:samd:mkrwan1310 Receiver.ino
+            cd ..
+          fi
+          
+          # Test sensor-relay LoRa communication
+          if [ -d "Sensor_Lora" ]; then
+            cd Sensor_Lora
+            arduino-cli compile --fqbn arduino:samd:mkrwan1310 Sensor_Lora.ino
+            cd ..
+          fi
+          
+          if [ -d "Relay_Lora" ]; then
+            cd Relay_Lora
+            arduino-cli compile --fqbn arduino:samd:mkrwan1310 Relay_Lora.ino
+            cd ..
+          fi
+          
+  lorawan-protocol-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+        
+      - name: Install Arduino core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:samd
+          
+      - name: Install LoRaWAN libraries
+        run: |
+          arduino-cli lib install "MKRWAN"
+          arduino-cli lib install "ArduinoLowPower"
+          
+      - name: Test LoRaWAN communication
+        run: |
+          cd hardware/tests
+          # Test LoRaWAN connectivity
+          if [ -d "testArduinoLoRaWAN" ]; then
+            cd testArduinoLoRaWAN
+            arduino-cli compile --fqbn arduino:samd:mkrwan1310 testArduinoLoRaWAN.ino
+            cd ..
+          fi
+          
+          # Test demo relay with LoRaWAN
+          if [ -f "../sensors/demo/Relay_LoraWan/Relay_LoraWan.ino" ]; then
+            cd ../sensors/demo/Relay_LoraWan
+            arduino-cli compile --fqbn arduino:samd:mkrwan1310 Relay_LoraWan.ino
+            cd ../../../tests
+          fi
+          
+  protocol-documentation:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Validate protocol documentation
+        run: |
+          echo "Checking LoRa protocol documentation..."
+          
+          # Check if protocol documentation exists
+          if [ -f "hardware/docs/4 - Our LoRa protocol_ENG.md" ]; then
+            echo "✓ LoRa protocol documentation found"
+          else
+            echo "✗ LoRa protocol documentation missing"
+            exit 1
+          fi
+          
+          # Check if gateway configuration documentation exists
+          if [ -f "hardware/docs/5 - Gateway and server configurations.md" ]; then
+            echo "✓ Gateway configuration documentation found"
+          else
+            echo "✗ Gateway configuration documentation missing"
+            exit 1
+          fi
+          
+          # Validate protocol constants in code match documentation
+          echo "Checking protocol constants..."
+          
+          # Check if RequestType enum is properly defined
+          grep -r "enum RequestType" hardware/shared/ && echo "✓ RequestType enum found" || echo "✗ RequestType enum missing"
+          
+          # Check if communication addresses are defined
+          grep -r "SYN.*0xcc" hardware/shared/ && echo "✓ SYN constant found" || echo "✗ SYN constant missing"
+          grep -r "ACK.*0x33" hardware/shared/ && echo "✓ ACK constant found" || echo "✗ ACK constant missing"

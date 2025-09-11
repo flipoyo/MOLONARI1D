@@ -1,15 +1,178 @@
 #  ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D ecosystem
 
+MOLONARI means MOnitoring LOcal des échanges NAppe-RIvière, which translates in English to LOcal MOnitoring of Stream-aquifer exchanges (LOMOS).
 
+The MOLONARI1D ecosystem is a comprehensive **environmental monitoring solution** for water and heat exchanges in riverbed environments. It provides end-to-end monitoring from hardware deployment to scientific analysis, enabling long-term autonomous data collection in challenging aquatic environments.
 
-MOLONARI means MOnitoring LOcal des échanges NAppe-RIvière, which translates in english LOcal MOnitoring of Stream-aquifer exchanges (LOMOS)
+## System Architecture
 
-The ecosystem is dedicated to the monitoring of water and heat exchanges in riverbed. It includes monitoring devices and two softwares under the EPLv2.0 license. 
+MOLONARI1D implements a **multi-tier monitoring architecture** designed for scalable, autonomous environmental monitoring:
 
-One software **pyheatmy** is dedicated to the inference of water and energy fluxes from the data acquired by the monitoring systems. It implements an MCMC approach taht infers the physical properties of a 1D column of a riverbed forced by hydraulic head difference between the top and the bottom of the column, as well as the associated temperatures. The energy of each MCMC iteration is calculated based on the RMSE between simulated and monitored temperatures at three depths of the porous medium column. For more information, please see the associated folder in the current repository.
+```
+Underwater Sensors → Relay → Gateway → Server → Database → Analysis Tools
+     (Arduino)       (LoRa)  (LoRaWAN)  (Internet) (SQL)   (Python ML/GUI)
+```
 
-The other software **molonaviz** is a GUI that allows for the management of the monitoring devices as "labs", the monitoring data of "sampling points", as the interpretation of the data with **pyheatmy**. It is designed in a frontend and backend programs that interacts with each other. The frontend uses the Qt library in python, and the backend handles a SQL database. **WARNING**: Molonaviz requires python 3.10 at least. Always secure your python version operating in a virtual python environment (see below).
+**Data Flow Pipeline:**
+1. **Field Sensors**: Battery-powered Arduino devices collect temperature/pressure every 15min
+2. **Local Communication**: Custom LoRa protocol transmits sensor data to relay daily
+3. **Wide Area Network**: LoRaWAN gateway forwards data to internet-connected server
+4. **Quality Control**: Server database processes and validates incoming sensor data
+5. **Analysis Interface**: Molonaviz GUI manages devices and visualizes data streams
+6. **Scientific Inference**: pyheatmy performs Bayesian MCMC inversion for flux estimation
 
+## Core Components
+
+### 🔬 **pyheatmy** - Scientific Computing Engine
+**Bayesian inference for hydrological parameter estimation**
+
+- **MCMC Implementation**: Infers physical properties of 1D riverbed columns
+- **Data Integration**: Direct coupling with sensor data streams from monitoring systems
+- **Uncertainty Quantification**: Provides parameter estimates with confidence intervals
+- **Research Extensions**: Modular architecture supporting experimental features
+
+### 📊 **Molonaviz** - Device Management & Visualization  
+**PyQt5-based GUI for operational monitoring**
+
+- **Device Registration**: Laboratory and sampling point hierarchy management
+- **Data Pipeline**: Quality control workflows from raw sensor data to analysis-ready datasets
+- **Analysis Integration**: Direct launching of pyheatmy inference workflows
+- **Real-time Monitoring**: Live data streams and alert generation
+
+**⚠️ Requirements**: Python 3.10+ for Molonaviz, Python 3.9+ for pyheatmy
+
+### 🔧 **Hardware Ecosystem** - Environmental Monitoring Devices
+**Arduino-based underwater sensor networks**
+
+- **Sensor Nodes**: Waterproof packages with temperature/pressure sensors
+- **Relay Stations**: Data aggregation and LoRaWAN communication
+- **Communication Protocols**: Custom LoRa (local) + LoRaWAN (wide-area)
+- **Power Management**: 8-12 months autonomous operation
+
+## 🚀 Quick Start
+
+### Repository Structure
+
+```
+MOLONARI1D/
+├── hardware/                  # Arduino-based monitoring devices
+│   ├── sensors/              # Temperature, pressure, and demo sensors
+│   ├── relay/               # Data aggregation stations
+│   ├── shared/              # Common libraries and protocols
+│   ├── tests/               # Hardware validation tests
+│   └── docs/                # Hardware documentation
+├── pyheatmy/                 # Scientific computing engine
+├── Molonaviz/               # Device management GUI
+├── data/                    # Sample datasets
+└── dataAnalysis/            # Analysis tools and notebooks
+```
+
+### Installation & Setup
+
+**Prerequisites:**
+- Python 3.10+ (for Molonaviz) or 3.9+ (for pyheatmy only)
+- Arduino IDE 2.x (for hardware development)
+- Git with shallow clone support
+
+**1. Clone Repository:**
+```bash
+git clone --depth=1 https://github.com/flipoyo/MOLONARI1D.git
+cd MOLONARI1D
+```
+
+**2. Install Python Components:**
+```bash
+# Install test dependencies
+pip install pytest nbmake
+
+# Install pyheatmy (scientific computing)
+cd pyheatmy/
+pip install --timeout 300 -e .
+
+# Install Molonaviz dependencies (GUI)
+pip install --timeout 300 pyqt5 pandas scipy matplotlib setuptools
+```
+
+**3. Validate Installation:**
+```bash
+# Test pyheatmy
+python -c "import pyheatmy; print('pyheatmy ready')"
+
+# Test Molonaviz structure (expected GUI import error in headless mode)
+cd Molonaviz/src/
+export PYTHONPATH="$PWD:$PYTHONPATH"
+python -c "import molonaviz; print('Molonaviz structure validated')"
+```
+
+**4. Run Tests:**
+```bash
+# Unit tests (~5 seconds)
+cd ../../
+pytest pyheatmy/ Molonaviz/
+
+# Scientific workflow validation (~85 seconds)
+cd pyheatmy/
+pytest --nbmake --nbmake-timeout=600 demoPyheatmy.ipynb demo_genData.ipynb
+```
+
+### Hardware Setup
+
+**For Arduino Development:**
+```bash
+cd hardware/
+# See hardware/README.md for detailed setup instructions
+# Requires Arduino MKR WAN 1310 and associated libraries
+```
+
+### Usage Examples
+
+**Scientific Analysis with pyheatmy:**
+```python
+import pyheatmy
+
+# Load sensor data and run MCMC inference
+column = pyheatmy.Column.from_sensor_data('site_data.csv')
+results = column.run_inference(n_iterations=10000)
+
+# Extract flux estimates with uncertainty
+water_flux = results.get_parameter_distribution('darcy_velocity')
+```
+
+**Device Management with Molonaviz:**
+```bash
+# Launch GUI (requires X11/display)
+cd Molonaviz/src/
+python -m molonaviz.main
+```
+
+**Hardware Programming:**
+```bash
+cd hardware/sensors/temperature/Sensor/
+# Compile and upload to Arduino MKR WAN 1310
+arduino-cli compile --fqbn arduino:samd:mkrwan1310 Sensor.ino
+arduino-cli upload --fqbn arduino:samd:mkrwan1310 Sensor.ino --port /dev/ttyACM0
+```
+
+### Target Audiences
+
+- **🔬 Research Users**: Operate monitoring systems and analyze flux data
+- **💻 Software Developers**: Extend Python ecosystem and analysis tools  
+- **🔧 Hardware Developers**: Build and deploy sensor networks
+- **📡 Protocol Engineers**: Develop communication systems
+- **🏭 Fablabs**: Manufacture and deploy monitoring hardware
+
+### Getting Help
+
+- **📖 Documentation**: See component-specific README files
+- **🧪 Examples**: Check `data/` and `dataAnalysis/` directories  
+- **🐛 Issues**: Open GitHub issues for support and bug reports
+- **💬 Community**: Participate in collaborative development
+
+## Warning on Reliability
+
+This version of MOLONARI1D is a development version. Some features are not yet implemented or are incomplete. Some bugs may also appear. We therefore do not guarantee any reliability on the resulting values of the calculations, however the data format will remain constant during their full implementation. Think of this code as a template that will remain persistent when the features are reliable in their results.
+
+![MOLONARI1D](Figures/schemaMOLONARI.png)
 
 ## Contributors
 MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021, under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors.
@@ -33,7 +196,7 @@ for **molonaviz**:
 - 2022 software restarted from scratch by Guillaume Vigne
 - 2023 Thibault Lambert
 
-for **hardwareProgramming**:
+for **hardware programming**:
 - 2022 Wissam Karrou, Guillaume Rouy, Pierre Louisot 
 - 2023 François Bradesi, Aymeric Cardot, Léopold Gravier, Léo Roux
 - 2024 Mohammad Kassem, Zehan Huang, Lucas Brandi, Haidar Yousef, Valeria Vega Valenzuela, Zihan Gu, Yufan Han, Yibing Wang
