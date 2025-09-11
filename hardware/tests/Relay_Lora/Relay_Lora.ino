@@ -2,7 +2,7 @@
    simulating scenarios with non-real data to quickly debug and refine the protocol
    without deploying the entire system. */
 
-#include "internals/Lora.hpp"
+#include "../shared/Lora.hpp"
 #include <queue>
 
 // Uncomment this line to enable diagnostics log on serial for the main loop

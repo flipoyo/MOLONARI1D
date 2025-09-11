@@ -1,0 +1,64 @@
+# Hardware Development Build Artifacts
+
+# Arduino IDE build files
+build/
+*.build/
+*.ino.bin
+*.ino.elf
+*.ino.hex
+*.ino.map
+*.ino.with_bootloader.bin
+*.ino.with_bootloader.hex
+
+# Arduino IDE preferences and temporary files
+.arduino15/
+.vscode/
+*.bak
+*.tmp
+
+# Testing and simulation artifacts
+test_results/
+simulation_logs/
+*.log
+
+# Hardware-specific temporary files
+*.pcb-bak
+*.sch-bak
+*.kicad_pcb-bak
+*.kicad_sch-bak
+
+# Backup files from hardware tools
+*~
+*.autosave
+*.backup
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE and editor files
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+
+# Local configuration files (contain device-specific settings)
+local_config.h
+secrets.h
+device_ids.h
+
+# Field test data (should be archived separately)
+field_data/
+test_logs/
+calibration_data/
+
+# Documentation build artifacts
+docs/build/
+*.pdf.tmp
+*.aux
+*.log
+*.out
+*.toc
