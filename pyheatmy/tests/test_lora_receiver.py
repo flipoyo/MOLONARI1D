@@ -358,7 +358,7 @@ class TestLoRaWANReceiver(unittest.TestCase):
     def test_mqtt_config(self):
         """Test MQTT configuration."""
         mqtt_config = {
-            'broker': 'test.example.com',
+            'broker': 'localhost',
             'port': 1883,
             'topic': 'test/topic'
         }

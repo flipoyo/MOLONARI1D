@@ -195,7 +195,7 @@ def demonstrate_lorawan_relay():
     
     # Setup LoRaWAN receiver/relay with MQTT
     mqtt_config = {
-        'broker': 'test.mosquitto.org',  # Public test broker
+        'broker': 'localhost',  # Local MQTT broker (graceful fallback if unavailable)
         'port': 1883,
         'topic': 'molonari/sensor_data'
     }
@@ -301,7 +301,7 @@ def demonstrate_mqtt_only():
     
     # Setup receiver with MQTT only (no LoRaWAN)
     mqtt_config = {
-        'broker': 'test.mosquitto.org',
+        'broker': 'localhost',
         'port': 1883,
         'topic': 'molonari/test_data'
     }
@@ -309,7 +309,6 @@ def demonstrate_mqtt_only():
     receiver = LoRaReceiver(  # Plain LoRa receiver, not LoRaWAN
         device_address=0x02,
         spreading_factor=LoRaSpreadingFactor.SF9,
-        mqtt_config=mqtt_config,  # This will be ignored by base LoRaReceiver
         verbose=True
     )
     
