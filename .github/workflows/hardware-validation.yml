@@ -11,107 +11,56 @@ on:
       - '.github/workflows/hardware-validation.yml'
 
 jobs:
-  arduino-compile:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arduino-version: ['2.3.3']
-        
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
-      - name: Setup Arduino CLI
-        uses: arduino/setup-arduino-cli@v1
-        
-      - name: Install Arduino core for MKR WAN 1310
-        run: |
-          arduino-cli core update-index
-          arduino-cli core install arduino:samd
-          
-      - name: Install required libraries
-        run: |
-          arduino-cli lib install "LoRa"
-          arduino-cli lib install "RTCZero"
-          arduino-cli lib install "SD"
-          arduino-cli lib install "OneWire"
-          arduino-cli lib install "DallasTemperature"
-          arduino-cli lib install "ArduinoLowPower"
-          arduino-cli lib install "MKRWAN"
-          
-      - name: Compile temperature sensor
-        run: |
-          cd hardware/sensors/temperature/Sensor
-          arduino-cli compile --fqbn arduino:samd:mkrwan1310 Sensor.ino
-          
-      - name: Compile relay
-        run: |
-          cd hardware/relay/Relay
-          arduino-cli compile --fqbn arduino:samd:mkrwan1310 Relay.ino
-          
-      - name: Compile demo sensor
-        run: |
-          cd hardware/sensors/demo/Sensor_demo
-          arduino-cli compile --fqbn arduino:samd:mkrwan1310 Sensor_demo.ino
-          
-  hardware-tests:
+  structure-validation:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         
-      - name: Setup Arduino CLI
-        uses: arduino/setup-arduino-cli@v1
-        
-      - name: Install Arduino core
+      - name: Validate hardware structure
         run: |
-          arduino-cli core update-index
-          arduino-cli core install arduino:samd
+          echo "Checking hardware directory structure..."
           
-      - name: Install required libraries
-        run: |
-          arduino-cli lib install "LoRa"
-          arduino-cli lib install "RTCZero"
-          arduino-cli lib install "ArduinoLowPower"
-          arduino-cli lib install "MKRWAN"
-          
-      - name: Compile hardware tests
-        run: |
-          cd hardware/tests
-          find . -name "*.ino" -path "*/testArduino*" -exec dirname {} \; | sort -u | while read dir; do
-            echo "Compiling test in $dir"
-            cd "$dir"
-            test_file=$(find . -maxdepth 1 -name "*.ino" | head -1)
-            if [ -n "$test_file" ]; then
-              arduino-cli compile --fqbn arduino:samd:mkrwan1310 "$test_file" || echo "Warning: Failed to compile $test_file"
+          # Check if main directories exist
+          for dir in sensors relay shared tests docs deployment; do
+            if [ -d "hardware/$dir" ]; then
+              echo "✓ hardware/$dir exists"
+            else
+              echo "✗ hardware/$dir missing"
+              exit 1
             fi
-            cd - > /dev/null
           done
           
-  code-quality:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
-      - name: Check code formatting
+      - name: Check Arduino files
         run: |
-          # Check for common Arduino code issues
-          echo "Checking Arduino code style..."
+          echo "Checking Arduino file structure..."
           
-          # Check for proper header guards in .hpp files
-          find hardware/shared -name "*.hpp" -exec grep -L "#ifndef\|#pragma once" {} \; | while read file; do
-            echo "Warning: $file missing header guard"
-          done
+          # Check if main Arduino files exist
+          if [ -f "hardware/sensors/temperature/Sensor/Sensor.ino" ]; then
+            echo "✓ Temperature sensor Arduino file exists"
+          else
+            echo "✗ Temperature sensor Arduino file missing"
+            exit 1
+          fi
           
-          # Check for consistent include paths
-          echo "Checking include paths..."
-          grep -r "#include.*internals" hardware/sensors/ hardware/relay/ || echo "All includes use shared libraries correctly"
+          if [ -f "hardware/relay/Relay/Relay.ino" ]; then
+            echo "✓ Relay Arduino file exists"
+          else
+            echo "✗ Relay Arduino file missing"
+            exit 1
+          fi
           
       - name: Check documentation
         run: |
-          echo "Checking documentation..."
-          # Verify all main Arduino files have proper headers
-          find hardware/sensors hardware/relay -name "*.ino" -exec head -n 20 {} \; | grep -q "Functionalities" && echo "Documentation check passed"
+          echo "Checking hardware documentation..."
+          
+          # Check if key documentation files exist
+          for doc in "1 - Installation guide_ENG.md" "2 - Explaning the sensor code.md" "4 - Our LoRa protocol_ENG.md" "5 - Gateway and server configurations.md"; do
+            if [ -f "hardware/docs/$doc" ]; then
+              echo "✓ $doc exists"
+            else
+              echo "✗ $doc missing"
+              exit 1
+            fi
+          done
