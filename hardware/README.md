@@ -2,6 +2,17 @@
 
 This directory contains all hardware-related code and documentation for the MOLONARI ecosystem, organized for efficient collaboration between hardware developers, protocol engineers, and system integrators.
 
+## Integration with Device/ Structure
+
+This `hardware/` directory provides a reorganized, team-oriented view of the hardware components found in the original `Device/` structure:
+
+- **hardware/** ↔ **Device/hardwareProgramming/** - Organized firmware development  
+- **hardware/docs/** ↔ **Device/hardwareProgramming/Documentation/** - Consolidated documentation
+- **hardware/deployment/** ↔ **Device/installationSystem/** - Field deployment guides
+- **hardware/shared/** - Replaces duplicated `internals/` directories across projects
+
+This reorganization maintains backward compatibility while improving development workflows and reducing code duplication.
+
 ## Directory Structure
 
 ```

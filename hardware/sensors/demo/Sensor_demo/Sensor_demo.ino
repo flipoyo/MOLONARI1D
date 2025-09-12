@@ -30,14 +30,14 @@ Required hardware :
 
 // ----- Imports -----
 
-#include "internals/Lora.hpp"
-#include "internals/Low_Power.cpp"
-#include "internals/Pressure_Sensor.hpp"
-#include "internals/Temp_Sensor.hpp"
-#include "internals/Time.cpp"
-#include "internals/SD_Initializer.cpp"
-#include "internals/Writer.hpp"
-#include "internals/Waiter.hpp"
+#include "../../../shared/Lora.hpp"
+#include "../../../shared/Low_Power.cpp"
+#include "../../../shared/Pressure_Sensor.hpp"
+#include "../../../shared/Temp_Sensor.hpp"
+#include "../../../shared/Time.cpp"
+#include "../../../shared/SD_Initializer.cpp"
+#include "../../../shared/Writer.hpp"
+#include "../../../shared/Waiter.hpp"
 #include <ArduinoLowPower.h>
 // #include "internals/FreeMemory.cpp"
 
