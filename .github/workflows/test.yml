@@ -1,33 +1,66 @@
 name: test-molonari
 
 on:
+  # Activate the workflow at each push on every branch
   push:
-    branches: [ main ]
+    branches:
+      - "*"
+  # Activate the workflow at each pull request on "main" branch
   pull_request:
     branches: [ main ]
 
 jobs:
-  test-pyheatmy:
-    runs-on: ubuntu-latest
-    
+  test-job:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        pyver: ["3.9", "3.10", "3.11", "3.12"]
+        module: ["pyheatmy"] # "Molonaviz" commented out due to GUI dependencies in CI
+        # Uncomment below to enable Molonaviz testing when GUI CI issues are resolved:
+        # module: ["pyheatmy", "Molonaviz"]
+    runs-on: ${{ matrix.os }}
+
     steps:
     - name: Checkout the repository
       uses: actions/checkout@v4
 
     - uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: ${{ matrix.pyver }}
 
-    - name: Install dependencies
-      run: |
-        pip install --timeout 300 pytest nbmake
-        pip install --timeout 300 -e pyheatmy/
+    - name: Install dev dependencies
+      run: pip install pytest nbmake
 
-    - name: Test pyheatmy
-      run: pytest pyheatmy/tests/ -v
-      
+    - name: Install ${{ matrix.module }}
+      run: pip install ${{ matrix.module }}/
+
+    - name: Test ${{ matrix.module }}
+      run: pytest ${{ matrix.module }}
+
     - name: Test Jupyter Notebooks
+      if: matrix.module == 'pyheatmy'
       run: |
         pytest --nbmake --nbmake-timeout=600 \
           pyheatmy/demoPyheatmy.ipynb \
           pyheatmy/demo_genData.ipynb
+      shell: bash
+
+  # Molonaviz testing job (commented out due to GUI dependencies in CI environments)
+  # Uncomment when GUI testing infrastructure is available
+  # test-molonaviz:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Checkout the repository
+  #     uses: actions/checkout@v4
+  #   - uses: actions/setup-python@v5
+  #     with:
+  #       python-version: "3.12"
+  #   - name: Install dependencies for Molonaviz
+  #     run: |
+  #       pip install pytest
+  #       pip install --timeout 300 pyqt5 pandas scipy matplotlib setuptools
+  #   - name: Test Molonaviz structure (expected GUI import error in headless mode)
+  #     run: |
+  #       cd Molonaviz/src/
+  #       export PYTHONPATH="$PWD:$PYTHONPATH"
+  #       python -c "import molonaviz; print('Molonaviz structure validated')"
