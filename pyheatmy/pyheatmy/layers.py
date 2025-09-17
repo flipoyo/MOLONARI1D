@@ -92,31 +92,3 @@ def getListParameters(layersList, nbCells: int):
         listParameters[:, 4],
     )
 
-
-def layersListCreator(layersListInput):
-    """
-    Create a list of Layer objects from input parameters.
-    
-    Parameters:
-    -----------
-    layersListInput : list of tuples
-        Each tuple contains six arguments for Layer definition:
-        (name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs)
-    
-    Returns:
-    --------
-    list of Layer objects
-    """
-    layersList = list()
-    for name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs in layersListInput:
-        layersList.append(
-            Layer(name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs))
-    return layersList
-
-
-def sortLayersList(layersList):
-    """
-    Return a sorted list of layers (sorted by zLow)
-    """
-    return sorted(layersList, key=lambda x: x.zLow)
-

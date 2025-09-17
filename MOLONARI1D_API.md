@@ -41,11 +41,11 @@ pip install -e .
 ```python
 # Basic imports (recommended approach)
 from pyheatmy import Column, Layer, Prior, Param
-from pyheatmy import layersListCreator, synthetic_MOLONARI
+from pyheatmy import synthetic_MOLONARI
 
 # Alternative: direct imports
 from pyheatmy.core import Column
-from pyheatmy.layers import Layer, layersListCreator
+from pyheatmy.layers import Layer
 from pyheatmy.params import Prior, Param
 from pyheatmy.synthetic_MOLONARI import synthetic_MOLONARI
 
@@ -112,33 +112,59 @@ The Layer class defines geological strata properties for stratified subsurface m
 - **Prior_rhos_cs**: `Prior` - Prior for heat capacity (optional)
 - **Prior_q**: `Prior` - Prior for heat source (optional)
 
-#### Layer Creation Functions
+#### Layer Integration with Column
 
-**layersListCreator Function**
+**Modern Approach (Recommended):**
+Layers are integrated directly into the Column class as attributes, eliminating the need for separate layer management.
+
+**Method 1: Constructor Integration**
 ```python
-def layersListCreator(layersListInput):
-    """
-    Create a list of Layer objects from input parameters.
-    
-    Parameters:
-    -----------
-    layersListInput : list of tuples
-        Each tuple contains six arguments for Layer definition:
-        (name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs)
-    
-    Returns:
-    --------
-    list of Layer objects
-    """
+from pyheatmy import Column, Layer
+
+# Create individual layers
+surface_layer = Layer(
+    name="Surface_Sediment",
+    zLow=0.5,
+    moinslog10IntrinK=5.0,
+    n=0.3,
+    lambda_s=2.5,
+    rhos_cs=2.1e6
+)
+
+clay_layer = Layer(
+    name="Clay_Layer", 
+    zLow=1.2,
+    moinslog10IntrinK=7.0,
+    n=0.2,
+    lambda_s=1.8,
+    rhos_cs=2.3e6
+)
+
+# Pass layers directly to Column constructor
+column = Column(
+    river_bed=245.3,
+    depth_sensors=[0.1, 0.3, 0.5, 0.7],
+    offset=0.05,
+    dH_measures=[...],
+    T_measures=[...],
+    all_layers=[surface_layer, clay_layer]  # Integrated approach
+)
 ```
 
-**Additional Layer Utilities**
+**Method 2: Using set_layers() Method**
 ```python
-def sortLayersList(layersList):
-    """Return a sorted list of layers (sorted by zLow)"""
-    
-def getListParameters(layersList, nbCells: int):
-    """Extract parameter arrays for all layers"""
+# Create column first
+column = Column(
+    river_bed=245.3,
+    depth_sensors=[0.1, 0.3, 0.5, 0.7],
+    offset=0.05,
+    dH_measures=[...],
+    T_measures=[...]
+)
+
+# Add layers using set_layers method
+layers = [surface_layer, clay_layer]
+column.set_layers(layers)  # Automatically sorts by zLow
 ```
 
 #### Layer Methods
@@ -148,29 +174,57 @@ def getListParameters(layersList, nbCells: int):
 - **set_priors_from_dict(priors_dict)**: Set priors from dictionary
 - **from_dict(monolayer_dict)**: Create layer from dictionary (class method)
 
-#### Example
+#### Layer Utility Functions
 
 ```python
-from pyheatmy import Layer, layersListCreator
+def getListParameters(layersList, nbCells: int):
+    """Extract parameter arrays for all layers"""
+```
 
-# Method 1: Direct Layer construction
-layer1 = Layer(
+#### Example: Complete Layer Definition
+
+```python
+from pyheatmy import Column, Layer, Prior
+
+# Create layers with priors for MCMC
+surface_layer = Layer(
     name="Surface_Sediment",
     zLow=0.5,
     moinslog10IntrinK=5.0,
     n=0.3,
     lambda_s=2.5,
-    rhos_cs=2.1e6
+    rhos_cs=2.1e6,
+    Prior_moinslog10IntrinK=Prior(range=(3, 8), sigma=0.1),
+    Prior_n=Prior(range=(0.1, 0.5), sigma=0.02),
+    Prior_lambda_s=Prior(range=(1, 4), sigma=0.1)
 )
 
-# Method 2: Using layersListCreator (recommended)
-layers_input = [
-    ("Surface_Sediment", 0.5, 5.0, 0.3, 2.5, 2.1e6),
-    ("Clay_Layer", 1.2, 7.0, 0.2, 1.8, 2.3e6),
-    ("Sand_Layer", 2.0, 4.0, 0.4, 3.2, 2.0e6)
-]
+clay_layer = Layer(
+    name="Clay_Layer",
+    zLow=1.2, 
+    moinslog10IntrinK=7.0,
+    n=0.2,
+    lambda_s=1.8,
+    rhos_cs=2.3e6,
+    Prior_moinslog10IntrinK=Prior(range=(5, 10), sigma=0.1),
+    Prior_n=Prior(range=(0.05, 0.3), sigma=0.02),
+    Prior_lambda_s=Prior(range=(1, 3), sigma=0.1)
+)
 
-layers = layersListCreator(layers_input)
+# Create column with integrated layers
+column = Column(
+    river_bed=245.3,
+    depth_sensors=[0.1, 0.3, 0.5, 0.7],
+    offset=0.05,
+    dH_measures=[...],
+    T_measures=[...],
+    all_layers=[surface_layer, clay_layer]
+)
+
+# Layers are now accessible via column.all_layers
+print(f"Number of layers: {len(column.all_layers)}")
+for layer in column.all_layers:
+    print(f"Layer {layer.name} extends to {layer.zLow}m depth")
 ```
 
 ### Column Class
@@ -305,8 +359,27 @@ Each tuple contains: `(datetime, pressure, surface_temperature)`
 #### Example
 
 ```python
-from pyheatmy import Column, layersListCreator
+from pyheatmy import Column, Layer
 from datetime import datetime
+
+# Create layers first
+surface_layer = Layer(
+    name="Surface_Sediment",
+    zLow=0.5,
+    moinslog10IntrinK=5.0,
+    n=0.3,
+    lambda_s=2.5,
+    rhos_cs=2.1e6
+)
+
+clay_layer = Layer(
+    name="Clay_Layer",
+    zLow=1.2,
+    moinslog10IntrinK=7.0,
+    n=0.2,
+    lambda_s=1.8,
+    rhos_cs=2.3e6
+)
 
 # Prepare measurement data
 column_data = {
@@ -315,6 +388,7 @@ column_data = {
     'offset': 0.05,  # 5cm extra penetration
     'sigma_meas_P': 0.01,
     'sigma_meas_T': 0.1,
+    'all_layers': [surface_layer, clay_layer],  # Integrated layers
     'dH_measures': [
         (datetime(2023, 6, 1, 0, 0), (1.25, 15.2)),
         (datetime(2023, 6, 1, 1, 0), (1.23, 15.4)),
@@ -327,16 +401,14 @@ column_data = {
     ]
 }
 
-# Create Column object
+# Create Column object with integrated layers
 column = Column.from_dict(column_data)
 
-# Define layers
-layers = layersListCreator([
-    ("surface", 0.3, 5.0, 0.35, 2.5, 2.1e6),
-    ("clay", 1.0, 7.0, 0.25, 1.8, 2.3e6)
-])
+# Alternative: Add layers after creation
+# column = Column.from_dict({...})  # without all_layers
+# column.set_layers([surface_layer, clay_layer])
 
-# Run direct model
+# Run direct model (layers automatically used)
 column.compute_solve_transi()
 
 # Get results
@@ -534,14 +606,11 @@ Represents LoRa packet structure used in MOLONARI1D.
 ### Layer Utilities
 
 ```python
-# Create layers from input data
-layersListCreator(layersListInput)
-
-# Sort layers by depth
-sortLayersList(layersList) 
-
-# Extract parameter arrays
+# Extract parameter arrays for all layers (internal utility)
 getListParameters(layersList, nbCells)
+
+# Note: Layer creation and sorting is now handled automatically 
+# by the Column class through all_layers parameter and set_layers() method
 ```
 
 ### Time Series Utilities
@@ -574,7 +643,7 @@ close_printable_file(fp, verbose=True)
 ### Complete Workflow Example
 
 ```python
-from pyheatmy import Column, layersListCreator, Prior, synthetic_MOLONARI
+from pyheatmy import Column, Layer, Prior, synthetic_MOLONARI
 from datetime import datetime
 
 # 1. Option A: Use synthetic data for testing
@@ -598,11 +667,26 @@ column_data = {
 # 3. Create column object
 column = Column.from_dict(column_data)
 
-# 4. Define geological layers
-layers = layersListCreator([
-    ("surface", 0.3, 5.0, 0.35, 2.5, 2.1e6),
-    ("clay", 1.0, 7.0, 0.25, 1.8, 2.3e6)
-])
+# 4. Define geological layers (modern approach)
+surface_layer = Layer(
+    name="surface",
+    zLow=0.3,
+    moinslog10IntrinK=5.0,
+    n=0.35,
+    lambda_s=2.5,
+    rhos_cs=2.1e6
+)
+
+clay_layer = Layer(
+    name="clay", 
+    zLow=1.0,
+    moinslog10IntrinK=7.0,
+    n=0.25,
+    lambda_s=1.8,
+    rhos_cs=2.3e6
+)
+
+layers = [surface_layer, clay_layer]
 
 # 5. Run direct model
 column.compute_solve_transi()
@@ -686,7 +770,7 @@ print(f"Estimated battery life: {battery_life:.1f} days")
 ### Data Quality Control Example
 
 ```python
-from pyheatmy import Column, layersListCreator
+from pyheatmy import Column, Layer
 import numpy as np
 
 def validate_sensor_data(dH_measures, T_measures):
@@ -730,16 +814,16 @@ except ValueError as e:
 
 ### Issues Identified and Resolved
 
-#### ✅ Fixed Import Issues
-- **Problem**: `layersListCreator` function was missing from main pyheatmy module
-- **Solution**: Added function to `layers.py` and updated `__init__.py` imports
-- **Impact**: Core layer creation functionality now accessible via `from pyheatmy import layersListCreator`
+#### ✅ Updated Layer Integration Architecture  
+- **Previous**: Deprecated `layersListCreator` function for separate layer management
+- **Current**: Layers integrated directly into Column class via `all_layers` parameter and `set_layers()` method
+- **Benefit**: Simplified workflow with automatic layer sorting and integrated management
 
 #### ✅ Added Missing Classes Documentation  
 - **synthetic_MOLONARI**: Data generation for testing and validation
 - **LoRaEmitter/LoRaWANEmitter**: Hardware communication simulation
 - **Analy_Sol**: Analytical solutions for benchmarking
-- **Layer utilities**: `sortLayersList`, `getListParameters`
+- **Layer utilities**: `getListParameters` for internal parameter extraction
 
 #### ✅ Comprehensive Column Class Methods
 - **Problem**: Only 4 methods documented vs 59 available methods
@@ -852,9 +936,14 @@ except ImportError:
     from pyheatmy.layers import Layer
     from pyheatmy.params import Prior
 
-# Issue: Missing layersListCreator function
-# Solution: Import from layers module
-from pyheatmy.layers import layersListCreator
+# Issue: Architecture changes for layer management
+# Old deprecated approach: layersListCreator function
+# New approach: integrated layers in Column class
+from pyheatmy import Column, Layer
+
+# Create layers individually and integrate them
+surface_layer = Layer("surface", 0.5, 5.0, 0.3, 2.5, 2.1e6)
+column = Column(..., all_layers=[surface_layer])
 
 # Issue: Network timeouts during pip install
 # Solution: Use timeout parameter
