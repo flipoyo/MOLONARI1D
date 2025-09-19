@@ -4,6 +4,9 @@ MOLONARI means MOnitoring LOcal des échanges NAppe-RIvière, which translates i
 
 The MOLONARI1D ecosystem is a comprehensive **environmental monitoring solution** for water and heat exchanges in riverbed environments. It provides end-to-end monitoring from hardware deployment to scientific analysis, enabling long-term autonomous data collection in challenging aquatic environments.
 
+![MOLONARI1D](Figures/schemaMOLONARI.png)
+![MOLONARI1D](Figures/Chaine_informations.jpg)
+
 ## System Architecture
 
 MOLONARI1D implements a **multi-tier monitoring architecture** designed for scalable, autonomous environmental monitoring:
@@ -182,12 +185,12 @@ arduino-cli upload --fqbn arduino:samd:mkrwan1310 Sensor.ino --port /dev/ttyACM0
 
 This version of MOLONARI1D is a development version. Some features are not yet implemented or are incomplete. Some bugs may also appear. We therefore do not guarantee any reliability on the resulting values of the calculations, however the data format will remain constant during their full implementation. Think of this code as a template that will remain persistent when the features are reliable in their results.
 
-![MOLONARI1D](Figures/schemaMOLONARI.png)
+
 
 ## Contributors
 MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021, under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors.
 
-- Nicolas Flipo supervises the development of the MOLONARI 1D ecosystem
+- Nicolas Flipo supervises the development of the MOLONARI 1D ecosystem. He manages the github repository and the developpers' teams. With Fabien Ors and Pierre Guillou, he is in charge of the source code development either for hardware programming, scientific computing, and IT
 - Aurelien Baudin and Agnès Rivière supervise the **monitoring device development** and their **_in situ_ deployment**
 - Nicolas Flipo and Thomas Romary supervise the development of **pyheatmy**
 - Fabien Ors contributed to the 2021 and 2022 editions by conceptualising **molonaviz**, and since 2024 securizing it
@@ -227,7 +230,6 @@ for **hardware programming**:
 This version of MOLONARI1D is a development version. Some features are not yet implemented or are incomplete.
 Some bugs may also appear. We therefore do not guarantee any reliability on the resulting values of the calculations, however the data format will remain constant during their full implementation. Think of this code as a template that will remain persistent when the features are reliable in their results.
 
-![MOLONARI1D](Figures/schemaMOLONARI.png)
 
 ## Get the sources
 
