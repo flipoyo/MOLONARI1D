@@ -20,8 +20,8 @@ Underwater Sensors → Relay → Gateway → Server → Database → Analysis To
 1. **Field Sensors**: Battery-powered Arduino devices collect temperature/pressure every 15min
 2. **Local Communication**: Custom LoRa protocol transmits sensor data to relay daily
 3. **Wide Area Network**: LoRaWAN gateway forwards data to internet-connected server
-4. **Quality Control**: Server database processes and validates incoming sensor data
-5. **Analysis Interface**: Molonaviz GUI manages devices and visualizes data streams
+4. **Quality Control**: Server database processes and validates incoming sensor data - backend of Molonaviz
+5. **Analysis Interface**: GUI manages devices and launches scientific computing - frontend of Molonaviz
 6. **Scientific Inference**: pyheatmy performs Bayesian MCMC inversion for flux estimation
 
 ## Core Components
@@ -29,7 +29,7 @@ Underwater Sensors → Relay → Gateway → Server → Database → Analysis To
 ### 🔬 **pyheatmy** - Scientific Computing Engine
 **Bayesian inference for hydrological parameter estimation**
 
-- **MCMC Implementation**: Infers physical properties of 1D riverbed columns
+- **Bayesian inversion, MCMC based**: Infers physical properties of 1D riverbed columns - multichain MCMC also available
 - **Data Integration**: Direct coupling with sensor data streams from monitoring systems
 - **Uncertainty Quantification**: Provides parameter estimates with confidence intervals
 - **Research Extensions**: Modular architecture supporting experimental features
@@ -40,7 +40,6 @@ Underwater Sensors → Relay → Gateway → Server → Database → Analysis To
 - **Device Registration**: Laboratory and sampling point hierarchy management
 - **Data Pipeline**: Quality control workflows from raw sensor data to analysis-ready datasets
 - **Analysis Integration**: Direct launching of pyheatmy inference workflows
-- **Real-time Monitoring**: Live data streams and alert generation
 
 **⚠️ Requirements**: Python 3.10+ for Molonaviz, Python 3.9+ for pyheatmy
 
@@ -94,19 +93,20 @@ cd MOLONARI1D
 ```
 
 **2. Install Python Components:**
-```bash
-# Install test dependencies
-pip install pytest nbmake
 
-# Install pyheatmy (scientific computing)
-cd pyheatmy/
-pip install --timeout 300 -e .
 
-# Install Molonaviz dependencies (GUI)
-pip install --timeout 300 pyqt5 pandas scipy matplotlib setuptools
-```
+Here is a step-by-step guide to install the ecosystem: 
+- First install **pyheatmy**, from the **pyheatmy** folder, by running ```pip install -e .```
+For more informations on the software, please check the folder.
 
-**3. Validate Installation:**
+- Second install **molonaviz**, from the **Molonaviz** folder, by running ```pip install -e .```
+For more informations on the software, please check the folder.
+
+You are now set to use the ecosystem. To launch it, you can simply run ```molonaviz``` in a terminal.
+
+**WARNING** For less advanced users, please refer to the end of the section to set-up your environment to at least `python3.10+`
+
+**3. Validate Installation: - untested copilot inserted section**
 ```bash
 # Test pyheatmy
 python -c "import pyheatmy; print('pyheatmy ready')"
@@ -117,7 +117,7 @@ export PYTHONPATH="$PWD:$PYTHONPATH"
 python -c "import molonaviz; print('Molonaviz structure validated')"
 ```
 
-**4. Run Tests:**
+**4. Run Tests: - untested copilot inserted section**
 ```bash
 # Unit tests (~5 seconds)
 cd ../../
@@ -237,17 +237,6 @@ Due to the large history of commits, cloning the repositroy may need to be perfo
 
 `git clone --depth=1 https://github.com/flipoyo/MOLONARI1D.git`
 
-
-## Installation
-
-Here is a step-by-step guide to install the ecosystem: 
-- First install **pyheatmy**, from the **pyheatmy** folder, by running ```pip install -e .```
-For more informations on the software, please check the folder.
-
-- Second install **molonaviz**, from the **Molonaviz** folder, by running ```pip install -e .```
-For more informations on the software, please check the folder.
-
-You are now set to use the ecosystem. To launch it, you can simply run ```molonaviz``` in a terminal.
 
 ## Virtual environments for linux
 
