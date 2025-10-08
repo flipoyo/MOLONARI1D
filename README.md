@@ -106,28 +106,6 @@ You are now set to use the ecosystem. To launch it, you can simply run ```molona
 
 **WARNING** For less advanced users, please refer to the end of the section to set-up your environment to at least `python3.10+`
 
-**3. Validate Installation: - untested copilot inserted section**
-```bash
-# Test pyheatmy
-python -c "import pyheatmy; print('pyheatmy ready')"
-
-# Test Molonaviz structure (expected GUI import error in headless mode)
-cd Molonaviz/src/
-export PYTHONPATH="$PWD:$PYTHONPATH"
-python -c "import molonaviz; print('Molonaviz structure validated')"
-```
-
-**4. Run Tests: - untested copilot inserted section**
-```bash
-# Unit tests (~5 seconds)
-cd ../../
-pytest pyheatmy/ Molonaviz/
-
-# Scientific workflow validation (~85 seconds)
-cd pyheatmy/
-pytest --nbmake --nbmake-timeout=600 demoPyheatmy.ipynb demo_genData.ipynb
-```
-
 ### Hardware Setup
 
 **For Arduino Development:**
@@ -338,6 +316,15 @@ Deactivate the virtual environment
 > conda deactivate
 ```
 
+## Virtual environment sous `MAC`
+
+Once ``conda`` installed
+
+```bash
+> conda create -n molonari python=3.12
+> conda activate molonari
+> cd …/chemin/pyheatmy
+> pip install -e .
 
 
 
