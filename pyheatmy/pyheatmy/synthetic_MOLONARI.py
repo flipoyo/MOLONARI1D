@@ -3,8 +3,8 @@ from pyheatmy.params import Param, Prior, PARAM_LIST
 from pyheatmy.checker import checker
 from pyheatmy.core import Column
 from pyheatmy.config import *
-from pyheatmy.utils import create_periodic_signal, convert_to_timestamp, convert_list_to_timestamp
-
+from pyheatmy.utils import create_periodic_signal, convert_to_timestamp, convert_list_to_timestamp, create_multi_periodic_signal
+# Adding the multi_periodic_signal function to generate more complex signals
 
 from scipy.interpolate import interp1d  # lagrange
 
@@ -34,6 +34,15 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
                 
         self._classType = ClassType.TIME_SERIES
         # on définit les attribut paramètres
+
+        # On verifie si param_T_riv_signal est une liste ou une liste de liste
+        if isinstance(param_T_riv_signal[0], list):
+            print("param_T_riv_signal is a list of list, generating multi periodic signal")
+            self._multiperiodic = True
+        else:
+            print("param_T_riv_signal is a one level list, generating single periodic signal")
+            self._multiperiodic = False
+
         self._param_dates = param_time_dates
         self._param_dH = param_dH_signal
         self._param_T_riv = param_T_riv_signal
@@ -110,12 +119,13 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
         ts = create_periodic_signal(self._dates,self._param_dH,"Hydraulic head differential",verbose=verbose)
         self._dH = ts
 
+
     def _generate_Temp_riv_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature rivière
-        ts = create_periodic_signal(self._dates,self._param_T_riv,"T_riv",verbose=verbose)
+        ts = create_multi_periodic_signal(self._dates,self._param_T_riv,"T_riv",verbose=verbose)
         self._T_riv = ts
 
     def _generate_Temp_aq_series(self,verbose=True):  # renvoie un signal sinusoïdal de temperature aquifère
-        ts = create_periodic_signal(self._dates,self._param_T_aq,"T_aq",verbose=verbose)
+        ts = create_multi_periodic_signal(self._dates,self._param_T_aq,"T_aq",verbose=verbose)
         self._T_aq = ts
 
     def _generate_Shaft_Temp_series(self, verbose = True):  # en argument n_sens_vir le nb de capteur (2 aux frontières et 3 inutiles à 0)
