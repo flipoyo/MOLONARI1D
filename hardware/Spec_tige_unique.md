@@ -26,6 +26,8 @@ Par contre le raccord canelé est de diamètre intérieur 14mm et diamètre ext�
 Rendre plus abrasif, pour que cela adhère bien et que cela reste étanche 
 Possibilité de mettre du silicone et un point de colle au niveau du tuyau 
 
+Si n'est pas assez étanche avec le PLA, on peut rajouter un serre-tête métallique (comme ceux utilisés pour le montage du sous-groupe étalonnage capteurs).
+
 ### A trouver 
 diamètre de la barre à mine pour savoir diamètres intérieur et extérieur de la tige
 forme optimale pour rugosité max pour raccord canelé + dimensions 
