@@ -582,6 +582,7 @@ def create_multi_periodic_signal(dates : list[datetime]
     if params[1] != CODE_scalar :
         if verbose:
             print(f"periodic signal\n")
+            
         signal =0
         for param in params:
             signal += (param[0] * sin(2 * pi * t_range / param[1]) + param[2] )
