@@ -566,44 +566,80 @@ def create_periodic_signal(dates : list[datetime]
         signal = full(len(dates), params[2])
     return signal    
 
-def create_multi_periodic_signal(dates : list[datetime]
-,params : list[list],signal_name="TBD",verbose=True): #params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
-    
-    # check if the time step is constant
-    t_step_list = []
-    for i in range(len(dates) - 1):
-        t_step_list.append(dates[i+1] - dates[i])
-    assert len(set(t_step_list)) <= 1, "The time step between two consecutive dates should be constant."
-    
-    dt = t_step_list[0].total_seconds()
-    if verbose:
-        print(f"Entering {signal_name} generation with amplitude {params[0]}, period of {params[1]}, offset {params[2]}, dt {dt} --> ")
-    t_range = arange(len(dates)) * dt
-    if params[1] != CODE_scalar :
-        if verbose:
-            print(f"periodic signal\n")
-        signal =0
-        for param in params:
-            signal += (param[0] * sin(2 * pi * t_range / param[1]) + param[2] )
+# Modification to handle multiple periodic signals
+def create_multi_periodic_signal(
+    dates: list[datetime],
+    params,
+    signal_name="TBD",
+    verbose=True,
+):
+    """
+    Build a signal from one or many sets of periodic parameters.
 
+    Parameters
+    ----------
+    dates : list[datetime]
+        Time axis used for evaluation. A constant spacing is required.
+    params : list or list[list]
+        Either a single periodic definition [amplitude, period, offset] or
+        an iterable of such definitions.
+    """
+    if len(dates) < 2:
+        raise ValueError("At least two dates are required to build a periodic signal.")
+
+    # Build time step list to ensure the sampling is regular.
+    t_step_list = [dates[i + 1] - dates[i] for i in range(len(dates) - 1)]
+    assert (
+        len(set(t_step_list)) <= 1
+    ), "The time step between two consecutive dates should be constant."
+
+    # Normalise params so that we always handle a list of triplets.
+    if not isinstance(params, (list, tuple)):
+        raise TypeError("params must be a list of [amplitude, period, offset].")
+    if not params:
+        raise ValueError("params must contain at least one periodic definition.")
+
+    if not isinstance(params[0], (list, tuple)):
         if verbose:
-            plt.figure(figsize=(10, 5))
-            plt.plot(dates, signal, label='Signal')
-            # Add labels and title
-            plt.xlabel('Dates')
-            plt.ylabel('Signal')
-            plt.title('Signal as a Function of Dates')
-            plt.legend()
-            # Rotate date labels for better readability
-            plt.xticks(rotation=45)
-            # Display the plot
-            plt.tight_layout()
-            plt.show()
-    else:
-        if verbose:
-            print(f"constant signal\n")
-        signal = full(len(dates), params[2])
-    return signal   
+            print(
+                "Single periodic signal detected, using create_periodic_signal function."
+            )
+        return create_periodic_signal(
+            dates, params, signal_name=signal_name, verbose=verbose
+        )
+
+    dt = t_step_list[0].total_seconds()
+    t_range = arange(len(dates)) * dt
+    signal = zeros(len(dates), dtype=float32)
+
+    if verbose:
+        print("Multiple periodic signals detected, summing them up.")
+
+    for idx, param in enumerate(params):
+        if len(param) != 3:
+            raise ValueError(
+                f"Parameter set at index {idx} should have 3 values [amplitude, period, offset]."
+            )
+
+        amplitude, period, offset = param
+        if period == CODE_scalar:
+            component = full(len(dates), offset)
+        else:
+            component = amplitude * sin(2 * pi * t_range / period) + offset
+        signal += component
+
+    if verbose:
+        plt.figure(figsize=(10, 5))
+        plt.plot(dates, signal, label="Signal")
+        plt.xlabel("Dates")
+        plt.ylabel("Signal")
+        plt.title("Signal as a Function of Dates")
+        plt.legend()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
+    return signal
 
 from datetime import datetime, timedelta
 
