@@ -566,6 +566,47 @@ def create_periodic_signal(dates : list[datetime]
         signal = full(len(dates), params[2])
     return signal    
 
+def create_multi_periodic_signal(dates : list[datetime]
+,params : list[list],signal_name="TBD",verbose=True): #params has 3 arguments 0 --> amplitude, 1 --> period (no period for CODE_scalar), 2 --> offset
+    
+    # check if the time step is constant
+    t_step_list = []
+    for i in range(len(dates) - 1):
+        t_step_list.append(dates[i+1] - dates[i])
+    assert len(set(t_step_list)) <= 1, "The time step between two consecutive dates should be constant."
+    
+    dt = t_step_list[0].total_seconds()
+    if verbose:
+        print(f"Entering {signal_name} generation with amplitude {params[0]}, period of {params[1]}, offset {params[2]}, dt {dt} --> ")
+    t_range = arange(len(dates)) * dt
+    if params[1] != CODE_scalar :
+        if verbose:
+            print(f"periodic signal\n")
+        signal =0
+        for param in params:
+            signal += (param[0] * sin(2 * pi * t_range / param[1]) + param[2] )
+
+        if verbose:
+            plt.figure(figsize=(10, 5))
+            plt.plot(dates, signal, label='Signal')
+            # Add labels and title
+            plt.xlabel('Dates')
+            plt.ylabel('Signal')
+            plt.title('Signal as a Function of Dates')
+            plt.legend()
+            # Rotate date labels for better readability
+            plt.xticks(rotation=45)
+            # Display the plot
+            plt.tight_layout()
+            plt.show()
+    else:
+        if verbose:
+            print(f"constant signal\n")
+        signal = full(len(dates), params[2])
+    return signal   
+
+from datetime import datetime, timedelta
+
 
 def create_dir(rac, verbose=True):
     # Directory path to print in
