@@ -2,18 +2,6 @@
 
 This directory contains all hardware-related code and documentation for the MOLONARI ecosystem, organized for efficient collaboration between hardware developers, protocol engineers, and system integrators.
 
-
-## Integration with Device/ Structure
-
-This `hardware/` directory provides a reorganized, team-oriented view of the hardware components found in the original `Device/` structure:
-
-- **hardware/** ↔ **Device/hardwareProgramming/** - Organized firmware development  
-- **hardware/docs/** ↔ **Device/hardwareProgramming/Documentation/** - Consolidated documentation
-- **hardware/deployment/** ↔ **Device/installationSystem/** - Field deployment guides
-- **hardware/shared/** - Replaces duplicated `internals/` directories across projects
-
-This reorganization maintains backward compatibility while improving development workflows and reducing code duplication.
-
 ## Directory Structure
 
 ```
@@ -30,7 +18,7 @@ hardware/
 │   ├── lora/                # Local LoRa communication
 │   └── lorawan/             # Wide-area LoRaWAN communication
 ├── shared/                   # Shared libraries and utilities
-│   ├── Lora.hpp/cpp         # LoRa communication classes
+│   ├── Lora.hpp/cpp         # LoRa communicaton classes
 │   ├── Temp_Sensor.hpp/cpp  # Temperature sensor drivers
 │   ├── Pressure_Sensor.hpp  # Pressure sensor drivers
 │   ├── Writer.hpp/cpp       # SD card data logging
@@ -150,7 +138,21 @@ The `shared/` directory contains common code used across all hardware components
 - Wide-area coverage (kilometers)
 - Internet connectivity via gateway
 
-## Development Workflows
+## Contributing : Development Workflows
+
+### Code Standards
+
+- **Commenting**: All Arduino files must have functionality header
+- **Include Paths**: Use shared libraries from `shared/` directory
+- **Testing**: Validate compilation with Arduino CLI
+- **Documentation**: Update relevant docs when modifying protocols
+
+### Pull Request Process
+
+1. Test your changes with hardware validation CI
+2. Update documentation if modifying protocols
+3. Ensure backward compatibility where possible
+4. Follow existing code formatting conventions
 
 ### For Hardware Developers
 
@@ -266,22 +268,6 @@ The hardware codebase includes CI/CD workflows:
 - **Archived Code**: Reference `archived/` for historical implementations
 - **Community**: Open issues on GitHub for support
 
-## Contributing
-
-### Code Standards
-
-- **Commenting**: All Arduino files must have functionality header
-- **Include Paths**: Use shared libraries from `shared/` directory
-- **Testing**: Validate compilation with Arduino CLI
-- **Documentation**: Update relevant docs when modifying protocols
-
-### Pull Request Process
-
-1. Test your changes with hardware validation CI
-2. Update documentation if modifying protocols
-3. Ensure backward compatibility where possible
-4. Follow existing code formatting conventions
-
 ## Hardware Specifications
 
 ### Target Hardware
@@ -303,6 +289,17 @@ The hardware codebase includes CI/CD workflows:
 - **Operating Temperature**: -20°C to +60°C
 - **Water Depth**: 0-10 meters
 - **Enclosure Rating**: IP68 required for underwater deployment
+
+## Integration of this directory with the Device/ Structure
+
+This `hardware/` directory provides a reorganized, team-oriented view of the hardware components found in the original `Device/` structure:
+
+- **hardware/** ↔ **Device/hardwareProgramming/** - Organized firmware development  
+- **hardware/docs/** ↔ **Device/hardwareProgramming/Documentation/** - Consolidated documentation
+- **hardware/deployment/** ↔ **Device/installationSystem/** - Field deployment guides
+- **hardware/shared/** - Replaces duplicated `internals/` directories across projects
+
+This reorganization maintains backward compatibility while improving development workflows and reducing code duplication.
 
 ## Future Development
 
