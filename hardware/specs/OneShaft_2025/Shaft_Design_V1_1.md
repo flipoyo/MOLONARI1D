@@ -7,9 +7,6 @@ Improving the system’s shaft by combining the temperature and the pressure sys
 
 |----------------------------------|------------------------------------|
 |![Shaft's body](Shaft_body.png)   | The shaft itself in which 4 holes are carved in order to place the thermometers and their cables. The sensors are respectively 10, 20, 30, and 40 cm deep from the beginning of the shaft (The 33 mm of each sensor are included in those depths). Each spot is 33 mm long and allows the placement of a 3 mm radius sensor. |
-|----------------------------------|------------------------------------|
-
-|----------------------------------|------------------------------------|
 |![Shaft's end](Shaft_end.png)     | A set of 4 triplets of conic holes are placed at the bottom, at the same height as the deepest thermometer, in order to let water enter the shaft to measure the difference in pressure between the atmosphere and the bottom of the shaft. The external diameter of each hole is 0.3 mm, which should ensure parasites cannot colonize the shaft for the duration of the measurements. The conical shape of the hole is chosen to minimize the hydraulic charge error due to the size of the external holes.   |
 |----------------------------------|------------------------------------|
 
