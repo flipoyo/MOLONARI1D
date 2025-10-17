@@ -7,8 +7,6 @@ import csv as csv
 from scipy.signal import butter, filtfilt, hilbert, find_peaks
 
 """
-2025 - Groupe Fréquentiel
-
 Module for frequency domain analysis of temperature data.
 The inputs will be the signals of the sensors, the depths of the sensors and the temperature of the river.
 The aim is to retrieve values of diffusivity kappa_e and Stallman speed v_t.
@@ -453,7 +451,12 @@ class frequentiel_analysis:
             beta = coeffs[0]
             b_val = -beta
             b_values.append(b_val)
-            b_R2_values.append(coeffs[1])
+            # Compute R^2
+            residuals = ph_unw[m] - (coeffs[0] * depths_all[m] + coeffs[1])
+            ss_res = np.sum(residuals**2)
+            ss_tot = np.sum((ph_unw[m] - np.mean(ph_unw[m]))**2)
+            r2 = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+            b_R2_values.append(r2)
 
             if draw:
                 plt.figure(figsize=(4, 4))
@@ -524,8 +527,8 @@ if __name__ == "__main__":
     dH_offset = .5 
     P_dh = -9999 #14*24*4*dt
 
-    depth_sensors = [1, 2, 3, 4]
-    Zbottom = 4
+    depth_sensors = [.2, .4, .6, .8]
+    Zbottom = .8
 
     """Bruit de mesure"""
     sigma_meas_P = 0.001
@@ -536,7 +539,7 @@ if __name__ == "__main__":
     # --- Génération des données synthétiques ---
 
     # Création du signal multipériodique de la rivière.
-    liste_params_river = [[T_riv_amp, P_T_riv, T_riv_offset/2], [0.3*T_riv_amp, P_T_riv/2, T_riv_offset/2]]
+    liste_params_river = [[T_riv_amp, P_T_riv, T_riv_offset], [T_riv_amp, P_T_riv/2, 0]]
 
     time_series_dict_user1 = {
     "offset":.0,
@@ -570,7 +573,7 @@ if __name__ == "__main__":
     nbcells = 100
     # on utilise les mesures générées précédemment dans les init "dH_measures" et "T_measures"
     col_dict = {
-        "river_bed": 4.0, 
+        "river_bed": 1.0, 
         "depth_sensors": depth_sensors, #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
         "offset": .0,
         "dH_measures": emu_observ_test_user1._molonariP_data,
@@ -598,12 +601,12 @@ if __name__ == "__main__":
     depth_sensors = col.depth_sensors[:3]
     depth_sensors = [0] + depth_sensors
 
-    # Finding dominant periods
-    dominant_periods_days, dominant_freqs, dominant_amps = fa.find_dominant_periods(signals, river, draw=True)
-
     # Plotting check figures
     fa.fft_sensors(dates, signals, depth_sensors)
     fa.plot_temperatures(dates, signals, depth_sensors)
+
+    # Finding dominant periods
+    dominant_periods_days, dominant_freqs, dominant_amps = fa.find_dominant_periods(signals, river, draw=True)
 
     # Estimate a and b for these dominant periods
     depths = np.array(depth_sensors)
