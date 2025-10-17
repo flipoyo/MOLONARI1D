@@ -1,0 +1,81 @@
+#include <queue>
+#include <Arduino.h>
+#include <ArduinoLowPower.h>
+
+#include "Waiter.hpp"
+#include "Low_Power.hpp" 
+#include "Reader.hpp"
+#include "LoRa_Molonari.hpp"
+
+
+
+// PrintQueue function definition
+void PrintQueue(std::queue<String> &receiveQueue) {
+    Serial.println("Session ended. Printing all received data:");
+    while (!receiveQueue.empty()) {
+        Serial.println(receiveQueue.front()); // Show the first item in the queue
+        receiveQueue.pop();                   // Remove the printed item
+    }
+    Serial.println("All data printed. Queue is now empty.");
+}
+
+// Default constructor
+Waiter::Waiter() {}
+
+// Start tracking time
+void Waiter::startTimer() {
+    starting_time = millis();
+}
+
+// Sleep the Arduino until the desired waiting time passes
+void Waiter::sleepUntil(unsigned long desired_waiting_time) {
+    unsigned long time_to_wait = (starting_time + desired_waiting_time) - millis();
+
+    // Log the waiting time for debugging
+    Serial.println("Sleeping for " + String(time_to_wait) + " ms");
+
+    // Sleep for the calculated time
+    LowPower.deepSleep(time_to_wait);
+}
+
+// Wait without sleeping to handle other tasks
+void Waiter::delayUntil(unsigned long desired_waiting_time, RoleType role) {
+    unsigned long end_date = starting_time + desired_waiting_time;
+
+    // Loop until the time is up
+    while (millis() < end_date) {
+        Serial.println("Starting new communication session...");
+
+        // Set up LoRa communication
+        LoraCommunication lora(868E6, 0xbb, 0xaa, role);
+        Reader reader;
+        lora.startLoRa();
+        uint8_t shift = 0;
+
+        // Perform handshake and connect to the reader
+        bool handshake = lora.handshake(shift);
+        bool readerConnected = reader.EstablishConnection(shift);
+
+        // If everything works, send the data
+        if (handshake && readerConnected) {
+            std::queue<String> sendQueue = reader.loadDataIntoQueue();
+            int nbofACK = lora.sendPackets(sendQueue);
+
+            // Update the cursor and close session
+            reader.UpdateCursor(nbofACK);
+            lora.closeSession(nbofACK);
+
+            // Clean up
+            lora.stopLoRa();
+            reader.Dispose();
+
+            return; // Exit since the task is done
+        }
+
+        // Clean up and retry on failure
+        lora.stopLoRa();
+        reader.Dispose();
+
+        delay(1); // Small delay to prevent the loop from running too fast
+    }
+}

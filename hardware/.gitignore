@@ -1,4 +1,5 @@
 # Hardware Development Build Artifacts
+.pio/
 
 # Arduino IDE build files
 build/
