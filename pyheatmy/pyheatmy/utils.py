@@ -566,6 +566,83 @@ def create_periodic_signal(dates : list[datetime]
         signal = full(len(dates), params[2])
     return signal    
 
+# Modification to handle multiple periodic signals
+def create_multi_periodic_signal(
+    dates: list[datetime],
+    params,
+    signal_name="TBD",
+    verbose=True,
+):
+    """
+    Build a signal from one or many sets of periodic parameters.
+
+    Parameters
+    ----------
+    dates : list[datetime]
+        Time axis used for evaluation. A constant spacing is required.
+    params : list or list[list]
+        Either a single periodic definition [amplitude, period, offset] or
+        an iterable of such definitions.
+    """
+    if len(dates) < 2:
+        raise ValueError("At least two dates are required to build a periodic signal.")
+
+    # Build time step list to ensure the sampling is regular.
+    t_step_list = [dates[i + 1] - dates[i] for i in range(len(dates) - 1)]
+    assert (
+        len(set(t_step_list)) <= 1
+    ), "The time step between two consecutive dates should be constant."
+
+    # Normalise params so that we always handle a list of triplets.
+    if not isinstance(params, (list, tuple)):
+        raise TypeError("params must be a list of [amplitude, period, offset].")
+    if not params:
+        raise ValueError("params must contain at least one periodic definition.")
+
+    if not isinstance(params[0], (list, tuple)):
+        if verbose:
+            print(
+                "Single periodic signal detected, using create_periodic_signal function."
+            )
+        return create_periodic_signal(
+            dates, params, signal_name=signal_name, verbose=verbose
+        )
+
+    dt = t_step_list[0].total_seconds()
+    t_range = arange(len(dates)) * dt
+    signal = zeros(len(dates), dtype=float32)
+
+    if verbose:
+        print("Multiple periodic signals detected, summing them up.")
+
+    for idx, param in enumerate(params):
+        if len(param) != 3:
+            raise ValueError(
+                f"Parameter set at index {idx} should have 3 values [amplitude, period, offset]."
+            )
+
+        amplitude, period, offset = param
+        if period == CODE_scalar:
+            component = full(len(dates), offset)
+        else:
+            component = amplitude * sin(2 * pi * t_range / period) + offset
+        signal += component
+
+    if verbose:
+        plt.figure(figsize=(10, 5))
+        plt.plot(dates, signal, label="Signal")
+        plt.xlabel("Dates")
+        plt.ylabel("Signal")
+        plt.title("Signal as a Function of Dates")
+        plt.legend()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
+    return signal
+
+from datetime import datetime, timedelta
+
 
 def create_dir(rac, verbose=True):
     # Directory path to print in

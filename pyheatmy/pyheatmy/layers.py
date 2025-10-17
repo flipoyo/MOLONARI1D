@@ -92,3 +92,28 @@ def getListParameters(layersList, nbCells: int):
         listParameters[:, 4],
     )
 
+# Add-on function to create the list of layers.
+def layersListCreator(layers_spec):
+    """
+    Construct and return a list of Layer instances.
+
+    Accepts:
+    - layers_spec: iterable of tuples or dicts describing each layer.
+      If an element is a dict, Layer.from_dict is used.
+      If an element is a sequence, it is passed to Layer(*sequence).
+
+    Expected tuple order (compatible with existing calls):
+      (name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs[, q])
+
+    Returns:
+      list of Layer
+    """
+    layers = []
+    for spec in layers_spec:
+        if isinstance(spec, dict):
+            layer = Layer.from_dict(spec)
+        else:
+            # allow lists/tuples with the exact arguments for Layer.__init__
+            layer = Layer(*spec)
+        layers.append(layer)
+    return layers
