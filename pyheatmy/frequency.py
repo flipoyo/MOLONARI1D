@@ -20,7 +20,6 @@ class frequentiel_analysis:
             print("Using phase decay and amplitude attenuation with depth, we'll retrieve kappa_e and v_t for each dominant period.")
 
     def _to_seconds(self, dates):
-		"""Converting dates as datetime format with seconds (safety precautions)"""
         d = np.asarray(dates)
         # numpy datetime64 array
         if np.issubdtype(d.dtype, np.datetime64):
