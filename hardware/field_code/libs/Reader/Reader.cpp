@@ -50,10 +50,14 @@ void Reader::lireConfigCSV(const char* NomFichier) {
         else if (key == "appKey") config.appKey = val;
         else if (key == "CSPin") config.CSPin = val.toInt();
         else if (key == "lora_freq") config.lora_freq = val.toFloat();
-        else if (key == "lora_intervalle_secondes") {
+        else if (key == "intervalle_de_mesure_secondes") {
+            int freq_sec = val.toInt();
+            config.intervalle_de_mesure_secondes = freq_sec;
+        }
+        else if (key == "intervalle_lora_secondes") {
             LORA_INTERVAL_S = val.toInt();
-            config.lora_intervalle_secondes = LORA_INTERVAL_S;
-        } 
+            config.intervalle_lora_secondes = LORA_INTERVAL_S;
+        }
 
         // ---------- CAPTEURS ----------
         else {

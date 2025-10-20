@@ -1,4 +1,8 @@
 // This file contains all the code to manage time using the MKR board's integrated Real Time Clock (RTC) and an external RTC.
+
+//Time doit récupérer lora_intervalle_secondes de config_sensor.csv
+
+
 #include <RTCZero.h>
 #include <RTClib.h>
 #include<vector>

@@ -20,8 +20,8 @@ struct RelayConfig {
     String appKey;
     int CSPin;
     float lora_freq;
-    int mesure_frequence_minutes;
-    int lora_intervalle_secondes;
+    int intervalle_de_mesure_secondes;
+    int intervalle_lora_secondes;
 };
 
 // Variables globales (extern pour éviter redéfinitions)
