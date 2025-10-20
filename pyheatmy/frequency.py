@@ -20,6 +20,7 @@ class frequentiel_analysis:
             print("Using phase decay and amplitude attenuation with depth, we'll retrieve kappa_e and v_t for each dominant period.")
 
     def _to_seconds(self, dates):
+		"""Converting dates as datetime format with seconds (safety precautions)"""
         d = np.asarray(dates)
         # numpy datetime64 array
         if np.issubdtype(d.dtype, np.datetime64):
@@ -42,6 +43,8 @@ class frequentiel_analysis:
     
     def find_dominant_periods(self, dates, signals, draw=True):
         """Find dominant periods in river signal using FFT.
+		This is an automatic processing. It takes the FFT spectrum and returns highest 
+		peak with threshold.
         Returns (periods_days, amplitudes, frequencies)
         """
         # Support two calling styles for backward compatibility:
@@ -93,7 +96,7 @@ class frequentiel_analysis:
         amp = np.abs(yf) / n
         freqs = np.fft.rfftfreq(n, d=dt)
 
-    # Now use find_peaks to identify dominant frequencies
+    # Now use find_peaks to identify dominant frequencies. This is automatic and we have a threshold to choose.
         mask = freqs > 0
         amps_masked = amp[mask]
         freqs_masked = freqs[mask]
@@ -112,6 +115,7 @@ class frequentiel_analysis:
         print("Dominant periods analysis complete")
         print("Found periods (days):", dominant_periods_days)
 
+		# Plotting if draw is enabled.
         if draw:
             plt.figure(figsize=(8, 4))
             plt.plot(1.0 / (freqs_masked * 86400.0), amps_masked, label='FFT Amplitude Spectrum')
@@ -196,14 +200,15 @@ class frequentiel_analysis:
             amp = np.abs(yf) / n
             freqs = np.fft.rfftfreq(n, d=dt)
              
-            # Find the amplitudes at the dominant frequencies
+            # Find the amplitudes at the dominant frequencies i.e the A(z)
             amplitudes_at_peaks_for_this_signal = []
             for Pd in dominant_periods_days:
                 target_freq = 1.0 / (Pd * 86400.0)
                 idx = (np.abs(freqs - target_freq)).argmin()
                 amplitudes_at_peaks_for_this_signal.append(amp[idx])
             amplitudes_at_peaks.append(amplitudes_at_peaks_for_this_signal)
-        
+
+		# Store the A(z) in the list
         amplitudes_at_peaks = np.array(amplitudes_at_peaks)  # shape (n_signals, n_periods)
 
         # Normalize depths -> depths_all should map 1:1 to signals
@@ -253,8 +258,8 @@ class frequentiel_analysis:
                 print(f"Period {Pd:.2f} days: Amplitudes = {amps_for_period}")
 
         # Now estimate a for each period in dominant_periods_days
-        a_values = []
-        a_R2_values = []
+        a_values = []	# Values of "a" parameter which controls the decrease of the amplitude
+        a_R2_values = []	# R^2 values of the linear regression of a.
 
 
         for i, Pd in enumerate(dominant_periods_days):
@@ -496,6 +501,12 @@ class frequentiel_analysis:
 
         return kappa_e, v_t
     
+    def check_constantes(self, a_values, b_values):
+        rapport = (b_values**2 - a_values**2)/a_values
+        print("Verification des constantes")
+        print(rapport)
+        return None
+    
 
     # def reconstruct_signal(self, signals, a_values, b_values, periods_days, depths, verbose=True):
     #     """Attempting to reconstruct the signal given the river and the spectral components."""
@@ -504,7 +515,6 @@ class frequentiel_analysis:
 
 if __name__ == "__main__":
     # Exemple.
-
     # --- Paramètres de la simulation ---
 
     t_debut = (2011, 1, 1)
@@ -524,7 +534,7 @@ if __name__ == "__main__":
     P_T_aq = -9999  
 
     dH_amp = 0
-    dH_offset = .5 
+    dH_offset = .5
     P_dh = -9999 #14*24*4*dt
 
     depth_sensors = [.2, .4, .6, .8]
@@ -562,7 +572,7 @@ if __name__ == "__main__":
         "n": 0.1,
         "lambda_s": 1,
         "rhos_cs": 4e6,
-        "q": 0,
+        "q": 1e-20,
     }
 
     # modèle une couche
@@ -612,5 +622,8 @@ if __name__ == "__main__":
     depths = np.array(depth_sensors)
     a_est, a_R2 = fa.estimate_a(dates, signals, depths, dominant_periods_days, verbose=True, draw=True)
     b_est, b_R2 = fa.estimate_b(dates, signals, depths, dominant_periods_days, verbose=True, draw=True)
+
+    # Checking constants
+    fa.check_constantes(a_est, b_est)
 
     kappa_e, v_t = fa.perform_inversion(a_est, b_est, dominant_periods_days, verbose=True)
