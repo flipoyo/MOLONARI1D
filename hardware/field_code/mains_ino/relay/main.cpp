@@ -55,7 +55,7 @@ void loop() {
     // Si 3/4 du temps d’intervalle est écoulé depuis la dernière tentative LoRa
 
     unsigned long currentTime = millis();
-    unsigned long wakeUpDelay = (unsigned long)(config.lora_intervalle_secondes * 0.75 * 1000UL);  // en ms
+    unsigned long wakeUpDelay = (unsigned long)(config.intervalle_lora_secondes * 0.75 * 1000UL);  // en ms
     if (currentTime - lastAttempt >= wakeUpDelay) {
 
         std::queue<String> receiveQueue;
@@ -70,7 +70,7 @@ void loop() {
             lora.stopLoRa();
 
             // Met à jour le temps de la dernière tentative de réception
-            lastAttempt = millis() / 1000;
+            lastAttempt = millis() ;
 
             // Transfert vers la queue globale
             while (!receiveQueue.empty()) {
@@ -79,7 +79,7 @@ void loop() {
             }
 
             // Envoi via LoRaWAN si intervalle complet atteint
-            if (currentTime - lastLoraSend >= (unsigned long)config.lora_intervalle_secondes) {
+            if (currentTime - lastLoraSend >= (unsigned long)config.intervalle_lora_secondes*1000UL) {
                 if (loraWAN.begin(config.appEui, config.appKey)) {
                     Serial.print("Envoi de ");
                     Serial.print(sendingQueue.size());

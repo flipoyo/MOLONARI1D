@@ -91,8 +91,6 @@ void loop() {
     int LORA_INTERVAL_S = config.intervalle_lora_secondes;
     bool IsTimeToLoRa = (current_Time - lastLoRaSend >= LORA_INTERVAL_S);
 
-    
-    
 
     if (IsTimeToLoRa || rattrapage) {
         lora.startLoRa();
