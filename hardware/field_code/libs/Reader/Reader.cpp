@@ -14,7 +14,6 @@
 // ----- Variables globales -----
 RelayConfig config;
 std::vector<SensorConfig> liste_capteurs;
-int FREQUENCE_MINUTES = 0;
 unsigned long LORA_INTERVAL_S = 3UL * 3600UL; // valeur par défaut
 
 // ----- Static member initialization -----
@@ -51,10 +50,6 @@ void Reader::lireConfigCSV(const char* NomFichier) {
         else if (key == "appKey") config.appKey = val;
         else if (key == "CSPin") config.CSPin = val.toInt();
         else if (key == "lora_freq") config.lora_freq = val.toFloat();
-        else if (key == "mesure_frequence_minutes") {
-            FREQUENCE_MINUTES = val.toInt();
-            config.mesure_frequence_minutes = FREQUENCE_MINUTES;
-        } 
         else if (key == "lora_intervalle_secondes") {
             LORA_INTERVAL_S = val.toInt();
             config.lora_intervalle_secondes = LORA_INTERVAL_S;
