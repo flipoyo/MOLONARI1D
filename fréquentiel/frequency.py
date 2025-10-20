@@ -4,7 +4,7 @@ from pyheatmy import *
 from datetime import datetime, timedelta
 import os as os
 import csv as csv 
-from scipy.signal import butter, filtfilt, hilbert, find_peaks
+from scipy.signal import butter, filtfilt, hilbert, find_peaks,peak_widths, get_window
 
 """
 Module for frequency domain analysis of temperature data.
@@ -40,94 +40,242 @@ class frequentiel_analysis:
         # fallback: assume numeric array (seconds)
         return d.astype(float)
     
-    def find_dominant_periods(self, dates, signals, draw=True):
-        """Find dominant periods in river signal using FFT.
-		This is an automatic processing. It takes the FFT spectrum and returns highest 
-		peak with threshold.
-        Returns (periods_days, amplitudes, frequencies)
+    # def find_dominant_periods(self, dates, signals, draw=True):
+    #     """Find dominant periods in river signal using FFT.
+	# 	This is an automatic processing. It takes the FFT spectrum and returns highest 
+	# 	peak with threshold.
+    #     Returns (periods_days, amplitudes, frequencies)
+    #     """
+    #     # Support two calling styles for backward compatibility:
+    #     # 1) find_dominant_periods(dates, signals, draw=True)
+    #     #    where signals = [river, sensor1, sensor2, ...]
+    #     # 2) legacy: find_dominant_periods(signals, river, draw=True)
+    #     #    where the user passed (signals_list, river_array)
+    #     # Require explicit dates array (physical times) as first argument.
+    #     dates_arr = np.asarray(dates)
+    #     is_dates = False
+    #     try:
+    #         if np.issubdtype(dates_arr.dtype, np.datetime64):
+    #             is_dates = True
+    #         elif dates_arr.dtype == object and len(dates_arr) > 0:
+    #             import datetime as _dt
+    #             is_dates = isinstance(dates_arr[0], _dt.datetime)
+    #     except Exception:
+    #         is_dates = False
+
+    #     if not is_dates:
+    #         # Try to use stored dates from a prior fft_sensors(dates, ...) call
+    #         if hasattr(self, '_last_dates') and self._last_dates is not None:
+    #             dates = self._last_dates
+    #             t = self._to_seconds(dates)
+    #             # interpret legacy calling style: first arg 'dates' was actually signals list
+    #             signals_list = dates_arr
+    #             signals = signals_list
+    #             river = signals[0]
+    #         else:
+    #             raise ValueError(
+    #                 "find_dominant_periods requires a 'dates' array as the first argument (numpy.datetime64 or list of datetime).\n"
+    #                 "If you used the legacy call find_dominant_periods(signals, river), call fft_sensors(dates, signals, ...) first so dates are stored, or call find_dominant_periods(dates, signals) directly."
+    #             )
+    #     else:
+    #         t = self._to_seconds(dates)
+    #         river = signals[0]
+
+    #     # Perform rFFT of the river temperature signal.
+    #     river = np.asarray(river)
+    #     t = np.asarray(t)
+    #     if river.ndim != 1:
+    #         raise ValueError(f"river must be 1D array, got shape {river.shape}")
+    #     if t.size != river.size:
+    #         raise ValueError(f"time axis length ({t.size}) and river signal length ({river.size}) must match")
+
+    #     n = river.size
+    #     dt = np.median(np.diff(t))
+    #     yf = np.fft.rfft(river - np.mean(river))
+    #     amp = np.abs(yf) / n
+    #     freqs = np.fft.rfftfreq(n, d=dt)
+
+    # # Now use find_peaks to identify dominant frequencies. This is automatic and we have a threshold to choose.
+    #     mask = freqs > 0
+    #     amps_masked = amp[mask]
+    #     freqs_masked = freqs[mask]
+    #     # Use a prominence threshold (fraction of max amplitude) to avoid too many small peaks
+    #     prom_thresh = np.max(amps_masked) * 0.05  # tuneable (5% of max amplitude)
+    #     peaks, props = find_peaks(amps_masked, prominence=prom_thresh)
+
+    #     # sort peaks by amplitude (descending) so dominant peaks appear first
+    #     if peaks.size:
+    #         order = np.argsort(amps_masked[peaks])[::-1]
+    #         peaks = peaks[order]
+
+    #     dominant_freqs = freqs_masked[peaks]
+    #     dominant_periods_days = (1.0 / dominant_freqs) / 86400.0
+
+    #     print("Dominant periods analysis complete")
+    #     print("Found periods (days):", dominant_periods_days)
+
+	# 	# Plotting if draw is enabled.
+    #     if draw:
+    #         plt.figure(figsize=(8, 4))
+    #         plt.plot(1.0 / (freqs_masked * 86400.0), amps_masked, label='FFT Amplitude Spectrum')
+    #         plt.plot(dominant_periods_days, amps_masked[peaks], 'ro', label='Dominant Periods')
+    #         plt.xscale('log')
+    #         plt.xlabel('Period (days)')
+    #         plt.ylabel('Amplitude')
+    #         plt.title('FFT of River Temperature Signal')
+    #         plt.legend()
+    #         plt.grid()
+    #         plt.show()
+
+    #     return dominant_periods_days, dominant_freqs, amps_masked[peaks]
+
+    def find_dominant_periods(
+        self,
+        dates_or_signals,
+        signals_or_river=None,
+        draw=True,
+        use_hann=True,
+        prom_rel=0.05,
+        Q_min=10.0,
+        max_width_rel=0.20,
+        min_cycles=3
+        ):
         """
-        # Support two calling styles for backward compatibility:
-        # 1) find_dominant_periods(dates, signals, draw=True)
-        #    where signals = [river, sensor1, sensor2, ...]
-        # 2) legacy: find_dominant_periods(signals, river, draw=True)
-        #    where the user passed (signals_list, river_array)
-        # Require explicit dates array (physical times) as first argument.
-        dates_arr = np.asarray(dates)
-        is_dates = False
-        try:
-            if np.issubdtype(dates_arr.dtype, np.datetime64):
-                is_dates = True
-            elif dates_arr.dtype == object and len(dates_arr) > 0:
+        Détecte les pics dominants du signal 'rivière', mesure la largeur (FWHM),
+        calcule Q=f0/FWHM et filtre les pics trop larges.
+
+        Signatures acceptées:
+        1) find_dominant_periods(dates, signals, draw=...)
+            - dates: array datetime64 ou liste de datetime
+            - signals: [river, sensor1, ...] (toutes les séries alignées sur 'dates')
+        2) find_dominant_periods(signals, river, draw=...)  # legacy
+            - signals: liste/array des séries (dates déjà connues via un appel précédent)
+            - river: array 1D de la rivière
+        """
+        # --------- Détection de la signature ----------
+        dates = None
+        signals = None
+        river = None
+
+        # Helper pour tester si dates
+        def _is_datetime_array(a):
+            a = np.asarray(a)
+            if np.issubdtype(a.dtype, np.datetime64):
+                return True
+            if a.dtype == object and a.size > 0:
                 import datetime as _dt
-                is_dates = isinstance(dates_arr[0], _dt.datetime)
-        except Exception:
-            is_dates = False
+                return isinstance(a[0], _dt.datetime)
+            return False
 
-        if not is_dates:
-            # Try to use stored dates from a prior fft_sensors(dates, ...) call
-            if hasattr(self, '_last_dates') and self._last_dates is not None:
-                dates = self._last_dates
-                t = self._to_seconds(dates)
-                # interpret legacy calling style: first arg 'dates' was actually signals list
-                signals_list = dates_arr
-                signals = signals_list
-                river = signals[0]
-            else:
-                raise ValueError(
-                    "find_dominant_periods requires a 'dates' array as the first argument (numpy.datetime64 or list of datetime).\n"
-                    "If you used the legacy call find_dominant_periods(signals, river), call fft_sensors(dates, signals, ...) first so dates are stored, or call find_dominant_periods(dates, signals) directly."
-                )
+        if _is_datetime_array(dates_or_signals):
+            # Nouvelle signature (dates, signals)
+            dates = np.asarray(dates_or_signals)
+            signals = signals_or_river
+            if signals is None:
+                raise ValueError("Avec la signature (dates, signals), 'signals' ne peut pas être None.")
+            river = np.asarray(signals[0], dtype=float)
         else:
-            t = self._to_seconds(dates)
-            river = signals[0]
+            # Legacy signature (signals, river)
+            signals = dates_or_signals
+            river = np.asarray(signals_or_river, dtype=float)
+            if not hasattr(self, '_last_dates') or self._last_dates is None:
+                raise ValueError(
+                    "Signature legacy détectée, mais aucune 'dates' mémorisée. "
+                    "Appelle plutôt find_dominant_periods(dates, signals) ou initialise _last_dates."
+                )
+            dates = np.asarray(self._last_dates)
 
-        # Perform rFFT of the river temperature signal.
-        river = np.asarray(river)
-        t = np.asarray(t)
+        # --------- Vérifications dimensions / types ----------
+        t = self._to_seconds(dates)
+        river = np.asarray(river, dtype=float)
         if river.ndim != 1:
-            raise ValueError(f"river must be 1D array, got shape {river.shape}")
+            raise ValueError(f"'river' doit être 1D, reçu shape={river.shape}")
         if t.size != river.size:
-            raise ValueError(f"time axis length ({t.size}) and river signal length ({river.size}) must match")
+            raise ValueError(f"taille(t)={t.size} ≠ taille(river)={river.size}")
 
-        n = river.size
-        dt = np.median(np.diff(t))
-        yf = np.fft.rfft(river - np.mean(river))
-        amp = np.abs(yf) / n
+        # Gestion NaN: on masque les points non valides
+        m = np.isfinite(t) & np.isfinite(river)
+        t = t[m]; river = river[m]
+        if t.size < 8:
+            raise ValueError("Pas assez d'échantillons valides pour la FFT.")
+
+        n = t.size
+        dt = float(np.median(np.diff(t)))
+        T  = n * dt
+        f_res = 1.0 / T
+
+        # --------- Fenêtrage optionnel ----------
+        x = river - np.nanmean(river)
+        if use_hann:
+            w = get_window('hann', n, fftbins=True)
+            x = x * w
+            x = x / (np.sum(w)/n)  # correction d'énergie approx.
+
+        # --------- FFT ----------
+        yf = np.fft.rfft(x)
         freqs = np.fft.rfftfreq(n, d=dt)
+        amp = np.abs(yf) / n
 
-    # Now use find_peaks to identify dominant frequencies. This is automatic and we have a threshold to choose.
+        # --------- Détection des pics ----------
         mask = freqs > 0
-        amps_masked = amp[mask]
-        freqs_masked = freqs[mask]
-        # Use a prominence threshold (fraction of max amplitude) to avoid too many small peaks
-        prom_thresh = np.max(amps_masked) * 0.05  # tuneable (5% of max amplitude)
-        peaks, props = find_peaks(amps_masked, prominence=prom_thresh)
+        freqs_m = freqs[mask]
+        amp_m   = amp[mask]
 
-        # sort peaks by amplitude (descending) so dominant peaks appear first
+        prom = np.max(amp_m) * prom_rel
+        peaks, props = find_peaks(amp_m, prominence=prom)
         if peaks.size:
-            order = np.argsort(amps_masked[peaks])[::-1]
+            order = np.argsort(amp_m[peaks])[::-1]
             peaks = peaks[order]
 
-        dominant_freqs = freqs_masked[peaks]
-        dominant_periods_days = (1.0 / dominant_freqs) / 86400.0
+        # Largeur à mi-hauteur (FWHM)
+        widths_bins, h_eval, left_ips, right_ips = peak_widths(amp_m, peaks, rel_height=0.5)
+        df = (freqs_m[1] - freqs_m[0]) if freqs_m.size > 1 else f_res
+        fwhm_hz = widths_bins * df
 
-        print("Dominant periods analysis complete")
-        print("Found periods (days):", dominant_periods_days)
+        f0  = freqs_m[peaks]
+        A0  = amp_m[peaks]
+        with np.errstate(divide='ignore', invalid='ignore'):
+            Q = f0 / fwhm_hz
+            width_rel = fwhm_hz / f0
 
-		# Plotting if draw is enabled.
+        # Critères de fiabilité
+        enough_cycles = (T * f0) >= min_cycles
+        narrow_enough = (Q >= Q_min) & (width_rel <= max_width_rel)
+        accepted = enough_cycles & narrow_enough
+
+        period_days = 1.0 / (f0 * 86400.0)
+
+        result = {
+            'period_days': period_days,
+            'freq_hz': f0,
+            'amplitude': A0,
+            'fwhm_hz': fwhm_hz,
+            'Q': Q,
+            'accepted_mask': accepted,
+            'f_res_hz': f_res,
+            'prominence': props.get('prominences', np.full_like(A0, np.nan)),
+        }
+
+        # --------- Plot ----------
         if draw:
-            plt.figure(figsize=(8, 4))
-            plt.plot(1.0 / (freqs_masked * 86400.0), amps_masked, label='FFT Amplitude Spectrum')
-            plt.plot(dominant_periods_days, amps_masked[peaks], 'ro', label='Dominant Periods')
-            plt.xscale('log')
-            plt.xlabel('Period (days)')
-            plt.ylabel('Amplitude')
-            plt.title('FFT of River Temperature Signal')
-            plt.legend()
-            plt.grid()
-            plt.show()
+            plt.figure(figsize=(9,4))
+            P_all = 1.0 / (freqs_m * 86400.0)
+            plt.plot(P_all, amp_m, label='FFT amplitude')
+            plt.plot(period_days, A0, 'o', mfc='none', mec='tab:red', label='Pics détectés')
+            plt.plot(period_days[accepted], A0[accepted], 'o', color='tab:green', label='Acceptés')
+            dP = fwhm_hz / (f0**2) / 86400.0  # ΔP ≈ (dP/df)*Δf
+            for P, A, d in zip(period_days, A0, dP):
+                plt.hlines(A, P - d/2, P + d/2, colors='gray', alpha=0.6)
+            plt.xscale('log'); plt.xlabel('Période (jours)'); plt.ylabel('Amplitude')
+            ttl = f"FFT rivière — f_res={f_res:.3e} Hz (~{1/(f_res*86400):.1f} j)"
+            plt.title(ttl); plt.grid(True, which='both', ls=':'); plt.legend(); plt.tight_layout(); plt.show()
 
-        return dominant_periods_days, dominant_freqs, amps_masked[peaks]
+        # Compat: retourner (périodes, fréquences, amplitudes)
+        if hasattr(self, '__dict__'):
+            self._last_fft_meta = result
+            self._last_dates = dates
+        return period_days, f0, A0, result
+
     
     def fft_sensors(self, dates, signals, depths):
         """Compute FFT of each sensor signal.
