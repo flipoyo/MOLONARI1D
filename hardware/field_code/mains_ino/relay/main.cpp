@@ -1,189 +1,117 @@
-//FORMERLY Relay_LoraWan_demo.ino
-/*
-This firmware will be is meant for the LoRa relay in the Molonari system.
+#include <Arduino.h>
+#include <SD.h>
+#include <queue>
 
-Functionalities :
-  - Request measurements from the sensors
-  - Print the measurements on the serial port
-
-In long term, this firmware will be able to :
-  - Send the measurements to the server
-
-Required hardware :
- - Arduino MKR WAN 1310
-*/
-
-// ----- Settings -----
-
-// Define the data-type of a measurement
-#define MEASURE_T double
-
-// Uncomment this line to enable dignostics log on serial about the main loop
-#define DEBUG
-// Uncomment this line to enable diagnostics log on serial for lora operations
-// #define LORA_DEBUG
-
-#ifdef DEBUG
-#define LOG(x) Serial.print(x)
-#define LOG_LN(x) Serial.println(x)
-#else
-#define LOG(x)
-#define LOG_LN(x)
-#endif
-
-// ----- Dependencies -----
-
-#include <MKRWAN.h>
-
+#include "LoRaWan_Molonari.hpp"
 #include "LoRa_Molonari.hpp"
 #include "Waiter.hpp"
+#include "Reader.hpp"
 
-LoRaModem modem;
+
+LoraCommunication lora(config.lora_freq, 0xAA, 0xFF, RoleType::MASTER);
+
+LoraWANCommunication loraWAN;
 std::queue<String> sendingQueue;
-uint8_t MyAddres = 0xaa;
-uint8_t defaultdestination = 0xff;
-uint8_t rotate = 0;
-LoraCommunication lora(868E6, MyAddres, defaultdestination);
-// ----- Main Setup -----
 
-void setup()
-{
-  // Enable the builtin LED during initialisation
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
+unsigned long lastLoraSend = 0;
+unsigned long lastAttempt = 0;
 
-  // Initialise serial
-  Serial.begin(115200);
 
-  // Wait for connection to start
-  while (!Serial)
-  {
-    // Do nothing
-  }
-  LOG_LN("LoRa relay for Molonari system");
-  LOG_LN("See : https://github.com/flipoyo/MOLONARI1D");
-  LOG_LN("");
 
-  // Disable the builtin LED
-  digitalWrite(LED_BUILTIN, LOW);
-}
+// ----- Setup -----
+void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
 
-void PrintQueue(std::queue<String> &receiveQueue)
-{
-  LOG_LN("Session ended. Printing all received data:");
-  while (!receiveQueue.empty())
-  {
-    delay(500);
-    Serial.println(receiveQueue.front()); // Print the front item in the queue
-    receiveQueue.pop();           // Remove item from the queue
-  }
-  LOG_LN("All data printed. Queue is now empty.");
-}
+    Serial.begin(9600);
+    unsigned long end_date = millis() + 5000;
+    while (!Serial && millis() < end_date) {}
 
-bool SendQueue()
-{
+    Serial.println("\n=== Initialisation du Relais Molonari ===");
 
-  LOG_LN("Session ended. Sending to the server all received data:");
-  while (!sendingQueue.empty())
-  {
-    //Serial.print("Sent: ");
-  
+    // Lecture configuration CSV
+    Reader reader;
+    reader.lireConfigCSV("relay_config.csv");
+    Serial.println("Configuration chargée.");
 
-    String payload = sendingQueue.front();
-    int err;
-    int counter = 0;
-    LOG_LN(payload);
-    do
-    {
-      counter++;
-      modem.beginPacket();
-      modem.print(payload);
-      err = modem.endPacket(true);
-      
-      if (err <= 0)
-      {
-        Serial.println("Error in sending !");
-        delay(10000);
-      }
-      if (counter == 6)
-        return false;
-    } while (err <= 0);
-    delay(10000);
-        // Print the front item in the queue
-    sendingQueue.pop(); // Remove item from the queue
-  }
-  LOG_LN("All data sended. Queue is now empty.");
-  return true;
-}
+    // Initialisation LoRa communication
+    lora = LoraCommunication(config.lora_freq, 0xAA, 0xFF, RoleType::MASTER);
 
-// ----- Main loop -----
-
-void loop()
-{
-  Waiter waiter;
-  waiter.startTimer();
-  lora.setdesttodefault();
-  std::queue<String> receiveQueue;
-  lora.startLoRa();
-  if (lora.Handshake(0))
-  {
-    LOG_LN("-----------Handshake done----------");
-    int last = lora.receivePackets(receiveQueue);
-    lora.closeSession(last);
-
-    lora.stopLoRa();
-    LOG_LN("-----------Lora Stop------------");
-    //PrintQueue(receiveQueue);
-    
-     while (!receiveQueue.empty()) {
-        sendingQueue.push(receiveQueue.front());  // Add elements to mainQueue
-        receiveQueue.pop();                    // Remove them from tempQueue
+    // Vérification SD
+    if (!SD.begin(config.CSPin)) {
+        Serial.println("Erreur SD - arrêt système.");
+        while (true) {}
     }
-    
-    //rotate++;
-    //if (rotate == 1)
-    //{
-      rotate = 0;
 
-      while (!SetUpLoRaWAN())
-      {
-        Serial.println("Error in initialization of LoRaWAN");
-        delay(10000);
-      }
-      SendQueue();
-
-      waiter.sleepUntil(60000);
-
-   // }
-  }
+    Serial.println("Initialisation terminée !");
+    pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 }
 
-bool SetUpLoRaWAN()
-{
-  // Enter the appEUI  and appKey from the TTN server
-  String appEui = "0000000000000000"; \\This must be the same value that we put in the server
-  String appKey = "72C5FBBF2AB954D3316A1EE13AA3F141"; \\This value is an example, you should replace it with the appKey of your Server
-  // change this to your regional band (eg. US915, AS923, ...)
-  if (!modem.begin(EU868))
-  {
-    Serial.println("Failed to start module");
-    return false;
-  };
-  int connected = modem.joinOTAA(appEui, appKey);
-  if (!connected)
-  {
-    Serial.println("Something went wrong; are you indoor? Move near a window and retry");
-    return false;
-  }
-  int err;
-  modem.minPollInterval(60);
-  modem.setADR(true);
-  do
-  {
-    modem.beginPacket();
-    modem.print("Start Sending ...");
-    err = modem.endPacket(true);
-    delay(8000);
-  } while (err <= 0);
-  return true;
+// ----- Loop -----
+void loop() {
+    static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
+    Waiter waiter;
+    waiter.startTimer();
+    // Si 3/4 du temps d’intervalle est écoulé depuis la dernière tentative LoRa
+
+    unsigned long currentTime = millis();
+    unsigned long wakeUpDelay = (unsigned long)(config.lora_intervalle_secondes * 0.75 * 1000UL);  // en ms
+    if (currentTime - lastAttempt >= wakeUpDelay) {
+
+        std::queue<String> receiveQueue;
+        lora.startLoRa();
+
+        // Réception des paquets via LoRa
+        uint8_t deviceId = 0;
+        if (lora.handshake(deviceId)) {
+            Serial.println("Handshake réussi. Réception des paquets...");
+            int last = lora.receivePackets(receiveQueue);
+            lora.closeSession(last);
+            lora.stopLoRa();
+
+            // Met à jour le temps de la dernière tentative de réception
+            lastAttempt = millis() / 1000;
+
+            // Transfert vers la queue globale
+            while (!receiveQueue.empty()) {
+                sendingQueue.push(receiveQueue.front());
+                receiveQueue.pop();
+            }
+
+            // Envoi via LoRaWAN si intervalle complet atteint
+            if (currentTime - lastLoraSend >= (unsigned long)config.lora_intervalle_secondes) {
+                if (loraWAN.begin(config.appEui, config.appKey)) {
+                    Serial.print("Envoi de ");
+                    Serial.print(sendingQueue.size());
+                    
+
+                    if (loraWAN.sendQueue(sendingQueue)) {
+                        Serial.println("Tous les paquets ont été envoyés !");
+                    } else {
+                        Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
+                    }
+                } else {
+                    Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
+                }
+                lastLoraSend = currentTime;
+            }
+
+        } else {
+            Serial.println("Handshake échoué, aucune donnée reçue.");
+            lora.stopLoRa();
+
+            // Met quand même à jour lastAttempt pour réessayer après 3/4 du temps
+            lastAttempt = millis() ;
+        }
+
+        Serial.println("Relais en veille jusqu’à la prochaine fenêtre de communication...");
+    }
+
+    // Calcule le temps restant avant le prochain réveil (non bloquant)
+    unsigned long nextWakeUp = wakeUpDelay - (currentTime - lastAttempt);
+    if ((long)nextWakeUp < 0) nextWakeUp = 0; // sécurité si dépassement
+
+    waiter.sleepUntil(nextWakeUp);
 }
+
+

@@ -7,6 +7,13 @@
 // Declare the RTC objects: internal (MKR) and external
 RTCZero internalRtc;
 RTC_PCF8523 externalRtc;
+int measurementCount = 0;
+
+const int MEASURE_INTERVAL_MINUTES = 15; // Interval between measurements
+const int TOTAL_MEASUREMENTS_PER_DAY = 1440 / MEASURE_INTERVAL_MINUTES; // Total measurements in a day
+std::vector<unsigned int> measurementTimesVec (TOTAL_MEASUREMENTS_PER_DAY); 
+
+
 
 // Helper function to convert an integer to a 2-digit string (e.g., 7 -> "07")
 String UIntTo2DigitString(uint8_t x) {
@@ -79,17 +86,13 @@ unsigned long GetSecondsSinceMidnight() {
   return hour * 3600 + minute * 60 + second; // Convert hours and minutes to seconds
 }
 
-// --- Measurement Control ---
-// Handles intervals and timing for periodic measurements throughout the day
-const int MEASURE_INTERVAL_MINUTES = 15; // Interval between measurements
-const int TOTAL_MEASUREMENTS_PER_DAY = 1440 / MEASURE_INTERVAL_MINUTES; // Total measurements in a day
-std::vector<unsigned int> measurementTimes (TOTAL_MEASUREMENTS_PER_DAY); // Store times for each measurement
-int measurementCount = 0;
+
+
 
 // Initialize the array with all the measurement times (in seconds from midnight)
 void InitializeMeasurementTimes() {
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
-    measurementTimes[i] = i * MEASURE_INTERVAL_MINUTES * 60;
+    measurementTimesVec[i] = i * MEASURE_INTERVAL_MINUTES * 60;
   }
 }
 
@@ -100,7 +103,7 @@ void InitializeMeasurementCount() {
   
   // Find the first measurement that hasn't been done yet
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
-    if (currentTime > measurementTimes[i]) {
+    if (currentTime > measurementTimesVec[i]) {
       measurementCount++;
     } else {
       break; // Stop once the current time is less than the next measurement time
@@ -114,14 +117,14 @@ unsigned long CalculateSleepTimeUntilNextMeasurement() {
   
   // Find the next measurement time
   for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
-    if (currentTime < measurementTimes[i]) {
-      unsigned long nextTime = measurementTimes[i];
+    if (currentTime < measurementTimesVec[i]) {
+      unsigned long nextTime = measurementTimesVec[i];
       return (nextTime - currentTime) * 1000; // Convert seconds to milliseconds
     }
   }
   
   // If no measurement is left today, calculate the time until the next day's first measurement
-  unsigned long nextDayFirstTime = measurementTimes[0] + 24 * 3600; // First time of the next day
+  unsigned long nextDayFirstTime = measurementTimesVec[0] + 24 * 3600; // First time of the next day
   return (nextDayFirstTime - currentTime) * 1000;
 }
 

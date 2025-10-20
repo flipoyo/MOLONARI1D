@@ -7,8 +7,10 @@
 #include <RTClib.h>
 
 // Declare the RTC objects: internal (MKR) and external
-RTCZero internalRtc;
-RTC_PCF8523 externalRtc;
+extern RTCZero internalRtc;
+extern RTC_PCF8523 externalRtc;
+extern std::vector<unsigned long> measurementTimes;
+extern int measurementCount;
 
 // Helper function to convert an integer to a 2-digit string (e.g., 7 -> "07")
 String UIntTo2DigitString(uint8_t x);
@@ -29,8 +31,6 @@ unsigned long GetSecondsSinceMidnight();
 // Handles intervals and timing for periodic measurements throughout the day
 extern const int MEASURE_INTERVAL_MINUTES; // Interval between measurements
 extern const int TOTAL_MEASUREMENTS_PER_DAY; // Total measurements in a day
-unsigned int* measurementTimes; // Store times for each measurement
-int measurementCount = 0;
 
 // Initialize the array with all the measurement times (in seconds from midnight)
 void InitializeMeasurementTimes();

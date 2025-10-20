@@ -1,236 +1,127 @@
-//FORMERLY Sensor_demo.ino, philosophically the main_sensor
-
-/*
-This firmware will be is meant for the arduino in the river bed of the Molonari system.
-
-Functionalities :
-  - Making measurements from the temperature and pressure sensors.
-  - Sending the measurements via LoRa
-  - Saving the measurements on an SD card
-
-Required hardware :
- - Arduino MKR WAN 1310
- - Featherwing Adalogger
-*/
-
-
-// ----- Configurations -----
-
-// Define the data-type of a measurement
-#define MEASURE_T double
-// Define the data-type of a measurement
-#define MEASURE_P unsigned short
-// Define a function to parse a measurement (i.e. to convert a string to a MEASURE_T)
-#define TO_MEASURE_T toDouble
-
-// Uncomment this line to enable diagnostics log on serial for lora operations
-#define LORA_DEBUG
-
-// Uncomment this line to enable diagnostics log on serial for SD operations
-#define SD_DEBUG
-
-
-// ----- Imports -----
+#include <queue>
+#include <vector>
 #include <Arduino.h>
+#include <SD.h>
+#include <LoRa.h>
 #include <ArduinoLowPower.h>
 
-#include "LoRa_Molonari.hpp"
-#include "Low_Power.hpp"
-#include "Pressure_Sensor.hpp"
-#include "Temp_Sensor.hpp"
-#include "Time.cpp"
-#include "SD_Initializer.cpp"
+#include "Measure.hpp"
 #include "Writer.hpp"
+#include "LoRa_Molonari.hpp"
+#include "Time.hpp"
 #include "Waiter.hpp"
-// #include "internals/FreeMemory.cpp"
+#include "Reader.hpp"
 
 
-// ----- Main Variables -----
+int LORA_INTERVAL_H = 3;//initialisation par défaut
 
-// --- SD ---
-// The chip select pin of the SD card
-const int CSPin = 5;
-// The SD logger to write measurements into a csv file
+Sensor** sens;
+double *toute_mesure;
+
 Writer logger;
-// The name of the csv file where the measurements will be saved
-const char filename[] = "RECORDS.CSV"; // WARNING Format 8.3, no more than 8 characters on SD FAT32 Files
+const int CSPin = 5;
+const char filename[] = "RECORDS.CSV";
 
-// --- Sensors Set up---
+LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE); // fréquence, adresse locale, adresse distante
+unsigned long lastLoRaSend = 0;
+unsigned long lastSDOffset = 0;
+std::queue<String> sendQueue;
 
-int npressure = 1; //number of pressure sensors
-int ntemp = 5; //number of temperature sensors
 
-// NF 29/4/2025 Adding temperature Shaft in MOLONARI 2025
-PressureSensor **pSens;
-TemperatureSensor **tempSensors;
 
-double *pressure;
-double *temperature;
-
-// ----- Main Setup -----
-
+// ----- Setup -----
 void setup() {
-  // Enable the builtin LED during initialisation
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
 
-  // Initialise Serial
-  Serial.begin(115200);
-  // Wait up to 5 seconds for serial to connect
-  unsigned long end_date = millis() + 5000;
-  while (!Serial && millis() < end_date) {
-    // Do nothing
-  }
+    Serial.begin(115200);
+    unsigned long end_date = millis() + 5000;
+    while (!Serial && millis() < end_date) {}
 
+    // Lecture de la configuration CSV
+    Reader reader;
+    reader.lireConfigCSV("config_sensor.csv");
 
-  // Initialise SD Card
-  Serial.print("Initialising SD card ...");
-  bool success = InitialiseLog(CSPin,npressure,ntemp);
-  if (success) {
-    Serial.println(" Done");
-  } else {
-    Serial.println(" Failed");
-    noInterrupts();
-    while (true) {}
-  }
+    // Compter les capteurs
+    int ncapteur = 0; 
+    for (auto &c : liste_capteurs) {
+        ncapteur++;
+    }
 
-  // Initialise the SD logger
-  Serial.print("Loading log file ...");
-  logger.EstablishConnection(CSPin);
-  Serial.println(" Done");
+    // Allocation dynamique
+    sens = new Sensor*[ncapteur];
+    toute_mesure = new double[ncapteur];
 
-  // Initialise RTC
-  Serial.print("Initialising RTC ...");
-  InitialiseRTC();
-  Serial.println(" Done");
+    // Initialisation des capteurs
+    int it = 0;
+    for (auto &c : liste_capteurs) {
+        sens[it] = new Sensor(c.pin, 1, c.offset, c.scale, c.type);
+        toute_mesure[it] = 0;
+        it++;
+    }
 
-  // Initialise the measurement times
-  Serial.print("Initialising measurement control");
-  InitializeMeasurementTimes();
-  InitializeMeasurementCount();
-  Serial.println(" Done");
+    // Initialisation SD et logger
+    if (!SD.begin(CSPin)) { while(true){} }
+    logger.EstablishConnection(CSPin);
+    InitialiseRTC();
 
-  int nanalogical = 1; //initialise number of analogical sensors to 1;
-  int pin = nanalogical ;
-  // Initialise the pressure sensors
-  Serial.println("Initialising pressure sensors...");
-  pSens = new PressureSensor*[npressure];
-  for (int i = 0; i < npressure; i++) {
-    pin = nanalogical++; // Use the analog pin number directly
-    pSens[i] = new PressureSensor(pin, 1); // Initialize the object
-    Serial.print("Pressure sensor ");
-    Serial.print(nanalogical++);
-    Serial.print("on pin");
-    Serial.print(pin);
-    Serial.println(" initialised.");
-  }
-
-  // Initialise the temperature sensors
-  Serial.println("Initialising temperature sensors...");
-  tempSensors = new TemperatureSensor*[ntemp];
-  for (int i = 0; i < ntemp; i++) {
-    pin = nanalogical++; // Use the analog pin number directly
-    tempSensors[i] = new TemperatureSensor(pin, 1, 0.5277, 101.15); // A2, A3, A4, etc.
-    Serial.print("Temperature sensor ");
-    Serial.print(i +1);
-    Serial.print("on pin");
-    Serial.print(pin);
-    Serial.println(" initialised.");
-  }
-
-  // Allocate memory for pressure and temperature arrays
-  pressure = new double[npressure];
-  temperature = new double[ntemp];
-
-  // Initialize the arrays to 0
-  for (int i = 0; i < npressure; i++) {
-    pressure[i] = 0;
-  }
-  for (int i = 0; i < ntemp; i++) {
-    temperature[i] = 0;
-  }
-
-
-  // Disable the builtin LED
-  pinMode(LED_BUILTIN, INPUT_PULLDOWN);
-
-  Serial.println("Initialisation complete !");
+    pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 }
 
-// ----- Main Loop -----
+// ----- Loop -----
 
 void loop() {
-  // Enable the builtin LED during initialisation
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
-  // Initialise Serial
-  Serial.begin(115200);
-  // Wait up to 5 seconds for serial to connect
-  unsigned long end_date = millis() + 5000;
-  while (!Serial && millis() < end_date) {
-    // Do nothing
-  }
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
 
-  // Initialise SD Card
-  InitialiseLog(CSPin,npressure,ntemp);
-  // Initialise the SD logger
-  logger.EstablishConnection(CSPin);
-  // Initialise RTC
-  InitialiseRTC();
-  // Initialise the measurement times
-  //InitializeMeasurementTimes();
-  //InitializeMeasurementCount();
-  // Disable the builtin LED
-  pinMode(LED_BUILTIN, INPUT_PULLDOWN);
-  Waiter waiter;
-  waiter.startTimer();
+    // --- Prendre mesures ---
+    int ncapt = 0;
+    for (auto &c : liste_capteurs) {
+        toute_mesure[ncapt] = sens[ncapt]->Measure();
+        ncapt++;
+        }
+    
+    // --- Stocker sur SD ---
+    logger.LogData(ncapt, toute_mesure); // LogData est dans writer
 
-  Serial.println("");
-  // Calculate the time to sleep until the next measurement
-  unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
+    // --- Envoyer LoRa si intervalle atteint ---
+    unsigned long current_Time=GetSecondsSinceMidnight();
+    if (current_Time - lastLoRaSend >= LORA_INTERVAL_S) {
+        lora.startLoRa();
 
-  // Count and check that the number of daily measurements has been reached
+        // Lire nouvelles lignes depuis SD
+        File dataFile = SD.open("RECORDS.CSV", FILE_READ);
+        if (dataFile) {
+            dataFile.seek(lastSDOffset);
+            while (dataFile.available()) {
+                String line = dataFile.readStringUntil('\n');
+                if (line.length() > 0) sendQueue.push(line);
+            }
+            unsigned long currentOffset = dataFile.position();
+            dataFile.close();
 
-  if (measurementCount <= TOTAL_MEASUREMENTS_PER_DAY) {
-    Serial.println("——Measurement " + String(measurementCount) + "——");
+            uint8_t shift = 0;
+            if (lora.handshake(shift)) {
+                if (!sendQueue.empty()) {
+                    lora.sendPackets(sendQueue);  // vidée seulement après ACK
+                    lora.closeSession(0);
+                }
+                lastSDOffset = currentOffset; // mise à jour après succès
+            } else {
+                Serial.println("Handshake LoRa échoué, données non envoyées.");
+            }
+        } else {
+            Serial.println("Impossible d'ouvrir RECORDS.CSV");
+        }
 
-    // Perform measurements
-    for(int i = 0; i < npressure; i++) {
-      pressure[i] = pSens[i]->MeasurePressure();
+        lora.stopLoRa();
+        lastLoRaSend = current_Time;
     }
-    for(int i = 0; i < ntemp; i++) {
-      temperature[i]= tempSensors[i]->MeasureTemperature();
-    }
 
-    logger.LogData(npressure,pressure,ntemp,temperature);
-  }
-
-  // If all measurements for the day are complete, transmit data and reset the counter
-  if (measurementCount >= TOTAL_MEASUREMENTS_PER_DAY) {
-    Serial.println("Transmitting data via LoRa...");
-    waiter.delayUntil(300000);
-    Serial.println("Data transmitted. Resetting measurement count.");
-
-    //ENVOIE DES DONNÉES
-  }
-
-  // Test code
-  /*
-  Serial.print("year: ");
-  Serial.println(internalRtc.getYear());
-  Serial.print("Month: "); 
-  Serial.println(internalRtc.getMonth());
-  Serial.print("Day: ");
-  Serial.println(internalRtc.getDay());
-  Serial.print("Hour: "); 
-  Serial.println(internalRtc.getHours());
-  Serial.print("Minute: "); 
-  Serial.println(internalRtc.getMinutes());
-  Serial.print("Second: "); 
-  Serial.println(internalRtc.getSeconds());
-  */
-
-  // Enter low power mode
-  Serial.end();
-  waiter.sleepUntil(sleepTime);
+    // --- Sommeil jusqu'à prochaine mesure ---
+    pinMode(LED_BUILTIN, INPUT_PULLDOWN);
+    Waiter waiter;
+    unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
+    waiter.sleepUntil(sleepTime);
 }
+
