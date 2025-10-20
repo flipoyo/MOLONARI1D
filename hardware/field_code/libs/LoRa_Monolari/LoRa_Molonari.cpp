@@ -65,6 +65,7 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     LoRa.endPacket();
 
     LORA_LOG("Packet sent: "); LORA_LOG_LN(payload);
+
 }
 
 bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload) {

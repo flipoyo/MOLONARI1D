@@ -7,6 +7,6 @@ T4,temperature,A4,0.5195,101.92
 T5,temperature,A5,0.5300,102.00
 
 # Configuration générale
-mesure_frequence_minutes,15
-lora_intervalle_secondes,900 
+intervalle_de_mesure_secondes,900
+intervalle_lora_secondes,3600
 

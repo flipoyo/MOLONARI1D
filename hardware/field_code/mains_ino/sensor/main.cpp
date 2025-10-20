@@ -13,8 +13,6 @@
 #include "Reader.hpp"
 
 
-int LORA_INTERVAL_H = 3;//initialisation par défaut
-
 Sensor** sens;
 double *toute_mesure;
 
@@ -42,6 +40,8 @@ void setup() {
     Reader reader;
     reader.lireConfigCSV("config_sensor.csv");
 
+    
+
     // Compter les capteurs
     int ncapteur = 0; 
     for (auto &c : liste_capteurs) {
@@ -67,6 +67,8 @@ void setup() {
 
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 }
+static bool rattrapage = false;
+
 
 // ----- Loop -----
 
@@ -86,42 +88,72 @@ void loop() {
 
     // --- Envoyer LoRa si intervalle atteint ---
     unsigned long current_Time=GetSecondsSinceMidnight();
-    if (current_Time - lastLoRaSend >= LORA_INTERVAL_S) {
+    int LORA_INTERVAL_S = config.intervalle_lora_secondes;
+    bool IsTimeToLoRa = (current_Time - lastLoRaSend >= LORA_INTERVAL_S);
+
+    
+    
+
+    if (IsTimeToLoRa || rattrapage) {
         lora.startLoRa();
 
         // Lire nouvelles lignes depuis SD
-        File dataFile = SD.open("RECORDS.CSV", FILE_READ);
-        if (dataFile) {
-            dataFile.seek(lastSDOffset);
-            while (dataFile.available()) {
-                String line = dataFile.readStringUntil('\n');
-                if (line.length() > 0) sendQueue.push(line);
-            }
-            unsigned long currentOffset = dataFile.position();
-            dataFile.close();
-
-            uint8_t shift = 0;
-            if (lora.handshake(shift)) {
-                if (!sendQueue.empty()) {
-                    lora.sendPackets(sendQueue);  // vidée seulement après ACK
-                    lora.closeSession(0);
-                }
-                lastSDOffset = currentOffset; // mise à jour après succès
-            } else {
-                Serial.println("Handshake LoRa échoué, données non envoyées.");
-            }
-        } else {
-            Serial.println("Impossible d'ouvrir RECORDS.CSV");
+        File dataFile = SD.open(filename, FILE_READ);
+        if (!dataFile) {
+            Serial.println("Impossible to open data file for LoRa sending");
+            lora.closeSession(0);
+            return;
         }
 
-        lora.stopLoRa();
+        dataFile.seek(lastSDOffset); // position sur la prochaine ligne
+
+        while (dataFile.available()) {
+            // Vérifier le temps restant avant prochaine mesure
+            if (CalculateSleepTimeUntilNextMeasurement() < 60UL) {
+                Serial.println("Not enough time before next measurement, stopping LoRa send");
+                break;
+            }
+
+            std::queue<String> lineToSend;
+            lineToSend.push(dataFile.readStringUntil('\n'));
+            if (lineToSend.front().length() == 0) {
+                rattrapage = false;
+                // Ligne vide → fin de fichier
+                break;
+            }
+
+            // Essayer d'envoyer la ligne jusqu'à 3 fois avec 20 s d'intervalle
+            bool success = false;
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                if (lora.sendPackets(lineToSend)) {
+                    success = true;
+                    break;
+                } else {
+                    Serial.println(attempt);
+                    if (attempt < 3) {
+                        delay(20000); // attendre 20 sec avant de retenter
+                    }
+                }
+            }
+
+            if (success) {
+                lastSDOffset = dataFile.position(); // ligne envoyée → avancer le pointeur
+                Serial.println("Line sent successfully via LoRa");
+            } else {
+                Serial.println("Line failed to send after 3 attempts, stopping LoRa send, retrying later");
+                rattrapage = false;
+                break; // on sort de la boucle pour retenter plus tard
+            }
+        }
+
+        dataFile.close();
+        lora.closeSession(0);
         lastLoRaSend = current_Time;
     }
 
     // --- Sommeil jusqu'à prochaine mesure ---
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     Waiter waiter;
-    unsigned long sleepTime = CalculateSleepTimeUntilNextMeasurement();
-    waiter.sleepUntil(sleepTime);
+    waiter.sleepUntil(CalculateSleepTimeUntilNextMeasurement());
 }
 
