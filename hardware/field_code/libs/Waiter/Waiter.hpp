@@ -3,7 +3,6 @@
 
 #include <queue>
 #include <Arduino.h>
-#include "Low_Power.hpp" 
 #include "Reader.hpp"
 #include "LoRa_Molonari.hpp"
 
