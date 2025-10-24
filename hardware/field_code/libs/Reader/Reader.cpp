@@ -73,7 +73,7 @@ void Reader::lireConfigCSV(const char* NomFichier) {
             if (tokenIdx >= 3) {  
                 SensorConfig c;
                 c.id = tokens[0];
-                c.type = tokens[1];
+                c.type_capteur = tokens[1];
                 if (tokens[2].startsWith("A"))
                     c.pin = tokens[2].substring(1).toInt() + A0;
                 else
@@ -81,6 +81,7 @@ void Reader::lireConfigCSV(const char* NomFichier) {
 
                 c.offset = (tokenIdx > 3) ? tokens[3].toFloat() : 0.0;
                 c.scale  = (tokenIdx > 4) ? tokens[4].toFloat() : 1.0;
+                c.id_capteur = (tokenIdx > 5) ? tokens[5] : "";
                 liste_capteurs.push_back(c);
             }
         }

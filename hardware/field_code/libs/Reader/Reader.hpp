@@ -9,7 +9,8 @@
 // ---- Structures globales ----
 struct SensorConfig {
     String id;
-    String type;
+    String type_capteur;
+    String id_capteur;
     int pin;
     float offset;
     float scale;
