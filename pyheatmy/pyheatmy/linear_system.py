@@ -339,7 +339,8 @@ class H_stratified(Linear_system):
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
-        c -= self.q_s_list
+        #Un q_s positif correspond à une source d'eau  
+        c += self.q_s_list
         return c
 
 
@@ -431,6 +432,8 @@ class T_stratified(Linear_system):
 
         return self.T_res
 
+    #Les 3 prochaines fonctions permettent le calcul de la matrice B qui multiplie le vecteur des températures au temps précedent
+
     def _compute_lower_diagonal(self, j):
         lower_diagonal = (self.ke_list[1:] * self.alpha / self.dz**2) - (
             self.alpha * self.ae_list[1:] / (2 * self.dz)
@@ -443,10 +446,16 @@ class T_stratified(Linear_system):
         return lower_diagonal
 
     def _compute_diagonal(self, j, dt):
-        diagonal = 1 / dt - 2 * self.ke_list * self.alpha / self.dz**2
-        diagonal[0] = 1 / dt - 4 * self.ke_list[0] * self.alpha / self.dz**2
+        #Terme de source d'énergie dû à la source d'eau q_s
+        #On traite le terme source de façon semi implicite pour la cohérence de la résolution
+        #Dans cette matrice, on pondère la contribution explicite par alpha
+        heat_source = (self.q_s_list * RHO_W * C_W ) / self.rho_mc_m_list
+
+        diagonal = 1 / dt - 2 * self.ke_list * self.alpha / self.dz**2 + self.alpha * heat_source
+        diagonal[0] = 1 / dt - 4 * self.ke_list[0] * self.alpha / self.dz**2 + self.alpha * heat_source[0]
         diagonal[-1] = (
             1 / dt - 4 * self.ke_list[self.n_cell - 1] * self.alpha / self.dz**2
+            + self.alpha * heat_source[-1]
         )
         return diagonal
 
@@ -459,6 +468,8 @@ class T_stratified(Linear_system):
             + (2 * self.alpha * self.ae_list[0] / (3 * self.dz)) * self.nablaH[0, j]
         )
         return upper_diagonal
+    
+    #La fonction suivante permet le calcul de vecteur c qui intègre les conditions au bord dans le syhstème matriciel
 
     def _compute_c(self, j):
         c = np.zeros(self.n_cell, np.float32)
@@ -488,11 +499,16 @@ class T_stratified(Linear_system):
         ) * self.T_aq[
             j
         ]
-
-        # c += self.q_s_list[:, j]
         return c
 
+    #La fonction suivante permettent le calcul de la matrice A qui multiplie le vecteur des températures au temps suivant
+
     def _compute_A_diagonals(self, j, dt):
+
+         #Terme de source d'énergie dû à la source d'eau q_s
+        #On traite le terme source de façon semi implicite pour la cohérence de la résolution
+        #Dans cette matrice, on pondère la contribution explicite par (1-alpha)
+        heat_source = (self.q_s_list * RHO_W * C_W ) / self.rho_mc_m_list
 
         lower_diagonal = (
             -(self.ke_list[1:] * (1 - self.alpha) / self.dz**2)
@@ -508,17 +524,17 @@ class T_stratified(Linear_system):
         diagonal = (
             1 / dt
             + 2 * self.ke_list * (1 - self.alpha) / self.dz**2
-            - self.q_s_list / self.rho_mc_m_list
+              - (1 - self.alpha) * heat_source #NOTE : signe négatif car on est de l'autre côté de l'équation
         )
         diagonal[0] = (
             1 / dt
             + 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2
-            - self.q_s_list[0] / self.rho_mc_m_list[0]
+            - (1 - self.alpha) * heat_source[0]
         )
         diagonal[-1] = (
             1 / dt
             + 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
-            - self.q_s_list[-1] / self.rho_mc_m_list[-1]
+            - (1 - self.alpha) * heat_source[-1]
         )
 
         upper_diagonal = (
