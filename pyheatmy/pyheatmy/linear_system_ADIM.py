@@ -16,10 +16,10 @@ from pyheatmy.config import *
 # entre la rivière et l'acquifère sur la durée de l'étude. On les place ici mais il faut les placer dans config.py 
 
 # Paramètres physiques d'adimensionnement :
-DH_0 = 1 # Différence de charge spécifique, UNITE cm ???
+DH_0 = 0.01 # Différence de charge spécifique, (en m) ???
 DT_0 = 10 # Différence de température caractéristique, UNITE °C ???
 L_0 = 0.4 # Hauteur caractéristique de la colonne d'eau (en m)
-P_0 = 24 # Période caractéristique de variation du signal, UNITE ???
+P_0 = 24*3600 # Période caractéristique de variation du signal, (en s)
 
 
 
