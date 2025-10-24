@@ -423,7 +423,8 @@ class frequentiel_analysis:
         # Now estimate a for each period in dominant_periods_days
         a_values = []	# Values of "a" parameter which controls the decrease of the amplitude
         a_R2_values = []	# R^2 values of the linear regression of a.
-
+		# Save in the class the values of amplitudes at peaks for possible later use
+        self._AMPS_AT_PEAKS = amplitudes_at_peaks[:,:] # store for later use if needed
 
         # We'll collect plotting data per period and, if requested, draw them in a single figure
         plot_items = []
@@ -848,7 +849,7 @@ if __name__ == "__main__":
 
     # --- Génération des données synthétiques ---
     # Création du signal multipériodique de la rivière.
-    liste_params_river = [[T_riv_amp, P_T_riv, T_riv_offset], [1, P_T_riv*30, 0]]
+    liste_params_river = [[T_riv_offset], [T_riv_amp, P_T_riv, 0], [1, P_T_riv*30, 0]]
 
     time_series_dict_user1 = {
     "offset":.0,
@@ -856,7 +857,7 @@ if __name__ == "__main__":
 	"param_time_dates": [t_debut, t_fin, dt], 
     "param_dH_signal": [dH_amp, P_dh, dH_offset], #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
 	"param_T_riv_signal":liste_params_river, #list of list for multiperiodic signal
-    "param_T_aq_signal": [T_aq_amp, P_T_aq, T_aq_offset],
+    "param_T_aq_signal": [[T_aq_offset], [T_aq_amp, P_T_aq, 0]],
     "sigma_meas_P": sigma_meas_P,
     "sigma_meas_T": sigma_meas_T, #float
     }
