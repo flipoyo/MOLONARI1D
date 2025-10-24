@@ -11,7 +11,8 @@ hardware/
 ├── sensors/                  # Sensor node implementations
 │   ├── temperature/
 │   ├── pressure/
-│   └── common/
+│   ├── common/
+│   └── calibration/
 ├── relay/                    # Relay station implementations  
 ├── protocols/                # Communication protocol implementations
 │   ├── lora/                 # Local LoRa communication
