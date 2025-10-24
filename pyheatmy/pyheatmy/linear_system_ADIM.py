@@ -545,17 +545,17 @@ class T_stratified(Linear_system):
         
         c[0] = (
             8 * self.alpha / (3 * self.dz_adim**2)
-            - 2 * self.alpha * self.kappa[0] * self.nablaH[0, j+1] / (3 * self.dz_adim)
+            - 2 * self.alpha * self.kappa[0] * self.nablaH_adim[0, j+1] / (3 * self.dz_adim)
         ) * T_riv_adim[j + 1] + (
             8 * (1 - self.alpha) / (3 * self.dz_adim**2)
-            - 2 * (1 - self.alpha) * self.kappa[0] * self.nablaH[0, j] / (3 * self.dz_adim)
+            - 2 * (1 - self.alpha) * self.kappa[0] * self.nablaH_adim[0, j] / (3 * self.dz_adim)
         ) * T_riv_adim[j]
         c[-1] = (
            8 * self.alpha / (3 * self.dz_adim**2)
-            + 2 * self.alpha * self.kappa[-1] * self.nablaH[-1, j+1] / (3 * self.dz_adim)
+            + 2 * self.alpha * self.kappa[-1] * self.nablaH_adim[-1, j+1] / (3 * self.dz_adim)
         ) * T_aq_adim[j + 1] + (
             8 * (1 - self.alpha) / (3 * self.dz_adim**2)
-            + 2 * (1 - self.alpha) * self.kappa[-1] * self.nablaH[-1, j] / (3 * self.dz_adim)
+            + 2 * (1 - self.alpha) * self.kappa[-1] * self.nablaH_adim[-1, j] / (3 * self.dz_adim)
         ) * T_aq_adim[j]
 
         # c += self.heat_source[:, j]
