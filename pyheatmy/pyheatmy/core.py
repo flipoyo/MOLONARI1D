@@ -40,7 +40,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         all_layers: list[Layer] = [], # liste des couches de la colonne
         inter_mode: str = "linear", # mode d'interpolation du profil de température initial : 'lagrange' ou 'linear'
         eps=EPSILON,
-        heat_source=np.ndarray,
+        q_s_list=np.ndarray , #liste des débits spécifiques (.s-1) source pour chaque couche
         nb_cells=NB_CELLS,
         rac="~/OUTPUT_MOLONARI1D/generated_data", #printing directory by default,
         verbose=False
@@ -129,13 +129,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     
     def initialization(self, nb_cells):
         self._nb_cells = nb_cells
-        self.initialize_heat_source()
+        self.initialize_q_s_list()
 
     def initialization_nb_cells(self, nb_cells):
         self._nb_cells = nb_cells
 
-    def initialize_heat_source(self):
-        self._heat_source = np.zeros((self._nb_cells, len(self._times)))
+    def initialize_q_s_list(self):
+        self._q_s_list = np.zeros((self._nb_cells, len(self._times)))
 
     def tests(self):
         # teste que les données sont aux bons formats
@@ -241,11 +241,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10IntrinK, n, lambda_s, rhos_cs, q = layer.params
+            moinslog10IntrinK, n, lambda_s, rhos_cs, q_s = layer.params
             if verbose:
                 print(
                     "--- Compute Solve Transi ---",
-                    f"One layer : moinslog10IntrinK = {moinslog10IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}, q = {q}",
+                    f"One layer : moinslog10IntrinK = {moinslog10IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}, q_s = {q_s}",
                     sep="\n",
                 )
 
@@ -256,12 +256,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             array_moinslog10IntrinK = np.array([moinslog10IntrinK, moinslog10IntrinK])
             # array_K = 10 ** (-array_moinslog10IntrinK * 1.0)
             array_K = (RHO_W * G * 10.0**-array_moinslog10IntrinK) * 1.0 / MU
-            array_q = np.array([q, q])
+            array_q_s = np.array([q_s, q_s])
             array_Ss = np.array([Ss, Ss])
             list_zLow = np.array([0.2])
             inter_cara = np.array([[nb_cells // 2, 0]])
             z_solve = self._z_solve.copy()
-            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_list = (
+            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_s_list = (
                 getListParameters(layersList, nb_cells)
             )
             Ss_list = n_list / heigth
@@ -275,7 +275,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 lambda_s_list,
                 rhos_cs_list,
                 all_dt,
-                q_list,
+                q_s_list,
                 dz,
                 H_init,
                 H_riv,
@@ -301,7 +301,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 lambda_s_list,
                 rhos_cs_list,
                 all_dt,
-                q_list,
+                q_s_list,
                 dz,
                 H_init,
                 H_riv,
@@ -369,7 +369,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_list = getListParameters(
+            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_s_list = getListParameters(
                 layersList, nb_cells)
         
             array_moinslog10IntrinK = np.array([float(layer.params.moinslog10IntrinK) for layer in self.all_layers])
@@ -522,7 +522,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 lambda_s_list,
                 rhos_cs_list,
                 all_dt,
-                q_list,
+                q_s_list,
                 dz,
                 H_init,
                 H_riv,
@@ -541,7 +541,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             self._H_res = H_res  # stocke les résultats
 
             # ###
-            # H_res = HTK_stratified(a,Ss_list,moinslog10IntrinK_list,n_list,lambda_s_list,rhos_cs_list,all_dt,dz,H_init,H_riv,H_aq,T_init,T_riv,T_aq,array_K,array_Ss,list_zLow,z_solve,inter_cara,isdtconstant,heatsource,alpha=ALPHA,N_update_Mu=N_UPDATE_MU,).compute_HTK_stratified()
+            # H_res = HTK_stratified(a,Ss_list,moinslog10IntrinK_list,n_list,lambda_s_list,rhos_cs_list,all_dt,dz,H_init,H_riv,H_aq,T_init,T_riv,T_aq,array_K,array_Ss,list_zLow,z_solve,inter_cara,isdtconstant,q_s_list,alpha=ALPHA,N_update_Mu=N_UPDATE_MU,).compute_HTK_stratified()
             # ###
 
             # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
@@ -625,7 +625,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 lambda_s_list,
                 rhos_cs_list,
                 all_dt,
-                q_list,
+                q_s_list,
                 dz,
                 H_init,
                 H_riv,
@@ -1385,11 +1385,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_rhos_cs = property(get_all_rhos_cs)
 
-    def get_all_q(self):
-        # retourne toutes les valeurs de q (q : flux latéral) par lesquelles est passé la MCMC
-        return [[layer.params.q for layer in state.layers] for state in self._states]
+    def get_all_q_s(self):
+        # retourne toutes les valeurs de q_s (q_s : débit spécifique de source en s-1) par lesquelles est passé la MCMC
+        return [[layer.params.q_s for layer in state.layers] for state in self._states]
 
-    all_q = property(get_all_q)
+    all_q_s = property(get_all_q_s)
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @compute_mcmc.needed
@@ -1634,11 +1634,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 self._T_measures[:, i] - zeroT,
                 label="Measurement",
             )
-            for q in self.get_quantiles():
+            for q_s in self.get_quantiles():
                 axes[i].plot(
                     temps_en_jours,
-                    self.get_temperatures_quantile(q)[id] - zeroT,
-                    label=f"Quantile {q}",
+                    self.get_temperatures_quantile(q_s)[id] - zeroT,
+                    label=f"Quantile {q_s}",
                 )
             axes[i].legend()
             axes[i].set_title(f"Sensor {i+1}")
@@ -1855,7 +1855,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             axes[id_l, 3].hist(layer_distribs[::, 3])
             axes[id_l, 3].set_title(f"Couche {id_l + 1} : rhos_cs")
             axes[id_l, 4].hist(layer_distribs[::, 4])
-            axes[id_l, 4].set_title(f"Couche {id_l + 1} : q")
+            axes[id_l, 4].set_title(f"Couche {id_l + 1} : q_s")
 
     @compute_mcmc.needed
     def plot_darcy_flow_quantile(self):
@@ -1868,14 +1868,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         # Store the image objects to use for the color bar
         im_list = []
-        for i, q in enumerate(self.get_quantiles()):
+        for i, q_s in enumerate(self.get_quantiles()):
             im = axes[i].imshow(
-                self.get_flows_quantile(q),
+                self.get_flows_quantile(q_s),
                 aspect="auto",
                 cmap="Spectral_r",
                 extent=[0, temps_en_jours[-1], self._real_z[-1], self._real_z[0]],
             )
-            axes[i].set_title(f"Darcy flow quantile : {100*q} %")
+            axes[i].set_title(f"Darcy flow quantile : {100*q_s} %")
             axes[i].set_xlabel("Time in days)")
             im_list.append(im)
 
@@ -1995,7 +1995,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     # Function updating the parameters of the different layers of the column with the sampled values from the priors
         
         for layer in self.all_layers:
-            layer.params = Param(layer.Prior_moinslog10IntrinK.sample(), layer.Prior_n.sample(), layer.Prior_lambda_s.sample(), layer.Prior_rhos_cs.sample(), layer.Prior_q.sample())
+            layer.params = Param(layer.Prior_moinslog10IntrinK.sample(), layer.Prior_n.sample(), layer.Prior_lambda_s.sample(), layer.Prior_rhos_cs.sample(), layer.Prior_q_s.sample())
 
     def get_list_current_params(self):
         return [layer.params for layer in self.all_layers]
@@ -2010,7 +2010,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 layer.Prior_n.perturb(layer.params.n),
                 layer.Prior_lambda_s.perturb(layer.params.lambda_s),
                 layer.Prior_rhos_cs.perturb(layer.params.rhos_cs),
-                layer.Prior_q.perturb(layer.params.q)
+                layer.Prior_q_s.perturb(layer.params.q_s)
             )
 
 def compute_energy(temp_simul, temp_ref, sigma2, sigma2_distrib):

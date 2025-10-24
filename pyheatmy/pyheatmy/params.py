@@ -6,7 +6,7 @@ from numpy import inf
 from typing import Callable, Sequence
 from pyheatmy.config import *
 
-PARAM_LIST = ["moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q"]
+PARAM_LIST = ["moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q_s"]
 
 Param = namedtuple("Param", PARAM_LIST)
 
@@ -48,7 +48,7 @@ class Prior:
         "n": ((0.01, 0.25), 0.01),
         "lambda_s": ((1, 5), 0.1),
         "rhos_cs": ((1e6, 1e7), 1e5),
-        "q": ((0, 1), 1e2)
+        "q_s": ((0, 1), 1e2)
     }
 
     #priors1 = ParamsPriors(

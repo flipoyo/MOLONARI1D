@@ -571,7 +571,7 @@ if __name__ == "__main__":
         "n": 0.1,
         "lambda_s": 1,
         "rhos_cs": 4e6,
-        "q": 1e-20,
+        "q_s": 1e-20,
     }
 
     # modèle une couche
