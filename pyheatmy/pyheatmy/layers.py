@@ -19,24 +19,24 @@ class Layer:
         n: float = N_DEFAULT,
         lambda_s: float = LAMBDA_S_DEFAULT,
         rhos_cs: float = RHOS_CS_DEFAULT,
-        q: float = Q_DEFAULT,
+        q_s: float = Q_S_DEFAULT,
         Prior_moinslog10IntrinK: Prior = None, # Prior sur moinslog10IntrinK, c'est un tuple ex: (range=(9, 15), sigma= 0.1)
         Prior_n: Prior = None,
         Prior_lambda_s: Prior = None,
         Prior_rhos_cs: Prior = None,
-        Prior_q: Prior = None,
+        Prior_q_s: Prior = None,
     ):
         # Voir si tout ça ne peut pas être simplifié avec un @dataclass
 
         self.name = name
         self.zLow = zLow
-        self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs, q)
+        self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs, q_s)
         self.Prior_moinslog10IntrinK = Prior_moinslog10IntrinK
         self.Prior_n = Prior_n
         self.Prior_lambda_s = Prior_lambda_s
         self.Prior_rhos_cs = Prior_rhos_cs
-        self.Prior_q = Prior_q
-        self.Prior_list = [Prior_moinslog10IntrinK, Prior_n, Prior_lambda_s, Prior_rhos_cs, Prior_q]
+        self.Prior_q_s = Prior_q_s
+        self.Prior_list = [Prior_moinslog10IntrinK, Prior_n, Prior_lambda_s, Prior_rhos_cs, Prior_q_s]
 
 
     def sample(self):
@@ -61,8 +61,8 @@ class Layer:
         self.Prior_n = Prior(*priors_dict['Prior_n'])
         self.Prior_lambda_s = Prior(*priors_dict['Prior_lambda_s'])
         self.Prior_rhos_cs = Prior(*priors_dict['Prior_rhos_cs'])
-        self.Prior_q = Prior(*priors_dict['Prior_q'])
-        self.Prior_list = [self.Prior_moinslog10IntrinK, self.Prior_n, self.Prior_lambda_s, self.Prior_rhos_cs, self.Prior_q]
+        self.Prior_q_s = Prior(*priors_dict['Prior_q_s'])
+        self.Prior_list = [self.Prior_moinslog10IntrinK, self.Prior_n, self.Prior_lambda_s, self.Prior_rhos_cs, self.Prior_q_s]
     
     @classmethod
     def from_dict(cls, monolayer_dict):
@@ -81,7 +81,7 @@ def getListParameters(layersList, nbCells: int):
             layer.params.n,
             layer.params.lambda_s,
             layer.params.rhos_cs,
-            layer.params.q,
+            layer.params.q_s,
         ]
         zLow_prev = layer.zLow
     return (
@@ -103,7 +103,7 @@ def layersListCreator(layers_spec):
       If an element is a sequence, it is passed to Layer(*sequence).
 
     Expected tuple order (compatible with existing calls):
-      (name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs[, q])
+      (name, zLow, moinslog10IntrinK, n, lambda_s, rhos_cs[, q_s])
 
     Returns:
       list of Layer

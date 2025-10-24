@@ -107,7 +107,7 @@ class H_stratified(Linear_system):
         lambda_s_list,
         rhos_cs_list,
         all_dt,
-        q_list,
+        q_s_list,
         dz,
         H_init,
         H_riv,
@@ -147,7 +147,7 @@ class H_stratified(Linear_system):
         self.H_riv = H_riv
         self.H_aq = H_aq
         self.alpha = alpha
-        self.heat_source = q_list
+        self.q_s_list = q_s_list
 
     def compute_H_stratified(self):
         if self.isdtconstant.all():
@@ -339,7 +339,7 @@ class H_stratified(Linear_system):
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
-        c -= self.heat_source
+        c -= self.q_s_list
         return c
 
 
@@ -354,7 +354,7 @@ class T_stratified(Linear_system):
         lambda_s_list,
         rhos_cs_list,
         all_dt,
-        q_list,
+        q_s_list,
         dz,
         H_init,
         H_riv,
@@ -389,7 +389,7 @@ class T_stratified(Linear_system):
         self.T_aq = T_aq
         self.alpha = alpha
         self.N_update_Mu = N_update_Mu
-        self.heat_source = q_list
+        self.q_s_list = q_s_list
 
     def compute_T_stratified(self):
         self.T_res = np.zeros((self.n_cell, self.n_times), np.float32)
@@ -489,7 +489,7 @@ class T_stratified(Linear_system):
             j
         ]
 
-        # c += self.heat_source[:, j]
+        # c += self.q_s_list[:, j]
         return c
 
     def _compute_A_diagonals(self, j, dt):
@@ -508,17 +508,17 @@ class T_stratified(Linear_system):
         diagonal = (
             1 / dt
             + 2 * self.ke_list * (1 - self.alpha) / self.dz**2
-            - self.heat_source / self.rho_mc_m_list
+            - self.q_s_list / self.rho_mc_m_list
         )
         diagonal[0] = (
             1 / dt
             + 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2
-            - self.heat_source[0] / self.rho_mc_m_list[0]
+            - self.q_s_list[0] / self.rho_mc_m_list[0]
         )
         diagonal[-1] = (
             1 / dt
             + 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
-            - self.heat_source[-1] / self.rho_mc_m_list[-1]
+            - self.q_s_list[-1] / self.rho_mc_m_list[-1]
         )
 
         upper_diagonal = (
@@ -567,7 +567,7 @@ class HTK_stratified(Linear_system):
         H_init,
         H_riv,
         H_aq,
-        heatsource,
+        q_s_list,
         alpha=ALPHA,
     ):
         super().__init__(
@@ -599,7 +599,7 @@ class HTK_stratified(Linear_system):
         self.H_riv = H_riv
         self.H_aq = H_aq
         self.alpha = alpha
-        self.heat_source = heatsource
+        self.q_s_list = q_s_list
         self.compute_HTK_stratified()
 
     def compute_HTK_stratified(self):
@@ -779,7 +779,7 @@ class HTK_stratified(Linear_system):
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
             (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
         )
-        # c += self.heat_source[:, j]
+        # c += self.q_s_list[:, j]
         return c
 
 
