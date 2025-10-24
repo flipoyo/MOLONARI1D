@@ -1,62 +1,47 @@
 # MOLONARI Hardware Programming
 
-This directory contains all hardware-related code and documentation for the MOLONARI ecosystem, organized for efficient collaboration between hardware developers, protocol engineers, and system integrators.
+This directory contains all hardware-related documentation and code for the MOLONARI1D sensors network, organized for efficient collaboration between hardware developers, protocol engineers, and system integrators.
 
-## Integration with Device/ Structure
-
-This `hardware/` directory provides a reorganized, team-oriented view of the hardware components found in the original `Device/` structure:
-
-- **hardware/** ↔ **Device/hardwareProgramming/** - Organized firmware development  
-- **hardware/docs/** ↔ **Device/hardwareProgramming/Documentation/** - Consolidated documentation
-- **hardware/deployment/** ↔ **Device/installationSystem/** - Field deployment guides
-- **hardware/shared/** - Replaces duplicated `internals/` directories across projects
-
-This reorganization maintains backward compatibility while improving development workflows and reducing code duplication.
+If you want to build a MOLONARI1D device, you can dive directly into the `docs/` folder.
 
 ## Directory Structure
 
 ```
 hardware/
-├── sensors/                    # Sensor node implementations
-│   ├── temperature/           # Temperature monitoring sensors
-│   │   └── Sensor/           # Main temperature sensor code
-│   ├── pressure/             # Pressure monitoring sensors (future)
-│   ├── demo/                 # Demonstration and testing sensors
-│   └── common/               # Common sensor utilities
+├── sensors/                  # Sensor node implementations
+│   ├── temperature/
+│   ├── pressure/
+│   └── common/
 ├── relay/                    # Relay station implementations  
-│   └── Relay/               # Main relay station code
 ├── protocols/                # Communication protocol implementations
-│   ├── lora/                # Local LoRa communication
-│   └── lorawan/             # Wide-area LoRaWAN communication
+│   ├── lora/                 # Local LoRa communication
+│   └── lorawan/              # Wide-area LoRaWAN communication
 ├── shared/                   # Shared libraries and utilities
-│   ├── Lora.hpp/cpp         # LoRa communication classes
-│   ├── Temp_Sensor.hpp/cpp  # Temperature sensor drivers
-│   ├── Pressure_Sensor.hpp  # Pressure sensor drivers
-│   ├── Writer.hpp/cpp       # SD card data logging
-│   ├── Low_Power.hpp/cpp    # Power management
-│   └── ...                  # Other shared components
+│   ├── Lora.hpp/cpp
+│   ├── Temp_Sensor.hpp/cpp
+│   ├── Pressure_Sensor.hpp
+│   ├── Writer.hpp/cpp
+│   ├── Low_Power.hpp/cpp
+│   └── ...
 ├── tests/                    # Hardware testing and validation
-│   ├── testArduinoLoRaWAN/  # LoRaWAN connectivity tests
-│   ├── testArduinoLowPower/ # Power consumption tests
-│   ├── Sender/              # LoRa sender test
-│   ├── Receiver/            # LoRa receiver test
-│   └── ...                  # Other test programs
 ├── docs/                     # Hardware documentation
-│   ├── 1 - Installation guide_ENG.md
-│   ├── 3 - Sensor's hardware-ENG.md
-│   ├── 4 - Our LoRa protocol_ENG.md
-│   └── 5 - Gateway and server configurations.md
-├── deployment/               # Installation and deployment guides
-├── archived/                 # Historical code and contributions
-│   ├── Archive_2022/        # 2022 student contributions
-│   └── Archive_2023/        # 2023 student contributions
-└── README.md                # This file
+│   ├── 1 - Setup             # A complete guide to build a sensor
+│   ├── 2 - Sensor code       # Explaining the sensor's code
+│   ├── 3 - Sensor hardware   # Deep-diving into technical considerations
+│   ├── 4 - Our LoRa protocol # Explaning the LoRa protocol
+│   ├── 5 - Gateway and server configurations
+│   ├── 6 - LoRaWAN           # Using the server
+|   ├── deployment/           # Installation and deployment guides
+|   └── specs/                # Hardware specifications
+├── demo/                     # Demonstration and testing sensors
+└── archived/                 # Historical code and contributions
 ```
 
 ## Quick Start
 
 ### Prerequisites
 
+- Having read and followed the **INSTALL.md** guide
 - **Arduino IDE** 2.x or **Arduino CLI**
 - **Arduino MKR WAN 1310** boards
 - Required libraries:
@@ -70,14 +55,7 @@ hardware/
 
 ### Installation
 
-1. **Install Arduino IDE** and required libraries
-2. **Clone the repository**:
-   ```bash
-   git clone --depth=1 https://github.com/flipoyo/MOLONARI1D.git
-   cd MOLONARI1D/hardware
-   ```
-
-3. **Compile and upload** sensor code:
+1. **Compile and upload** sensor code:
    ```bash
    cd sensors/temperature/Sensor
    # Open Sensor.ino in Arduino IDE or use Arduino CLI:
@@ -85,7 +63,7 @@ hardware/
    arduino-cli upload --fqbn arduino:samd:mkrwan1310 Sensor.ino --port /dev/ttyACM0
    ```
 
-4. **Compile and upload** relay code:
+2. **Compile and upload** relay code:
    ```bash
    cd relay/Relay
    arduino-cli compile --fqbn arduino:samd:mkrwan1310 Relay.ino
@@ -102,9 +80,9 @@ arduino-cli compile --fqbn arduino:samd:mkrwan1310 testArduinoLoRaWAN.ino
 
 ## Component Overview
 
-### Sensor Nodes
+### 🔍 Sensor Nodes
 
-**Temperature Sensors** (`sensors/temperature/`):
+#### Temperature Sensors (`sensors/temperature/`):
 - **Purpose**: Underwater temperature monitoring with 15-minute intervals
 - **Hardware**: Arduino MKR WAN 1310 + DS18B20 sensors + SD card
 - **Features**: 
@@ -113,11 +91,11 @@ arduino-cli compile --fqbn arduino:samd:mkrwan1310 testArduinoLoRaWAN.ino
   - Daily LoRa transmission to relay
   - Automatic retry mechanism (up to 6 attempts)
 
-**Demo Sensors** (`sensors/demo/`):
+#### Demo Sensors (`sensors/demo/`):
 - Simplified versions for testing and presentations
 - Reduced functionality for rapid prototyping
 
-### Relay Stations
+### 🛜 Relay Stations
 
 **Main Relay** (`relay/Relay/`):
 - **Purpose**: Aggregate data from multiple sensor nodes
@@ -126,7 +104,7 @@ arduino-cli compile --fqbn arduino:samd:mkrwan1310 testArduinoLoRaWAN.ino
   - Forwards to gateway via LoRaWAN
 - **Coverage**: Up to 10 sensors per relay, 1km range
 
-### Shared Libraries
+### 🔗 Shared Libraries
 
 The `shared/` directory contains common code used across all hardware components:
 
@@ -136,15 +114,15 @@ The `shared/` directory contains common code used across all hardware components
 - **`Low_Power.hpp`**: Power management and sleep modes
 - **`Waiter.hpp`**: Timing and scheduling utilities
 
-### Communication Protocols
+### 🗣️ Communication Protocols
 
-**Custom LoRa Protocol** (sensor ↔ relay):
+#### Custom LoRa Protocol (sensor ↔ relay):
 - Three-way handshake: SYN → ACK → DATA → FIN
 - Scheduled transmission windows (daily at 23:45 for temperature)
 - Retry mechanism with exponential backoff
 - Tree topology support for scalability
 
-**LoRaWAN Protocol** (relay ↔ gateway):
+#### LoRaWAN Protocol (relay ↔ gateway):
 - Standard LoRaWAN implementation
 - Wide-area coverage (kilometers)
 - Internet connectivity via gateway
@@ -318,3 +296,14 @@ The hardware codebase includes CI/CD workflows:
 - **Energy Harvesting**: Solar and thermal energy collection
 - **Data Compression**: Reduced transmission bandwidth
 - **Fault Tolerance**: Redundant communication pathways
+
+## Integration with Device/ Structure
+
+This `hardware/` directory provides a reorganized, team-oriented view of the hardware components found in the original `Device/` structure:
+
+- **hardware/** ↔ **Device/hardwareProgramming/** - Organized firmware development  
+- **hardware/docs/** ↔ **Device/hardwareProgramming/Documentation/** - Consolidated documentation
+- **hardware/deployment/** ↔ **Device/installationSystem/** - Field deployment guides
+- **hardware/shared/** - Replaces duplicated `internals/` directories across projects
+
+This reorganization maintains backward compatibility while improving development workflows and reducing code duplication.
