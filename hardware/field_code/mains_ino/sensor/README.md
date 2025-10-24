@@ -1,100 +1,241 @@
-# Sensor Demo - River Bed Monitoring System
+ Sensor - River Bed Monitoring System
 
-This is the demonstration firmware for the Arduino-based river bed sensors in the MOLONARI1D environmental monitoring system.
+This firmware is part of the **MOLONARI1D** project, designed for **river bed monitoring** through **temperature** and **pressure sensors** connected to an **Arduino MKR WAN 1310**.  
+It combines **LoRa transmission**, **SD card logging**, and **low-power management** for long-term autonomous operation.
+
+---
 
 ## Overview
 
-This firmware demonstrates the complete sensor functionality including temperature and pressure measurements, LoRa transmission, and local data storage for underwater deployment scenarios.
+This demonstration code showcases the full sensor workflow — from measurement to data transmission — in realistic field-like conditions.  
+It allows developers to test, calibrate, and validate the MOLONARI sensor nodes before underwater deployment.
+
+---
 
 ## Hardware Requirements
 
-- **Arduino MKR WAN 1310** - Main microcontroller with LoRa capabilities
-- **Featherwing Adalogger** - SD card storage for local data backup
-- **Temperature sensors** - DS18B20 or similar waterproof sensors
-- **Pressure sensors** - Differential pressure measurement devices
-- **LoRa antenna** - For communication with relay stations
+| Component | Description |
+|------------|-------------|
+| **Arduino MKR WAN 1310** | Main microcontroller (LoRa compatible) |
+| **Featherwing Adalogger** | SD card module for data backup |
+| **Temperature sensors** | DS18B20 or equivalent (waterproof) |
+| **Pressure sensors** | Differential pressure sensors |
+| **LoRa antenna** | For communication with relay stations |
+
+---
 
 ## Functionalities
 
-### Core Features
-- **Temperature Measurements**: Multi-sensor support with high precision
-- **Pressure Measurements**: Differential pressure for water level monitoring
-- **LoRa Communication**: Wireless transmission to relay stations
-- **SD Card Logging**: Local storage backup with CSV format
-- **Power Management**: Low-power sleep modes for extended battery life
+- Multi-sensor **temperature** and **pressure** acquisition  
+- **Local SD logging** in CSV format  
+- **LoRa transmission** with retry and acknowledgment  
+- **Power-efficient sleep** between measurements  
+- **Catch-up mechanism** in case of LoRa communication loss  
 
-### Data Flow
-1. **Sensor Reading**: Periodic measurements every 15 minutes
-2. **Local Storage**: Immediate storage to SD card with timestamps
-3. **LoRa Transmission**: Daily data upload to relay station
-4. **Power Management**: Deep sleep between measurement cycles
 
-## Configuration Options
+---
 
-### Debug Settings
+## Configuration
+
+- Enables setting the type and position of each sensor connected to the Arduino. 
+- Enables setting the interval between measurements.
+- Enables setting the interval between sending throught LoRa.
+
+## Code Explanation
+
+### 1. Included Libraries
+
 ```cpp
-#define LORA_DEBUG      // Enable LoRa operation diagnostics
-#define SD_DEBUG        // Enable SD card operation diagnostics
+#include <queue>
+#include <vector>
+#include <Arduino.h>
+#include <SD.h>
+#include <LoRa.h>
+#include <ArduinoLowPower.h>
 ```
 
-### Data Types
+These are the **core libraries** for Arduino, SD card management, LoRa communication, and low-power functions.  
+Custom headers (`Measure.hpp`, `Writer.hpp`, etc.) provide project-specific logic.
+
+---
+
+### 2. Global Variables
+
 ```cpp
-#define MEASURE_T double          // Temperature measurement precision
-#define MEASURE_P unsigned short  // Pressure measurement type
+Sensor** sens;
+double *toute_mesure;
+Writer logger;
+const int CSPin = 5;
+const char filename[] = "RECORDS.CSV";
+LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE);
 ```
 
-## Communication Protocol
+| Variable | Role |
+|-----------|------|
+| `sens` | Array of sensor pointers (temperature/pressure) |
+| `toute_mesure` | Stores the most recent measurement values |
+| `logger` | Handles SD card writing |
+| `CSPin` | Chip Select pin for SD card |
+| `lora` | Manages LoRa communication on **868 MHz** as a **slave node** |
 
-- **Custom LoRa Protocol**: Three-way handshake for reliable transmission
-- **Retry Mechanism**: Up to 6 attempts with exponential backoff
-- **Data Validation**: Checksums and acknowledgment confirmation
+---
 
-## Power Consumption
+### 3. `setup()` — Initialization Phase
 
-- **Active Measurement**: ~50mA for 30 seconds every 15 minutes
-- **LoRa Transmission**: ~120mA for 5 seconds daily
-- **Deep Sleep**: <0.1mA continuous
-- **Expected Battery Life**: 8-12 months on 5000mAh Li-ion
-
-## Installation
-
-1. Install required Arduino libraries:
-   - LoRa
-   - RTCZero
-   - SD
-   - OneWire
-   - DallasTemperature
-   - ArduinoLowPower
-
-2. Configure sensor parameters in the code
-3. Upload firmware to Arduino MKR WAN 1310
-4. Deploy in waterproof enclosure with external sensors
-
-## File Structure
-
+```cpp
+void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
+    Serial.begin(115200);
 ```
-Sensor_demo/
-├── Sensor_demo.ino          # Main firmware file
-└── internals/               # Shared library components
-    ├── Lora.hpp             # LoRa communication
-    ├── Temp_Sensor.hpp      # Temperature sensing
-    ├── Pressure_Sensor.hpp  # Pressure sensing
-    ├── Low_Power.cpp        # Power management
-    ├── Time.cpp             # RTC operations
-    ├── SD_Initializer.cpp   # SD card setup
-    ├── Writer.hpp           # Data logging
-    └── Waiter.hpp           # Timing control
+- Turns on the LED during initialization.  
+- Starts serial communication for debugging.
+
+#### Configuration File Reading
+
+```cpp
+Reader reader;
+reader.lireConfigCSV("config_sensor.csv");
+```
+Reads configuration file (`config_sensor.csv`) that defines:
+- Number and type of sensors  
+- Pin assignments  
+- Calibration parameters (offset, scale)
+
+#### Sensor Allocation
+
+```cpp
+sens = new Sensor*[ncapteur];
+toute_mesure = new double[ncapteur];
+```
+Allocates memory for each sensor and its measurements.
+
+#### SD and RTC Initialization
+
+```cpp
+SD.begin(CSPin);
+logger.EstablishConnection(CSPin);
+InitialiseRTC();
+```
+Initializes SD card logging and the real-time clock.  
+Finally, the LED is turned off to save power.
+
+---
+
+### 4. `loop()` — Measurement and Transmission Cycle
+
+Each loop iteration corresponds to one **measurement cycle**.
+
+#### a. Sensor Measurements
+
+```cpp
+for (auto &c : liste_capteurs) {
+    toute_mesure[ncapt] = sens[ncapt]->Measure();
+}
+```
+All sensors take their measurements and store the results in `toute_mesure`.
+
+#### b. Store on SD Card
+
+```cpp
+logger.LogData(ncapt, toute_mesure);
+```
+Writes all current measurements to `RECORDS.CSV` with timestamps and CSV formatting.
+
+#### c. LoRa Transmission
+
+```cpp
+unsigned long current_Time = GetSecondsSinceMidnight();
+int LORA_INTERVAL_S = config.intervalle_lora_secondes;
+bool IsTimeToLoRa = (current_Time - lastLoRaSend >= LORA_INTERVAL_S);
+```
+If the LoRa interval has elapsed or if **catch-up mode** (`rattrapage`) is active, the node attempts transmission.
+
+```cpp
+lora.startLoRa();
+File dataFile = SD.open(filename, FILE_READ);
+dataFile.seek(lastSDOffset);
+```
+The node resumes transmission from the last saved offset.  
+Each line is sent up to **3 times**, with **20-second** delays if unsuccessful:
+
+```cpp
+for (int attempt = 1; attempt <= 3; attempt++) {
+    if (lora.sendPackets(lineToSend)) {
+        success = true;
+        break;
+    } else {
+        delay(20000);
+    }
+}
 ```
 
-## Usage
+If successful, the file offset is updated; otherwise, LoRa stops and retries later.
 
-This demo showcases the complete sensor functionality for evaluation and testing before field deployment. The code demonstrates best practices for:
+#### d. Deep Sleep Mode
 
-- Sensor calibration and validation
-- Power-efficient measurement cycles
-- Reliable wireless communication
-- Data integrity and storage
-- Environmental monitoring protocols
+```cpp
+waiter.sleepUntil(CalculateSleepTimeUntilNextMeasurement());
+```
+The node enters deep sleep until the next scheduled measurement, minimizing power usage.
+
+---
+
+## LoRa Communication Protocol
+
+- **Custom packet structure**: header, payload, checksum  
+- **Acknowledgment-based reliability**  
+- **Retry/timeout mechanism** (up to 3 attempts per packet)  
+- **Role system** (`MASTER` / `SLAVE`) for two-way communication  
+
+---
+
+## Power Management
+
+- LED disabled outside initialization  
+- Uses `ArduinoLowPower` for deep sleep  
+- Active only during:
+  - Sensor measurement  
+  - SD write  
+  - LoRa transmission  
+
+| Mode | Current | Duration | Frequency | Description |
+|------|----------|-----------|------------|--------------|
+| **Active Measurement** | ~50 mA | 30 s | Every 15 min | Sensor reading |
+| **LoRa Transmission** | ~120 mA | 5 s | Once per day | Data upload |
+| **Deep Sleep** | <0.1 mA | Continuous | — | Standby mode |
+
+**Estimated battery life:** 8–12 months (5000 mAh Li-ion)
+
+---
+
+## Testing & Deployment
+
+1. Connect Arduino MKR WAN 1310 with sensors and SD module.  
+2. Upload the firmware via Arduino IDE.  
+3. Open Serial Monitor (`115200 baud`) to check logs.  
+4. Inspect `RECORDS.CSV` on the SD card.  
+5. Deploy the node in a waterproof case.
+
+---
+
+## Developer Notes
+
+- The modular structure (`internals/`) allows independent testing of each subsystem.  
+- Future extensions can include:
+  - New sensor types (pH, turbidity, conductivity)  
+  - Adaptive transmission intervals based on water level  
+  - Encryption layer for LoRa packets  
+
+---
+
+## Summary
+
+This firmware demonstrates a **complete autonomous monitoring cycle**:
+- Modular architecture  
+- Reliable data handling and recovery  
+- Power-efficient design  
+- Ready for long-term field deployment in environmental monitoring
 
 ## Related Documentation
 
