@@ -515,7 +515,7 @@ class T_stratified(Linear_system):
         lower_diagonal[:] = ((1 - self.alpha) / self.dz_adim**2) - (
             (1 - self.alpha) * self.kappa[1:] / (2 * self.dz_adim)
         ) * self.nablaH_adim[1:, j]
-        lower_diagonal[-1] = (4 *(1 - self.alpha) / self.dz_adim**2 /3) + (
+        lower_diagonal[-1] = (4 *(1 - self.alpha) / (3*self.dz_adim**2)) + (
             (1 - self.alpha) * 2 *self.kappa[-1] / (3 * self.dz_adim)
         ) * self.nablaH_adim[-1, j]
         return lower_diagonal
@@ -532,9 +532,9 @@ class T_stratified(Linear_system):
         upper_diagonal[:] = ((1 - self.alpha) / self.dz_adim**2) + (
             (1 - self.alpha) * self.kappa[:-1] / (2 * self.dz_adim)
         ) * self.nablaH_adim[:-1, j]
-        upper_diagonal[0] = (4 * (1 - self.alpha) / self.dz_adim**2 /3) + (
+        upper_diagonal[0] = (4 * (1 - self.alpha) / (3 * self.dz_adim**2)) + (
             (1 - self.alpha) * 2 * self.kappa[0] / (3 * self.dz_adim)
-        ) * self.nablaH_adim[1, j]
+        ) * self.nablaH_adim[0, j]
         return upper_diagonal
 
     def _compute_c(self, j): #OK
@@ -565,11 +565,11 @@ class T_stratified(Linear_system):
 
         lower_diagonal = zeros(self.n_cell - 1, float32)
         lower_diagonal[:] = (
-            - self.alpha / self.dz_adim**2 + self.alpha * self.kappa[:-1] * self.nablaH_adim[:-1,j+1] / (2*self.dz_adim)
+            - self.alpha / self.dz_adim**2 + self.alpha * self.kappa[1:] * self.nablaH_adim[1:,j+1] / (2*self.dz_adim)
         )
 
         lower_diagonal[-1] = (
-            - 4 * self.alpha / (3 * self.dz_adim**2) + 2 * self.alpha * self.kappa[-2] * self.nablaH_adim[-2,j+1] / (3*self.dz_adim)
+            - 4 * self.alpha / (3 * self.dz_adim**2) + 2 * self.alpha * self.kappa[-1] * self.nablaH_adim[-1,j+1] / (3*self.dz_adim)
         )
 
         diagonal = zeros(self.n_cell, float32)
@@ -588,10 +588,10 @@ class T_stratified(Linear_system):
 
         upper_diagonal = zeros(self.n_cell - 1, float32)
         upper_diagonal[:] = (
-            - self.alpha / self.dz_adim**2 - self.alpha * self.kappa[1:] * self.nablaH_adim[1:,j+1] / (2*self.dz_adim)      
+            - self.alpha / self.dz_adim**2 - self.alpha * self.kappa[:-1] * self.nablaH_adim[:-1,j+1] / (2*self.dz_adim)
         )
         upper_diagonal[0] = (
-            - 4 * self.alpha / (3 * self.dz_adim**2) - 2 * self.alpha * self.kappa[0] * self.nablaH_adim[1,j+1] / (3*self.dz_adim)
+            - 4 * self.alpha / (3 * self.dz_adim**2) - 2 * self.alpha * self.kappa[0] * self.nablaH_adim[0,j+1] / (3*self.dz_adim)
         )
 
         return lower_diagonal, diagonal, upper_diagonal

@@ -19,10 +19,15 @@ from pyheatmy.params import Param, Prior, PARAM_LIST, calc_K
 from pyheatmy.state import State
 from pyheatmy.checker import checker
 from pyheatmy.config import *
-from pyheatmy.linear_system_DIM import *
 
 from pyheatmy.utils import *
 from pyheatmy.layers import Layer, getListParameters
+
+#DEBUG ADIM 
+from pyheatmy.linear_system_ADIM import *
+import os
+import pandas as pd
+#
 
 # Column is a monolithic class and pyheatmy is executable from there. Calculation, retrieval and plots are methods from the column class
 class Column:  # colonne de sédiments verticale entre le lit de la rivière et l'aquifère
@@ -319,6 +324,17 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             self._temperatures = T_res
             self._H_res = H_res  # stocke les résultats
 
+            ## DEBUG ADIM
+            ic = 1
+            while os.path.exists(f"T_res_{ic}.csv"):
+                ic += 1
+            # self._temperatures and self._H_res are 2D arrays (depth x time)
+            # writing with a single-column header raises ValueError when the
+            # number of columns != 1. Write CSV without header to avoid mismatch.
+            pd.DataFrame(self._temperatures).to_csv(f"T_res_{ic}.csv", index=False, header=False)
+            pd.DataFrame(self._H_res).to_csv(f"H_res_{ic}.csv", index=False, header=False)
+            ##
+
             k = 10 ** (
                 -moinslog10IntrinK
             )  # NF This is wrong since we are now using the intrinsec permeability
@@ -330,7 +346,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     f"Solving the flow with intrinsec permeability {k}, and permeability {K}"
                 )
             self._flows = -K * nablaH  # calcul du débit spécifique
-
+            print(nablaH) # DEBUG ADIM
             if verbose:
                 print("Done.")
 
