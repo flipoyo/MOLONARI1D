@@ -81,7 +81,7 @@ void setup() {
 
     // Compter les capteurs
     int ncapteur = 0; 
-    for (auto &_c : liste_capteurs) {
+    for (auto & _c : liste_capteurs) {
         ncapteur++;
     }
 
@@ -91,8 +91,8 @@ void setup() {
 
     // Initialisation des capteurs
     int it = 0;
-    for (const auto &_c : liste_capteurs) {
-        sens[it] = new Sensor(_c.pin, 1, _c.offset, _c.scale, _c.type_capteur, _c.id_capteur);
+    for (const auto & _c : liste_capteurs) {
+        sens[it] = new Sensor(_c.pin, 1, _c.type_capteur, _c.id_box);
         toute_mesure[it] = 0;
         it++;
     }
