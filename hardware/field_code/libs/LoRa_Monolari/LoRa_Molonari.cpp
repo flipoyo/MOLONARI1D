@@ -218,27 +218,34 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath) {
     RequestType requestType;
     String payload;
 
-    File newConfig = SD.open(filepath, FILE_WRITE | O_TRUNC);
-    if (!newConfig) {
-        Serial.print("Impossible d'ouvrir ");
-        Serial.println(filepath);
-        return false;
-    }
+    std::vector<String> newConfigLines; // stockage temporaire des lignes
 
-    Serial.println(" Réception de la nouvelle configuration LoRa...");
+    Serial.println("Écoute de la nouvelle configuration LoRa...");
 
     while (true) {
         if (!receivePacket(packetNumber, requestType, payload)) continue;
 
-        if (requestType == FIN) {
-            Serial.println("Fin de la réception de la config");
-            newConfig.close();
-            return true;
+        if (requestType == DATA && payload.length() > 0) {
+            newConfigLines.push_back(payload);
+            sendPacket(packetNumber, ACK, "ACK"); // acquittement
         }
 
-        if (requestType == DATA && payload.length() > 0) {
-            newConfig.println(payload);
-            sendPacket(packetNumber, ACK, "ACK"); // acquittement
+        if (requestType == FIN) {
+            // Écriture du fichier seulement si FIN reçu
+            File newConfig = SD.open(filepath, FILE_WRITE | O_TRUNC);
+            if (!newConfig) {
+                Serial.print("Impossible d'ouvrir ");
+                Serial.println(filepath);
+                return false;
+            }
+
+            for (auto &line : newConfigLines) {
+                newConfig.println(line);
+            }
+
+            newConfig.close();
+            Serial.println("Réception de la config terminée, fichier mis à jour.");
+            return true;
         }
     }
 }
