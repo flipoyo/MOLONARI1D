@@ -31,7 +31,7 @@ void setup() {
 
     // Lecture configuration CSV
     Reader reader;
-    reader.lireConfigCSV("relay_config.csv");
+    reader.lireConfigCSV("conf_rel.csv");
     Serial.println("Configuration chargée.");
 
     // Initialisation LoRa communication
