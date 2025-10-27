@@ -55,8 +55,7 @@ bool Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
             config.intervalle_de_mesure_secondes = freq_sec;
         }
         else if (key == "intervalle_lora_secondes") {
-            LORA_INTERVAL_S = val.toInt();
-            config.intervalle_lora_secondes = LORA_INTERVAL_S;
+            config.intervalle_lora_secondes = val.toInt();
         }
 
         // ---------- CAPTEURS ----------

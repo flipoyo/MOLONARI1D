@@ -12,8 +12,6 @@ struct SensorConfig {
     String type_capteur;
     String id_box; //pour l'export des données
     int pin;
-
-
 };
 
 struct RelayConfig {

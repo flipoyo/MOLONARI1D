@@ -52,5 +52,6 @@ String Measure::oneLine() {
 // Retourne une version complète et lisible de la mesure
 String Measure::ToString() {
   String str = oneLine();
+
   return str;
 }
