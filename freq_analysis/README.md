@@ -2,6 +2,11 @@
 
 This has been developped by the group "fréquentiel" in 2025. 
 
+> [!NOTE]
+>
+> The notebook in the same directory provides a demo on how to use the frequency tools.
+
+
 ### Theory starting point.
 
 You should already know that the physics behind Molonari is governed by the heat diffusion-advection equation :
