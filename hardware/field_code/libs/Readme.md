@@ -92,6 +92,8 @@ Measure est une librairie permettant de récupérer les données des capteurs et
 - une classe Sensor qui récupère les données des capteurs
 - une classe Measure qui met en forme les mesures que on lui envoie
 
+Les données sont renvoyées sous la forme " 'Measure n°' ID, date, heure, mesures " puis sont ensuite renvoyées à Writer.
+
                   ┌───────────────────────────┐
                   │        Sensor             │
                   └─────────────┬─────────────┘
@@ -132,12 +134,58 @@ Measure est une librairie permettant de récupérer les données des capteurs et
     │ - Retourne ligne CSV  │
     └───────────────────────┘
 
+## *Writer*
+Writer est une librairie permettant d'écrire les données sur la carte SD : 
+
+- Gestion des connexions (reconnexion automatique en cas de perte)
+- Logs de debug optionnels
+- IDs uniques pour chaque mesure
+- Formatage CSV standardisé et écriture sur la carte
+
+┌───────────────────────────────┐
+│          CAPTEURS             │
+│ (Mesure via Sensor/Measure)   │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│          MEASURE              │
+│ - Contient les valeurs        │
+│ - Formate en CSV (ToString)  │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│           WRITER              │
+│                               │
+│ LogData()                     │
+│ ├─ ApplyContent() → Remplit    │
+│ │   les channels               │
+│ ├─ Vérifie la connexion SD     │
+│ ├─ WriteInNewLine() → Écriture│
+│ │   CSV et flush               │
+│ └─ Incrémente next_id          │
+│                               │
+│ Reconnect() → Restaure SD si  │
+│ perte de connexion             │
+│ Dispose() → Ferme fichier      │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│             SD                │
+│ - Stocke les mesures au format│
+│   CSV                         │
+└───────────────────────────────┘
 
 ## *Reader*
-Measure est une librairie permettant de récupérer les données des capteurs et de les mettre en formes : 
+Reader est une librairie permettant de récupérer les données enregistrées sur la carte SD après qu'elles aient écrites par Writer: 
 
-- une classe Sensor qui récupère les données des capteurs
-- une classe Measure qui met en forme les mesures que on lui envoie 
+- Lire un fichier CSV de configuration pour un système embarqué (paramètres LoRa, capteurs, etc.)
+- Gérer un curseur de lecture pour un fichier de données (data.csv)
+- Charger les données dans une file d’attente pour traitement ultérieur
+- Sauvegarder la position du curseur pour reprendre la lecture après une coupu
+
                        ┌─────────────────────────────┐
                        │        Reader               │
                        └─────────────┬───────────────┘
@@ -166,9 +214,9 @@ Measure est une librairie permettant de récupérer les données des capteurs et
            ▼                                                   ▼
  ┌─────────────────────┐                           ┌─────────────────────────┐
  │ UpdateCursor(shift) │                           │ loadDataIntoQueue()     │
- │ - Décale line_cursor │                           │ - Lit les prochaines    │
- │ - Sauvegarde curseur │                           │   lignes dans la SD     │
- │   dans cursor.txt    │                           │ - Remplit queue<String> │
+ │ - Décale line_cursor│                           │ - Lit les prochaines    │
+ │ - Sauvegarde curseur│                           │   lignes dans la SD     │
+ │   dans cursor.txt   │                           │ - Remplit queue<String> │
  └─────────────────────┘                           └─────────┬─────────────┘
                                      │
                                      ▼
@@ -296,41 +344,3 @@ Ce fichier gère le temps d’attente et la synchronisation des tâches pour l�
       │   vider queue │
       └───────────────┘
 
-## *Writer*
-Ce fichier gère l’écriture des mesures dans un fichier CSV sur carte SD et s’assure que chaque mesure a un ID unique et que la connexion SD est fiable.
-
-┌───────────────────────────────┐
-│          CAPTEURS             │
-│ (Mesure via Sensor/Measure)   │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│          MEASURE              │
-│ - Contient les valeurs        │
-│ - Formate en CSV (ToString)  │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│           WRITER              │
-│                               │
-│ LogData()                     │
-│ ├─ ApplyContent() → Remplit    │
-│ │   les channels               │
-│ ├─ Vérifie la connexion SD     │
-│ ├─ WriteInNewLine() → Écriture│
-│ │   CSV et flush               │
-│ └─ Incrémente next_id          │
-│                               │
-│ Reconnect() → Restaure SD si  │
-│ perte de connexion             │
-│ Dispose() → Ferme fichier      │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│             SD                │
-│ - Stocke les mesures au format│
-│   CSV                         │
-└───────────────────────────────┘
