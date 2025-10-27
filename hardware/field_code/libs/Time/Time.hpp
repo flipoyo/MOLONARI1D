@@ -18,6 +18,7 @@ String UIntTo2DigitString(uint8_t x);
 
 // Initialize both the internal and external RTCs
 void InitialiseRTC();
+void RefreshConfigFromFile();
 
 // Get the current date in "DD/MM/YYYY" format
 String GetCurrentDate();
