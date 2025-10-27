@@ -1,5 +1,6 @@
+#include <SD.h>
+#include <Arduino.h> 
 #include "LoRa_Molonari.hpp"
-
 #ifdef LORA_DEBUG
 #define LORA_LOG(msg) Serial.print(msg);
 #define LORA_LOG_HEX(msg) Serial.print(msg, HEX);
