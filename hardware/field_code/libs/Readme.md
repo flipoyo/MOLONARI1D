@@ -2,9 +2,14 @@
 
 Ce document présente les différentes libraires utilisées dans le projet Molonari pour les applications In the Air, ainsi que leur fonctionnement basique avec des schémas. 
 
-*LoRa_Molonari*
-Ce module fournit une classe LoraCommunication permettant d’établir, maintenir et fermer une communication fiable entre deux modules LoRa (type SX127x).
-Il gère les handshakes, l’envoi/réception de paquets, les ACK/FIN, et la vérification d’intégrité via un checksum.
+## *LoRa_Molonari*
+LoRa_Molonari est une librairie permettant la communication sans fil entre deux cartes via le protocole LoRa : 
+
+- Initialisation et gestion de la connexion LoRa : Démarrage et arrêt du module LoRa.
+- Envoi et réception de paquets : Avec gestion des checksums et des acquittements.
+- Handshake (poignée de main) : Établissement d’une connexion fiable entre un maître et un esclave.
+- Fermeture de session : Clôture propre de la communication.
+
 +--------------------+
 | startLoRa()        |
 +--------------------+
@@ -26,7 +31,7 @@ Il gère les handshakes, l’envoi/réception de paquets, les ACK/FIN, et la vé
           v
 +--------------------+
 | receivePackets()   |
-|  - recevoir DATA   |
+|  - receivePacket() |
 |  - envoyer ACK     |
 +--------------------+
           |
@@ -38,13 +43,18 @@ Il gère les handshakes, l’envoi/réception de paquets, les ACK/FIN, et la vé
 +--------------------+
 
 
-*LoRaWan_Molonari*
-Ce fichier fournit un wrapper simple pour LoRaWAN : initialisation, connexion au réseau et envoi fiable de messages à partir d’une file. Il gère les retries, les logs de debug et la synchronisation des envois.
+## *LoRaWan_Molonari*
+LoRaWAN_Molonari est une librairie permettant l’envoi de données via le réseau LoRaWAN :
 
-+------------------------+
+- Connexion OTAA : Activation du module LoRaWAN via AppEUI et AppKey.
+- Envoi de données : Gestion d’une file d’attente de messages à envoyer.
+- Gestion des erreurs : Retry automatique en cas d’échec d’envoi.
+- Configuration réseau : Adaptation du débit (ADR) et intervalle de poll.
+
+┌────────────────────────┐
 |  File de messages      |
 |   (std::queue<String>) |
-+------------------------+
+└───────────┬────────────┘
             |
             v
 +------------------------+
@@ -76,11 +86,16 @@ Ce fichier fournit un wrapper simple pour LoRaWAN : initialisation, connexion 
 +------------------------+
 
 
-*Measure*
-Ce fichier définit deux classes principales : Sensor et Measure, utilisées pour la lecture et la représentation des données de capteurs (pression, température, etc.) sur une carte Arduino MKR. La classe Sensor gère l’acquisition de données depuis un capteur analogique. La classe Measure gère la représentation et le formatage des mesures collectées.
+## *Measure*
+Measure est une librairie permettant de récupérer les données des capteurs et de les mettre en formes : 
+
+- une classe Sensor qui récupère les données des capteurs
+- une classe Measure qui met en forme les mesures que on lui envoie
+
+Les données sont renvoyées sous la forme " 'Measure n°' ID, date, heure, mesures " puis sont ensuite renvoyées à Writer.
 
                   ┌───────────────────────────┐
-                  │        Sensor              │
+                  │        Sensor             │
                   └─────────────┬─────────────┘
                                 │
              ┌──────────────────┴──────────────────┐
@@ -88,8 +103,8 @@ Ce fichier définit deux classes principales : Sensor et Measure, utilisées p
              ▼                                     ▼
     ┌───────────────────┐                  ┌───────────────────┐
     │ Constructeur par  │                  │ Constructeur complet│
-    │ défaut             │                  │ avec pins, offset,  │
-    │ (dataPin=-1,...)   │                  │ scale, type, id    │
+    │ défaut            │                  │ avec pins, offset,│
+    │ (dataPin=-1,...)  │                  │ scale, type, id   │
     └─────────┬─────────┘                  └─────────┬─────────┘
               │                                      │
               └──────────────┐──────────────────────┘
@@ -119,9 +134,58 @@ Ce fichier définit deux classes principales : Sensor et Measure, utilisées p
     │ - Retourne ligne CSV  │
     └───────────────────────┘
 
+## *Writer*
+Writer est une librairie permettant d'écrire les données sur la carte SD : 
 
-*Reader*
-Ce fichier définit la classe Reader et gère principalement la lecture et le traitement des fichiers CSV sur la carte SD, ainsi que le suivi de la position de lecture pour s'assurer entre autres de l'envoi des mesures qui n'auraient pas pu être envoyées précédemment. 
+- Gestion des connexions (reconnexion automatique en cas de perte)
+- Logs de debug optionnels
+- IDs uniques pour chaque mesure
+- Formatage CSV standardisé et écriture sur la carte
+
+┌───────────────────────────────┐
+│          CAPTEURS             │
+│ (Mesure via Sensor/Measure)   │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│          MEASURE              │
+│ - Contient les valeurs        │
+│ - Formate en CSV (ToString)  │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│           WRITER              │
+│                               │
+│ LogData()                     │
+│ ├─ ApplyContent() → Remplit    │
+│ │   les channels               │
+│ ├─ Vérifie la connexion SD     │
+│ ├─ WriteInNewLine() → Écriture│
+│ │   CSV et flush               │
+│ └─ Incrémente next_id          │
+│                               │
+│ Reconnect() → Restaure SD si  │
+│ perte de connexion             │
+│ Dispose() → Ferme fichier      │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│             SD                │
+│ - Stocke les mesures au format│
+│   CSV                         │
+└───────────────────────────────┘
+
+## *Reader*
+Reader est une librairie permettant de récupérer les données enregistrées sur la carte SD après qu'elles aient écrites par Writer: 
+
+- Lire un fichier CSV de configuration pour un système embarqué (paramètres LoRa, capteurs, etc.)
+- Gérer un curseur de lecture pour un fichier de données (data.csv)
+- Charger les données dans une file d’attente pour traitement ultérieur
+- Sauvegarder la position du curseur pour reprendre la lecture après une coupu
+
                        ┌─────────────────────────────┐
                        │        Reader               │
                        └─────────────┬───────────────┘
@@ -150,9 +214,9 @@ Ce fichier définit la classe Reader et gère principalement la lecture et le tr
            ▼                                                   ▼
  ┌─────────────────────┐                           ┌─────────────────────────┐
  │ UpdateCursor(shift) │                           │ loadDataIntoQueue()     │
- │ - Décale line_cursor │                           │ - Lit les prochaines    │
- │ - Sauvegarde curseur │                           │   lignes dans la SD     │
- │   dans cursor.txt    │                           │ - Remplit queue<String> │
+ │ - Décale line_cursor│                           │ - Lit les prochaines    │
+ │ - Sauvegarde curseur│                           │   lignes dans la SD     │
+ │   dans cursor.txt   │                           │ - Remplit queue<String> │
  └─────────────────────┘                           └─────────┬─────────────┘
                                      │
                                      ▼
@@ -168,7 +232,7 @@ Ce fichier définit la classe Reader et gère principalement la lecture et le tr
                        │ - Ferme le fichier SD        │
                        └─────────────────────────────┘
 
-*Time*
+## *Time*
 Ce fichier gère le temps et les horaires des mesures pour le système basé sur la carte MKR. Il utilise à la fois l’horloge interne de la carte (RTCZero) et une horloge externe (RTC_PCF8523) pour assurer la précision et la persistance après coupure d’alimentation.
 
                  ┌──────────────────────────┐
@@ -226,7 +290,7 @@ Ce fichier gère le temps et les horaires des mesures pour le système basé sur
                                  │
                                 (boucle)
 
-*Waiter*
+## *Waiter*
 Ce fichier gère le temps d’attente et la synchronisation des tâches pour l’Arduino, en particulier pour la communication LoRa et la lecture/écriture sur la carte SD.
 
 ┌─────────────────────────┐
@@ -280,41 +344,3 @@ Ce fichier gère le temps d’attente et la synchronisation des tâches pour l�
       │   vider queue │
       └───────────────┘
 
-*Writer*
-Ce fichier gère l’écriture des mesures dans un fichier CSV sur carte SD et s’assure que chaque mesure a un ID unique et que la connexion SD est fiable.
-
-┌───────────────────────────────┐
-│          CAPTEURS             │
-│ (Mesure via Sensor/Measure)   │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│          MEASURE              │
-│ - Contient les valeurs        │
-│ - Formate en CSV (ToString)  │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│           WRITER              │
-│                               │
-│ LogData()                     │
-│ ├─ ApplyContent() → Remplit    │
-│ │   les channels               │
-│ ├─ Vérifie la connexion SD     │
-│ ├─ WriteInNewLine() → Écriture│
-│ │   CSV et flush               │
-│ └─ Incrémente next_id          │
-│                               │
-│ Reconnect() → Restaure SD si  │
-│ perte de connexion             │
-│ Dispose() → Ferme fichier      │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│             SD                │
-│ - Stocke les mesures au format│
-│   CSV                         │
-└───────────────────────────────┘

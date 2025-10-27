@@ -16,9 +16,11 @@ Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur, String _id_bo
 
 MESURE Sensor::Measure() {
   digitalWrite(enablePin, HIGH);
-  delay(200); // temps de stabilisation
+  digitalWrite(this->alimPin, HIGH);
+  delay(200);
   MESURE mesure = analogRead(dataPin);
   digitalWrite(enablePin, LOW);
+  digitalWrite(this->alimPin, LOW); 
   return mesure;
 }
 
