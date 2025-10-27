@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <LoRa.h>
+#include <string>
 #include <ArduinoLowPower.h>
 
 #include "Measure.hpp"
@@ -19,6 +20,7 @@
 Sensor** sens;
 double *toute_mesure;
 
+//std::string FileName = "conf_sen.csv"; Impossible to use that because SD.open() takes squid string arguments
 Writer logger;
 const int CSPin = 5;
 const char filename[] = "RECORDS.CSV";
@@ -30,7 +32,7 @@ std::queue<String> sendQueue;
 
 void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
 
-    File file = SD.open("/config_sensor.csv", FILE_READ);
+    File file = SD.open("conf_sen.csv", FILE_READ);
     if (!file) {
         Serial.println("ERREUR : impossible de lire config_sensor.csv");
         return;
@@ -51,7 +53,7 @@ void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
         }
     }
 
-    file = SD.open("/config_sensor.csv", FILE_WRITE | O_TRUNC);
+    file = SD.open("/conf_sen.csv", FILE_WRITE | O_TRUNC);
     if (!file) {
         Serial.println("ERREUR : impossible d'écrire config_sensor.csv");
         return;
@@ -62,7 +64,7 @@ void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
     }
 
     file.close();
-    Serial.println("Fichier config_sensor.csv mis à jour sans toucher aux autres paramètres.");
+    Serial.println("Fichier conf_sen.csv mis à jour sans toucher aux autres paramètres.");
 }
 
 
