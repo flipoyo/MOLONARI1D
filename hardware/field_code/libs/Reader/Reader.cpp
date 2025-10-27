@@ -20,8 +20,8 @@ unsigned long LORA_INTERVAL_S = 3UL * 3600UL; // valeur par défaut
 unsigned int Reader::line_cursor = 0;
 
 // ==================== Lecture CSV ====================
-bool Reader::lireConfigCSV(const char* NomFichier) {
-    if (!SD.begin(config.CSPin)) {
+bool Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
+    if (!SD.begin(CSPin)) {
         Serial.println("Impossible de monter SD");
         return false;
     }

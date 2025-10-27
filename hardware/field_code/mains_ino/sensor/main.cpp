@@ -77,7 +77,17 @@ void setup() {
 
     // Lecture de la configuration CSV
     Reader reader;
-    bool test = reader.lireConfigCSV("config_sensor.csv");
+    while(!SD.begin(CSPin)){
+        DEBUG_LOG ("ça marche pas le sd begin");
+        delay(250);
+    }
+    if(SD.begin(CSPin)){
+        DEBUG_LOG("SD begin worked");
+    }else{
+        DEBUG_LOG("SD begin marche toujours pas");
+    }
+
+    bool test = reader.lireConfigCSV("config_sensor.csv", CSPin);
     if (test){
         DEBUG_LOG("lecture config terminée avec succès");
     }
