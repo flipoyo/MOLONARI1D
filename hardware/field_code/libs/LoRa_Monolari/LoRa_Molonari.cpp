@@ -139,7 +139,8 @@ bool LoraCommunication::handshake(uint8_t &shift) {
             }
         }
         return false;
-    } else { // SLAVE
+    } 
+    else { // SLAVE
         String payload; uint8_t packetNumber; RequestType requestType;
         while (true) {
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
