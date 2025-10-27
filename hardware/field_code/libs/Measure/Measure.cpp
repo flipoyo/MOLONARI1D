@@ -18,9 +18,11 @@ Sensor::Sensor(int _dataPin, int _enablePin, float _offset, float _scale, String
 MESURE Sensor::Measure() {
   //Power the sensor only when we measure
   digitalWrite(enablePin, HIGH);
+  digitalWrite(this->alimPin, HIGH);
   delay(200);
   MESURE mesure = analogRead(dataPin);
   digitalWrite(enablePin, LOW);
+  digitalWrite(this->alimPin, LOW); 
   if (type_capteur == "Thermistance") {
   return 1/(1/298.15+log(4096/mesure-1)/scale)-273.15+offset;
 } else {
