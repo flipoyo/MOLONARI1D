@@ -1,6 +1,11 @@
 #include "Measure.hpp"
 #include "Time.hpp"
 
+
+#ifndef DEBUG_LOG
+#define DEBUG_LOG(msg) Serial.println(msg)
+#endif
+
 // Constructeur par défaut
 Sensor::Sensor() 
   : dataPin(-1), enablePin(-1), type_capteur("-1"), id_box("-1") {}
@@ -27,7 +32,9 @@ MESURE Sensor::Measure() {
 // Retourne une ligne formatée pour une mesure
 String Measure::oneLine() {
   String date = GetCurrentDate();
+  DEBUG_LOG("Date actuelle : " + date);
   String hour = GetCurrentHour();
+  DEBUG_LOG("Heure actuelle : " + hour);
 
 
   // Construction de la ligne
