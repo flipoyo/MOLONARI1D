@@ -61,9 +61,9 @@ void Reader::lireConfigCSV(const char* NomFichier) {
 
         // ---------- CAPTEURS ----------
         else {
-            String tokens[5];
+            String tokens[4];
             int first = 0, last = 0, tokenIdx = 0;
-            while (last >= 0 && tokenIdx < 5) {
+            while (last >= 0 && tokenIdx < 4) {
                 last = line.indexOf(',', first);
                 if (last < 0) last = line.length();
                 tokens[tokenIdx++] = line.substring(first, last);
@@ -79,9 +79,7 @@ void Reader::lireConfigCSV(const char* NomFichier) {
                 else
                     c.pin = tokens[2].toInt();
 
-                c.offset = (tokenIdx > 3) ? tokens[3].toFloat() : 0.0;
-                c.scale  = (tokenIdx > 4) ? tokens[4].toFloat() : 1.0;
-                c.id_capteur = (tokenIdx > 5) ? tokens[5] : "";
+                c.id_box = (tokenIdx >= 4) ? tokens[3] : "";
                 liste_capteurs.push_back(c);
             }
         }

@@ -3,10 +3,10 @@
 
 // Constructeur par défaut
 Sensor::Sensor() 
-  : dataPin(-1), enablePin(-1), offset(-1), scale(-1), type_capteur("-1"), id_capteur("-1") {}
+  : dataPin(-1), enablePin(-1), type_capteur("-1"), id_box("-1") {}
 // Constructeur complet
-Sensor::Sensor(int _dataPin, int _enablePin, float _offset, float _scale, String _type_capteur, String _id_capteur)
-  : dataPin(_dataPin), enablePin(_enablePin), offset(_offset), scale(_scale), type_capteur(_type_capteur), id_capteur(_id_capteur) 
+Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur, String _id_box)
+  : dataPin(_dataPin), enablePin(_enablePin), type_capteur(_type_capteur), id_box(_id_box) 
 {
   pinMode(enablePin, OUTPUT);
   pinMode(dataPin, INPUT);
