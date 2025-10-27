@@ -93,7 +93,6 @@ void Writer::LogData(int ncapteur, double *toute_mesure) {
     Measure data;
     this->ApplyContent(&data,ncapteur, toute_mesure); // Assign channel values
     data.id = this->next_id; // Set unique ID for the measurement
-    
     // Check if the connection is still established
     bool is_connected = SD.begin(this->CSPin) && this->file;
     if (!is_connected) {

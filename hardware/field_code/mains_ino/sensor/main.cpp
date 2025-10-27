@@ -77,8 +77,13 @@ void setup() {
 
     // Lecture de la configuration CSV
     Reader reader;
-    reader.lireConfigCSV("config_sensor.csv");
-    Serial.println("Configuration chargée.");
+    bool test = reader.lireConfigCSV("config_sensor.csv");
+    if (test){
+        DEBUG_LOG("lecture config terminée avec succès");
+    }
+    else {
+        DEBUG_LOG("échec de la lecture du fichier config");
+    }
 
     
 
