@@ -213,3 +213,30 @@ void LoraCommunication::closeSession(int lastPacket) {
     }
 }
 
+bool LoraCommunication::receiveConfigUpdate(uint16_t measureInterval, uint16_t loraInterval) {
+    uint8_t packetNumber;
+    RequestType requestType;
+    String payload;
+
+    // On écoute un unique message venant du master
+    if (!receivePacket(packetNumber, requestType, payload)) return false;
+    if (requestType != DATA) return false;
+
+    // Format attendu :
+    // intervalle_de_mesure_secondes=600;intervalle_lora_secondes=1800
+    int eq1 = payload.indexOf('=');
+    int sep  = payload.indexOf(';');
+    int eq2 = payload.lastIndexOf('=');
+
+    if (eq1 == -1 || sep == -1 || eq2 == -1) return false;
+
+    measureInterval = payload.substring(eq1 + 1, sep).toInt();
+    loraInterval    = payload.substring(eq2 + 1).toInt();
+
+
+    Serial.println("Configuration reçue par LoRa :");
+    Serial.print(" - intervalle_de_mesure_secondes = "); Serial.println(measureInterval);
+    Serial.print(" - intervalle_lora_secondes = "); Serial.println(loraInterval);
+
+    return true;
+}

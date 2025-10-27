@@ -25,6 +25,42 @@ unsigned long lastLoRaSend = 0;
 unsigned long lastSDOffset = 0;
 std::queue<String> sendQueue;
 
+void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
+
+    File file = SD.open("/config_sensor.csv", FILE_READ);
+    if (!file) {
+        Serial.println("ERREUR : impossible de lire config_sensor.csv");
+        return;
+    }
+
+    std::vector<String> lignes;
+    while (file.available()) {
+        lignes.push_back(file.readStringUntil('\n'));
+    }
+    file.close();
+
+    for (auto &ligne : lignes) {
+        if (ligne.startsWith("intervalle_de_mesure_secondes")) {
+            ligne = "intervalle_de_mesure_secondes," + String(measureInterval);
+        }
+        else if (ligne.startsWith("intervalle_lora_secondes")) {
+            ligne = "intervalle_lora_secondes," + String(loraInterval);
+        }
+    }
+
+    file = SD.open("/config_sensor.csv", FILE_WRITE | O_TRUNC);
+    if (!file) {
+        Serial.println("ERREUR : impossible d'écrire config_sensor.csv");
+        return;
+    }
+
+    for (auto &ligne : lignes) {
+        file.println(ligne);
+    }
+
+    file.close();
+    Serial.println("Fichier config_sensor.csv mis à jour sans toucher aux autres paramètres.");
+}
 
 
 // ----- Setup -----
@@ -148,6 +184,29 @@ void loop() {
         dataFile.close();
         lora.closeSession(0);
         lastLoRaSend = current_Time;
+
+        // --- Réception éventuelle de mise à jour config ---
+        uint16_t newMeasureInterval = 0;
+        uint16_t newLoraInterval = 0;
+
+        Serial.println("Vérification de mise à jour descendante...");
+        lora.startLoRa();
+        if (lora.receiveConfigUpdate(newMeasureInterval, newLoraInterval)) {
+
+            Serial.println("📥 Mise à jour config reçue du master.");
+
+            updateConfigFile(newMeasureInterval, newLoraInterval);
+
+            // On met à jour les variables déjà existantes dans le programme :
+            LORA_INTERVAL_S = newLoraInterval;
+
+        } else {
+            Serial.println("Pas de mise à jour reçue.");
+        }
+        lora.stopLoRa();
+
+
+        
     }
 
     // --- Sommeil jusqu'à prochaine mesure ---
