@@ -95,7 +95,6 @@ void setup() {
         DEBUG_LOG("échec de la lecture du fichier config");
     }
 
-    
 
     // Compter les capteurs
     int ncapteur = 0; 
@@ -117,8 +116,8 @@ void setup() {
     // Initialisation SD et logger
     if (!SD.begin(CSPin)) { while(true){} }
     logger.EstablishConnection(CSPin);
+    
     InitialiseRTC();
-
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     DEBUG_LOG ("Setup finished");
 }
@@ -211,7 +210,7 @@ void loop() {
         lora.startLoRa();
         if (lora.receiveConfigUpdate(newMeasureInterval, newLoraInterval)) {
 
-            Serial.println("📥 Mise à jour config reçue du master.");
+            Serial.println("Mise à jour config reçue du master.");
 
             updateConfigFile(newMeasureInterval, newLoraInterval);
 
