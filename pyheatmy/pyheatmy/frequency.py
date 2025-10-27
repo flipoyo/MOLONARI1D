@@ -225,102 +225,6 @@ class frequency_analysis:
         plt.legend()
         plt.show()
 
-
-    def rss_score(self, y_true, y_pred):
-        """Return residual sum of squares between y_true and y_pred."""
-        y_true = np.asarray(y_true)
-        y_pred = np.asarray(y_pred)
-        return np.sum((y_true - y_pred) ** 2)
-
-
-    def regression_poly(self, reg, z_values, deg, show_plot=False):
-        """Polynomial regression of degree `deg` fitting reg (log-amplitude) vs depths z_values.
-
-        Parameters
-        - reg: array-like, values of ln(A(z)) (or any dependent variable)
-        - z_values: array-like, independent variable (depths)
-        - deg: int, polynomial degree (1 => linear)
-        - show_plot: if True, display a scatter + fit plot and return same metrics
-
-        Returns (r2, rss)
-        """
-        z = np.asarray(z_values, dtype=float)
-        y = np.asarray(reg, dtype=float)
-        # Fit polynomial
-        coeffs = np.polyfit(z, y, deg)
-        p = np.poly1d(coeffs)
-        y_pred = p(z)
-        r2 = float(r2_score(y, y_pred))
-        rss = float(self.rss_score(y, y_pred))
-
-        if show_plot:
-            plt.scatter(z, y, label='Données FFT mesurées')
-            z_sorted = np.linspace(np.min(z), np.max(z), 200)
-            plt.plot(z_sorted, p(z_sorted), 'r--', label=f'Ajustement poly {deg}: R²={r2:.3f}')
-            plt.xlabel('Profondeur z (m)')
-            plt.ylabel('Log amplitude ln(A(z))')
-            plt.title(f"Régression polynomiale de degré {deg}, R²={r2:.3f}")
-            plt.legend()
-            plt.grid(True)
-            plt.show()
-
-        return r2, rss
-
-
-    def critere_AICC(self, reg, z_values, t_sigma, show=False):
-        """Model selection between degree 1 and 2 polynomial using AICc.
-
-        reg: array-like (dependent variable), z_values: depths, t_sigma: noise sd
-        Returns: '1D' or '2D' (strings)
-        """
-        vraisemblance = []
-        n = len(z_values)
-        for deg in range(1, 3):
-            _, rss = self.regression_poly(reg, z_values, deg)
-            # log-likelihood under Gaussian errors
-            L = -0.5 * n * np.log(2 * np.pi * t_sigma ** 2) - 0.5 * rss / (t_sigma ** 2)
-            k = deg # Because we do not a fit an intercept (because in z=0, ln(...) = 0)
-            # AICc formula
-            aicc = 2 * k - 2 * L + (2 * k * (k + 1)) / max(1, (n - k - 1))
-            vraisemblance.append(aicc)
-
-        best_idx = int(np.argmin(vraisemblance))
-        deg_best = best_idx + 1
-        if deg_best == 1:
-            if show:
-                print("Modèle linéaire préféré selon AICc → 1D")
-            return "1D"
-        else:
-            if show:
-                print("Modèle polynomiale (deg>1) préféré selon AICc → 2D")
-            return "2D"
-
-
-    def critere_LRT(self, reg, z_values, show=False, alpha=0.05):
-        """Likelihood ratio test comparing linear (deg=1) vs quadratic (deg=2) fits.
-
-        Returns '1D' if linear not rejected, '2D' otherwise.
-        """
-        RSS = []
-        for deg in range(1, 3):
-            _, rss = self.regression_poly(reg, z_values, deg)
-            RSS.append(rss)
-
-        # guard against zero/negative RSS
-        LRT = 2 * np.log(RSS[0] / RSS[1])
-        df = 1
-        p_value = 1 - chi2.cdf(LRT, df)
-
-        if p_value < alpha:
-            if show:
-                print("LRT: nonlinear model preferred → 2D (p < {:.2f})".format(alpha))
-            return "2D"
-        else:
-            if show:
-                print("LRT: linear model not rejected → 1D (p >= {:.2f})".format(alpha))
-            return "1D"
-
-
     def find_dominant_periods(
         self,
         dates_or_signals=None,
@@ -545,7 +449,7 @@ class frequency_analysis:
         plt.show()
 
 
-    def estimate_a(self, dates=None, signals=None, depths=None, periods_days=None, allow2D=False, verbose=True, draw=True):
+    def estimate_a(self, dates=None, signals=None, depths=None, periods_days=None, verbose=True, draw=True):
         """For each signal, compute the amplitudes at peaks of dominant periods.
         Then for each period, estimate the exponential decay of the corresponding amplitude A(z, omega)/A(0, omega) = e^(-a*z)"""
 
@@ -556,10 +460,7 @@ class frequency_analysis:
 
         amplitudes_at_peaks = []
 
-        if allow2D:
-            print("Entering dimension selection. \n The model will either select 1D or 2D")
-        else:
-            print("Default 1D analysis has been selected. \n This model will not deal with possible 2D analysis.")
+        print("This deals only with 1D attenuation (no lateral flow).")
 
         for i in range(len(signals)):
             signal = signals[i]
@@ -674,34 +575,6 @@ class frequency_analysis:
             # perform model-selection (1D linear vs 2D polynomial) on the log-amplitude
             z_m = z[m]
             y_m = log_ratio[m]
-
-            # At least 3 points needed to compare deg=1 vs deg=2 robustly
-            is_2D = False
-            if y_m.size >= 3 and allow2D:
-                try:
-                    # get RSS for deg1 in order to get t_sigma (spread)
-                    _, rss1 = self.regression_poly(y_m, z_m, 1, show_plot=False)
-                    # estimate noise sigma from deg1 residuals (dof = n - k)
-                    dof1 = max(1, y_m.size - 2)
-                    t_sigma = np.sqrt(rss1 / dof1) if dof1 > 0 else np.std(y_m - np.mean(y_m))
-                    choice_aicc = self.critere_AICC(y_m, z_m, t_sigma, show=true)
-                    choice_lrt = self.critere_LRT(y_m, z_m, show=True)
-                    is_2D = (choice_aicc == '2D') or (choice_lrt == '2D')
-                except Exception:
-                    # if model selection fails for any reason, fall back to linear
-                    is_2D = False
-            
-            if not allow2D:
-                is_2D = False
-
-            if is_2D:
-                # mark as skipped because data suggests a 2D behavior
-                a_values.append(np.nan)
-                a_R2_values.append(np.nan)
-                plot_items.append({'Pd': Pd, 'skipped': True, 'reason': '2D model preferred by AICc/LRT', 'z': z.copy(), 'log_ratio': log_ratio.copy()})
-                if verbose:
-                    print(f"Period {Pd:.2f} days: model-selection -> 2D (skip linear attenuation fit)")
-                continue
 
             # perform linear fit on finite data (1D assumption accepted)
             coeffs = np.polyfit(z_m, y_m, 1)
