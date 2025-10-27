@@ -5,11 +5,12 @@
 
 #include <RTCZero.h>
 #include <RTClib.h>
+#include <vector>
 
 // Declare the RTC objects: internal (MKR) and external
 extern RTCZero internalRtc;
 extern RTC_PCF8523 externalRtc;
-extern std::vector<unsigned long> measurementTimes;
+extern std::vector <unsigned long> measurementTimes;
 extern int measurementCount;
 
 // Helper function to convert an integer to a 2-digit string (e.g., 7 -> "07")

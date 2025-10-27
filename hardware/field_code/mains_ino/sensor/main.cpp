@@ -41,6 +41,7 @@ void setup() {
     // Lecture de la configuration CSV
     Reader reader;
     reader.lireConfigCSV("config_sensor.csv");
+    Serial.println("Configuration chargée.");
 
     // Compter les capteurs
     int ncapteur = 0; 
