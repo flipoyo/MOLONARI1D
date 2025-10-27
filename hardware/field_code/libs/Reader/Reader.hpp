@@ -9,7 +9,8 @@
 // ---- Structures globales ----
 struct SensorConfig {
     String id;
-    String type;
+    String type_capteur;
+    String id_capteur; //pour l'export des données
     int pin;
     float offset;
     float scale;
@@ -20,8 +21,8 @@ struct RelayConfig {
     String appKey;
     int CSPin;
     float lora_freq;
-    int mesure_frequence_minutes;
-    int lora_intervalle_secondes;
+    int intervalle_de_mesure_secondes;
+    int intervalle_lora_secondes;
 };
 
 // Variables globales (extern pour éviter redéfinitions)

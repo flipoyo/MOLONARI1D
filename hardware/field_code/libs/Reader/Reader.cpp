@@ -14,7 +14,6 @@
 // ----- Variables globales -----
 RelayConfig config;
 std::vector<SensorConfig> liste_capteurs;
-int FREQUENCE_MINUTES = 0;
 unsigned long LORA_INTERVAL_S = 3UL * 3600UL; // valeur par défaut
 
 // ----- Static member initialization -----
@@ -51,14 +50,14 @@ void Reader::lireConfigCSV(const char* NomFichier) {
         else if (key == "appKey") config.appKey = val;
         else if (key == "CSPin") config.CSPin = val.toInt();
         else if (key == "lora_freq") config.lora_freq = val.toFloat();
-        else if (key == "mesure_frequence_minutes") {
-            FREQUENCE_MINUTES = val.toInt();
-            config.mesure_frequence_minutes = FREQUENCE_MINUTES;
-        } 
-        else if (key == "lora_intervalle_secondes") {
+        else if (key == "intervalle_de_mesure_secondes") {
+            int freq_sec = val.toInt();
+            config.intervalle_de_mesure_secondes = freq_sec;
+        }
+        else if (key == "intervalle_lora_secondes") {
             LORA_INTERVAL_S = val.toInt();
-            config.lora_intervalle_secondes = LORA_INTERVAL_S;
-        } 
+            config.intervalle_lora_secondes = LORA_INTERVAL_S;
+        }
 
         // ---------- CAPTEURS ----------
         else {
@@ -74,7 +73,7 @@ void Reader::lireConfigCSV(const char* NomFichier) {
             if (tokenIdx >= 3) {  
                 SensorConfig c;
                 c.id = tokens[0];
-                c.type = tokens[1];
+                c.type_capteur = tokens[1];
                 if (tokens[2].startsWith("A"))
                     c.pin = tokens[2].substring(1).toInt() + A0;
                 else
@@ -82,6 +81,7 @@ void Reader::lireConfigCSV(const char* NomFichier) {
 
                 c.offset = (tokenIdx > 3) ? tokens[3].toFloat() : 0.0;
                 c.scale  = (tokenIdx > 4) ? tokens[4].toFloat() : 1.0;
+                c.id_capteur = (tokenIdx > 5) ? tokens[5] : "";
                 liste_capteurs.push_back(c);
             }
         }

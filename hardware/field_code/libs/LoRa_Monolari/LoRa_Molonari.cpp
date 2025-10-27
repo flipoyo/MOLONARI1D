@@ -65,6 +65,7 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     LoRa.endPacket();
 
     LORA_LOG("Packet sent: "); LORA_LOG_LN(payload);
+
 }
 
 bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload) {
@@ -117,20 +118,22 @@ bool LoraCommunication::isLoRaActive() { return active; }
 
 bool LoraCommunication::handshake(uint8_t &shift) {
     if (deviceRole == MASTER) {
-        sendPacket(0, SYN, "");
+        sendPacket(0, SYN, "SYN");
         LORA_LOG_LN("MASTER: SYN sent");
 
         String payload; uint8_t packetNumber; RequestType requestType;
         int retries = 0;
 
         while (retries < 6) {
-            if (receivePacket(packetNumber, requestType, payload) && requestType == SYN) {
+            if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN-ACK") {
                 shift = packetNumber;
-                sendPacket(packetNumber, ACK, "");
+                sendPacket(packetNumber, ACK, "ACK");
+                LORA_LOG_LN("MASTER: Received SYN-ACK, ACK sent");
                 return true;
             } else {
                 delay(100 * (retries + 1));
-                sendPacket(0, SYN, "");
+                sendPacket(0, SYN, "SYN");
+                LORA_LOG_LN("MASTER: Retrying SYN");
                 retries++;
             }
         }
@@ -138,16 +141,17 @@ bool LoraCommunication::handshake(uint8_t &shift) {
     } else { // SLAVE
         String payload; uint8_t packetNumber; RequestType requestType;
         while (true) {
-            if (receivePacket(packetNumber, requestType, payload) && requestType == SYN) {
+            if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
                 shift = packetNumber;
                 sendPacket(shift, SYN, "SYN-ACK");
+                LORA_LOG_LN("SLAVE: SYN-ACK sent");
                 break;
             }
         }
 
         int retries = 0;
         while (retries < 6) {
-            if (receivePacket(packetNumber, requestType, payload) && requestType == ACK) return true;
+            if (receivePacket(packetNumber, requestType, payload) && requestType == ACK && payload == "ACK") return true;
             delay(100 * (retries + 1));
             sendPacket(shift, SYN, "SYN-ACK");
             retries++;

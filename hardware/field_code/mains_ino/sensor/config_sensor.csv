@@ -1,0 +1,12 @@
+# id,type,pin,offset,facteur, id_capteur
+P1,pression,A0,0.0,1.0,123456789012345
+T1,temperature,A1,0.5277,101.15,123456789012346
+T2,temperature,A6,0.5000,3450.0,123456789012347
+T3,temperature,A3,0.5290,101.50,123456789012348
+T4,temperature,A4,0.5195,101.92,123456789012349
+T5,temperature,A5,0.5300,102.00,123456789012350
+
+# Configuration générale
+intervalle_de_mesure_secondes,900
+intervalle_lora_secondes,3600
+

@@ -1,17 +1,35 @@
 // This file contains all the code to manage time using the MKR board's integrated Real Time Clock (RTC) and an external RTC.
+
+//Time doit récupérer lora_intervalle_secondes de config_sensor.csv
+
+
 #include <RTCZero.h>
 #include <RTClib.h>
 #include<vector>
 
 #include "Time.hpp"
+#include "Reader.hpp"
+
+
 // Declare the RTC objects: internal (MKR) and external
 RTCZero internalRtc;
 RTC_PCF8523 externalRtc;
 int measurementCount = 0;
 
-const int MEASURE_INTERVAL_MINUTES = 15; // Interval between measurements
-const int TOTAL_MEASUREMENTS_PER_DAY = 1440 / MEASURE_INTERVAL_MINUTES; // Total measurements in a day
-std::vector<unsigned int> measurementTimesVec (TOTAL_MEASUREMENTS_PER_DAY); 
+
+// Lecture de la configuration CSV
+Reader reader;
+int freq_envoi_lora_seconds = 0;
+int freq_mesure_seconds = 0;
+
+std::vector<unsigned long> measurementTimesVec;
+
+void LoadConfig() {
+  // Read configuration (call this from setup or main)
+  reader.lireConfigCSV("config_sensor.csv");
+  freq_envoi_lora_seconds = config.intervalle_lora_secondes;
+  freq_mesure_seconds = config.intervalle_de_mesure_secondes;
+}
 
 
 
@@ -85,16 +103,31 @@ unsigned long GetSecondsSinceMidnight() {
   uint8_t second = internalRtc.getSeconds();
   return hour * 3600 + minute * 60 + second; // Convert hours and minutes to seconds
 }
-
-
-
-
-// Initialize the array with all the measurement times (in seconds from midnight)
 void InitializeMeasurementTimes() {
-  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
-    measurementTimesVec[i] = i * MEASURE_INTERVAL_MINUTES * 60;
+  // Vider d'abord le vecteur existant
+  measurementTimesVec.clear();
+
+  // Vérifie que la fréquence est bien définie
+  if (freq_mesure_seconds <= 0) {
+    return; // Rien à faire si la fréquence n'est pas configurée
+  }
+
+  // Calcul du nombre total de mesures possibles dans une journée
+  // (on ignore le reste si 86400 n'est pas divisible par freq_mesure_seconds)
+  int totalMeasurementsPerDay = 86400 / freq_mesure_seconds; // 86400 = secondes dans une journée
+  if (totalMeasurementsPerDay <= 0) {
+    return;
+  }
+
+  // Remplis le vecteur avec les instants de mesure (en secondes depuis minuit)
+  measurementTimesVec.reserve(static_cast<size_t>(totalMeasurementsPerDay));
+  for (int i = 0; i < totalMeasurementsPerDay; ++i) {
+    unsigned long timeSec = static_cast<unsigned long>(i) * static_cast<unsigned long>(freq_mesure_seconds);
+    measurementTimesVec.push_back(timeSec);
   }
 }
+
+
 
 // Determine how many measurements have already been done today
 void InitializeMeasurementCount() {
@@ -102,7 +135,8 @@ void InitializeMeasurementCount() {
   measurementCount = 0;
   
   // Find the first measurement that hasn't been done yet
-  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
+  int totalMeasurementsPerDay = 86400 / freq_mesure_seconds; // 86400 = secondes dans une journée
+  for (int i = 0; i < totalMeasurementsPerDay; i++) {
     if (currentTime > measurementTimesVec[i]) {
       measurementCount++;
     } else {
@@ -113,10 +147,13 @@ void InitializeMeasurementCount() {
 
 // Calculate the time (in ms) until the next measurement
 unsigned long CalculateSleepTimeUntilNextMeasurement() {
+
+
   unsigned long currentTime = GetSecondsSinceMidnight(); // Current time in seconds
   
   // Find the next measurement time
-  for (int i = 0; i < TOTAL_MEASUREMENTS_PER_DAY; i++) {
+  int totalMeasurementsPerDay = 86400 / freq_mesure_seconds; // 86400 = secondes dans une journée
+  for (int i = 0; i < totalMeasurementsPerDay; i++) {
     if (currentTime < measurementTimesVec[i]) {
       unsigned long nextTime = measurementTimesVec[i];
       return (nextTime - currentTime) * 1000; // Convert seconds to milliseconds
