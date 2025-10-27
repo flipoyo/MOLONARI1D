@@ -5,6 +5,7 @@
 
 #include <RTCZero.h>
 #include <RTClib.h>
+#include <vector>
 
 // Declare the RTC objects: internal (MKR) and external
 extern RTCZero internalRtc;

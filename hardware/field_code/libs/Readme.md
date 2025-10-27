@@ -22,10 +22,16 @@ LoRaWAN_Molonari est une librairie permettant l’envoi de données via le rése
 
 ## *Measure* 
 
-Measure est une librairie permettant de récupérer les données des capteurs et de les mettre en formes : 
+Measure est une librairie permettant de récupérer les données des capteurs et de les mettre en formes avant de les écrire sur la carte SD grace à Writer et Reader: 
 
 - une classe Sensor qui lit les données et les récupère
 - une classe Measure qui met en forme les mesures que on lui envoie
 
 ## *Reader*
 
+Reader est une librairie permettant de récupérer les données sur la carte 
+
+Lire un fichier CSV de configuration pour un système embarqué (paramètres LoRa, capteurs, etc.)
+Gérer un curseur de lecture pour un fichier de données (data.csv)
+Charger les données dans une file d’attente pour traitement ultérieur
+Sauvegarder la position du curseur pour reprendre la lecture après une coupure
