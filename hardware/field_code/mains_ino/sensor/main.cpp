@@ -39,12 +39,13 @@ void setup() {
     // Lecture de la configuration CSV
     Reader reader;
     reader.lireConfigCSV("config_sensor.csv");
+    Serial.println("Configuration chargée.");
 
     
 
     // Compter les capteurs
     int ncapteur = 0; 
-    for (auto &c : liste_capteurs) {
+    for (auto & _c : liste_capteurs) {
         ncapteur++;
     }
 
@@ -54,8 +55,8 @@ void setup() {
 
     // Initialisation des capteurs
     int it = 0;
-    for (auto &c : liste_capteurs) {
-        sens[it] = new Sensor(c.pin, 1, c.offset, c.scale, c.type);
+    for (const auto & _c : liste_capteurs) {
+        sens[it] = new Sensor(_c.pin, 1, _c.type_capteur, _c.id_box);
         toute_mesure[it] = 0;
         it++;
     }

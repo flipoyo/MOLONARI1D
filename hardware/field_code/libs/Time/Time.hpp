@@ -5,11 +5,12 @@
 
 #include <RTCZero.h>
 #include <RTClib.h>
+#include <vector>
 
 // Declare the RTC objects: internal (MKR) and external
 extern RTCZero internalRtc;
 extern RTC_PCF8523 externalRtc;
-extern std::vector<unsigned long> measurementTimes;
+extern std::vector<unsigned long> measurementTimesVec;
 extern int measurementCount;
 
 // Helper function to convert an integer to a 2-digit string (e.g., 7 -> "07")
@@ -27,10 +28,6 @@ String GetCurrentHour();
 // Get the current time in seconds since midnight
 unsigned long GetSecondsSinceMidnight();
 
-// --- Measurement Control ---
-// Handles intervals and timing for periodic measurements throughout the day
-extern const int MEASURE_INTERVAL_MINUTES; // Interval between measurements
-extern const int TOTAL_MEASUREMENTS_PER_DAY; // Total measurements in a day
 
 // Initialize the array with all the measurement times (in seconds from midnight)
 void InitializeMeasurementTimes();
@@ -40,5 +37,7 @@ void InitializeMeasurementCount();
 
 // Calculate the time (in ms) until the next measurement
 unsigned long CalculateSleepTimeUntilNextMeasurement();
+
+void LoadConfig();
 
 #endif // MY_TIME
