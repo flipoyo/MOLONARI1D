@@ -88,7 +88,7 @@ void setup() {
 
     // Compter les capteurs
     int ncapteur = 0; 
-    for (auto & _c : liste_capteurs) {©
+    for (auto & _c : liste_capteurs) {
         ncapteur++;
     }
     // Allocation dynamique

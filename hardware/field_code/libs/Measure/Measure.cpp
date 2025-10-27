@@ -32,7 +32,7 @@ String Measure::oneLine() {
 
   // Construction de la ligne
   String str = String(id);
-  str += " (" + date + " " + hour + " ) : ; ";
+  str += " (" + date + " " + hour + " ) ; ";
 
   // Ajouter les valeurs des capteurs
   for (int i = 0; i < ncapteur; i++) {
@@ -44,6 +44,6 @@ String Measure::oneLine() {
 }
 // Retourne une version complète et lisible de la mesure
 String Measure::ToString() {
-  String str = "Measure n°" + String(id) + ": ; " + oneLine();
+  String str = oneLine();
   return str;
 }
