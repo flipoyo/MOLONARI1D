@@ -80,8 +80,6 @@ void setup() {
     reader.lireConfigCSV("config_sensor.csv");
 
 
-    
-
     // Compter les capteurs
     int ncapteur = 0; 
     for (auto & _c : liste_capteurs) {
@@ -196,7 +194,7 @@ void loop() {
         lora.startLoRa();
         if (lora.receiveConfigUpdate(newMeasureInterval, newLoraInterval)) {
 
-            Serial.println("📥 Mise à jour config reçue du master.");
+            Serial.println("Mise à jour config reçue du master.");
 
             updateConfigFile(newMeasureInterval, newLoraInterval);
 

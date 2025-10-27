@@ -99,6 +99,15 @@ void Writer::LogData(int ncapteur, double *toute_mesure) {
     this->ApplyContent(&data,ncapteur, toute_mesure); // Assign channel values
     data.id = this->next_id; // Set unique ID for the measurement
     
+    bool is_well_connected= SD.begin(this->CSPin);
+    if(!is_well_connected){
+        SD_LOG_LN("SD connection lost BEFORE LOG DATA.");
+    }
+    else {
+        SD_LOG_LN("SD connection still established BEFORE LOG DATA.");
+    }
+      
+    
     // Check if the connection is still established
     bool is_connected = SD.begin(this->CSPin) && this->file;
     if (!is_connected) {
@@ -115,6 +124,7 @@ void Writer::LogData(int ncapteur, double *toute_mesure) {
 
 // Write data if connected
     if (is_connected) {
+        SD_LOG_LN("SD connection established WHEN LOG DATA.");
         this->WriteInNewLine(data); // Write data to a new CSV line
     }
     this->next_id++; // Increment ID for next measurement
