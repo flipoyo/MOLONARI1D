@@ -25,9 +25,13 @@ struct RelayConfig {
     int intervalle_lora_secondes;
 };
 
+struct GeneralConfig {
+    RelayConfig rel_config;
+    std::vector<SensorConfig> liste_capteurs;
+    bool succes = true;
+};
+
 // Variables globales (extern pour éviter redéfinitions)
-extern RelayConfig config;
-extern std::vector<SensorConfig> liste_capteurs;
 
 // Variables globales associées à la logique du programme
 extern int FREQUENCE_MINUTES;
@@ -43,7 +47,7 @@ public:
     Reader() = default;
 
     // ----- Lecture CSV -----
-    bool lireConfigCSV(const char* NomFichier, int CSPin = 5);
+    GeneralConfig lireConfigCSV(const char* NomFichier, int CSPin = 5);
 
     // ----- Méthodes pour Waiter -----
     bool EstablishConnection(unsigned int shift);

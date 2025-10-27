@@ -20,16 +20,19 @@ unsigned long LORA_INTERVAL_S = 3UL * 3600UL; // valeur par défaut
 unsigned int Reader::line_cursor = 0;
 
 // ==================== Lecture CSV ====================
-bool Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
+GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
+    GeneralConfig res = GeneralConfig();
     if (!SD.begin(CSPin)) {
         Serial.println("Impossible de monter SD");
-        return false;
+        res.succes = false;
+        return res;
     }
 
     File f = SD.open(NomFichier);
     if (!f) {
         Serial.println("Fichier CSV non trouvé, utilisation des valeurs par défaut");
-        return false;
+        res.succes = false;
+        return res;
     }
 
     Serial.println("Lecture du fichier de configuration...");
@@ -46,17 +49,17 @@ bool Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
         String val = line.substring(idx + 1);
 
         // ---------- PARAMÈTRES GLOBAUX ----------
-        if (key == "appEui") config.appEui = val;
-        else if (key == "appKey") config.appKey = val;
-        else if (key == "CSPin") config.CSPin = val.toInt();
-        else if (key == "lora_freq") config.lora_freq = val.toFloat();
+        if (key == "appEui") res.rel_config.appEui = val;
+        else if (key == "appKey") res.rel_config.appKey = val;
+        else if (key == "CSPin") res.rel_config.CSPin = val.toInt();
+        else if (key == "lora_freq") res.rel_config.lora_freq = val.toFloat();
         else if (key == "intervalle_de_mesure_secondes") {
             int freq_sec = val.toInt();
-            config.intervalle_de_mesure_secondes = freq_sec;
+            res.rel_config.intervalle_de_mesure_secondes = freq_sec;
         }
         else if (key == "intervalle_lora_secondes") {
             LORA_INTERVAL_S = val.toInt();
-            config.intervalle_lora_secondes = LORA_INTERVAL_S;
+            res.rel_config.intervalle_lora_secondes = LORA_INTERVAL_S;
         }
 
         // ---------- CAPTEURS ----------
@@ -80,13 +83,13 @@ bool Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
                     c.pin = tokens[2].toInt();
 
                 c.id_box = (tokenIdx >= 4) ? tokens[3] : "";
-                liste_capteurs.push_back(c);
+                res.liste_capteurs.push_back(c);
             }
         }
     }
     f.close();
     Serial.println("Configuration chargée avec succès.");
-    return true;
+    return res;
 }
 
 // ==================== Waiter Methods ====================
