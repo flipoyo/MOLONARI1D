@@ -53,3 +53,5 @@ private:
 };
 
 #endif
+
+bool receiveConfigUpdate(const char* filepath);

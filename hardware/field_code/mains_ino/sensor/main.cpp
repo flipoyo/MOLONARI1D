@@ -19,6 +19,7 @@ double *toute_mesure;
 Writer logger;
 const int CSPin = 5;
 const char filename[] = "RECORDS.CSV";
+const char* configFilePath = "/config_sensor.csv";
 
 LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE); // fréquence, adresse locale, adresse distante
 unsigned long lastLoRaSend = 0;
@@ -69,13 +70,34 @@ void setup() {
     digitalWrite(LED_BUILTIN, HIGH);
 
     Serial.begin(115200);
-    unsigned long end_date = millis() + 5000;
-    while (!Serial && millis() < end_date) {}
+    while(!Serial){}
 
-    // Lecture de la configuration CSV
+    if (!SD.begin(CSPin)) {
+        Serial.println("❌ Impossible d'initialiser la SD");
+        while(true){}
+    }
+
+    // Vérifier si config_sensor.csv existe
+    if (!SD.exists("/config_sensor.csv")) {
+        Serial.println("config_sensor.csv absent, en attente de réception LoRa...");
+        lora.startLoRa();
+        if (lora.receiveConfigUpdate("/config_sensor.csv")) {
+            Serial.println("Configuration initiale reçue via LoRa !");
+        } else {
+            Serial.println("⚠️ Pas de configuration reçue, création par défaut");
+            File file = SD.open("/config_sensor.csv", FILE_WRITE);
+            if (file) {
+                file.println("intervalle_de_mesure_secondes,600");
+                file.println("intervalle_lora_secondes,1800");
+                file.close();
+            }
+        }
+        lora.stopLoRa();
+    }
+
+    // Charger la configuration
     Reader reader;
     reader.lireConfigCSV("config_sensor.csv");
-    Serial.println("Configuration chargée.");
 
     
 
@@ -187,25 +209,24 @@ void loop() {
         lastLoRaSend = current_Time;
 
         // --- Réception éventuelle de mise à jour config ---
-        uint16_t newMeasureInterval = 0;
-        uint16_t newLoraInterval = 0;
-
         Serial.println("Vérification de mise à jour descendante...");
         lora.startLoRa();
-        if (lora.receiveConfigUpdate(newMeasureInterval, newLoraInterval)) {
 
-            Serial.println("📥 Mise à jour config reçue du master.");
+        if (lora.receiveConfigUpdate(configFilePath)) {
+            Serial.println("Nouvelle configuration reçue et enregistrée !");
+            
+            // Recharger la configuration depuis le fichier mis à jour
+            Reader reader;
+            reader.lireConfigCSV(configFilePath);
+            Serial.println("Configuration rechargée depuis le fichier LoRa.");
 
-            updateConfigFile(newMeasureInterval, newLoraInterval);
-
-            // On met à jour les variables déjà existantes dans le programme :
-            LORA_INTERVAL_S = newLoraInterval;
+            LORA_INTERVAL_S = config.intervalle_lora_secondes;
 
         } else {
             Serial.println("Pas de mise à jour reçue.");
         }
-        lora.stopLoRa();
 
+        lora.stopLoRa();
 
         
     }
