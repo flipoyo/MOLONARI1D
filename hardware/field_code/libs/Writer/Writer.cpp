@@ -13,8 +13,8 @@
 #include "Time.hpp"
 #include "Measure.hpp"
 
-
-#ifdef SD_DEBUG
+#define SD_BUG 
+#ifdef SD_BUG
 #define SD_LOG(msg) Serial.print(msg)
 #define SD_LOG_LN(msg) Serial.println(msg)
 #else
@@ -52,7 +52,7 @@ void Writer::WriteInNewLine(Measure data){
     SD_LOG("Writing data ..."); // Debug log
     // Write measurement data as a single CSV line
     //this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.chanel1) + COMA + String(data.chanel2) + COMA + String(data.chanel3) + COMA + String(data.chanel4));
-    this->file.println(data.ToString()); // CHANGE TOSTRING TO USE STD::STRING
+    this->file.println(data.ToString()); 
     SD_LOG_LN(" Done");
 
     SD_LOG("Flushing ..."); // Ensure data is saved immediately
