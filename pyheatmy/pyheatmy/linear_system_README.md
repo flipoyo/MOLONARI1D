@@ -43,7 +43,7 @@ Pour résoudre numériquement ces équations, nous utilisons un **$\theta$-schem
 
 Les variables sont notées $U^{n}_{i}$, où `n` est l'indice temporel et `i` l'indice spatial sur l'axe vertical `z`.
 
-Les équations discrétisées sont :
+Les équations discrétisées (dans l'intérieur du domaine) sont :
 
 $$S_s \frac{H_{i}^{n+1} - H_{i}^{n}}{\Delta t} = \alpha \left[ K \frac{H_{i+1}^n - 2H_{i}^n + H_{i-1}^n}{(\Delta z)^2} \right] + (1-\alpha) \left[ K \frac{H_{i+1}^{n+1} - 2H_{i}^{n+1} + H_{i-1}^{n+1}}{(\Delta z)^2} \right] + q_s$$
 
@@ -51,7 +51,7 @@ $$\frac{T_{i}^{n+1} - T_{i}^{n}}{\Delta t} = \alpha \left\{ \kappa_e \frac{T_{i+
 
 ### Conditions initiales
 
-Les profils initiaux de charge et de température ($t=0$) doivent être définis sur toute la colonne verticale `z` pour initialiser la résolution. Comme nous n'avons que 5 points de mesure pour T, et une mesure de différence de charge pour H, on procédera par interpolation de Lagrange d'ordre 5 pour T, et pour H on fera une interpolation linéaire avec $H_{aq} = 0$. 
+Les profils initiaux de charge et de température ($t=0$) doivent être définis sur toute la colonne verticale `z` pour initialiser la résolution. Comme nous n'avons que 5 points de mesure pour T, et une mesure de différence de charge pour H, on procédera par interpolation de Lagrange d'ordre 5 pour T, et pour H on fera une interpolation linéaire avec $H_{aq} = 0$. La charge étant définie à une constante près on peut fixer sa valeur dans l'aquifère à 0 (la charge varie peu dans l'aquifère, elle varie plus proche de la surface ou le débit d'eau varie).
 
 $$\begin{cases}
 H(z, t=0) \\
@@ -62,9 +62,21 @@ $$
 
 ### Conditions aux limites
 
-Nous imposons des conditions de **Dirichlet** (valeur imposée) en haut et en bas du domaine de simulation, qui peuvent varier dans le temps :
+Nous allons raisonner sur la charge, mais le principe est le même pour la température.
 
-$$\text{Limites haute et basse} \quad \begin{cases} H(z=0, t) = H_{riv}(t)-H_{aq}(t) \\ H(z=h, t) = 0 \end{cases} \quad \text{et} \quad \begin{cases} T(z=0, t) = T_{riv}(t) \\ T(z=h, t) = T_{aq}(t) \end{cases}$$
+Nous imposons des conditions de **Dirichlet** (valeur imposée, nos mesures) en haut et en bas du domaine de simulation, qui peuvent varier dans le temps. De manière plus précise, ces conditions fixent les valeurs sur les points fictifs du maillage $i=-\frac{1}{2}$ et $i=n+\frac{1}{2}$.
+
+Notre but est d'estimer $K \frac{\partial^2 H}{\partial z^2}$ au noeud 0. On ne peut pas utiliser la formule usuelle car on ne connaît pas la valeur au point -1, mais on connaît celle en $-\frac{1}{2}$. En faisant les DL, on a :
+$$\begin{cases}
+    H_{riv} = H_0 - H'_0 \frac{\Delta z}{2} + H''_0 \frac{\Delta z^2}{8} - O(\Delta z^3) \quad \text{(1)} \\
+    \\
+    H_1 = H_0 + H'_0 \Delta z + H''_0 \frac{\Delta z^2}{2} + O(\Delta z^3) \quad \text{(2)}
+\end{cases}$$
+
+Ensuite, pour éliminer le terme en $H'_0$, on combine les deux équations. En calculant $2 \times (1) + (2)$, on peut isoler $H''_0$ et on obtient :
+$$H''_0 \approx \frac{1}{\Delta z^2} \left( \frac{8}{3} H_{riv} - 4 H_0 + \frac{4}{3} H_1 \right)$$
+
+C'est la formule utilisée dans le code pour évaluer la dérivée seconde sur la frontière. Pour la frontière en $n+\frac{1}{2}$ on procède de la même manière.
 
 ### Traitement numérique
 
