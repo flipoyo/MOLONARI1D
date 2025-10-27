@@ -23,7 +23,7 @@
 #endif
 
 // Define a comma string for separating CSV columns
-const std::string COMA = ",";
+const std::string COMA = ";";
 
 // GetNextLine function: Returns the number of lines in the CSV file, representing the next ID.
 // SHOULD BE CALLED ONLY ONCE to initialize next_id
@@ -82,6 +82,11 @@ bool Writer::Reconnect() {
 // EstablishConnection: Sets up initial connection to SD card and prepares file for writing
 void Writer::EstablishConnection(const int CSpin) {
     this->CSPin = CSpin;
+    if (!SD.begin(this->CSPin)) {
+        SD_LOG_LN("SD initialization failed!");
+        return;
+    }
+    SD_LOG_LN("SD initialization done.");
     this->next_id = GetNextLine();
     this->file = SD.open(filename, FILE_WRITE);
 }

@@ -39,7 +39,7 @@ void setup() {
     // Lecture de la configuration CSV
     Reader reader;
     reader.lireConfigCSV("config_sensor.csv");
-    Serial.println("Configuration chargée.");
+
 
     
 
@@ -64,8 +64,8 @@ void setup() {
     // Initialisation SD et logger
     if (!SD.begin(CSPin)) { while(true){} }
     logger.EstablishConnection(CSPin);
+    
     InitialiseRTC();
-
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 }
 static bool rattrapage = false;
