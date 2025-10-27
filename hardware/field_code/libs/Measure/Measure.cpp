@@ -32,7 +32,7 @@ String Measure::oneLine() {
 
   // Construction de la ligne
   String str = String(id);
-  str += " (" + date + " " + hour + " ) ; ";
+  str += " ; " + date + " ; " + hour + "  ; ";
 
   // Ajouter les valeurs des capteurs
   for (int i = 0; i < ncapteur; i++) {
