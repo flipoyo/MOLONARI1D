@@ -95,8 +95,7 @@ void loop() {
     unsigned long currentTime = GetSecondsSinceMidnight();
     LORA_INTERVAL_S = config.intervalle_lora_secondes;
     bool IsTimeToLoRa = (currentTime - lastLoRaSend >= LORA_INTERVAL_S);
-
-    if (IsTimeToLoRa || rattrapage) {
+     if (IsTimeToLoRa || rattrapage) {
         lora.startLoRa();
 
         File dataFile = SD.open(filename, FILE_READ);
@@ -109,31 +108,29 @@ void loop() {
         dataFile.seek(lastSDOffset);
 
         while (dataFile.available()) {
-            // Vérification que le ratrappage n'empeche pas de faire une mesure
+            // Vérification que le ratrappage n'empêche pas de faire une mesure
             if (CalculateSleepTimeUntilNextMeasurement() < 60UL) break; 
             
-        
-
             std::queue<String> lineToSend;
             lineToSend.push(dataFile.readStringUntil('\n'));
-            //S'il n'y a plus rien à envoyer
+
+            // S'il n'y a plus rien à envoyer
             if (lineToSend.front().length() == 0) {
                 rattrapage = false;
                 break;
             }
 
-            bool success = false;
-            //Tentative d'envoi 3 fois
+
+            // Tentative d'envoi 3 fois
             for (int attempt = 1; attempt <= 3; attempt++) {
                 if (lora.sendPackets(lineToSend)) {
-                    success = true;
                     break;
                 } else {
                     Serial.println(attempt);
                     if (attempt < 3) delay(20000);
                 }
             }
-
+        } // <-- fermeture du while !
 
         dataFile.close();
         lora.closeSession(0);
@@ -143,7 +140,7 @@ void loop() {
         Serial.println("Vérification de mise à jour descendante...");
         lora.startLoRa();
         if (lora.receiveConfigUpdate(configFilePath)) {
-            Serial.println(" Nouvelle configuration reçue et enregistrée !");
+            Serial.println("Nouvelle configuration reçue et enregistrée !");
             Reader reader;
             reader.lireConfigCSV(configFilePath);
             RefreshConfigFromFile();
@@ -152,7 +149,6 @@ void loop() {
         }
         lora.stopLoRa();
     }
-
     // --- Sommeil jusqu'à prochaine mesure ---
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     Waiter waiter;
