@@ -125,7 +125,7 @@ void loop() {
 
     // --- Envoyer LoRa si intervalle atteint ---
     unsigned long current_Time=GetSecondsSinceMidnight();
-    int LORA_INTERVAL_S = config.intervalle_lora_secondes;
+    LORA_INTERVAL_S = config.intervalle_lora_secondes;
     bool IsTimeToLoRa = (current_Time - lastLoRaSend >= LORA_INTERVAL_S);
 
 
