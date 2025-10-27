@@ -77,12 +77,18 @@ void setup() {
 
     // Lecture de la configuration CSV
     Reader reader;
-    reader.lireConfigCSV("config_sensor.csv");
+    bool test = reader.lireConfigCSV("config_sensor.csv");
+    if (test){
+        DEBUG_LOG("lecture config terminée avec succès");
+    }
+    else {
+        DEBUG_LOG("échec de la lecture du fichier config");
+    }
 
 
     // Compter les capteurs
     int ncapteur = 0; 
-    for (auto & _c : liste_capteurs) {
+    for (auto & _c : liste_capteurs) {©
         ncapteur++;
     }
     // Allocation dynamique

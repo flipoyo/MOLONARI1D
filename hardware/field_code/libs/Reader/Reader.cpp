@@ -20,16 +20,16 @@ unsigned long LORA_INTERVAL_S = 3UL * 3600UL; // valeur par défaut
 unsigned int Reader::line_cursor = 0;
 
 // ==================== Lecture CSV ====================
-void Reader::lireConfigCSV(const char* NomFichier) {
+bool Reader::lireConfigCSV(const char* NomFichier) {
     if (!SD.begin(config.CSPin)) {
         Serial.println("Impossible de monter SD");
-        return;
+        return false;
     }
 
     File f = SD.open(NomFichier);
     if (!f) {
         Serial.println("Fichier CSV non trouvé, utilisation des valeurs par défaut");
-        return;
+        return false;
     }
 
     Serial.println("Lecture du fichier de configuration...");
@@ -86,6 +86,7 @@ void Reader::lireConfigCSV(const char* NomFichier) {
     }
     f.close();
     Serial.println("Configuration chargée avec succès.");
+    return true;
 }
 
 // ==================== Waiter Methods ====================

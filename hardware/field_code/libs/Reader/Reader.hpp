@@ -43,7 +43,7 @@ public:
     Reader() = default;
 
     // ----- Lecture CSV -----
-    void lireConfigCSV(const char* NomFichier);
+    bool lireConfigCSV(const char* NomFichier);
 
     // ----- Méthodes pour Waiter -----
     bool EstablishConnection(unsigned int shift);
