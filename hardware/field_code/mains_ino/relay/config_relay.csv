@@ -3,5 +3,6 @@ appEui,0000000000000000
 appKey,72C5FBBF2AB954D3316A1EE13AA3F141
 CSPin,5
 lora_freq,868000000
+
 #Envoi toutes les 15 minutes:
 lora_intervalle_secondes,900
