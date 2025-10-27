@@ -118,6 +118,7 @@ void loop() {
     for (auto &c : liste_capteurs) {
         toute_mesure[ncapt] = sens[ncapt]->Measure();
         ncapt++;
+        delay(2000);
         }
     
     // --- Stocker sur SD ---
