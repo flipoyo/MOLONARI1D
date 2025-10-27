@@ -12,7 +12,10 @@
 #include "Waiter.hpp"
 #include "Reader.hpp"
 
-
+//#define DEBUG_LOG
+#ifndef DEBUG_LOG
+#define DEBUG_LOG(msg) Serial.println(msg)
+#endif
 Sensor** sens;
 double *toute_mesure;
 
@@ -84,7 +87,6 @@ void setup() {
     for (auto & _c : liste_capteurs) {
         ncapteur++;
     }
-
     // Allocation dynamique
     sens = new Sensor*[ncapteur];
     toute_mesure = new double[ncapteur];
@@ -103,6 +105,7 @@ void setup() {
     InitialiseRTC();
 
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
+    DEBUG_LOG ("Setup finished");
 }
 static bool rattrapage = false;
 
