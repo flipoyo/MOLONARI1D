@@ -32,10 +32,11 @@ MESURE Sensor::Measure() {
 // Retourne une ligne formatée pour une mesure
 String Measure::oneLine() {
   String date = GetCurrentDate();
-  DEBUG_LOG("Date actuelle : " + date);
+
   String hour = GetCurrentHour();
   DEBUG_LOG("Heure actuelle : " + hour);
 
+  DEBUG_LOG(ncapteur);
 
   // Construction de la ligne
   String str = String(id);
@@ -45,8 +46,9 @@ String Measure::oneLine() {
   for (int i = 0; i < ncapteur; i++) {
     str += " " + String(channel[i]);
     if (i < ncapteur) str += "; ";
-  }
 
+  }
+  DEBUG_LOG("end of initialization of one LineMeasure" + str);
   return str;
 }
 // Retourne une version complète et lisible de la mesure

@@ -77,11 +77,13 @@ void setup() {
     unsigned long end_date = millis() + 5000;
     while (!Serial && millis() < end_date) {}
 
+    DEBUG_LOG("\n\n\n\n");
     // Lecture de la configuration CSV
     Reader reader;
 
-    bool test = reader.lireConfigCSV("conf_sen.csv", CSPin);
-    if (test){
+    GeneralConfig temp_config_container = reader.lireConfigCSV("conf_sen.csv", CSPin);
+    std::vector<SensorConfig> liste_capteurs = temp_config_container.liste_capteurs ;
+    if (temp_config_container.succes){
         DEBUG_LOG("lecture config terminée avec succès");
     }
     else {
