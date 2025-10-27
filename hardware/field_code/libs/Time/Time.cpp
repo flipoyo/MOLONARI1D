@@ -30,7 +30,19 @@ void LoadConfig() {
   freq_envoi_lora_seconds = config.intervalle_lora_secondes;
   freq_mesure_seconds = config.intervalle_de_mesure_secondes;
 }
+//Permet de mettre à jour les données si le fichier de config a changé
 
+void RefreshConfigFromFile() {
+    reader.lireConfigCSV("config_sensor.csv");
+    freq_envoi_lora_seconds = config.intervalle_lora_secondes;
+    freq_mesure_seconds = config.intervalle_de_mesure_secondes;
+
+    // Recalculer les instants de mesure si la fréquence a changé
+    InitializeMeasurementTimes();
+    InitializeMeasurementCount();
+
+    Serial.println("🔄 Configuration LoRa et fréquence de mesure mises à jour depuis le fichier CSV.");
+}
 
 
 // Helper function to convert an integer to a 2-digit string (e.g., 7 -> "07")

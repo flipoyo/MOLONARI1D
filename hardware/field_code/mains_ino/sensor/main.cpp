@@ -146,8 +146,7 @@ void loop() {
             Serial.println(" Nouvelle configuration reçue et enregistrée !");
             Reader reader;
             reader.lireConfigCSV(configFilePath);
-            Serial.println("Configuration rechargée depuis LoRa");
-            LORA_INTERVAL_S = config.intervalle_lora_secondes;
+            RefreshConfigFromFile();
         } else {
             Serial.println("Pas de mise à jour reçue.");
         }
