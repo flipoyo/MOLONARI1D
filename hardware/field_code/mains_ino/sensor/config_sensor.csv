@@ -7,6 +7,7 @@ T4,temperature,A4,123456789012345
 T5,temperature,A5,123456789012345
 
 # Configuration générale
+# Les deux délais ne doivent pas être inférieurs respectivement à 900s et 3600s
 intervalle_de_mesure_secondes,900
 intervalle_lora_secondes,3600
 
