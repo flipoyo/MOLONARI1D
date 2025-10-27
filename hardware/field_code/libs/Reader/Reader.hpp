@@ -10,7 +10,7 @@
 struct SensorConfig {
     String id;
     String type_capteur;
-    String id_capteur;
+    String id_capteur; //pour l'export des données
     int pin;
     float offset;
     float scale;
