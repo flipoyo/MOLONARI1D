@@ -18,9 +18,11 @@ Sensor::Sensor(int _dataPin, int _enablePin, float _offset, float _scale, String
 MESURE Sensor::Measure() {
   //Power the sensor only when we measure
   digitalWrite(enablePin, HIGH);
+  digitalWrite(this->alimPin, HIGH);
   delay(200);
   MESURE mesure = analogRead(dataPin);
   digitalWrite(enablePin, LOW);
+  digitalWrite(this->alimPin, LOW); 
   return mesure;
 }
 

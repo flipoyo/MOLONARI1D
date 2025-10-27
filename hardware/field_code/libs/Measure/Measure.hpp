@@ -35,7 +35,8 @@ class Sensor {
         const int enablePin;
         const float offset;  
         const float scale;
-        const String type_capteur;   
+        const String type_capteur;
+        const int alimPin = 1;   
 };
 
 class Measure {
