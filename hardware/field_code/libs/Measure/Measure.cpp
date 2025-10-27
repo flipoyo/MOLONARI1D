@@ -37,7 +37,7 @@ String Measure::oneLine() {
   // Ajouter les valeurs des capteurs
   for (int i = 0; i < ncapteur; i++) {
     str += " " + String(channel[i]);
-    if (i < ncapteur - 1) str += "; "; // éviter le point-virgule final
+    if (i < ncapteur) str += "; ";
   }
 
   return str;

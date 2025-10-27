@@ -32,9 +32,9 @@ std::queue<String> sendQueue;
 
 void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
 
-    File file = SD.open("conf_sen.csv", FILE_READ);
+    File file = SD.open("/conf_sen.csv", FILE_READ);
     if (!file) {
-        Serial.println("ERREUR : impossible de lire config_sensor.csv");
+        Serial.println("ERREUR : impossible de lire conf_sen.csv");
         return;
     }
 
@@ -55,7 +55,7 @@ void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
 
     file = SD.open("/conf_sen.csv", FILE_WRITE | O_TRUNC);
     if (!file) {
-        Serial.println("ERREUR : impossible d'écrire config_sensor.csv");
+        Serial.println("ERREUR : impossible d'écrire conf_sen.csv");
         return;
     }
 
@@ -79,17 +79,8 @@ void setup() {
 
     // Lecture de la configuration CSV
     Reader reader;
-    while(!SD.begin(CSPin)){
-        DEBUG_LOG ("ça marche pas le sd begin");
-        delay(250);
-    }
-    if(SD.begin(CSPin)){
-        DEBUG_LOG("SD begin worked");
-    }else{
-        DEBUG_LOG("SD begin marche toujours pas");
-    }
 
-    bool test = reader.lireConfigCSV("config_sensor.csv", CSPin);
+    bool test = reader.lireConfigCSV("conf_sen.csv", CSPin);
     if (test){
         DEBUG_LOG("lecture config terminée avec succès");
     }
