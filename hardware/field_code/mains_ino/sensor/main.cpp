@@ -38,10 +38,6 @@ unsigned long lastLoRaSend = 0;
 unsigned long lastSDOffset = 0;
 std::queue<String> sendQueue;
 
-std::vector<SensorConfig> liste_capteurs;
-int intervalle_de_mesure_secondes;
-int lora_intervalle_secondes;
-
 uint16_t newMeasureInterval = 0;
 uint16_t newLoraInterval = 0;
 
