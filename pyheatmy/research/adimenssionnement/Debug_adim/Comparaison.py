@@ -30,8 +30,8 @@ t_res_adim = pd.read_csv(f_adim, index_col=0)
 matrix_dim = t_res_dim.values
 matrix_adim = t_res_adim.values
 
-# Calcul de l'écart de température
-temperature_diff = matrix_adim - matrix_dim
+# Calcul de l'écart relatif de température
+temperature_diff = 100*(matrix_adim - matrix_dim)/matrix_dim
 
 print(t_res_dim.shape)
 
@@ -44,14 +44,14 @@ plt.figure(figsize=(12, 8))
 
 im = plt.imshow(temperature_diff, aspect='auto', cmap='RdBu_r', origin='lower')
 im.set_clim(-np.max(np.abs(temperature_diff)), np.max(np.abs(temperature_diff)))
-plt.colorbar(im, label='Écart de température (°C)')
+plt.colorbar(im, label='Écart relatif (en %) de température')
 
 # Configuration des ticks
 plt.yticks(range(len(profondeurs)), profondeurs, rotation=45)
 plt.gca().invert_yaxis()
 plt.ylabel('Profondeur')
 plt.xlabel('Date')
-plt.title('Écart de température: T_res_ADIM - T_res_DIM')
+plt.title('Écart relatif (en %) de température: T_res_ADIM - T_res_DIM')
 
 plt.tight_layout()
 
@@ -75,8 +75,8 @@ t_res_adim = pd.read_csv(f_adim, index_col=0)
 matrix_dim = t_res_dim.values
 matrix_adim = t_res_adim.values
 
-# Calcul de l'écart de température
-temperature_diff = matrix_adim - matrix_dim
+# Calcul de l'écart relatif de hauteur de charge
+temperature_diff = 100*(matrix_adim - matrix_dim)/matrix_dim
 
 print(t_res_dim.shape)
 
@@ -89,14 +89,14 @@ plt.figure(figsize=(12, 8))
 
 im = plt.imshow(temperature_diff, aspect='auto', cmap='RdBu_r', origin='lower')
 im.set_clim(-np.max(np.abs(temperature_diff)), np.max(np.abs(temperature_diff)))
-plt.colorbar(im, label='Écart de hauteur de charge (m)')
+plt.colorbar(im, label='Écart relatif (en %) de hauteur de charge')
 
 # Configuration des ticks
 plt.yticks(range(len(profondeurs)), profondeurs, rotation=45)
 plt.gca().invert_yaxis()
 plt.ylabel('Profondeur')
 plt.xlabel('Date')
-plt.title('Écart de hauteur de charge: H_res_ADIM - H_res_DIM')
+plt.title('Écart relatif (en %) de hauteur de charge: H_res_ADIM - H_res_DIM')
 
 plt.tight_layout()
 
