@@ -35,6 +35,7 @@ const char* configFilePath = "/config_sensor.csv";
 // LoRa
 LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE);
 unsigned long lastLoRaSend = 0;
+unsigned long lastMeasure = 0;
 unsigned long lastSDOffset = 0;
 std::queue<String> sendQueue;
 
@@ -141,13 +142,19 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
 
     // --- Prendre mesures ---
+    unsigned long current_Time=GetSecondsSinceMidnight();
+    bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 180UL));
+
     int ncapt = 0;
-    for (auto &c : liste_capteurs) {
-        toute_mesure[ncapt] = sens[ncapt]->get_voltage();
-        ncapt++;
-        delay(2000);
+
+    if (IsTimeToMeasure) {
+        for (auto &c : liste_capteurs) {
+            toute_mesure[ncapt] = sens[ncapt]->get_voltage();
+            ncapt++;
+            delay(2000);
         }
-    
+        lastMeasure = current_Time;
+    }
 
     DEBUG_LOG(ncapt);//so far so good
     
@@ -156,7 +163,6 @@ void loop() {
   // --- Envoyer LoRa si intervalle atteint ---
 
     // --- Envoyer LoRa si intervalle atteint ---
-    unsigned long current_Time=GetSecondsSinceMidnight();
     
     bool IsTimeToLoRa = (current_Time - lastLoRaSend >= lora_intervalle_secondes - 60UL); // 60 secondes de marge
 
@@ -228,5 +234,11 @@ void loop() {
     // --- Sommeil jusqu'à prochaine mesure ---
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     Waiter waiter;
-    waiter.sleepUntil(CalculateSleepTimeUntilNextMeasurement());
+
+    if (CalculateSleepTimeUntilNextMeasurement() <= CalculateSleepTimeUntilNextCommunication()){
+        waiter.sleepUntil(CalculateSleepTimeUntilNextMeasurement());
+    } else {
+        waiter.sleepUntil(CalculateSleepTimeUntilNextCommunication());
+    }
+    
 }
