@@ -394,7 +394,14 @@ class T_stratified(Linear_system):
 
     def compute_T_stratified(self):
         self.T_res = np.zeros((self.n_cell, self.n_times), np.float32)
+        #nouvelle ligne pour stocker le flux de chaleur associé à la source d'eau q_s
+        #il doit être calculé de manière semi-implicite pour la cohérence de la résolution
+        self.source_heat_flux = np.zeros((self.n_cell, self.n_times), np.float32)
+
         self.T_res[:, 0] = self.T_init
+        #calcul du flux au temps initial
+        self.source_heat_flux[:, 0] = self.q_s_list * RHO_W * C_W * (self.T_res[:, 0] - ZERO_CELSIUS)
+
         for j, dt in enumerate(self.all_dt):
             # Update of Mu(T) after N_update_Mu iterations:
             if j % self.N_update_Mu == 1:
@@ -429,6 +436,10 @@ class T_stratified(Linear_system):
                     lower_diagonal_A, diagonal_A, upper_diagonal_A
                 )
                 self.T_res[:, j + 1] = solve(A, B_fois_T_plus_c)
+            
+            #Calcul du flux de chaleur source de manière semi-implicite
+            T_semi_implicite = self.alpha * self.T_res[:, j] + (1 - self.alpha) * self.T_res[:, j + 1]
+            self.source_heat_flux[:, j + 1] = self.q_s_list * RHO_W * C_W * (T_semi_implicite - ZERO_CELSIUS)
 
         return self.T_res
 

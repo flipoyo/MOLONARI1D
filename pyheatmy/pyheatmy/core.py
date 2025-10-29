@@ -86,6 +86,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self._H_res = None
         # le tableau contenant le débit spécifique à tout temps et à toute profondeur (lignes : débit) (colonnes : temps)
         self._flows = None
+        # le tableau contenant le flux advectif latéral (pseudo2D) à tout temps et à toute profondeur (lignes : flux) (colonnes : temps)
+        self._lateral_advec_heat_flux = None
 
         # liste contenant des objets de classe état et de longueur le nombre d'états acceptés par la MCMC (<=nb_iter), passe à un moment par une longueur de 1000 pendant l'initialisation de MCMC
         self._states = list()
@@ -313,6 +315,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 N_update_Mu=N_UPDATE_MU,
             )
             T_res = T_strat.compute_T_stratified()
+
+            #on récupère le flux de chaleur latéral (W.m-3) et on convertit en (W.m-2) en multipliant par dz
+            if hasattr(T_strat, 'source_heat_flux'):
+                self._lateral_advec_heat_flux = T_strat.source_heat_flux * dz
 
             # calcule toutes les températures à tout temps et à toute profondeur
 
@@ -744,12 +750,26 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     # récupération des températures au cours du temps à toutes les profondeurs (par défaut) ou bien à une profondeur donnée
 
     # erreur si pas déjà éxécuté compute_solve_transi, sinon l'attribut pas encore affecté à une valeur
+    #on renomme le getter pour distinguer l'advectif vertical et latéral
     @compute_solve_transi.needed
-    def get_advec_flows_solve(self):
+    def get_vertical_advec_flows_solve(self):
         return RHO_W * C_W * self._flows * (self.temperatures_solve - ZERO_CELSIUS)
 
-    advec_flows_solve = property(get_advec_flows_solve)
+    vertical_advec_flows_solve = property(get_vertical_advec_flows_solve)
     # récupération des flux advectifs = masse volumnique*capacité calorifique*débit spécifique*température
+
+    # nouveau getter
+    def get_lateral_advec_heat_flux_solve(self, z=None):
+        """
+        Retourne le flux de chaleur surfacique (W/m2) généré par le terme source latéral.
+        """
+        if z is None:
+            return self._lateral_advec_heat_flux
+        
+        z_ind = np.argmin(np.abs(self.depths_solve - z))
+        return self._lateral_advec_heat_flux[z_ind, :]
+
+    lateral_advec_heat_flux_solve = property(get_lateral_advec_heat_flux_solve)
 
     # erreur si pas déjà éxécuté compute_solve_transi, sinon l'attribut pas encore affecté à une valeur
     @compute_solve_transi.needed
@@ -1689,6 +1709,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         plt.show()
 
     @compute_solve_transi.needed
+    @compute_solve_transi.needed
     def plot_CALC_results(self, fontsize=15):
         print(
             f"Plotting Température in column. time series have nrecords =  {len(self._times)}"
@@ -1710,9 +1731,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         """Plots des profils de température"""
 
-        fig, ax = plt.subplots(2, 3, sharey=False, figsize=(22, 14))
+        # Créer une grille 3x3 et ajuster la taille
+        fig, ax = plt.subplots(3, 3, sharey=False, figsize=(22, 21))
         plt.subplots_adjust(wspace=0.3, hspace=0.4)
         fig.suptitle("Résultats calcul : simulateur de données", fontsize=fontsize + 6)
+
+        # LIGNE 1, PLOT 1 : Températures mesurées
         ax[0, 0].plot(self._T_riv[:nt][:nt] - K_offset, label="Triv")
         for i in range(n_sens):
             ax[0, 0].plot(
@@ -1731,6 +1755,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ax[0, 0].secax.set_xlabel("t (jour)", fontsize=fontsize)
         ax[0, 0].set_title("Température mesurées", fontsize=fontsize, pad=20)
 
+        # LIGNE 1, PLOT 2 : Evolution du profil de température
         for i in range(nt):
             ax[0, 1].plot(self._temperatures[:nt, i] - K_offset, -self._z_solve)
         ax[0, 1].set_ylabel("Depth (m)", fontsize=fontsize)
@@ -1740,25 +1765,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             "Evolution du profil de température", fontsize=fontsize, pad=20
         )
 
-        """Plots des frises"""
+        #  Masquer l'axe inutilisé de la première ligne
+        ax[0, 2].axis('off')
 
-        im0 = ax[0, 2].imshow(
+        # LIGNE 2, PLOT 1 : Frise température
+        im0 = ax[1, 0].imshow(
             self._temperatures[:, :nt] - K_offset, aspect="auto", cmap="Spectral_r"
-        )
-        ax[0, 2].set_xlabel("t (15min)", fontsize=fontsize)
-        ax[0, 2].set_ylabel("z (m)", fontsize=fontsize)
-        ax[0, 2].xaxis.tick_top()
-        ax[0, 2].xaxis.set_label_position("top")
-        ax[0, 2].secax = ax[0, 2].secondary_xaxis(
-            "bottom", functions=(min2jour, jour2min)
-        )
-        ax[0, 2].secax.set_xlabel("t (jour)", fontsize=fontsize)
-        cbar0 = fig.colorbar(im0, ax=ax[0, 2], shrink=1, location="right")
-        cbar0.set_label("Température (°C)", fontsize=fontsize)
-        ax[0, 2].set_title("Frise température MD", fontsize=fontsize, pad=20)
-
-        im1 = ax[1, 0].imshow(
-            self.get_conduc_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
         )
         ax[1, 0].set_xlabel("t (15min)", fontsize=fontsize)
         ax[1, 0].set_ylabel("z (m)", fontsize=fontsize)
@@ -1768,12 +1780,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             "bottom", functions=(min2jour, jour2min)
         )
         ax[1, 0].secax.set_xlabel("t (jour)", fontsize=fontsize)
-        cbar1 = fig.colorbar(im1, ax=ax[1, 0], shrink=1, location="right")
-        cbar1.set_label("Flux conductif (W/m²)", fontsize=fontsize)
-        ax[1, 0].set_title("Frise Flux conductif MD", fontsize=fontsize, pad=20)
+        cbar0 = fig.colorbar(im0, ax=ax[1, 0], shrink=1, location="right")
+        cbar0.set_label("Température (°C)", fontsize=fontsize)
+        ax[1, 0].set_title("Frise température MD", fontsize=fontsize, pad=20)
 
-        im2 = ax[1, 1].imshow(
-            self.get_advec_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
+        # LIGNE 2, PLOT 2 : Frise Flux d'eau
+        im3 = ax[1, 1].imshow(
+            self.get_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
         )
         ax[1, 1].set_xlabel("t (15min)", fontsize=fontsize)
         ax[1, 1].set_ylabel("z (m)", fontsize=fontsize)
@@ -1783,24 +1796,64 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             "bottom", functions=(min2jour, jour2min)
         )
         ax[1, 1].secax.set_xlabel("t (jour)", fontsize=fontsize)
-        cbar2 = fig.colorbar(im2, ax=ax[1, 1], shrink=1, location="right")
-        cbar2.set_label("Flux advectif (W/m²)", fontsize=fontsize)
-        ax[1, 1].set_title("Frise Flux advectif MD", fontsize=fontsize, pad=20)
+        cbar3 = fig.colorbar(im3, ax=ax[1, 1], shrink=1, location="right")
+        cbar3.set_label("Water flow (m/s)", fontsize=fontsize)
+        ax[1, 1].set_title("Frise Flux d'eau MD", fontsize=fontsize, pad=20)
+        
+        # Masquer l'axe inutilisé de la deuxième ligne
+        ax[1, 2].axis('off')
 
-        im3 = ax[1, 2].imshow(
-            self.get_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
+        # LIGNE 3, PLOT 1 : Frise Flux conductif 
+        im1 = ax[2, 0].imshow(
+            self.get_conduc_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
         )
-        ax[1, 2].set_xlabel("t (15min)", fontsize=fontsize)
-        ax[1, 2].set_ylabel("z (m)", fontsize=fontsize)
-        ax[1, 2].xaxis.tick_top()
-        ax[1, 2].xaxis.set_label_position("top")
-        ax[1, 2].secax = ax[1, 2].secondary_xaxis(
+        ax[2, 0].set_xlabel("t (15min)", fontsize=fontsize)
+        ax[2, 0].set_ylabel("z (m)", fontsize=fontsize)
+        ax[2, 0].xaxis.tick_top()
+        ax[2, 0].xaxis.set_label_position("top")
+        ax[2, 0].secax = ax[2, 0].secondary_xaxis(
             "bottom", functions=(min2jour, jour2min)
         )
-        ax[1, 2].secax.set_xlabel("t (jour)", fontsize=fontsize)
-        cbar3 = fig.colorbar(im3, ax=ax[1, 2], shrink=1, location="right")
-        cbar3.set_label("Water flow (m/s)", fontsize=fontsize)
-        ax[1, 2].set_title("Frise Flux d'eau MD", fontsize=fontsize, pad=20)
+        ax[2, 0].secax.set_xlabel("t (jour)", fontsize=fontsize)
+        cbar1 = fig.colorbar(im1, ax=ax[2, 0], shrink=1, location="right")
+        cbar1.set_label("Flux conductif (W/m²)", fontsize=fontsize)
+        ax[2, 0].set_title("Frise Flux conductif MD", fontsize=fontsize, pad=20)
+
+        # LIGNE 3, PLOT 2 : Frise Flux advectif vertical
+        im2 = ax[2, 1].imshow(
+            self.get_vertical_advec_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
+        )
+        ax[2, 1].set_xlabel("t (15min)", fontsize=fontsize)
+        ax[2, 1].set_ylabel("z (m)", fontsize=fontsize)
+        ax[2, 1].xaxis.tick_top()
+        ax[2, 1].xaxis.set_label_position("top")
+        ax[2, 1].secax = ax[2, 1].secondary_xaxis(
+            "bottom", functions=(min2jour, jour2min)
+        )
+        ax[2, 1].secax.set_xlabel("t (jour)", fontsize=fontsize)
+        cbar2 = fig.colorbar(im2, ax=ax[2, 1], shrink=1, location="right")
+        cbar2.set_label("Vertical Advective Flux (W/m²)", fontsize=fontsize)
+        ax[2, 1].set_title("Frise Flux advectif vertical MD", fontsize=fontsize, pad=20)
+
+        # LIGNE 3, PLOT 3 : Frise Flux advectif latéral
+        if self._lateral_advec_heat_flux is not None:
+            im4 = ax[2, 2].imshow(
+                self.get_lateral_advec_heat_flux_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
+            )
+            ax[2, 2].set_xlabel("t (15min)", fontsize=fontsize)
+            ax[2, 2].set_ylabel("z (m)", fontsize=fontsize)
+            ax[2, 2].xaxis.tick_top()
+            ax[2, 2].xaxis.set_label_position("top")
+            ax[2, 2].secax = ax[2, 2].secondary_xaxis(
+                "bottom", functions=(min2jour, jour2min)
+            )
+            ax[2, 2].secax.set_xlabel("t (jour)", fontsize=fontsize)
+            cbar4 = fig.colorbar(im4, ax=ax[2, 2], shrink=1, location="right")
+            cbar4.set_label("Lateral Advective Flux (W/m²)", fontsize=fontsize)
+            ax[2, 2].set_title("Frise Flux advectif latéral MD", fontsize=fontsize, pad=20)
+        else:
+            # S'il n'y a pas de flux latéral, on masque aussi ce dernier axe
+            ax[2, 2].axis('off')
 
     @compute_solve_transi.needed
     def plot_all_results(self):
@@ -1823,15 +1876,21 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         title = "Temperatures"
         self.plot_it_Zt(temperatures, title, unitLeg)
 
-        flux_advectifs = self.get_advec_flows_solve()
+        flux_advectifs_verticaux = self.get_vertical_advec_flows_solve()
         unitLeg = "W/m2"
-        title = "Advective heat flux"
-        self.plot_it_Zt(flux_advectifs, title, unitLeg, 1.04, 2)
+        title = "Vertical Advective heat flux"
+        self.plot_it_Zt(flux_advectifs_verticaux, title, unitLeg, 1.04, 2)
 
         flux_conductifs = self.get_conduc_flows_solve()
         unitLeg = "W/m2"
         title = "Conductive heat flux"
         self.plot_it_Zt(flux_conductifs, title, unitLeg, 1.04, 2)
+
+        if self._lateral_advec_heat_flux is not None:
+            flux_advectif_lateral = self.get_lateral_advec_heat_flux_solve()
+            unitLeg = "W/m2"
+            title = "Lateral Advective Heat Flux"
+            self.plot_it_Zt(flux_advectif_lateral, title, unitLeg, 1.04, 2)
 
         self.plot_CALC_results()
 
