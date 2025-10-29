@@ -13,7 +13,7 @@
 #include "Waiter.hpp"
 #include "Reader.hpp"
 
-//#define DEBUG_LOG
+// define DEBUG_LOG
 #ifndef DEBUG_LOG
 #define DEBUG_LOG(msg) Serial.println(msg)
 #endif
@@ -22,6 +22,9 @@ double *toute_mesure;
 
 
 GeneralConfig config;
+std::vector<SensorConfig> liste_capteurs;
+int lora_intervalle_secondes;
+int intervalle_de_mesure_secondes;
 
 //std::string FileName = "conf_sen.csv"; Impossible to use that because SD.open() takes squid string arguments
 Writer logger;
@@ -65,7 +68,7 @@ void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
             ligne = "intervalle_lora_secondes," + String(loraInterval);
         }
     }
-
+    
     file = SD.open("/conf_sen.csv", FILE_WRITE | O_TRUNC);
     if (!file) {
         Serial.println("ERREUR : impossible d'écrire conf_sen.csv");
@@ -148,15 +151,18 @@ void loop() {
         ncapt++;
         delay(2000);
         }
+    
+
     DEBUG_LOG(ncapt);//so far so good
     
     // --- Stocker sur SD ---
     logger.LogData(ncapt, toute_mesure);
+  // --- Envoyer LoRa si intervalle atteint ---
 
     // --- Envoyer LoRa si intervalle atteint ---
     unsigned long current_Time=GetSecondsSinceMidnight();
-    LORA_INTERVAL_S = lora_intervalle_secondes;
-    bool IsTimeToLoRa = (current_Time - lastLoRaSend >= LORA_INTERVAL_S);
+    
+    bool IsTimeToLoRa = (current_Time - lastLoRaSend >= lora_intervalle_secondes);
 
 
     if (IsTimeToLoRa || rattrapage) {
@@ -213,7 +219,7 @@ void loop() {
             updateConfigFile(newMeasureInterval, newLoraInterval);
 
             // On met à jour les variables déjà existantes dans le programme :
-            LORA_INTERVAL_S = newLoraInterval;
+            lora_intervalle_secondes = newLoraInterval;
 
         } else {
             Serial.println("Pas de mise à jour reçue.");
