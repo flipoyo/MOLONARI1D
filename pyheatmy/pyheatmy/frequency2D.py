@@ -2,10 +2,13 @@ from dataclasses import dataclass
 import numpy as np
 from typing import Optional, Dict, Any
 
+"""This class helps decide if a log-amplitude profile y(z) is better described by a 1D linear model
+or a 2D quadratic model in z, using AICc and Likelihood Ratio Test (LRT).
 
-# -----------------------------
-# Result container
-# -----------------------------
+@author: Noé Daniel (Computing 2025)
+"""
+
+# This container stores the decision result (whether 2D or 1D).
 @dataclass
 class Decision:
     is_2D: bool
@@ -13,40 +16,35 @@ class Decision:
     metrics: Dict[str, Any]   # contains z, y, rss, coeffs, AICc, p-value, etc.
 
 
-# -----------------------------
-# Configuration container
-# -----------------------------
+# This configuration class holds parameters for the testing procedure.
 @dataclass
 class TwoDConfig:
-    # Fit type: either enforce y(0)=0 or allow an intercept
+    # Fit type: either enforce y(0)=0 or allow an intercept (normally it's better to enforce y(0)=0)
     through_origin: bool = True
     # Show LRT details in reason
     alpha_lrt: float = 0.05
     # Small epsilon to avoid log(0)
     eps: float = 1e-12
-    # Whether to draw plots by default from high-level helpers
+    # Whether to draw plots by default.
     default_show_plot: bool = False
 
 
-# -----------------------------
-# Core tester class
-# -----------------------------
+# Core class implementing the 1D vs 2D decision logic.
 class TwoDTester:
     """
-    Teste si un profil log-amplitude y(z) est mieux décrit par un modèle 1D linéaire
-    que par un modèle 2D quadratique en z. Deux variantes de régression sont offertes:
+    Test if a log-amplitude profile y(z) is better described by a 1D linear model
+    than by a 2D quadratic model in z. Two regression variants are offered:
       - through_origin=True  : y = c1*z  (1D)  vs y = c1*z + c2*z^2  (2D)
       - through_origin=False : y = c0 + c1*z  (1D)  vs y = c0 + c1*z + c2*z^2  (2D)
 
-    Les comparaisons s'appuient sur AICc et sur un Likelihood Ratio Test (LRT),
-    avec k (nbre de paramètres) adapté à la contrainte choisie.
+    The comparisons rely on AICc and on a Likelihood Ratio Test (LRT),
+    with k (number of parameters) adapted to the chosen constraint.
     """
 
     def __init__(self, config: Optional[TwoDConfig] = None):
         self.config = config or TwoDConfig()
 
     # ---------- Linear algebra helpers ----------
-
     @staticmethod
     def _fit_least_squares(X: np.ndarray, y: np.ndarray):
         """Return coeffs, y_pred, rss."""
@@ -90,7 +88,6 @@ class TwoDTester:
         return X, k
 
     # ---------- Information criteria & LRT ----------
-
     @staticmethod
     def _aicc(n: int, rss: float, sigma2_hat: float, k: int) -> float:
         """
@@ -213,13 +210,12 @@ class TwoDTester:
         }
         return Decision(is_2D=is_2D, reason=reason, metrics=metrics)
 
-    # ---------- Convenience wrappers ----------
 
     def decide_from_amplitudes(self, depths: np.ndarray, amplitudes_at_period: np.ndarray,
                                show_plot: Optional[bool] = None) -> Decision:
         """
-        Entrée: profondeur 'depths' et amplitude spectrale A(z) pour UNE période.
-        On construit y(z) = log(A(z)/A(0)) puis on appelle decide_1d_vs_2d.
+        Inputs: depths and spectral amplitudes for ONE period.
+        We build y(z) = log(A(z)/A(0)) then call decide_1d_vs_2d.
         """
         cfg = self.config
         if show_plot is None:
@@ -241,10 +237,11 @@ class TwoDTester:
     def decide_for_fa_period(self, fa, period_index: int = 0,
                              show_plot: Optional[bool] = None) -> Decision:
         """
-        Utilitaire pour travailler directement avec ton objet `frequency_analysis` :
-          - lit fa._AMPS_AT_PEAKS  (matrice (n_signaux x n_périodes))
-          - lit fa._depths         (vector)
-          - ajuste depths pour inclure z=0 si besoin
+        To work directly with a frequency_analysis object (fa).
+        We extract the relevant depths and amplitudes for the specified period.
+        - read fa._AMPS_AT_PEAKS  (matrix (n_signals x n_periods))
+        - read fa._depths         (vector)
+        - adjust depths to include z=0 if needed.
         """
         cfg = self.config
         if show_plot is None:
@@ -256,7 +253,7 @@ class TwoDTester:
         A_all = fa._AMPS_AT_PEAKS[:, period_index]  # shape (n_signaux,)
         depths = np.asarray(fa._depths, float).ravel()
 
-        # Si depths ne contient pas la rivière (z=0) mais A_all oui, on préfixe 0:
+        # If depths does not contain the river (z=0) but A_all does, we prefix 0:
         if depths.shape[0] == A_all.shape[0] - 1:
             depths = np.concatenate(([0.0], depths))
 
