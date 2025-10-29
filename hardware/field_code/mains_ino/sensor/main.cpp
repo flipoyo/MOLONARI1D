@@ -13,8 +13,7 @@
 #include "Waiter.hpp"
 #include "Reader.hpp"
 
-<<<<<<< HEAD
-//#define DEBUG_LOG
+// define DEBUG_LOG
 #ifndef DEBUG_LOG
 #define DEBUG_LOG(msg) Serial.println(msg)
 #endif
@@ -23,15 +22,11 @@ double *toute_mesure;
 
 
 GeneralConfig config;
+std::vector<SensorConfig> liste_capteurs;
+int lora_intervalle_secondes;
+int intervalle_de_mesure_secondes;
 
 //std::string FileName = "conf_sen.csv"; Impossible to use that because SD.open() takes squid string arguments
-=======
-// Capteurs
-Sensor** sens;
-double *toute_mesure;
-
-// Logger
->>>>>>> 242
 Writer logger;
 const int CSPin = 5;
 const char filename[] = "RECORDS.CSV";
@@ -43,11 +38,9 @@ unsigned long lastLoRaSend = 0;
 unsigned long lastSDOffset = 0;
 std::queue<String> sendQueue;
 
-<<<<<<< HEAD
-std::vector<SensorConfig> liste_capteurs;
-int intervalle_de_mesure_secondes;
-int lora_intervalle_secondes;
-
+bool rattrapage = false;
+uint16_t newMeasureInterval = 0;
+uint16_t newLoraInterval = 0;
 
 void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
 
@@ -71,7 +64,7 @@ void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
             ligne = "intervalle_lora_secondes," + String(loraInterval);
         }
     }
-
+    
     file = SD.open("/conf_sen.csv", FILE_WRITE | O_TRUNC);
     if (!file) {
         Serial.println("ERREUR : impossible d'écrire conf_sen.csv");
@@ -86,9 +79,6 @@ void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
     Serial.println("Fichier conf_sen.csv mis à jour sans toucher aux autres paramètres.");
 }
 
-=======
-static bool rattrapage = false;
->>>>>>> 242
 
 // ----- Setup -----
 void setup() {
@@ -99,7 +89,6 @@ void setup() {
     unsigned long end_date = millis() + 5000;
     while (!Serial && millis() < end_date) {}
 
-<<<<<<< HEAD
     DEBUG_LOG("\n\n\n\n");
     // Lecture de la configuration CSV
     Reader reader;
@@ -124,24 +113,6 @@ void setup() {
     for (auto & _c : liste_capteurs) {
         ncapteur++;
     }
-=======
-    // Initialisation SD
-    if (!SD.begin(CSPin)) {
-        Serial.println("Impossible d'initialiser la SD");
-        while(true) {}
-    }
-
-
-    // --- Charger la configuration ---
-    Reader reader;
-    reader.lireConfigCSV(configFilePath);
-
-
-    // Compter les capteurs
-    int ncapteur = 0;
-    for (auto & _c : liste_capteurs) ncapteur++;
-
->>>>>>> 242
     // Allocation dynamique
     sens = new Sensor*[ncapteur];
     toute_mesure = new double[ncapteur];
@@ -174,32 +145,20 @@ void loop() {
         toute_mesure[ncapt] = sens[ncapt]->get_voltage();
         ncapt++;
         delay(2000);
-<<<<<<< HEAD
-        }
-    DEBUG_LOG(ncapt);//so far so good
-    
-=======
     }
 
->>>>>>> 242
+    DEBUG_LOG(ncapt);//so far so good
+    
     // --- Stocker sur SD ---
     logger.LogData(ncapt, toute_mesure);
+  // --- Envoyer LoRa si intervalle atteint ---
 
-<<<<<<< HEAD
-    // --- Envoyer LoRa si intervalle atteint ---
     unsigned long current_Time=GetSecondsSinceMidnight();
-    LORA_INTERVAL_S = lora_intervalle_secondes;
-    bool IsTimeToLoRa = (current_Time - lastLoRaSend >= LORA_INTERVAL_S);
+    
+    bool IsTimeToLoRa = (current_Time - lastLoRaSend >= lora_intervalle_secondes);
 
 
     if (IsTimeToLoRa || rattrapage) {
-=======
-    // --- Envoyer LoRa si intervalle atteint ou s'il faut rattraper du retard d'envoi ---
-    unsigned long currentTime = GetSecondsSinceMidnight();
-    LORA_INTERVAL_S = config.intervalle_lora_secondes;
-    bool IsTimeToLoRa = (currentTime - lastLoRaSend >= LORA_INTERVAL_S);
-     if (IsTimeToLoRa || rattrapage) {
->>>>>>> 242
         lora.startLoRa();
 
         File dataFile = SD.open(filename, FILE_READ);
@@ -238,28 +197,20 @@ void loop() {
 
         dataFile.close();
         lora.closeSession(0);
-        lastLoRaSend = currentTime;
+        lastLoRaSend = current_Time;
 
         // --- Réception éventuelle de mise à jour config ---
         Serial.println("Vérification de mise à jour descendante...");
         lora.startLoRa();
-<<<<<<< HEAD
-        if (lora.receiveConfigUpdate(newMeasureInterval, newLoraInterval)) {
+        if (lora.receiveConfigUpdate(configFilePath)) {
 
             Serial.println("Mise à jour config reçue du master.");
 
             updateConfigFile(newMeasureInterval, newLoraInterval);
 
             // On met à jour les variables déjà existantes dans le programme :
-            LORA_INTERVAL_S = newLoraInterval;
+            lora_intervalle_secondes = newLoraInterval;
 
-=======
-        if (lora.receiveConfigUpdate(configFilePath)) {
-            Serial.println("Nouvelle configuration reçue et enregistrée !");
-            Reader reader;
-            reader.lireConfigCSV(configFilePath);
-            RefreshConfigFromFile();
->>>>>>> 242
         } else {
             Serial.println("Pas de mise à jour reçue.");
         }

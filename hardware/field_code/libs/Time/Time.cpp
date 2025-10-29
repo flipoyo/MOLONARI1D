@@ -14,20 +14,22 @@ int freq_mesure_seconds = 0;
 
 std::vector<unsigned long> measurementTimesVec;
 
+GeneralConfig res;
+
 // ------------------------------------------------------------
 // Lecture et mise à jour de la configuration
 // ------------------------------------------------------------
 
 void LoadConfig() {
   reader.lireConfigCSV("config_sensor.csv");
-  freq_envoi_lora_seconds = config.intervalle_lora_secondes;
-  freq_mesure_seconds = config.intervalle_de_mesure_secondes;
+  freq_envoi_lora_seconds = res.int_config.lora_intervalle_secondes;
+  freq_mesure_seconds = res.int_config.intervalle_de_mesure_secondes;
 }
 
 void RefreshConfigFromFile() {
   reader.lireConfigCSV("config_sensor.csv");
-  freq_envoi_lora_seconds = config.intervalle_lora_secondes;
-  freq_mesure_seconds = config.intervalle_de_mesure_secondes;
+  freq_envoi_lora_seconds = res.int_config.lora_intervalle_secondes;
+  freq_mesure_seconds = res.int_config.intervalle_de_mesure_secondes;
 
   InitializeMeasurementTimes();
   InitializeMeasurementCount();
