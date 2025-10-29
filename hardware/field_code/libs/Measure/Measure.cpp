@@ -27,11 +27,12 @@ double Sensor::get_voltage() {
   return voltage;
 }
 
-Measure::Measure(int ncapt, double* toute_mesure):ncapteur(ncapt){
-  int iterator = 0;
+Measure::Measure(const int& ncapt, const double* toute_mesure):ncapteur(ncapt){
   for (int iterator = 0; iterator < ncapteur; iterator ++){
     channel.push_back(toute_mesure[iterator]);
   } 
+  this->time = GetCurrentHour();
+  this->date = GetCurrentDate();
 }
 
 // Retourne une ligne formatée pour une mesure

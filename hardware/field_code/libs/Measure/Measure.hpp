@@ -38,12 +38,12 @@ class Sensor {
 
 class Measure {
   public:
-    Measure(int ncapt, double* toute_mesure);
+    Measure(const int& ncapt, const double* toute_mesure);
     // Unique ID for each measurement
     unsigned int id;
 
-    std::string date;
-    std::string time;
+    String date;
+    String time;
     unsigned long time_in_second;
 
     int ncapteur;
