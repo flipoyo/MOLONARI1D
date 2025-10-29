@@ -831,47 +831,71 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         cr_vec,
         pcr,
         ranges,
+        is_param_fixed,  # <-- NOUVEL ARGUMENT
     ):
         X_proposal = np.zeros((nb_layer, nb_param), np.float32)
         dX = np.zeros((nb_layer, nb_param), np.float32)
-        for l in range(nb_layer):
-            # actualiation des paramètres DREAM pour la couche l
 
+        for l in range(nb_layer):
+            # --- LOGIQUE MODIFIÉE POUR IGNORER LES PARAMÈTRES FIXES ---
+
+            # On identifie les paramètres avec lesquels on a le droit de "jouer".
+            variable_indices = np.where(is_param_fixed[l] == False)[0]
+            n_variable_params = len(variable_indices)
+
+            # Si tous les paramètres de cette couche sont fixes, on ne fait rien.
+            if n_variable_params == 0:
+                X_proposal[l] = X[j, l]
+                continue # On passe à la couche suivante
+
+            # La logique de DREAM ne s'applique que sur les paramètres variables.
             id_layer[l] = np.random.choice(ncr, p=pcr[l])
-            z = np.random.uniform(0, 1, nb_param)
-            A = z <= cr_vec[id_layer[l]]
-            d_star = np.sum(A)
-            if d_star == 0:
-                A[np.argmin(z)] = True
+            z = np.random.uniform(0, 1, n_variable_params) # On ne tire que pour les variables
+            
+            # On décide quels paramètres VARIABLES seront perturbés
+            A_variable = z <= cr_vec[id_layer[l]]
+            d_star = np.sum(A_variable)
+
+            if d_star == 0: # On s'assure d'en perturber au moins un
+                A_variable[np.argmin(z)] = True
                 d_star = 1
+
+            # On reconstruit le masque de perturbation complet 'A'
+            A = np.zeros(nb_param, dtype=bool)
+            jump_indices = variable_indices[A_variable]
+            A[jump_indices] = True
+            
+            # Le reste du calcul du saut ne change pas, car le masque 'A'
+            # sélectionnera automatiquement les bons paramètres.
             lambd = np.random.uniform(-c, c, d_star)
             zeta = np.random.normal(0, c_star, d_star)
-
-            # Exclude the current chain index 'j' from the list of chain indices
+            
             available_indices = np.delete(np.arange(nb_chain), j)
-
-            # Randomly select 'delta' unique indices for 'a' from the available indices
             a = np.random.choice(available_indices, delta, replace=False)
-
-            # Exclude the indices selected in 'a' from the available indices
             remaining_indices = np.setdiff1d(available_indices, a)
-
-            # Randomly select 'delta' unique indices for 'b' from the remaining indices
             b = np.random.choice(remaining_indices, delta, replace=False)
-
             gamma = 2.38 / np.sqrt(2 * d_star * delta)
             gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
+
+            # Le calcul de dX ne se fait que sur les indices où A est True.
             dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
                 X[a, l][:, A] - X[b, l][:, A], axis=0
             )
 
-            X_proposal[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
+            X_proposal[l] = X[j, l] + dX[l]
 
-            # On vérifie que les paramètres sont dans les bornes
-            # Si ce n'est pas le cas on les ramène dans les bornes à la manière d'un tore
+            # On calcule la largeur de l'intervalle pour tous les paramètres
             width = ranges[l][:, 1] - ranges[l][:, 0]
-            X_proposal[l] = ranges[l][:, 0] + np.mod(X_proposal[l] - ranges[l][:, 0], width)
-
+            
+            # On crée un masque pour identifier les paramètres qui sont réellement variables (width > 0)
+            variable_mask = width > 0
+            
+            # On applique la condition aux bords UNIQUEMENT aux paramètres variables.
+            # Les paramètres fixes (où width=0) ne sont pas touchés par cette ligne.
+            X_proposal[l][variable_mask] = ranges[l][variable_mask, 0] + np.mod(
+                X_proposal[l][variable_mask] - ranges[l][variable_mask, 0], 
+                width[variable_mask]
+            )
 
         return (X_proposal, dX, id_layer)
 
@@ -894,7 +918,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         n_sous_ech_space=1,
         threshold=GELMANRCRITERIA,
     ):
-
 
         if verbose:
             print(
@@ -940,6 +963,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_param = N_PARAM_MCMC  # nombre de paramètres à estimer par couche
         nb_accepted = 0  # nombre de propositions acceptées
         nb_burn_in_iter = 0  # nombre d'itération de burn-in
+
+        is_param_fixed = np.zeros((nb_layer, nb_param), dtype=bool)
+        for l, layer in enumerate(self.all_layers):
+            for p, prior in enumerate(layer.Prior_list):
+                if prior.is_fixed:
+                    is_param_fixed[l, p] = True
+
   
         # variables pour l'état courant
         temp_proposal = np.zeros((self._nb_cells, len(self._times)), np.float32)
@@ -1035,12 +1065,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for i in trange(nitmaxburning, desc="Burn in phase"):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
+                # afin d'éviter la division par zéro dans le calcul du saut dans le cas d'un paramètre fixe
+                std_X[std_X == 0] = 1.0
 
                 for j, column in enumerate(multi_chain):
                     
                     # On lance la perturbation DREAM pour cette colonne, on en tire un nouveau jeu de paramètre X_proposal, 
                     # l'ensemble des indices de crossover choisis et la perturbation dX_colonne
-                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges)                    
+                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges, is_param_fixed)                    
                     sigma2_temp_proposal = sigma2_temp_prior.perturb(self._states[j].sigma2_temp)  # On tire un nouveau sigma2
 
                     # On met à jour les paramètres de la colonne j selon X_proposal pour appeler le modèle direct et calculer l'énergie:
@@ -1085,8 +1117,18 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         
                 # Mise à jour du pcr pour chaque couche pour DREAM
                 for l in range(nb_layer):
+
+                    # On met à jour pcr avec la qualité des sauts J
                     pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
-                    pcr[l] = pcr[l] / np.sum(pcr[l])
+                    
+                    # On vérifie si la somme des probabilités est nulle
+                    if np.sum(pcr[l]) == 0:
+                        # Si oui (ce qui arrive si seul le paramètre fixe a été perturbé),
+                        # on réinitialise les probabilités à une distribution uniforme.
+                        pcr[l][:] = 1.0 / n_CR
+                    else:
+                        # Sinon, on normalise comme d'habitude.
+                        pcr[l] = pcr[l] / np.sum(pcr[l])
 
                 # Fin d'une itération, on vérifie si on peut sortir du burn-in
                 XBurnIn[i + 1] = X
@@ -1117,9 +1159,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for i in trange(nb_iter, desc="DREAM MCMC Computation", file=sys.stdout):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
+                std_X[std_X == 0] = 1.0 # afin d'éviter la division par zéro dans le calcul du saut dans le cas d'un paramètre fixe
 
                 for j, column in enumerate(multi_chain):
-                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges)
+                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges, is_param_fixed)
                     sigma2_temp_proposal = sigma2_temp_prior.perturb(self._states[j].sigma2_temp)  # On tire un nouveau sigma2
                     
                     # Mise à jour des paramètres de la colonne j :
