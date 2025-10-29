@@ -100,7 +100,7 @@ fa.set_phys_prop(lambda_s=LAMBDA_S,
 
 With `compute_now` we directly return the theoretical values of `\kappa_e` and `v_t`.
 
-##### Plotting the signals.
+#### Plotting the signals.
 
 The first thing we encourage you to do is to plot the signals to see if there are no mistakes. You can do this with :
 
@@ -108,7 +108,7 @@ The first thing we encourage you to do is to plot the signals to see if there ar
 fa.plot_signals()
 ```
 
-##### Fast Fourier Transform of the temperature signals.
+#### Fast Fourier Transform of the temperature signals.
 
 The second thing you can do is get the FFT of all the temperature signals on the same plot. We encourage you to do this everytime because it enables you to see what are the main spectral components (main frequencies). This is done with :
 
@@ -118,7 +118,7 @@ fa.fft_sensors()
 
 This will plot the amplitude spectrum of each of the given signals.
 
-##### Automatic detection of the dominant peaks.
+#### Automatic detection of the dominant peaks.
 
 When you generate the river signal artifically, you already know what are the dominant frequencies in the signal (i.e the peaks in the FFT). However, as you process unknown signal from field experiments, you do not have this knowledge. Using `find_dominant_periods`, the script will return you the main peaks (main spectral components) using the FFT.
 
@@ -128,7 +128,7 @@ This is how you should call it :
 Pd, f0, A0, meta = fa.find_dominant_periods(store=True, compute_phases=True)
 ```
 
-##### Estimating $a$ and $b$ parameters.
+#### Estimating $a$ and $b$ parameters.
 
 The key point is to retrieve the $a$ and $b$ parameters. Note that the values of these parameters will change according to each peak. Here is the pipeline, for each dominant peak :
 
@@ -148,7 +148,7 @@ b_est, b_R2 = fa.estimate_b(draw=True)
 
 `allow2D` permet de lancer un sous-module qui détermine si on se trouve dans le cas 2D ou 1D.
 
-##### Performing 1D inversion.
+#### Performing 1D inversion.
 
 If the 1D model is valid for the input signals, one can go from $a$ and $b$ to $\kappa_e$ and $v_t$. 
 
@@ -162,7 +162,7 @@ To perform the inversion, just launch :
 kappa_e, v_t = fa.perform_inversion(verbose=True) 
 ```
 
-##### Recovering real parameters from a synthetic signal.
+#### Recovering real parameters from a synthetic signal.
 
 If you know what are the physical parameters of your input signals, you can check if you find the same $\kappa_e$ and $v_t$. We assume that you already know the physical parameters stored in `LAMBDA_S, RHO_CS, K_INTRIN, POROSITE, grad_H`.
 
@@ -178,6 +178,7 @@ Similarly, you can also recover the $a$ and $b$ values corresponding to the freq
 a_expected, b_expected = fa.phys_to_a_b()
 ```
 
+---
 
 ## `frequency2D` : Detecting 1D vs 2D Behavior in Depth-Dependent Spectral Attenuation
 
@@ -189,59 +190,58 @@ This module determines whether the depth-attenuation of the harmonic temperature
 This diagnostic is **essential** before inverting \(a, b\) to recover physical parameters \(\kappa_e\) and \(v_t\):  
 **if the system behaves as 2D, the classical 1D inversion is *not physically valid*.**
 
----
 
-## Physical Background
+### Physical Background
 
-For a dominant period \(P\):
+For a dominant period $P$:
 
-\[
+$$
 \theta(z,t) = \theta_\mu + A(z)\cos(\omega t - b z), \quad \omega = \frac{2\pi}{P}
-\]
+$$
 
 In a **1D homogeneous medium**:
 
-\[
+$$
 A(z) = A(0)\,e^{-a z}
 \quad \Rightarrow \quad
 \ln\!\left(\frac{A(z)}{A(0)}\right) = -a z
-\]
+$$
 
-Thus, the curve of **\(\ln(A(z)/A(0))\) vs depth** must be **a straight line**.
+Thus, the curve of $\ln (A(z)/A(0))$ vs depth must be **a straight line**.
 
 **Any curvature** indicates deviation from a 1D model → likely **2D transport**.
 
-## What This Module Does
+### What this module does ?
 
 | Function | Purpose |
 |---------|---------|
-| `decide_1d_vs_2d(z, y)` | Compares linear vs quadratic fits of \(y = \log(A/A_0)\). |
-| `decide_from_amplitudes(depths, amplitudes)` | Accepts raw amplitudes \(A(z)\). |
+| `decide_1d_vs_2d(z, y)` | Compares linear vs quadratic fits of $y = \log(A/A_0)$. |
+| `decide_from_amplitudes(depths, amplitudes)` | Accepts raw amplitudes $A(z)$. |
 | `decide_for_fa_period(fa, period_index)` | Direct one-line test for a given period inside `frequency_analysis`. |
 
-### Models Being Compared
+### The models being compared.
 
 | Model | Expression | Number of free parameters (if enforcing y(0)=0) |
 |-------|------------|-----------------------------------------------|
-| **1D** | \( y = c_1 z \) | 1 |
-| **2D** | \( y = c_1 z + c_2 z^2 \) | 2 |
+| **1D** | $y = c_1 z$ | 1 |
+| **2D** | $y = c_1 z + c_2 z^2$ | 2 |
 
-## Statistical Decision Criteria
+### Statistical Decision Criteria
 
 Two independent criteria are evaluated:
 
 | Criterion | Interpretation |
 |----------|----------------|
 | **AICc** (Akaike corrected) | Chooses the best model while penalizing complexity. |
-| **LRT** (Likelihood Ratio Test) | Tests whether the 2D model significantly improves fit (\(p < \alpha\)). |
+| **LRT** (Likelihood Ratio Test) | Tests whether the 2D model significantly improves fit $(p < \alpha)$. |
 
 **Final decision:**
 
-\[
+$$
 \textbf{2D if } \text{AICc}_{2D}<\text{AICc}_{1D} \quad \textbf{or} \quad p_{\mathrm{LRT}}<0.05
-\]
+$$
 
-## 📦 Imports
+### Imports
 
 ```python
 from pyheatmy.frequency2D import TwoDTester, TwoDConfig
