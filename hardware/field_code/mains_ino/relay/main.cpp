@@ -6,15 +6,26 @@
 #include "LoRa_Molonari.hpp"
 #include "Waiter.hpp"
 #include "Reader.hpp"
+#include "ArduinoLowPower.h"
+#include <MKRWAN.h>
 
+LoRaModem modem;
 
-LoraCommunication lora(config.lora_freq, 0xAA, 0xFF, RoleType::MASTER);
+LoraCommunication lora(3600000, 0xAA, 0xFF, RoleType::MASTER);
 
 LoraWANCommunication loraWAN;
 std::queue<String> sendingQueue;
 
+GeneralConfig res;
+
 unsigned long lastLoraSend = 0;
 unsigned long lastAttempt = 0;
+
+volatile bool wakeUpFlag = false;
+void wakeUp() {
+    wakeUpFlag = true;
+}
+int CSPin = 5; // Pin CS par défaut
 
 
 
@@ -31,32 +42,33 @@ void setup() {
 
     // Lecture configuration CSV
     Reader reader;
-    reader.lireConfigCSV("relay_config.csv");
+    res=reader.lireConfigCSV("conf_rel.csv", CSPin);
     Serial.println("Configuration chargée.");
 
     // Initialisation LoRa communication
-    lora = LoraCommunication(config.lora_freq, 0xAA, 0xFF, RoleType::MASTER);
+    lora = LoraCommunication(res.int_config.lora_intervalle_secondes, 0xAA, 0xFF, RoleType::MASTER);
 
     // Vérification SD
-    if (!SD.begin(config.CSPin)) {
+    if (!SD.begin(res.rel_config.CSPin)) {
         Serial.println("Erreur SD - arrêt système.");
         while (true) {}
     }
 
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
+
+    digitalWrite(LED_BUILTIN, LOW);
 }
 
 // ----- Loop -----
 void loop() {
     static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
-    Waiter waiter;
+    static Waiter waiter; //pour ne pas l'indenter dans le loop
     waiter.startTimer();
-    // Si 3/4 du temps d’intervalle est écoulé depuis la dernière tentative LoRa
+    // le temps d’intervalle est écoulé depuis la dernière tentative LoRa
 
     unsigned long currentTime = millis();
-    unsigned long wakeUpDelay = (unsigned long)(config.intervalle_lora_secondes * 0.75 * 1000UL);  // en ms
-    if (currentTime - lastAttempt >= wakeUpDelay) {
+    if (currentTime - lastAttempt >= config.intervalle_lora_secondes* 1000UL) {
 
         std::queue<String> receiveQueue;
         lora.startLoRa();
@@ -79,39 +91,39 @@ void loop() {
             }
 
             // Envoi via LoRaWAN si intervalle complet atteint
-            if (currentTime - lastLoraSend >= (unsigned long)config.intervalle_lora_secondes*1000UL) {
-                if (loraWAN.begin(config.appEui, config.appKey)) {
-                    Serial.print("Envoi de ");
-                    Serial.print(sendingQueue.size());
+            
+            if (loraWAN.begin(config.appEui, config.appKey)) {
+                Serial.print("Envoi de ");
+                Serial.print(sendingQueue.size());
                     
 
-                    if (loraWAN.sendQueue(sendingQueue)) {
-                        Serial.println("Tous les paquets ont été envoyés !");
-                    } else {
-                        Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
-                    }
+                if (loraWAN.sendQueue(sendingQueue)) {
+                    Serial.println("Tous les paquets ont été envoyés !");
                 } else {
-                    Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
+                    Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
                 }
-                lastLoraSend = currentTime;
+            } else {
+                Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
+            }
+            lastLoraSend = currentTime;
             }
 
         } else {
             Serial.println("Handshake échoué, aucune donnée reçue.");
             lora.stopLoRa();
 
-            // Met quand même à jour lastAttempt pour réessayer après 3/4 du temps
+            // Met quand même à jour lastAttempt pour réessayer après l'intervalle de temps
             lastAttempt = millis() ;
         }
 
         Serial.println("Relais en veille jusqu’à la prochaine fenêtre de communication...");
-    }
 
     // Calcule le temps restant avant le prochain réveil (non bloquant)
-    unsigned long nextWakeUp = wakeUpDelay - (currentTime - lastAttempt);
+    unsigned long nextWakeUp = config.intervalle_lora_secondes* 1000UL - (currentTime - lastAttempt);
     if ((long)nextWakeUp < 0) nextWakeUp = 0; // sécurité si dépassement
 
-    waiter.sleepUntil(nextWakeUp);
+    LowPower.idle();
+
 }
 
 

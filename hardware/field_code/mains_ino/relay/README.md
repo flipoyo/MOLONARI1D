@@ -4,7 +4,7 @@ This firmware implements the LoRa relay functionality for the MOLONARI1D monitor
 
 ## Overview
 
-The relay station collects sensor data from multiple underwater monitoring devices and forwards the aggregated information to the LoRaWAN gateway for internet transmission to the server.
+The relay station collects sensor data from underwater monitoring devices and forwards the aggregated information to the LoRaWAN gateway for internet transmission to the server.
 
 ## Hardware Requirements
 
@@ -16,7 +16,7 @@ The relay station collects sensor data from multiple underwater monitoring devic
 ## Functionalities
 
 ### Current Features
-- **Sensor Data Collection**: Request measurements from multiple sensors
+- **Sensor Data Collection**: Receive measurements from sensors
 - **LoRa Communication**: Custom protocol for sensor-to-relay communication
 - **Serial Output**: Real-time data monitoring and debugging
 - **Multi-sensor Management**: Handle up to 10 sensors per relay
@@ -38,7 +38,7 @@ The relay station collects sensor data from multiple underwater monitoring devic
 ### Network Topology
 ```
 Sensors (underwater) → Relay (surface) → Gateway → Server
-     LoRa                    LoRaWAN       Internet
+                    LoRa            LoRaWAN    Internet
 ```
 
 ## Configuration

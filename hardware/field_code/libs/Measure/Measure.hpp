@@ -15,7 +15,6 @@
 #include <string>
 #include <Arduino.h>
 
-typedef double MESURE;
 
 class Sensor {
     public :
@@ -26,25 +25,25 @@ class Sensor {
         Sensor(int dataPin, int enablePin, String type_capteur, String id_box);
         
         // Measure the pressure
-        MESURE Measure();
+        double get_voltage();
 
     private :
         // Pin to read data from (Analog pin)
         const int dataPin;
         // Pin to enable/disable the sensor
-        const int enablePin;
-        const int alimPin = 1;   
+        const int enablePin = 1;  
         const String type_capteur;
         const String id_box;
 };
 
 class Measure {
   public:
+    Measure(const int& ncapt, const double* toute_mesure);
     // Unique ID for each measurement
     unsigned int id;
 
-    std::string date;
-    std::string time;
+    String date;
+    String time;
     unsigned long time_in_second;
 
     int ncapteur;

@@ -13,8 +13,8 @@
 #include "Time.hpp"
 #include "Measure.hpp"
 
-#define SD_BUG 
-#ifdef SD_BUG
+
+#ifdef SD_DEBUG
 #define SD_LOG(msg) Serial.print(msg)
 #define SD_LOG_LN(msg) Serial.println(msg)
 #else
@@ -23,7 +23,7 @@
 #endif
 
 // Define a comma string for separating CSV columns
-const std::string COMA = ",";
+const std::string COMA = ";";
 
 // GetNextLine function: Returns the number of lines in the CSV file, representing the next ID.
 // SHOULD BE CALLED ONLY ONCE to initialize next_id
@@ -52,7 +52,7 @@ void Writer::WriteInNewLine(Measure data){
     SD_LOG("Writing data ..."); // Debug log
     // Write measurement data as a single CSV line
     //this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.chanel1) + COMA + String(data.chanel2) + COMA + String(data.chanel3) + COMA + String(data.chanel4));
-    this->file.println(data.ToString()); 
+    this->file.println(data.ToString()); // CHANGE TOSTRING TO USE STD::STRING
     SD_LOG_LN(" Done");
 
     SD_LOG("Flushing ..."); // Ensure data is saved immediately
@@ -60,13 +60,6 @@ void Writer::WriteInNewLine(Measure data){
     SD_LOG_LN(" Done");
 }
 
-// ApplyContent: Fills a Measure object with raw data values for each channel
-void Writer::ApplyContent(Measure* measure, int ncapteur, double  *toute_mesure) {
-    
-    for(int i = 0; i < ncapteur; i++) {
-        measure->channel.push_back(toute_mesure[i]); // Assign  values    
-    }
-}
 
 // Reconnect: Attempts to re-establish connection to the SD card and reopen the CSV file in write mode
 bool Writer::Reconnect() {
@@ -82,6 +75,11 @@ bool Writer::Reconnect() {
 // EstablishConnection: Sets up initial connection to SD card and prepares file for writing
 void Writer::EstablishConnection(const int CSpin) {
     this->CSPin = CSpin;
+    if (!SD.begin(this->CSPin)) {
+        SD_LOG_LN("SD initialization failed!");
+        return;
+    }
+    SD_LOG_LN("SD initialization done.");
     this->next_id = GetNextLine();
     this->file = SD.open(filename, FILE_WRITE);
 }
@@ -90,10 +88,8 @@ void Writer::EstablishConnection(const int CSpin) {
 void Writer::LogData(int ncapteur, double *toute_mesure) {
 
     // Create a new Measure object
-    Measure data;
-    this->ApplyContent(&data,ncapteur, toute_mesure); // Assign channel values
+    Measure data (ncapteur, toute_mesure);
     data.id = this->next_id; // Set unique ID for the measurement
-    
     // Check if the connection is still established
     bool is_connected = SD.begin(this->CSPin) && this->file;
     if (!is_connected) {
@@ -110,6 +106,7 @@ void Writer::LogData(int ncapteur, double *toute_mesure) {
 
 // Write data if connected
     if (is_connected) {
+        SD_LOG_LN("SD connection established WHEN LOG DATA.");
         this->WriteInNewLine(data); // Write data to a new CSV line
     }
     this->next_id++; // Increment ID for next measurement

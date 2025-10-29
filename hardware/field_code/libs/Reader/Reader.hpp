@@ -11,10 +11,14 @@ struct SensorConfig {
     String id;
     String type_capteur;
     String id_box; //pour l'export des données
-    int pin;
-
-
+    int pin;//TODO rename dataPin 
 };
+
+struct IntervallConfig{
+    int intervalle_de_mesure_secondes; //mettre un nom différent de celui du relais pour éviter confusion ??
+    int lora_intervalle_secondes;
+};
+
 
 struct RelayConfig {
     String appEui;
@@ -22,14 +26,19 @@ struct RelayConfig {
     int CSPin;
     float lora_freq;
     int intervalle_de_mesure_secondes;
-    int intervalle_lora_secondes;
+    int lora_intervalle_secondes;
+};
+
+struct GeneralConfig {
+    RelayConfig rel_config;
+    std::vector<SensorConfig> liste_capteurs;
+    IntervallConfig int_config;
+    bool succes = true;
 };
 
 // Variables globales (extern pour éviter redéfinitions)
-extern RelayConfig config;
-extern std::vector<SensorConfig> liste_capteurs;
 
-// Variables globales associées à la logique du programme
+// Variables globales associées à la logique du programme : à supprimer plus tard ?
 extern int FREQUENCE_MINUTES;
 extern unsigned long LORA_INTERVAL_S;
 
@@ -43,7 +52,7 @@ public:
     Reader() = default;
 
     // ----- Lecture CSV -----
-    void lireConfigCSV(const char* NomFichier);
+    GeneralConfig lireConfigCSV(const char* NomFichier, int CSPin = 5);
 
     // ----- Méthodes pour Waiter -----
     bool EstablishConnection(unsigned int shift);
