@@ -21,22 +21,6 @@ GeneralConfig res;
 // Lecture et mise à jour de la configuration
 // ------------------------------------------------------------
 
-void LoadConfig() {
-  reader.lireConfigCSV("config_sensor.csv");
-  freq_envoi_lora_seconds = res.int_config.lora_intervalle_secondes;
-  freq_mesure_seconds = res.int_config.intervalle_de_mesure_secondes;
-}
-
-void RefreshConfigFromFile() {
-  reader.lireConfigCSV("config_sensor.csv");
-  freq_envoi_lora_seconds = res.int_config.lora_intervalle_secondes;
-  freq_mesure_seconds = res.int_config.intervalle_de_mesure_secondes;
-
-  InitializeMeasurementTimes();
-  InitializeMeasurementCount();
-
-  Serial.println("🔄 Configuration mise à jour depuis le fichier CSV.");
-}
 
 // ------------------------------------------------------------
 // Initialisation RTC externe uniquement
@@ -89,51 +73,11 @@ unsigned long GetSecondsSinceMidnight() {
   return now.hour() * 3600UL + now.minute() * 60UL + now.second();
 }
 
-// ------------------------------------------------------------
-// Gestion des mesures
-// ------------------------------------------------------------
-
-void InitializeMeasurementTimes() {
-  measurementTimesVec.clear();
-
-  if (freq_mesure_seconds <= 0) return;
-
-  int totalMeasurementsPerDay = 86400 / freq_mesure_seconds;
-  if (totalMeasurementsPerDay <= 0) return;
-
-  measurementTimesVec.reserve(totalMeasurementsPerDay);
-  for (int i = 0; i < totalMeasurementsPerDay; ++i) {
-    unsigned long timeSec = (unsigned long)i * (unsigned long)freq_mesure_seconds;
-    measurementTimesVec.push_back(timeSec);
-  }
-}
-
-void InitializeMeasurementCount() {
+unsigned long CalculateSleepTimeUntilNextMeasurement(unsigned long previousMeasurementTime, int measurementInterval) {
+  //retourne en ms
   unsigned long currentTime = GetSecondsSinceMidnight();
-  measurementCount = 0;
-
-  int totalMeasurementsPerDay = 86400 / freq_mesure_seconds;
-  for (int i = 0; i < totalMeasurementsPerDay; i++) {
-    if (currentTime > measurementTimesVec[i])
-      measurementCount++;
-    else
-      break;
-  }
-}
-
-unsigned long CalculateSleepTimeUntilNextMeasurement() {
-  unsigned long currentTime = GetSecondsSinceMidnight();
-
-  int totalMeasurementsPerDay = 86400 / freq_mesure_seconds;
-  for (int i = 0; i < totalMeasurementsPerDay; i++) {
-    if (currentTime < measurementTimesVec[i]) {
-      unsigned long nextTime = measurementTimesVec[i];
-      return (nextTime - currentTime) * 1000UL;
-    }
-  }
-
-  unsigned long nextDayFirstTime = measurementTimesVec[0] + 86400UL;
-  return (nextDayFirstTime - currentTime) * 1000UL;
+  unsigned long time_to_sleep = (measurementInterval - (currentTime - previousMeasurementTime)) * 1000UL;
+  return (time_to_sleep);
 }
 
 unsigned long CalculateSleepTimeUntilNextCommunication() {
@@ -146,7 +90,6 @@ unsigned long CalculateSleepTimeUntilNextCommunication() {
       return (nextTime - currentTime) * 1000UL;
     }
   }
-
   unsigned long nextDayFirstTime = communicationTimesVec[0] + 86400UL;
   return (nextDayFirstTime - currentTime) * 1000UL;
 }

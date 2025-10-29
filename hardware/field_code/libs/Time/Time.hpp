@@ -13,15 +13,11 @@ extern int measurementCount;
 String UIntTo2DigitString(uint8_t x);
 
 void InitialiseRTC();
-void RefreshConfigFromFile();
-void LoadConfig();
 
 String GetCurrentDate();
 String GetCurrentHour();
 unsigned long GetSecondsSinceMidnight();
 
-void InitializeMeasurementTimes();
-void InitializeMeasurementCount();
 unsigned long CalculateSleepTimeUntilNextMeasurement();
 unsigned long CalculateSleepTimeUntilNextCommunication();
 
