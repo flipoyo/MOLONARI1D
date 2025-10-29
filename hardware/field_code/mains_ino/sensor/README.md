@@ -3,6 +3,23 @@ This firmware is part of the MOLONARI 1D project, designed for river bed monitor
 It combines LoRa communication, SD card logging, and low-power management for long-term autonomous operation.
 
 
+# Configuration 
+
+Tableau des capteurs avec id, type, pin et id_box
+
+Puis configuration générale avec : 
+- intervalle_de_mesure_secondes
+- intervalle_lora_secondes
+- pas de intervalle_lorawan_secondes parce que on envoie dès que on recoit car c'est plus simple à gérer dans l'optique de mettre plusieurs boitiers
+- max_pload_octet
+- periode_lora_min_secondes
+- periode_mesure_min_secondes : intervalle_de_mesure_secondes doit être plus grand que nombre_capteur*periode_min_secondes
+- max_secondes_par_jour : ca c'est la loi
+
+Les limitations sont prises TRES LARGES.
+
+Tout n'est pas utilisé dans le code mais ca nous permet d'avoir un fichier main.cpp mais ca nous permet d'avoir un fichier commun avec le groupe qui s'occupe de la gateway et du serveur.
+
 *Overview*
 
 This code implements the complete workflow of a MOLONARI field node:

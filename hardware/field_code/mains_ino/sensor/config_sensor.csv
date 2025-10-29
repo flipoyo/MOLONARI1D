@@ -9,8 +9,7 @@ T5,temperature,A5,123456789012345
 # Configuration générale
 intervalle_de_mesure_secondes,900
 intervalle_lora_secondes,3600
-# pas de intervalle_lorawan_secondes parce que on envoie dès que on recoit
 max_pload_octet, 20
 periode_lora_min_secondes, 1
-periode_mesure_min_secondes, 2 #intervalle_de_mesure_secondes doit être plus grand que nombre_capteur*periode_min_secondes
-max_secondes_par_jour, 850
+periode_mesure_min_secondes, 2
+max_secondes_par_jour, 850 
