@@ -13,6 +13,7 @@ int freq_envoi_lora_seconds = 0;
 int freq_mesure_seconds = 0;
 
 std::vector<unsigned long> measurementTimesVec;
+std::vector<unsigned long> communicationTimesVec;
 
 GeneralConfig res;
 
@@ -132,5 +133,20 @@ unsigned long CalculateSleepTimeUntilNextMeasurement() {
   }
 
   unsigned long nextDayFirstTime = measurementTimesVec[0] + 86400UL;
+  return (nextDayFirstTime - currentTime) * 1000UL;
+}
+
+unsigned long CalculateSleepTimeUntilNextCommunication() {
+  unsigned long currentTime = GetSecondsSinceMidnight();
+
+  int totalCommunicationPerDay = 86400 / freq_envoi_lora_seconds;
+  for (int i = 0; i < totalCommunicationPerDay; i++) {
+    if (currentTime < communicationTimesVec[i]) {
+      unsigned long nextTime = communicationTimesVec[i];
+      return (nextTime - currentTime) * 1000UL;
+    }
+  }
+
+  unsigned long nextDayFirstTime = communicationTimesVec[0] + 86400UL;
   return (nextDayFirstTime - currentTime) * 1000UL;
 }

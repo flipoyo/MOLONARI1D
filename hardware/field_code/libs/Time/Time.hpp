@@ -23,5 +23,6 @@ unsigned long GetSecondsSinceMidnight();
 void InitializeMeasurementTimes();
 void InitializeMeasurementCount();
 unsigned long CalculateSleepTimeUntilNextMeasurement();
+unsigned long CalculateSleepTimeUntilNextCommunication();
 
 #endif // MY_TIME
