@@ -80,7 +80,7 @@ fa.set_inputs(dates=dates, signals=signals, depths=depths[:-1])
 
 Ici depths contenait le dernier point 0.4, d'où le `:-1`.
 
-Si en plus vous disposez des paramètres physiques exacts de la simulation, vous pouvez les ajouter :
+If you have the exact physical parameters of the simulation, you can add them with :
 
 ```python
 POROSITE = Layer1.params[1]
@@ -98,7 +98,7 @@ fa.set_phys_prop(lambda_s=LAMBDA_S,
                  verbose=True)
 ```
 
-Avec `compute_now` on renvoie directement les valeurs théoriques de `\kappa_e` et `v_t`.
+With `compute_now` we directly return the theoretical values of `\kappa_e` and `v_t`.
 
 ##### Plotting the signals.
 
