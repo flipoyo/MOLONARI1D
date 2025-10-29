@@ -68,7 +68,7 @@ void loop() {
     // le temps d’intervalle est écoulé depuis la dernière tentative LoRa
 
     unsigned long currentTime = millis();
-    if (currentTime - lastAttempt >= config.intervalle_lora_secondes* 1000UL) {
+    if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes * 1000UL) {
 
         std::queue<String> receiveQueue;
         lora.startLoRa();
@@ -91,8 +91,8 @@ void loop() {
             }
 
             // Envoi via LoRaWAN si intervalle complet atteint
-            
-            if (loraWAN.begin(config.appEui, config.appKey)) {
+
+            if (loraWAN.begin(res.rel_config.appEui, res.rel_config.appKey)) {
                 Serial.print("Envoi de ");
                 Serial.print(sendingQueue.size());
                     
@@ -119,7 +119,7 @@ void loop() {
         Serial.println("Relais en veille jusqu’à la prochaine fenêtre de communication...");
 
     // Calcule le temps restant avant le prochain réveil (non bloquant)
-    unsigned long nextWakeUp = config.intervalle_lora_secondes* 1000UL - (currentTime - lastAttempt);
+    unsigned long nextWakeUp = res.int_config.lora_intervalle_secondes * 1000UL - (currentTime - lastAttempt);
     if ((long)nextWakeUp < 0) nextWakeUp = 0; // sécurité si dépassement
 
     LowPower.idle();
