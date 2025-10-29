@@ -142,13 +142,18 @@ bool LoraCommunication::handshake(uint8_t &shift) {
     } 
     else { // SLAVE
         String payload; uint8_t packetNumber; RequestType requestType;
-        while (true) {
+        int n = 0;
+        while (n < 50) {
+            n++;
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
                 shift = packetNumber;
                 sendPacket(shift, SYN, "SYN-ACK");
                 LORA_LOG_LN("SLAVE: SYN-ACK sent");
                 break;
             }
+        if (n == 50) {
+            LORA_LOG_LN("SLAVE: No SYN received");
+            return false;
         }
 
         int retries = 0;
@@ -160,7 +165,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         }
         return false;
     }
-}
+}}
 
 uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue) {
     uint8_t packetNumber = 0;
@@ -224,7 +229,11 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath) {
 
     Serial.println("Écoute de la nouvelle configuration LoRa...");
 
-    while (true) {
+    int n = 0;
+
+    while (n < 50) {
+        n++;
+
         if (!receivePacket(packetNumber, requestType, payload)) continue;
 
         if (requestType == DATA && payload.length() > 0) {
