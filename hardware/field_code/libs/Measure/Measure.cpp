@@ -19,14 +19,19 @@ Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur, String _id_bo
 }
 
 
-MESURE Sensor::Measure() {
+double Sensor::get_voltage() {
   digitalWrite(enablePin, HIGH);
-  digitalWrite(this->alimPin, HIGH);
   delay(200);
-  MESURE mesure = analogRead(dataPin);
+  double voltage = analogRead(dataPin);
   digitalWrite(enablePin, LOW);
-  digitalWrite(this->alimPin, LOW); 
-  return mesure;
+  return voltage;
+}
+
+Measure::Measure(int ncapt, double* toute_mesure):ncapteur(ncapt){
+  int iterator = 0;
+  for (int iterator = 0; iterator < ncapteur; iterator ++){
+    channel.push_back(toute_mesure[iterator]);
+  } 
 }
 
 // Retourne une ligne formatée pour une mesure

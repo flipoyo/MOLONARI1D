@@ -12,8 +12,6 @@
 #endif
 
 // ----- Variables globales -----
-RelayConfig config;
-//std::vector<SensorConfig> liste_capteurs;
 unsigned long LORA_INTERVAL_S = 3UL * 3600UL; // valeur par défaut
 
 // ----- Static member initialization -----

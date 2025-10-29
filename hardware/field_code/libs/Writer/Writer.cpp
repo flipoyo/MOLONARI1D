@@ -60,13 +60,6 @@ void Writer::WriteInNewLine(Measure data){
     SD_LOG_LN(" Done");
 }
 
-// ApplyContent: Fills a Measure object with raw data values for each channel
-void Writer::ApplyContent(Measure* measure, int ncapteur, double  *toute_mesure) {
-    
-    for(int i = 0; i < ncapteur; i++) {
-        measure->channel.push_back(toute_mesure[i]); // Assign  values    
-    }
-}
 
 // Reconnect: Attempts to re-establish connection to the SD card and reopen the CSV file in write mode
 bool Writer::Reconnect() {
@@ -95,8 +88,7 @@ void Writer::EstablishConnection(const int CSpin) {
 void Writer::LogData(int ncapteur, double *toute_mesure) {
 
     // Create a new Measure object
-    Measure data;
-    this->ApplyContent(&data,ncapteur, toute_mesure); // Assign channel values
+    Measure data (ncapteur, toute_mesure);
     data.id = this->next_id; // Set unique ID for the measurement
     // Check if the connection is still established
     bool is_connected = SD.begin(this->CSPin) && this->file;

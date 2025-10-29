@@ -138,9 +138,10 @@ void loop() {
     // --- Prendre mesures ---
     int ncapt = 0;
     for (auto &c : liste_capteurs) {
-        toute_mesure[ncapt] = sens[ncapt]->Measure();
+        toute_mesure[ncapt] = sens[ncapt]->get_voltage();
         ncapt++;
         }
+    DEBUG_LOG(ncapt);//so far so good
     
     // --- Stocker sur SD ---
     logger.LogData(ncapt, toute_mesure); // LogData est dans writer

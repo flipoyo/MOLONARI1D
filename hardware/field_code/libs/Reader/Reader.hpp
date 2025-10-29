@@ -11,7 +11,7 @@ struct SensorConfig {
     String id;
     String type_capteur;
     String id_box; //pour l'export des données
-    int pin;
+    int pin;//TODO rename dataPin 
 };
 
 struct IntervallConfig{
