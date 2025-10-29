@@ -20,6 +20,10 @@
 Sensor** sens;
 double *toute_mesure;
 
+std::vector<SensorConfig> liste_capteurs;
+
+GeneralConfig config;
+
 //std::string FileName = "conf_sen.csv"; Impossible to use that because SD.open() takes squid string arguments
 Writer logger;
 const int CSPin = 5;
@@ -83,6 +87,7 @@ void setup() {
 
     GeneralConfig temp_config_container = reader.lireConfigCSV("conf_sen.csv", CSPin);
     std::vector<SensorConfig> liste_capteurs = temp_config_container.liste_capteurs ;
+
     if (temp_config_container.succes){
         DEBUG_LOG("lecture config terminée avec succès");
     }
@@ -137,7 +142,7 @@ void loop() {
 
     // --- Envoyer LoRa si intervalle atteint ---
     unsigned long current_Time=GetSecondsSinceMidnight();
-    LORA_INTERVAL_S = config.intervalle_lora_secondes;
+    LORA_INTERVAL_S = .lora_intervalle_secondes;
     bool IsTimeToLoRa = (current_Time - lastLoRaSend >= LORA_INTERVAL_S);
 
 
