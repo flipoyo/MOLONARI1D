@@ -20,7 +20,6 @@
 Sensor** sens;
 double *toute_mesure;
 
-std::vector<SensorConfig> liste_capteurs;
 
 GeneralConfig config;
 
