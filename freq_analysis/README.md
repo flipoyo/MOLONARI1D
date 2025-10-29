@@ -178,3 +178,70 @@ Similarly, you can also recover the $a$ and $b$ values corresponding to the freq
 a_expected, b_expected = fa.phys_to_a_b()
 ```
 
+
+## `frequency2D` : Detecting 1D vs 2D Behavior in Depth-Dependent Spectral Attenuation
+
+This module determines whether the depth-attenuation of the harmonic temperature signal \(A(z)\) is consistent with:
+
+- a **1D vertical advection–diffusion model** (homogeneous porous medium), or
+- a **2D regime** (lateral flow, preferential pathways, heterogeneous layers, mixing domains, hyporheic exchange complexity).
+
+This diagnostic is **essential** before inverting \(a, b\) to recover physical parameters \(\kappa_e\) and \(v_t\):  
+**if the system behaves as 2D, the classical 1D inversion is *not physically valid*.**
+
+---
+
+## Physical Background
+
+For a dominant period \(P\):
+
+\[
+\theta(z,t) = \theta_\mu + A(z)\cos(\omega t - b z), \quad \omega = \frac{2\pi}{P}
+\]
+
+In a **1D homogeneous medium**:
+
+\[
+A(z) = A(0)\,e^{-a z}
+\quad \Rightarrow \quad
+\ln\!\left(\frac{A(z)}{A(0)}\right) = -a z
+\]
+
+Thus, the curve of **\(\ln(A(z)/A(0))\) vs depth** must be **a straight line**.
+
+**Any curvature** indicates deviation from a 1D model → likely **2D transport**.
+
+## What This Module Does
+
+| Function | Purpose |
+|---------|---------|
+| `decide_1d_vs_2d(z, y)` | Compares linear vs quadratic fits of \(y = \log(A/A_0)\). |
+| `decide_from_amplitudes(depths, amplitudes)` | Accepts raw amplitudes \(A(z)\). |
+| `decide_for_fa_period(fa, period_index)` | Direct one-line test for a given period inside `frequency_analysis`. |
+
+### Models Being Compared
+
+| Model | Expression | Number of free parameters (if enforcing y(0)=0) |
+|-------|------------|-----------------------------------------------|
+| **1D** | \( y = c_1 z \) | 1 |
+| **2D** | \( y = c_1 z + c_2 z^2 \) | 2 |
+
+## Statistical Decision Criteria
+
+Two independent criteria are evaluated:
+
+| Criterion | Interpretation |
+|----------|----------------|
+| **AICc** (Akaike corrected) | Chooses the best model while penalizing complexity. |
+| **LRT** (Likelihood Ratio Test) | Tests whether the 2D model significantly improves fit (\(p < \alpha\)). |
+
+**Final decision:**
+
+\[
+\textbf{2D if } \text{AICc}_{2D}<\text{AICc}_{1D} \quad \textbf{or} \quad p_{\mathrm{LRT}}<0.05
+\]
+
+## 📦 Imports
+
+```python
+from pyheatmy.frequency2D import TwoDTester, TwoDConfig
