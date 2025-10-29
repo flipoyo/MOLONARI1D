@@ -21,6 +21,9 @@
 Sensor** sens;
 double *toute_mesure;
 
+
+GeneralConfig config;
+
 //std::string FileName = "conf_sen.csv"; Impossible to use that because SD.open() takes squid string arguments
 =======
 // Capteurs
