@@ -78,7 +78,8 @@ Then you need to set the required parameters to the class.
 fa.set_inputs(dates=dates, signals=signals, depths=depths[:-1])
 ```
 
-Ici depths contenait le dernier point 0.4, d'où le `:-1`.
+Here, `depths` contained the last point 0.4, hence the `:-1`.
+
 
 If you have the exact physical parameters of the simulation, you can add them with :
 
@@ -146,7 +147,7 @@ a_est, a_R2 = fa.estimate_a(allow2D=False, draw=True)
 b_est, b_R2 = fa.estimate_b(draw=True)     
 ```
 
-`allow2D` permet de lancer un sous-module qui détermine si on se trouve dans le cas 2D ou 1D.
+`allow2D` allows launching a submodule that determines whether we are in the 2D or 1D case.
 
 #### Performing 1D inversion.
 
