@@ -30,6 +30,11 @@ unsigned long lastLoRaSend = 0;
 unsigned long lastSDOffset = 0;
 std::queue<String> sendQueue;
 
+std::vector<SensorConfig> liste_capteurs;
+int intervalle_de_mesure_secondes;
+int lora_intervalle_secondes;
+
+
 void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
 
     File file = SD.open("/conf_sen.csv", FILE_READ);
@@ -82,7 +87,12 @@ void setup() {
     Reader reader;
 
     GeneralConfig temp_config_container = reader.lireConfigCSV("conf_sen.csv", CSPin);
-    std::vector<SensorConfig> liste_capteurs = temp_config_container.liste_capteurs ;
+    IntervallConfig int_conf = temp_config_container.int_config;
+    
+    liste_capteurs = temp_config_container.liste_capteurs;
+    lora_intervalle_secondes = int_conf.lora_intervalle_secondes;
+    intervalle_de_mesure_secondes = int_conf.intervalle_de_mesure_secondes;
+
     if (temp_config_container.succes){
         DEBUG_LOG("lecture config terminée avec succès");
     }
@@ -137,7 +147,7 @@ void loop() {
 
     // --- Envoyer LoRa si intervalle atteint ---
     unsigned long current_Time=GetSecondsSinceMidnight();
-    LORA_INTERVAL_S = config.intervalle_lora_secondes;
+    LORA_INTERVAL_S = lora_intervalle_secondes;
     bool IsTimeToLoRa = (current_Time - lastLoRaSend >= LORA_INTERVAL_S);
 
 
