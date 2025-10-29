@@ -132,6 +132,8 @@ void Reader::writetomyrecourdfile()
     }
 }
 
+// toutes les fonctions jusqu'ici sont potentiellement inutiles 
+
 std::queue<String> Reader::loadDataIntoQueue()
 {
     std::queue<String> Queue;

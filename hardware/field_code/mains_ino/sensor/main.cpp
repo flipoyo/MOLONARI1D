@@ -107,10 +107,8 @@ void loop() {
 
         dataFile.seek(lastSDOffset);
 
-        while (dataFile.available()) {
-            // Vérification que le ratrappage n'empêche pas de faire une mesure
-            if (CalculateSleepTimeUntilNextMeasurement() < 60UL) break; 
-            
+        while (CalculateSleepTimeUntilNextMeasurement() > 60UL && dataFile.available()) {
+
             std::queue<String> lineToSend;
             lineToSend.push(dataFile.readStringUntil('\n'));
 
@@ -120,16 +118,21 @@ void loop() {
                 break;
             }
 
-
             // Tentative d'envoi 3 fois
             for (int attempt = 1; attempt <= 3; attempt++) {
+
                 if (lora.sendPackets(lineToSend)) {
+                    lastSDOffset = dataFile.position();
                     break;
+
                 } else {
                     Serial.println(attempt);
                     if (attempt < 3) delay(20000);
                 }
             }
+
+            rattrapage = dataFile.available();
+            
         } // <-- fermeture du while !
 
         dataFile.close();
