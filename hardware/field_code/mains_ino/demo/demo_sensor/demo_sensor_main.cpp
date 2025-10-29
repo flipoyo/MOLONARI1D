@@ -13,9 +13,18 @@
 #include "Waiter.hpp"
 #include "Reader.hpp"
 
-//#define DEBUG_LOG
-#ifndef DEBUG_LOG
+//#define DEBUG
+#ifndef DEBUG
+#define DEBUG_MAIN
+#endif
+
+#ifdef DEBUG_MAIN
 #define DEBUG_LOG(msg) Serial.println(msg)
+#define DEBUG_LOG_NOLN(msg) Serial.print(msg)
+#else
+ 
+#define DEBUG_LOG(msg) Serial.println(msg)
+#define DEBUG_LOG_NOLN(msg) Serial.print(msg)
 #endif
 Sensor** sens;
 double *toute_mesure;
@@ -150,7 +159,9 @@ void loop() {
     unsigned long current_Time=GetSecondsSinceMidnight();
     LORA_INTERVAL_S = lora_intervalle_secondes;
     bool IsTimeToLoRa = (current_Time - lastLoRaSend >= LORA_INTERVAL_S);
-
+    if(IsTimeToLoRa){
+        DEBUG_LOG("intervalle atteint");
+    }
 
     if (IsTimeToLoRa || rattrapage) {
         lora.startLoRa();
@@ -161,8 +172,10 @@ void loop() {
             Serial.println("Impossible to open data file for LoRa sending");
             lora.closeSession(0);
             return;
+        }else{
+            DEBUG_LOG("Open data file for lora send successful");
         }
-
+        
         dataFile.seek(lastSDOffset); // position sur la prochaine ligne
 
         while (dataFile.available()) {
@@ -182,29 +195,32 @@ void loop() {
 
             // Essayer d'envoyer la ligne jusqu'à 3 fois avec 20 s d'intervalle
             bool success = false;
+            DEBUG_LOG("attempt to send line via LoRa");
             for (int attempt = 1; attempt <= 3; attempt++) {
                 if (lora.sendPackets(lineToSend)) {
                     success = true;
+                    DEBUG_LOG("sending successful");
                     break;
                 } else {
-                    Serial.println(attempt);
+                    DEBUG_LOG("attempt number " + String(attempt) + " failed.");
                     if (attempt < 3) {
-                        delay(20000); // attendre 20 sec avant de retenter
+                        delay(2000); // attendre 2 sec avant de retenter, durée réduite pour la démo
                     }
                 }
             }
 
             if (success) {
                 lastSDOffset = dataFile.position(); // ligne envoyée → avancer le pointeur
-                Serial.println("Line sent successfully via LoRa");
+                DEBUG_LOG("Line sent successfully via LoRa");
             } else {
-                Serial.println("Line failed to send after 3 attempts, stopping LoRa send, retrying later");
+                DEBUG_LOG("Failed to send line after 3 attempts, stopping LoRa send, retrying later");
                 rattrapage = false;
                 break; // on sort de la boucle pour retenter plus tard
             }
         }
 
         dataFile.close();
+        DEBUG_LOG("reading finished, file closed");
         lora.closeSession(0);
         lastLoRaSend = current_Time;
 
@@ -235,6 +251,8 @@ void loop() {
     // --- Sommeil jusqu'à prochaine mesure ---
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     Waiter waiter;
-    waiter.sleepUntil(CalculateSleepTimeUntilNextMeasurement());
+    unsigned long to_be_slept = CalculateSleepTimeUntilNextMeasurement();
+    DEBUG_LOG("ms to be slept : " + String(to_be_slept));
+    waiter.sleepUntil(to_be_slept);
 }
 

@@ -6,7 +6,17 @@
 #include "Reader.hpp"
 #include "LoRa_Molonari.hpp"
 
-
+#define DEBUG
+#ifdef DEBUG
+#define DEBUG_WAITER
+#endif
+#ifdef DEBUG_WAITER
+#define DEBUG_LOG(msg) Serial.println(msg)
+#define DEBUG_LOG_NO_LN(msg) Serial.print(msg)
+#else
+#define DEBUG_LOG(msg) 
+#define DEBUG_LOG_NO_LN(msg)
+#endif
 
 // PrintQueue function definition
 void PrintQueue(std::queue<String> &receiveQueue) {
@@ -28,7 +38,8 @@ void Waiter::startTimer() {
 
 // Sleep the Arduino until the desired waiting time passes
 void Waiter::sleepUntil(unsigned long desired_waiting_time) {
-    unsigned long time_to_wait = (starting_time + desired_waiting_time) - millis();
+    
+    unsigned long time_to_wait = (starting_time + desired_waiting_time) - millis();//BIG ISSUE, INTERNAL TIME USED HERE
 
     // Log the waiting time for debugging
     Serial.println("Sleeping for " + String(time_to_wait) + " ms");
