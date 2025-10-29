@@ -6,3 +6,4 @@ lora_freq,868000000
 
 #Envoi toutes les 15 minutes:
 lora_intervalle_secondes,900
+intervalle_de_mesure_secondes,900

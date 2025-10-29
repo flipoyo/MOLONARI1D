@@ -14,24 +14,31 @@ struct SensorConfig {
     int pin;
 };
 
+struct IntervallConfig{
+    int intervalle_de_mesure_secondes; //mettre un nom différent de celui du relais pour éviter confusion ??
+    int lora_intervalle_secondes;
+};
+
+
 struct RelayConfig {
     String appEui;
     String appKey;
     int CSPin;
     float lora_freq;
     int intervalle_de_mesure_secondes;
-    int intervalle_lora_secondes;
+    int lora_intervalle_secondes;
 };
 
 struct GeneralConfig {
     RelayConfig rel_config;
     std::vector<SensorConfig> liste_capteurs;
+    IntervallConfig int_config;
     bool succes = true;
 };
 
 // Variables globales (extern pour éviter redéfinitions)
 
-// Variables globales associées à la logique du programme
+// Variables globales associées à la logique du programme : à supprimer plus tard ?
 extern int FREQUENCE_MINUTES;
 extern unsigned long LORA_INTERVAL_S;
 

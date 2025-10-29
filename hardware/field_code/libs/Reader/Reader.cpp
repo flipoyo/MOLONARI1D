@@ -39,55 +39,70 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
 
     while (f.available()) {
         String line = f.readStringUntil('\n');
-        line.trim();  
+        line.trim();
         if (line.length() == 0 || line.startsWith("#")) continue;
 
-        int idx = line.indexOf(',');
-        if (idx < 0) continue;
-
-        String key = line.substring(0, idx);
-        String val = line.substring(idx + 1);
+        // Découper la ligne CSV
+        std::vector<String> tokens;
+        int last = 0, next = 0;
+        while ((next = line.indexOf(',', last)) != -1) {
+            tokens.push_back(line.substring(last, next));
+            last = next + 1;
+        }
+        tokens.push_back(line.substring(last)); // dernier token
 
         // ---------- PARAMÈTRES GLOBAUX ----------
-        if (key == "appEui") res.rel_config.appEui = val;
-        else if (key == "appKey") res.rel_config.appKey = val;
-        else if (key == "CSPin") res.rel_config.CSPin = val.toInt();
-        else if (key == "lora_freq") res.rel_config.lora_freq = val.toFloat();
-        else if (key == "intervalle_de_mesure_secondes") {
-            int freq_sec = val.toInt();
-            res.rel_config.intervalle_de_mesure_secondes = freq_sec;
-        }
-        else if (key == "intervalle_lora_secondes") {
-            config.intervalle_lora_secondes = val.toInt();
+        if (tokens.size() == 2) {
+            String key = tokens[0];
+            String val = tokens[1];
+
+            if (key == "appEui") res.rel_config.appEui = val;
+            else if (key == "appKey") res.rel_config.appKey = val;
+            else if (key == "CSPin") res.rel_config.CSPin = val.toInt();
+            else if (key == "lora_freq") res.rel_config.lora_freq = val.toFloat();
+
+
+            //config générale des intervalles
+            else if (key == "intervalle_de_mesure_secondes") {
+                res.int_config.intervalle_de_mesure_secondes = val.toInt();
+            }
+            else if (key == "lora_intervalle_secondes") {
+                res.int_config.lora_intervalle_secondes = val.toInt();
+            }
+            else {
+                Serial.print("Clé inconnue ignorée : ");
+                Serial.println(key);
+            }
         }
 
         // ---------- CAPTEURS ----------
+        else if (tokens.size() == 4) {
+            SensorConfig c;
+            c.id = tokens[0];
+            c.type_capteur = tokens[1];
+
+            // Gestion du pin (A0, A1, etc.)
+            if (tokens[2].startsWith("A"))
+                c.pin = tokens[2].substring(1).toInt() + A0;
+            else
+                c.pin = tokens[2].toInt();
+
+            c.id_box = tokens[3];
+            res.liste_capteurs.push_back(c);
+        }
+
         else {
-            String tokens[4];
-            int first = 0, last = 0, tokenIdx = 0;
-            while (last >= 0 && tokenIdx < 4) {
-                last = line.indexOf(',', first);
-                if (last < 0) last = line.length();
-                tokens[tokenIdx++] = line.substring(first, last);
-                first = last + 1;
-            }
-
-            if (tokenIdx >= 3) {  
-                SensorConfig c;
-                c.id = tokens[0];
-                c.type_capteur = tokens[1];
-                if (tokens[2].startsWith("A"))
-                    c.pin = tokens[2].substring(1).toInt() + A0;
-                else
-                    c.pin = tokens[2].toInt();
-
-                c.id_box = (tokenIdx >= 4) ? tokens[3] : "";
-                res.liste_capteurs.push_back(c);
-            }
+            Serial.print("Ligne ignorée : ");
+            Serial.println(line);
         }
     }
+
     f.close();
+    res.succes = true;
     Serial.println("Configuration chargée avec succès.");
+    Serial.print("→ Capteurs trouvés : ");
+    Serial.println(res.liste_capteurs.size());
+
     return res;
 }
 
