@@ -41,7 +41,7 @@ public:
     int receivePackets(std::queue<String> &receiveQueue);
     void closeSession(int lastPacket);
 
-    bool receiveConfigUpdate(uint16_t measureInterval, uint16_t loraInterval);
+    bool receiveConfigUpdate(const char* filepath);
 
 private:
     long freq;
@@ -53,3 +53,5 @@ private:
 };
 
 #endif
+
+

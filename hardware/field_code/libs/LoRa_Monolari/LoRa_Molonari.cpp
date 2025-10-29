@@ -1,5 +1,6 @@
+#include <SD.h>
+#include <Arduino.h> 
 #include "LoRa_Molonari.hpp"
-
 #ifdef LORA_DEBUG
 #define LORA_LOG(msg) Serial.print(msg);
 #define LORA_LOG_HEX(msg) Serial.print(msg, HEX);
@@ -138,7 +139,8 @@ bool LoraCommunication::handshake(uint8_t &shift) {
             }
         }
         return false;
-    } else { // SLAVE
+    } 
+    else { // SLAVE
         String payload; uint8_t packetNumber; RequestType requestType;
         while (true) {
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
@@ -213,30 +215,39 @@ void LoraCommunication::closeSession(int lastPacket) {
     }
 }
 
-bool LoraCommunication::receiveConfigUpdate(uint16_t measureInterval, uint16_t loraInterval) {
+bool LoraCommunication::receiveConfigUpdate(const char* filepath) {
     uint8_t packetNumber;
     RequestType requestType;
     String payload;
 
-    // On écoute un unique message venant du master
-    if (!receivePacket(packetNumber, requestType, payload)) return false;
-    if (requestType != DATA) return false;
+    std::vector<String> newConfigLines; // stockage temporaire des lignes
 
-    // Format attendu :
-    // intervalle_de_mesure_secondes=600;intervalle_lora_secondes=1800
-    int eq1 = payload.indexOf('=');
-    int sep  = payload.indexOf(';');
-    int eq2 = payload.lastIndexOf('=');
+    Serial.println("Écoute de la nouvelle configuration LoRa...");
 
-    if (eq1 == -1 || sep == -1 || eq2 == -1) return false;
+    while (true) {
+        if (!receivePacket(packetNumber, requestType, payload)) continue;
 
-    measureInterval = payload.substring(eq1 + 1, sep).toInt();
-    loraInterval    = payload.substring(eq2 + 1).toInt();
+        if (requestType == DATA && payload.length() > 0) {
+            newConfigLines.push_back(payload);
+            sendPacket(packetNumber, ACK, "ACK"); // acquittement
+        }
 
+        if (requestType == FIN) {
+            // Écriture du fichier seulement si FIN reçu
+            File newConfig = SD.open(filepath, FILE_WRITE | O_TRUNC);
+            if (!newConfig) {
+                Serial.print("Impossible d'ouvrir ");
+                Serial.println(filepath);
+                return false;
+            }
 
-    Serial.println("Configuration reçue par LoRa :");
-    Serial.print(" - intervalle_de_mesure_secondes = "); Serial.println(measureInterval);
-    Serial.print(" - intervalle_lora_secondes = "); Serial.println(loraInterval);
+            for (auto &line : newConfigLines) {
+                newConfig.println(line);
+            }
 
-    return true;
+            newConfig.close();
+            Serial.println("Réception de la config terminée, fichier mis à jour.");
+            return true;
+        }
+    }
 }

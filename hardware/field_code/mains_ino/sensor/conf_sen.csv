@@ -7,6 +7,12 @@ T4,temperature,A4,123456789012345
 T5,temperature,A5,123456789012345
 
 # Configuration générale
+intervalle_de_mesure_secondes,900
+intervalle_lora_secondes,3600
+max_pload_octet, 20
+periode_lora_min_secondes, 1
+periode_mesure_min_secondes, 2
+max_secondes_par_jour, 850 
 # Les deux délais ne doivent pas être inférieurs respectivement à 900s et 3600s
 #Doivent absolument avoir le même nom que dans le fichier conf_relay.csv
 lora_intervalle_secondes,3600
