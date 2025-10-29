@@ -28,6 +28,8 @@
 #endif
 Sensor** sens;
 double *toute_mesure;
+const char* configFilePath = "/config_sensor.csv";
+GeneralConfig config;
 
 //std::string FileName = "conf_sen.csv"; Impossible to use that because SD.open() takes squid string arguments
 Writer logger;
@@ -230,7 +232,7 @@ void loop() {
 
         Serial.println("Vérification de mise à jour descendante...");
         lora.startLoRa();
-        if (lora.receiveConfigUpdate(newMeasureInterval, newLoraInterval)) {
+        if (lora.receiveConfigUpdate(configFilePath)) {
 
             Serial.println("Mise à jour config reçue du master.");
 
