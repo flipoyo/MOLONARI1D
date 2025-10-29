@@ -16,6 +16,8 @@ RTCZero internalRtc;
 RTC_PCF8523 externalRtc;
 int measurementCount = 0;
 
+GeneralConfig res;
+
 
 // Lecture de la configuration CSV
 Reader reader;
@@ -26,9 +28,9 @@ std::vector<unsigned long> measurementTimesVec;
 
 void LoadConfig() {
   // Read configuration (call this from setup or main)
-  reader.lireConfigCSV("config_sensor.csv");
-  freq_envoi_lora_seconds = config.intervalle_lora_secondes;
-  freq_mesure_seconds = config.intervalle_de_mesure_secondes;
+  res=reader.lireConfigCSV("config_sensor.csv");
+  freq_envoi_lora_seconds = res.int_config.lora_intervalle_secondes;
+  freq_mesure_seconds = res.int_config.intervalle_de_mesure_secondes;
 }
 
 

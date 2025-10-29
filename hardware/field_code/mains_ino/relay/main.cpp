@@ -11,10 +11,12 @@
 
 LoRaModem modem;
 
-LoraCommunication lora(config.lora_freq, 0xAA, 0xFF, RoleType::MASTER);
+LoraCommunication lora(3600000, 0xAA, 0xFF, RoleType::MASTER);
 
 LoraWANCommunication loraWAN;
 std::queue<String> sendingQueue;
+
+GeneralConfig res;
 
 unsigned long lastLoraSend = 0;
 unsigned long lastAttempt = 0;
@@ -23,6 +25,9 @@ volatile bool wakeUpFlag = false;
 void wakeUp() {
     wakeUpFlag = true;
 }
+int CSPin = 5; // Pin CS par défaut
+
+
 
 // ----- Setup -----
 void setup() {
@@ -37,14 +42,14 @@ void setup() {
 
     // Lecture configuration CSV
     Reader reader;
-    reader.lireConfigCSV("relay_config.csv");
+    res=reader.lireConfigCSV("conf_rel.csv", CSPin);
     Serial.println("Configuration chargée.");
 
     // Initialisation LoRa communication
-    lora = LoraCommunication(config.lora_freq, 0xAA, 0xFF, RoleType::MASTER);
+    lora = LoraCommunication(res.int_config.lora_intervalle_secondes, 0xAA, 0xFF, RoleType::MASTER);
 
     // Vérification SD
-    if (!SD.begin(config.CSPin)) {
+    if (!SD.begin(res.rel_config.CSPin)) {
         Serial.println("Erreur SD - arrêt système.");
         while (true) {}
     }
@@ -52,12 +57,13 @@ void setup() {
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
 
+    digitalWrite(LED_BUILTIN, LOW);
 }
 
 // ----- Loop -----
 void loop() {
     static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
-    Waiter waiter;
+    static Waiter waiter; //pour ne pas l'indenter dans le loop
     waiter.startTimer();
     // le temps d’intervalle est écoulé depuis la dernière tentative LoRa
 

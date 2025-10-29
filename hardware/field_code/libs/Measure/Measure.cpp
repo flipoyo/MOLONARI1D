@@ -1,6 +1,11 @@
 #include "Measure.hpp"
 #include "Time.hpp"
 
+
+#ifndef DEBUG_LOG
+#define DEBUG_LOG(msg) Serial.println(msg)
+#endif
+
 // Constructeur par défaut
 Sensor::Sensor() 
   : dataPin(-1), enablePin(-1), type_capteur("-1"), id_box("-1") {}
@@ -14,36 +19,46 @@ Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur, String _id_bo
 }
 
 
-MESURE Sensor::Measure() {
+double Sensor::get_voltage() {
   digitalWrite(enablePin, HIGH);
-  digitalWrite(this->alimPin, HIGH);
   delay(200);
-  MESURE mesure = analogRead(dataPin);
+  double voltage = analogRead(dataPin);
   digitalWrite(enablePin, LOW);
-  digitalWrite(this->alimPin, LOW); 
-  return mesure;
+  return voltage;
+}
+
+Measure::Measure(int ncapt, double* toute_mesure):ncapteur(ncapt){
+  int iterator = 0;
+  for (int iterator = 0; iterator < ncapteur; iterator ++){
+    channel.push_back(toute_mesure[iterator]);
+  } 
 }
 
 // Retourne une ligne formatée pour une mesure
 String Measure::oneLine() {
   String date = GetCurrentDate();
-  String hour = GetCurrentHour();
 
+  String hour = GetCurrentHour();
+  DEBUG_LOG("Heure actuelle : " + hour);
+
+  DEBUG_LOG(ncapteur);
 
   // Construction de la ligne
   String str = String(id);
-  str += " (" + date + " " + hour + " ) : ";
+  str += " ; " + date + " ; " + hour + "  ; ";
 
   // Ajouter les valeurs des capteurs
   for (int i = 0; i < ncapteur; i++) {
     str += " " + String(channel[i]);
-    if (i < ncapteur - 1) str += ", "; // éviter la virgule finale
-  }
+    if (i < ncapteur) str += "; ";
 
+  }
+  DEBUG_LOG("end of initialization of one LineMeasure" + str);
   return str;
 }
 // Retourne une version complète et lisible de la mesure
 String Measure::ToString() {
-  String str = "Measure n°" + String(id) + ": " + oneLine();
+  String str = oneLine();
+
   return str;
 }
