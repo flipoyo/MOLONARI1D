@@ -1,19 +1,19 @@
 # Readme-code-2D
-Contient les informations qui décrivent le fonctionnement de la résolution numérique en 2D des équations de Molonari pour implémenter un terme de flux latéral
+Contient les informations qui décrivent le fonctionnement de la résolution numérique en 2D des équations de Molonari pour implémenter un terme de flux latéral, dans le cas 2 dimensions, une verticale et une horizontale. Ce code a été produit en 2025. Petit avertissement, ce modèle produit est incomplet, car les échanges ne sont pas uniquement selon 2 dimensions mais 3 dimensions. C'est incorrect de négliger les échanges horizontaux de l'aquifère dans le sens de la rivière.
 
 ### But
 
-Le but du nouveau code est d'ajouter la contribution des flux d'eau latéraux à nos équations de température et de charge. L'équipe de 2024 avait pour cela rajouté un terme source volumique q dans l'équation 1D, ce qui ne fait pas de sens selon nous car le flux d'eau ne fait que transiter de droite à gauche (ou de gauche à droite) de l'aquifère, le bilan total net sur le capteur est donc nul si l'on isole une tranche dz pour réaliser le bilan (même quantité entrante et sortante).
+Le but de ce code est de réaliser une résolution 2D des équations. Il a été réalisé pour apporter une réponse plus physique à l'approche "pseudo 2D" qui considère un terme source globale dans l'équation 1D. Ici, on résoud l'équation en 2D (mais il reste incorrect car il manque une dimension qui ne peut pas être appréhendée fautes de conditions aux limites existantes)
 
 
 ### Discrétisation
 
-Nous proposons donc une nouvelle approche, plus rigoureuse physiquement. Les équations seront traitées en 2D sur un maillage régulier qui sera centrée sur notre capteur. Il sera considéré fin en largeur, le but n'étant pas de résoudre en 2D sur toute l'aquifère. Les points supplémentaires en largeur sont donc des intermédiaires de calcul qui nous permettront d'implémenter le flux latéral d'eau comme une condition de Neumann sur notre maillage. Les équations traitées sont les suivantes :
+Les équations seront traitées en 2D sur un maillage régulier qui sera centrée sur notre capteur. Il sera considéré fin en largeur, le but n'étant pas de résoudre en 2D sur toute l'aquifère. Les points supplémentaires en largeur sont donc des intermédiaires de calcul qui nous permettront d'implémenter le flux latéral d'eau comme une condition de Neumann sur notre maillage. Les équations traitées sont les suivantes :
 
 $$S_s \frac{\partial H}{\partial t} = K \Delta H$$ 
 $$\frac{\partial T}{\partial t} = \kappa_e \Delta T + \alpha_e \nabla H \cdot \nabla T$$
 
-Pour les traiter, on utilise comme précedemment un schéma de Crank-Nicolson régi par un paramètre $\alpha$ tel que le schéma soit explicite pour $\alpha=1$ et implicite pour $\alpha=0$. Pour les variables, on utilisera la notation suivante $U^{n}_{i,j}$ avec n l'indice temporel, i l'indice de l'axe z vertical, et j l'indice de l'axe x horizontal.
+Pour les traiter, on utilise comme précedemment un schéma thêta régi par un paramètre $\alpha$ tel que le schéma soit explicite pour $\alpha=1$ et implicite pour $\alpha=0$. Pour les variables, on utilisera la notation suivante $U^{n}_{i,j}$ avec n l'indice temporel, i l'indice de l'axe z vertical, et j l'indice de l'axe x horizontal.
 Les discrétisations sont les suivantes :
 
 $$S_s \frac{H_{i,j}^{n+1} - H_{i,j}^{n}}{\Delta t} = \alpha K \left[ \frac{H_{i+1,j}^n - 2H_{i,j}^n + H_{i-1,j}^n}{(\Delta z)^2} + \frac{H_{i,j+1}^n - 2H_{i,j}^n + H_{i,j-1}^n}{(\Delta x)^2} \right] + (1-\alpha) K \left[ \frac{H_{i+1,j}^{n+1} - 2H_{i,j}^{n+1} + H_{i-1,j}^{n+1}}{(\Delta z)^2} + \frac{H_{i,j+1}^{n+1} - 2H_{i,j}^{n+1} + H_{i,j-1}^{n+1}}{(\Delta x)^2} \right]$$
