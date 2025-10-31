@@ -1,6 +1,7 @@
+#include<vector>
+
 #include "Measure.hpp"
 #include "Time.hpp"
-
 
 #define DEBUG_MEASURE
 #ifdef DEBUG_MEASURE
@@ -30,8 +31,16 @@ double Sensor::get_voltage() {
   return voltage;
 }
 
-Measure::Measure(const int& ncapt, const double* toute_mesure):ncapt(ncapt){
+Measure::Measure(int ncapt_arg, std::vector<double> toute_mesure):ncapt(ncapt_arg), channel(){
+  #ifdef DEBUG_MEASURE
+  for (int it = 0; it < ncapt; it++){
+    double temp = toute_mesure[it];
+    DEBUG_LOG("toute_mesure [" + String(it) + "] exists and equals " + String(temp));
+  }
+  #endif
+  
   for (int iterator = 0; iterator < ncapt; iterator ++){
+    DEBUG_LOG("set channel element number " + String(toute_mesure[iterator]));
     channel.push_back(toute_mesure[iterator]);
   }
   DEBUG_LOG("Initialised channel attribute of a Measure object");

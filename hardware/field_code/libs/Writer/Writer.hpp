@@ -34,7 +34,7 @@ class Writer
 
         // Process raw data and append it as a new entry in the CSV file
         // NF 29/4/2025 modification to pass 
-        void LogData(int ncapteur, double *toute_mesure);
+        void LogData(int ncapteur, const std::vector<double>& toute_mesure);
 
         // Safely close the connection with the SD card
         void Dispose();

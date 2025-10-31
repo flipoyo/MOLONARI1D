@@ -87,7 +87,7 @@ void Writer::EstablishConnection(const int CSpin) {
 }
 
 // LogData: Processes raw data, applies a timestamp, and writes it to the CSV file as a new entry
-void Writer::LogData(int ncapteur, double *toute_mesure) {
+void Writer::LogData(int ncapteur, const std::vector<double>& toute_mesure) {
     SD_LOG("about to create data");
     // Create a new Measure object
     Measure data (ncapteur, toute_mesure);
