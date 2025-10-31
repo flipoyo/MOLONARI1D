@@ -30,7 +30,7 @@ int intervalle_de_mesure_secondes;
 Writer logger;
 const int CSPin = 5;
 const char filename[] = "RECORDS.CSV";
-const char* configFilePath = "/config_sensor.csv";
+const char* configFilePath = "/config_sen.csv";
 
 // LoRa
 LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE);
@@ -209,12 +209,10 @@ void loop() {
         } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
 
         dataFile.close();
-        lora.closeSession(0);
         lastLoRaSend = current_Time;
 
         // --- Réception éventuelle de mise à jour config ---
         Serial.println("Vérification de mise à jour descendante...");
-        lora.startLoRa();
 
         if (lora.receiveConfigUpdate(configFilePath)) {
 
