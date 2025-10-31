@@ -1,70 +1,68 @@
 # Readme-code-1D
-Ce document décrit le fonctionnement de la résolution numérique 1D des équations de charge et de température pour un aquifère stratifié, incluant un terme source/puits.
+Ce document decrit le fonctionnement de la resolution numerique 1D des equations de charge et de temperature pour un aquifere stratifie, incluant un terme source/puits.
 
 ### But
 
-Le but de ce code est de simuler l'évolution de la **charge hydraulique (H)** et de la **température (T)** le long d'un profil vertical (axe z) au sein d'un aquifère. Le modèle prend en compte la diffusion de la charge et de la chaleur, ainsi que le transport de chaleur par advection (écoulement de l'eau). Il permet également d'intégrer un terme source/puits volumique `q` pour modéliser les échanges radiaux dans notre couche.
+Le but de ce code est de simuler l'evolution de la **charge hydraulique (H)** et de la **temperature (T)** le long d'un profil vertical (axe z) au sein d'un aquifere. Le modele prend en compte la diffusion de la charge et de la chaleur, ainsi que le transport de chaleur par advection (ecoulement de l'eau). Il permet egalement d'integrer un terme source/puits volumique `q` pour modeliser les echanges radiaux dans notre couche.
 
-### Modèle et zoom sur le terme q
+<br>
 
-Il faut imaginer le capteur comme planté dans le sol, mais pas parfaitement au centre de la rivière, plutôt dans un endroit quelconque. Cela permet d'éviter les confusions sur les échanges latéraux.
+## Modele et zoom sur le terme q
 
-Pour la mise en équation, on considèrera que le capteur est planté parfaitement verticalement dans le sol. Ainsi, la charge et la température seront des fonctions uniquement de z sur le profil considéré, puisqu'on travaille avec les autres coordonées d'espaces constantes. Pour la mise en équation, on considère un cylindre de contrôle (d'axe le capteur) d'épaisseur dz sur lequel charge et température sont uniformes. 
+Il faut imaginer le capteur comme plante dans le sol, mais pas parfaitement au centre de la riviere, plutot dans un endroit quelconque. Cela permet d'eviter les confusions sur les echanges lateraux.
 
-Sur les bords de notre cylindre de contrôle, par advection diffusion il existe un flux d'eau. En nommant $q_s$ le flux d'eau total latéral par mètre de colonne on a $q_{s}dz =  \iint_{S_{lat}} \vec{q} \cdot d\vec{S}$. Cette quantité sera considérée comme uniforme sur z. Cette hypothèse est justifiée par le fait que notre capteur n'est pas très long en comparatif de la longueur totale de l'aquifère. On la traitera donc comme un terme source constant nommé $q_s$. Le terme q comprend donc l'advection et la diffusion radiales à notre capteur, il s'exprime donc à l'aide des dérivées spatiales de H selon x et y qu'on ne peut évaluer. Le fait de tout regrouper dans un seul paramètre constant q nous permet de le calculer en l'inférant dans notre MCMC.
+Pour la mise en equation, on considerera que le capteur est plante parfaitement verticalement dans le sol. Ainsi, la charge et la temperature seront des fonctions uniquement de z sur le profil considere, puisqu'on travaille avec les autres coordonees d'espaces constantes. Pour la mise en equation, on considere un cylindre de controle (d'axe le capteur) d'epaisseur dz sur lequel charge et temperature sont uniformes. 
 
-Ce flux est directement relié à l'équation de la charge par la loi de Darcy. Pour la température, on considérera que la quantité totale d'eau entrante / sortante est à la température du cylindre de contrôle. Cette approximation se justifie par le fait que les variations radiales de température et de charge sont négligeables devant les variations verticales. Le terme à rajouter dans les équations est donc $\rho_w c_w q_s T$.
+Sur les bords de notre cylindre de controle, par advection diffusion il existe un flux d'eau. En nommant $q_s$ le flux d'eau total lateral par metre de colonne on a $q_{s}dz =  \iint_{S_{lat}} \vec{q} \cdot d\vec{S}$. Cette quantite sera consideree comme uniforme sur z. Cette hypothese est justifiee par le fait que notre capteur n'est pas tres long en comparatif de la longueur totale de l'aquifere. On la traitera donc comme un terme source constant nomme $q_s$. Le terme $q_s$ comprend donc l'advection et la diffusion radiales a notre capteur, il s'exprime donc a l'aide des derivees spatiales de H selon x et y qu'on ne peut evaluer faute de mesures. Le fait de tout regrouper dans un seul parametre constant $q_s$ nous permet de le calculer en l'inferant dans notre MCMC.
 
-On utilise ce subterfuge de calcul car notre capteur ne nous donne que des informations selon l'axe z. On ne peut donc résoudre notre équation que sur ce profil d'espace, et avec les informations disponibles.
+L'equation de la charge est obtenue par un bilan de masse couple a la loi de Darcy. Pour tenir en compte de $q_s$ dans l'equation il suffit donc d'ajouter un flux. L'equation de temperature est elle obtenue par un bilan d'energie. On cherche donc a connaitre la quantite d'energie apportee par notre flux. Pour simplifier, on considerera que la quantite totale d'eau entrante / sortante est a la temperature du cylindre de controle. Cette approximation se justifie par le fait que les variations radiales de temperature et de charge sont negligeables devant les variations verticales. Le terme a rajouter dans le bilan d'energie est donc $\rho_w c_w q_s T$.
 
-### Équations
+On utilise ce subterfuge de calcul car notre capteur ne nous donne que des informations selon l'axe z. On ne peut donc resoudre notre equation que sur ce profil d'espace, et avec les informations disponibles.
 
-Les équations traitées sont les suivantes :
+<br>
 
-1.  **Équation de charge hydraulique (H) :**
-$$S_s \frac{\partial H}{\partial t} = K \Delta H$$ 
+## Equations
 
-2.  **Équation de température (T) :**
+Les equations traitees sont les suivantes :
+
+1.  **Equation de charge hydraulique (H), obtenue par bilan de masse couple a la loi de Darcy :**
+
+$$S_s \frac{\partial H}{\partial t} = K \Delta H$$
+
+2.  **Equation de temperature (T), obtenue par bilan d'energie :**
 $$\frac{\partial T}{\partial t} = \kappa_e \Delta T + \alpha_e \nabla H \cdot \nabla T$$
 
 En 1D en incluant le terme source, on a donc :
 
-1.  **Équation de charge hydraulique (H) :**
+1.  **Equation de charge hydraulique (H) :**
     $$S_s \frac{\partial H}{\partial t} = K \frac{\partial^2 H}{\partial z^2}  + q_s$$
-2.  **Équation de température (T) :**
+2.  **Equation de temperature (T) :**
     $$\frac{\partial T}{\partial t} = \underbrace{\kappa_e \frac{\partial^2 T}{\partial z^2}}_{\text{Diffusion}} + \underbrace{\alpha_e \frac{\partial H}{\partial z} \frac{\partial T}{\partial z}}_{\text{Advection}} + \underbrace{\frac{\rho_w c_w}{\rho_m c_m} q_s T}_{\text{Source}}$$
 
-### Discrétisation
+<br>
 
-Pour résoudre numériquement ces équations, nous utilisons un **$\theta$-schema** pondéré par un paramètre $\alpha$.
-* $\alpha = 0$ : Schéma totalement **implicite** (inconditionnellement stable).
-* $\alpha = 0.5$ : Schéma de Crank-Nicolson classique.
-* $\alpha = 1$ : Schéma totalement **explicite** (conditionnellement stable).
+## Discretisation de l'equation a l'interieur du domaine
 
-Les variables sont notées $U^{n}_{i}$, où `n` est l'indice temporel et `i` l'indice spatial sur l'axe vertical `z`.
+Pour resoudre numeriquement ces equations, nous utilisons un **$\theta$-schema** pondere par un parametre $\alpha$.
+* $\alpha = 0$ : Schema totalement **implicite** (inconditionnellement stable).
+* $\alpha = 0.5$ : Schema de Crank-Nicolson classique.
+* $\alpha = 1$ : Schema totalement **explicite** (conditionnellement stable).
 
-Les équations discrétisées (dans l'intérieur du domaine) sont :
+Les variables sont notees $U^{n}_{i}$, où `n` est l'indice temporel et `i` l'indice spatial sur l'axe vertical `z`.
+
+Les equations discretisees (dans l'interieur du domaine) sont :
 
 $$S_s \frac{H_{i}^{n+1} - H_{i}^{n}}{\Delta t} = \alpha \left[ K \frac{H_{i+1}^n - 2H_{i}^n + H_{i-1}^n}{(\Delta z)^2} \right] + (1-\alpha) \left[ K \frac{H_{i+1}^{n+1} - 2H_{i}^{n+1} + H_{i-1}^{n+1}}{(\Delta z)^2} \right] + q_s$$
 
 $$\frac{T_{i}^{n+1} - T_{i}^{n}}{\Delta t} = \alpha \left\{ \kappa_e \frac{T_{i+1}^n - 2T_{i}^n + T_{i-1}^n}{(\Delta z)^2} - \alpha_e \left(\frac{H_{i+1}^n - H_{i-1}^n}{2\Delta z}\right)\left(\frac{T_{i+1}^n - T_{i-1}^n}{2\Delta z}\right) \right\} + (1-\alpha) \left\{ \kappa_e \frac{T_{i+1}^{n+1} - 2T_{i}^{n+1} + T_{i-1}^{n+1}}{(\Delta z)^2} - \alpha_e \left(\frac{H_{i+1}^{n+1} - H_{i-1}^{n+1}}{2\Delta z}\right)\left(\frac{T_{i+1}^{n+1} - T_{i-1}^{n+1}}{2\Delta z}\right) \right\} + {\frac{\rho_w c_w}{\rho_m c_m} q_s \left((1-\alpha)T^{n+1}_i + \alpha T^{n}_i\right)}$$
 
-### Conditions initiales
+<br>
 
-Les profils initiaux de charge et de température ($t=0$) doivent être définis sur toute la colonne verticale `z` pour initialiser la résolution. Comme nous n'avons que 5 points de mesure pour T, et une mesure de différence de charge pour H, on procédera par interpolation de Lagrange d'ordre 5 pour T, et pour H on fera une interpolation linéaire avec $H_{aq} = 0$. La charge étant définie à une constante près on peut fixer sa valeur dans l'aquifère à 0 (la charge varie peu dans l'aquifère, elle varie plus proche de la surface ou le débit d'eau varie).
+## Conditions aux limites
 
-$$\begin{cases}
-H(z, t=0) \\
-T(z, t=0)
-\end{cases} \quad
-\text{Calculés par interpolation sur les points de mesure initiaux.}
-$$
+Nous allons raisonner sur la charge, mais le principe est le même pour la temperature.
 
-### Conditions aux limites
-
-Nous allons raisonner sur la charge, mais le principe est le même pour la température.
-
-Nous imposons des conditions de **Dirichlet** (valeur imposée, nos mesures) en haut et en bas du domaine de simulation, qui peuvent varier dans le temps. De manière plus précise, ces conditions fixent les valeurs sur les points fictifs du maillage $i=-\frac{1}{2}$ et $i=n+\frac{1}{2}$.
+Nous imposons des conditions de **Dirichlet** (valeur imposee, nos mesures) en haut et en bas du domaine de simulation, qui peuvent varier dans le temps. De maniere plus precise, ces conditions fixent les valeurs sur les points fictifs du maillage $i=-\frac{1}{2}$ et $i=n+\frac{1}{2}$.
 
 Notre but est d'estimer $K \frac{\partial^2 H}{\partial z^2}$ au noeud 0. On ne peut pas utiliser la formule usuelle car on ne connaît pas la valeur au point -1, mais on connaît celle en $-\frac{1}{2}$. En faisant les DL, on a :
 $$\begin{cases}
@@ -73,21 +71,36 @@ $$\begin{cases}
     H_1 = H_0 + H'_0 \Delta z + H''_0 \frac{\Delta z^2}{2} + O(\Delta z^3) \quad \text{(2)}
 \end{cases}$$
 
-Ensuite, pour éliminer le terme en $H'_0$, on combine les deux équations. En calculant $2 \times (1) + (2)$, on peut isoler $H''_0$ et on obtient :
+Ensuite, pour eliminer le terme en $H'_0$, on combine les deux equations. En calculant $2 \times (1) + (2)$, on peut isoler $H''_0$ et on obtient :
 $$H''_0 \approx \frac{1}{\Delta z^2} \left( \frac{8}{3} H_{riv} - 4 H_0 + \frac{4}{3} H_1 \right)$$
 
 On a donc 
 $$S_s \frac{H_{0}^{n+1} - H_{0}^{n}}{\Delta t} = \alpha \left[  \frac{K}{\Delta z^2} \left( \frac{8}{3} H_{riv}^n - 4 H_0^n + \frac{4}{3} H_1^n \right) \right] + (1-\alpha) \left[  \frac{K}{\Delta z^2} \left( \frac{8}{3} H_{riv}^{n+1} - 4 H_0^{n+1} + \frac{4}{3} H_1^{n+1} \right) \right] + q_s$$
 
-C'est la formule utilisée dans le code pour évaluer la dérivée seconde sur la frontière. Pour la frontière en $n+\frac{1}{2}$ on procède de la même manière.
+C'est la formule utilisee dans le code pour evaluer la derivee seconde sur la frontiere. Pour la frontiere en $n+\frac{1}{2}$ on procede de la même maniere.
 
-### Système d'équations après discrétisation
+<br>
 
-La discrétisation conduit à un système d'équations linéaires de la forme $A(\alpha) X^{n+1} = B(\alpha)X^{n} + C^{n,n+1}$, où $X$ est le vecteur des charges ou des températures à l'instant `n`.
+## Conditions initiales
 
-* **Matrice A et B** : Les matrice $A$ et $B$ sont **tridiagonales** et constantes dans le temps. Leur taille est $N_z \times N_z$, où $N_z$ est le nombre de points de discrétisation sur l'axe vertical. On a $B(0)=Id$  (schéma implicite), $A(1)=Id$  (schéma explicite).
+Les profils initiaux de charge et de temperature ($t=0$) doivent être definis sur toute la colonne verticale `z` pour initialiser la resolution. Comme nous n'avons que 5 points de mesure pour T, et une mesure de difference de charge pour H, on procedera par interpolation de Lagrange d'ordre 5 pour T, et pour H on fera une interpolation lineaire avec $H_{aq} = 0$. La charge etant definie a une constante pres on peut fixer sa valeur dans l'aquifere a 0 (la charge varie peu dans l'aquifere, elle varie plus proche de la surface ou le debit d'eau varie).
 
-* **Vecteur C** : Le vecteur C permet d'introduire les conditions aux limites au temps n et n+1 (on fait une moyenne pondérée par $\alpha$ pour coller au schéma). Pour la charge, le terme q_s sera implémenté dans C, pour la température comme il est en préfacteur de T il sera directement implémenté dans A et B.
+$$\begin{cases}
+H(z, t=0) \\
+T(z, t=0)
+\end{cases} \quad
+\text{Calcules par interpolation sur les points de mesure initiaux.}
+$$
+
+<br>
+
+## Systeme d'equations apres discretisation
+
+La discretisation conduit a un systeme d'equations lineaires de la forme $A(\alpha) X^{n+1} = B(\alpha)X^{n} + C^{n,n+1}$, où $X$ est le vecteur des charges ou des temperatures a l'instant `n`.
+
+* **Matrice A et B** : Les matrice $A$ et $B$ sont **tridiagonales** et constantes dans le temps. Leur taille est $N_z \times N_z$, où $N_z$ est le nombre de points de discretisation sur l'axe vertical. On a $B(0)=Id$  (schema implicite), $A(1)=Id$  (schema explicite).
+
+* **Vecteur C** : Le vecteur C permet d'introduire les conditions aux limites au temps n et n+1 (on fait une moyenne ponderee par $\alpha$ pour coller au schema). Pour la charge, le terme q_s sera implemente dans C, pour la temperature comme il est en prefacteur de T il sera directement implemente dans A et B.
 
 Pour la charge, on a $A_H(\alpha) H^{n+1} = B_H(\alpha)H^{n} + C_H^{n,n+1}$, avec :
 
@@ -127,12 +140,12 @@ q_{s} \\
 
 <br>
 
-### Résolution numérique
+## Resolution numerique
 
-* **Résolution efficace** : Puisque le système est tridiagonal, il est résolu de manière très efficace à l'aide de l'**algorithme de Thomas** (implémenté dans la fonction `solver`, voir plus dans solver_README.md). Cet algorithme a une complexité linéaire $O(N_z)$, ce qui est beaucoup plus rapide qu'un solveur générique (comme l'élimination de Gauss).
+* **Resolution efficace** : Puisque le systeme est tridiagonal, il est resolu de maniere tres efficace a l'aide de l'**algorithme de Thomas** (implemente dans la fonction `solver`, voir plus dans solver_README.md). Cet algorithme a une complexite lineaire $O(N_z)$, ce qui est beaucoup plus rapide qu'un solveur generique (comme l'elimination de Gauss).
 
-* **Déroulement** : Pour chaque pas de temps (toutes les 15 minutes), le code :
-    1.  Calcule le membre de droite ($B X^{n} + C^{n,n+1}$) qui dépend de l'état connu à l'instant `n` et des conditions aux limites. 
+* **Deroulement** : Pour chaque pas de temps (toutes les 15 minutes), le code :
+    1.  Calcule le membre de droite ($B X^{n} + C^{n,n+1}$) qui depend de l'etat connu a l'instant `n` et des conditions aux limites. 
     2.  Construit la matrice $A$.
     3.  Appelle le `solver` pour trouver $X^{n+1}$.
-    4.  Le processus est répété pour toute la durée de la simulation.
+    4.  Le processus est repete pour toute la duree de la simulation.
