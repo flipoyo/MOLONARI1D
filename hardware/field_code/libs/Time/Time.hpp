@@ -18,7 +18,7 @@ String GetCurrentDate();
 String GetCurrentHour();
 unsigned long GetSecondsSinceMidnight();
 
-unsigned long CalculateSleepTimeUntilNextMeasurement();
-unsigned long CalculateSleepTimeUntilNextCommunication();
+unsigned long CalculateSleepTimeUntilNextMeasurement(unsigned long previousMeasurementTime, int measurementInterval);
+unsigned long CalculateSleepTimeUntilNextCommunication(unsigned long previousCommunicationTime, int communicationInterval);
 
 #endif // MY_TIME

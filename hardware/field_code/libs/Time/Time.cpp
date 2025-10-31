@@ -81,7 +81,8 @@ unsigned long CalculateSleepTimeUntilNextMeasurement(unsigned long previousMeasu
 }
 
 unsigned long CalculateSleepTimeUntilNextCommunication(unsigned long previousCommunicationTime, int communicationInterval) {
+  //retourne en ms
   unsigned long currentTime = GetSecondsSinceMidnight();
-  unsigned long time_to_sleep = (communicationInterval - (currentTime - previousCommunicationTime)) * 1000UL;
-  return time_to_sleep;
+  unsigned long timeToSleep = (communicationInterval - (currentTime - previousCommunicationTime)) * 1000UL;
+  return (timeToSleep);
 }

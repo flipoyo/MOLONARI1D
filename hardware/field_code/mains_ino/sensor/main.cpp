@@ -178,7 +178,7 @@ void loop() {
 
         dataFile.seek(lastSDOffset);
 
-        while (CalculateSleepTimeUntilNextMeasurement() > 60UL && dataFile.available()) {
+        while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 60000UL && dataFile.available()) {
 
             std::queue<String> lineToSend;
             lineToSend.push(dataFile.readStringUntil('\n'));
@@ -231,10 +231,10 @@ void loop() {
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     Waiter waiter;
 
-    if (CalculateSleepTimeUntilNextMeasurement() <= CalculateSleepTimeUntilNextCommunication()){
-        waiter.sleepUntil(CalculateSleepTimeUntilNextMeasurement());
+    if (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) <= CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes)){
+        waiter.sleepUntil(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes));
     } else {
-        waiter.sleepUntil(CalculateSleepTimeUntilNextCommunication());
+        waiter.sleepUntil(CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes));
     }
     
 }
