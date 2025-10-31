@@ -233,6 +233,8 @@ class frequency_analysis:
         use_hann=True,
         prom_rel=0.05,
         Q_min=10.0,
+        Q_max=np.inf,
+        amplitude_threshold=0.0,
         max_width_rel=0.20,
         min_cycles=3,
         store=True,            # <-- store internal state
@@ -340,7 +342,7 @@ class frequency_analysis:
             width_rel = fwhm_hz / f0
 
         enough_cycles = (T * f0) >= min_cycles
-        narrow_enough = (Q >= Q_min) & (width_rel <= max_width_rel)
+        narrow_enough = (Q >= Q_min) & (width_rel <= max_width_rel) & (Q <= Q_max) & (A0 >= amplitude_threshold)
         accepted = enough_cycles & narrow_enough
 
         period_days = 1.0 / (f0 * 86400.0)
@@ -359,6 +361,10 @@ class frequency_analysis:
         if draw:
             plt.figure(figsize=(9,4))
             P_all = 1.0 / (freqs_m * 86400.0)
+
+            if amplitude_threshold > 0:
+                plt.hlines(amplitude_threshold, P_all[0], P_all[-1], colors='tab:orange', linestyles='--', label='Amplitude threshold')
+
             plt.plot(P_all, amp_m, label='FFT amplitude')
             plt.plot(period_days, A0, 'o', mfc='none', mec='tab:red', label='Detected peaks')
             plt.plot(period_days[accepted], A0[accepted], 'o', color='tab:green', label='Accepted')
