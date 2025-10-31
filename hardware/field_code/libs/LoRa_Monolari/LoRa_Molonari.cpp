@@ -48,7 +48,7 @@ void LoraCommunication::setdesttodefault() {
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
     if (!active) { LORA_LOG_LN("LoRa inactive"); return; }
 
-    uint8_t b = LoRa.random();
+    uint8_t b = random(10, 80);
     delay(100 + b);
 
     if (!LoRa.beginPacket()) {
@@ -72,7 +72,7 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload) {
     if (!active) return false;
 
-    delay(80);
+    delay(10);
     unsigned long startTime = millis();
     int ackTimeout = 2000;
 
@@ -142,13 +142,18 @@ bool LoraCommunication::handshake(uint8_t &shift) {
     } 
     else { // SLAVE
         String payload; uint8_t packetNumber; RequestType requestType;
-        while (true) {
+        int n = 0;
+        while (n < 50) {
+            n++;
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
                 shift = packetNumber;
                 sendPacket(shift, SYN, "SYN-ACK");
                 LORA_LOG_LN("SLAVE: SYN-ACK sent");
                 break;
             }
+        if (n == 50) {
+            LORA_LOG_LN("SLAVE: No SYN received");
+            return false;
         }
 
         int retries = 0;
@@ -160,7 +165,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         }
         return false;
     }
-}
+}}
 
 uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue) {
     uint8_t packetNumber = 0;
@@ -185,7 +190,6 @@ uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue) {
 int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {
     uint8_t packetNumber = 0; String payload; RequestType requestType; uint8_t prevPacket = -1;
     unsigned long startTime = millis(); int ackTimeout = 60000;
-    receiveQueue.push(String(destination)); //à conserver ?
 
     while (millis() - startTime < ackTimeout) {
         if (receivePacket(packetNumber, requestType, payload)) {
@@ -215,7 +219,7 @@ void LoraCommunication::closeSession(int lastPacket) {
     }
 }
 
-bool LoraCommunication::receiveConfigUpdate(const char* filepath) {
+bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms) {
     uint8_t packetNumber;
     RequestType requestType;
     String payload;
@@ -224,30 +228,97 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath) {
 
     Serial.println("Écoute de la nouvelle configuration LoRa...");
 
-    while (true) {
-        if (!receivePacket(packetNumber, requestType, payload)) continue;
+    unsigned long start = millis();
+    while (millis() - start < timeout_ms) {
+        // petite attente pour éviter busy-loop
+        if (!receivePacket(packetNumber, requestType, payload)) {
+            delay(50);
+            continue;
+        }
 
         if (requestType == DATA && payload.length() > 0) {
-            newConfigLines.push_back(payload);
-            sendPacket(packetNumber, ACK, "ACK"); // acquittement
+            payload.trim(); // supprime CR/LF
+            if (payload.length() > 0) {
+                // Écrire d'abord en mémoire
+                newConfigLines.push_back(payload);
+                // ACK **après** avoir stocké en RAM (et idéalement après écriture SD, mais on postpose)
+                sendPacket(packetNumber, ACK, "ACK");
+            }
+            continue;
         }
 
         if (requestType == FIN) {
-            // Écriture du fichier seulement si FIN reçu
-            File newConfig = SD.open(filepath, FILE_WRITE | O_TRUNC);
-            if (!newConfig) {
+            // Écriture atomique : on écrit d'abord sur un fichier temporaire
+            const char* tmpPath = "tmp_conf.csv";
+            File tmp = SD.open(tmpPath, FILE_WRITE | O_TRUNC);
+            if (!tmp) {
                 Serial.print("Impossible d'ouvrir ");
-                Serial.println(filepath);
+                Serial.println(tmpPath);
                 return false;
             }
 
             for (auto &line : newConfigLines) {
-                newConfig.println(line);
+                tmp.println(line);
+            }
+            tmp.close();
+
+            // Remplacer l'ancien fichier (supprime puis renommer si possible)
+            // Si SD.rename est disponible, on peut faire SD.remove(filepath); SD.rename(tmpPath, filepath);
+            // Sinon on réécrit:
+            if (!SD.remove(filepath)) {
+                // si le fichier n'existait pas, remove peut échouer mais ce n'est pas fatal
+                Serial.println("Warning: ancienne conf non supprimée (peut ne pas exister).");
             }
 
-            newConfig.close();
+            File newF = SD.open(filepath, FILE_WRITE | O_TRUNC);
+            if (!newF) {
+                Serial.print("Impossible de créer ");
+                Serial.println(filepath);
+                return false;
+            }
+            File tmpRead = SD.open(tmpPath, FILE_READ);
+            if (!tmpRead) {
+                Serial.println("Impossible d'ouvrir tmp pour lecture");
+                newF.close();
+                return false;
+            }
+            while (tmpRead.available()) {
+                newF.write(tmpRead.read());
+            }
+            tmpRead.close();
+            newF.close();
+            SD.remove(tmpPath);
+            
+
             Serial.println("Réception de la config terminée, fichier mis à jour.");
+
+            // Parser les lignes reçues pour extraire les intervalles
+            for (auto &line : newConfigLines) {
+                String copy = line;
+                copy.trim();
+                if (copy.startsWith("intervalle_de_mesure_secondes")) {
+                    int idx = copy.indexOf(',');
+                    if (idx >= 0) {
+                        String val = copy.substring(idx + 1);
+                        val.trim();
+                        long vv = val.toInt();
+                        if (vv > 0 && outMeasureInterval) *outMeasureInterval = (uint16_t)vv;
+                    }
+                } else if (copy.startsWith("intervalle_lora_secondes")) {
+                    int idx = copy.indexOf(',');
+                    if (idx >= 0) {
+                        String val = copy.substring(idx + 1);
+                        val.trim();
+                        long vv = val.toInt();
+                        if (vv > 0 && outLoraInterval) *outLoraInterval = (uint16_t)vv;
+                    }
+                }
+            }
+
             return true;
         }
-    }
+    } // fin timeout
+
+    Serial.println("Timeout: pas de configuration complète reçue.");
+    return false;
 }
