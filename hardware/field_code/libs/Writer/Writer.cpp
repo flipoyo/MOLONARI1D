@@ -88,10 +88,12 @@ void Writer::EstablishConnection(const int CSpin) {
 
 // LogData: Processes raw data, applies a timestamp, and writes it to the CSV file as a new entry
 void Writer::LogData(int ncapteur, const std::vector<double>& toute_mesure) {
+    
     SD_LOG("about to create data");
     // Create a new Measure object
     Measure data (ncapteur, toute_mesure);
     SD_LOG("data initialised");
+
     data.id = this->next_id; // Set unique ID for the measurement
     // Check if the connection is still established
     bool is_connected = SD.begin(this->CSPin) && this->file;

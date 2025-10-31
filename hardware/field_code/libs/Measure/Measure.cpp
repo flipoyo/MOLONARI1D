@@ -27,11 +27,12 @@ double Sensor::get_voltage() {
   digitalWrite(enablePin, HIGH);
   delay(200);
   double voltage = analogRead(dataPin);
+  DEBUG_LOG("measured voltage of Pin " + String(dataPin) + " of " + String (voltage));
   digitalWrite(enablePin, LOW);
   return voltage;
 }
 
-Measure::Measure(int ncapt_arg, std::vector<double> toute_mesure):ncapt(ncapt_arg), channel(){
+Measure::Measure(int ncapt_arg, const std::vector<double>& toute_mesure):ncapt(ncapt_arg), channel(){
   #ifdef DEBUG_MEASURE
   for (int it = 0; it < ncapt; it++){
     double temp = toute_mesure[it];
@@ -40,7 +41,7 @@ Measure::Measure(int ncapt_arg, std::vector<double> toute_mesure):ncapt(ncapt_ar
   #endif
   
   for (int iterator = 0; iterator < ncapt; iterator ++){
-    DEBUG_LOG("set channel element number " + String(toute_mesure[iterator]));
+    DEBUG_LOG("set channel element number " + String(iterator) + " to " + String(toute_mesure[iterator]));
     channel.push_back(toute_mesure[iterator]);
   }
   DEBUG_LOG("Initialised channel attribute of a Measure object");
