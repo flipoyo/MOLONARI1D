@@ -180,7 +180,7 @@ void loop() {
     DEBUG_LOG("LogData instruction done");
     // --- Envoyer LoRa si intervalle atteint ---
     
-    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
+    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 60));
 
     if (IsTimeToLoRa || rattrapage) {
         

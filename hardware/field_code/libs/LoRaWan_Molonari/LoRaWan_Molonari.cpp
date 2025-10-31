@@ -54,3 +54,35 @@ bool LoraWANCommunication::sendQueue(std::queue<String>& sendingQueue) {
     }
     return true;
 }
+
+bool LoraWANCommunication::receiveConfig(const char* configFilePath, bool modif) {
+    String rcv = modem.readString();
+    Serial.print("↓ Message reçu en downlink : ");
+    Serial.println(rcv);
+
+    const char* tmpPath = "tmp_conf.csv";
+    File tmp = SD.open(tmpPath, FILE_WRITE | O_TRUNC);
+    tmp.println(rcv);
+    tmp.close();
+    File newF = SD.open(configFilePath, FILE_WRITE | O_TRUNC);
+    if (!newF) {
+        Serial.print("Impossible de créer ");
+        Serial.println(configFilePath);
+        return false;
+    }
+    File tmpRead = SD.open(tmpPath, FILE_READ);
+    if (!tmpRead) {
+        Serial.println("Impossible d'ouvrir tmp pour lecture");
+        newF.close();
+        return false;
+    }
+    while (tmpRead.available()) {
+        newF.write(tmpRead.read());
+    }
+    tmpRead.close();
+    newF.close();
+    SD.remove(tmpPath);
+    return true;
+
+}
+
