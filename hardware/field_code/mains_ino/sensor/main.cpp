@@ -143,7 +143,7 @@ void loop() {
 
     // --- Prendre mesures ---
     unsigned long current_Time=GetSecondsSinceMidnight();
-    bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 180UL));
+    bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes));
 
     int ncapt = 0;
 
