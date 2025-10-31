@@ -1,14 +1,17 @@
 #include <SD.h>
 #include <Arduino.h> 
 #include "LoRa_Molonari.hpp"
-#ifdef LORA_DEBUG
-#define LORA_LOG(msg) Serial.print(msg);
-#define LORA_LOG_HEX(msg) Serial.print(msg, HEX);
-#define LORA_LOG_LN(msg) Serial.println(msg);
+#define DEBUG_MAIN
+#define DEBUG_MEASURE
+#define DEBUG_WRITER
+#define DEBUG_READER
+
+#ifdef DEBUG_MAIN
+#define DEBUG_LOG(msg) Serial.println(msg)
+#define DEBUG_LOG_NO_LN(msg) Serial.print(msg)
 #else
-#define LORA_LOG(msg)
-#define LORA_LOG_HEX(msg)
-#define LORA_LOG_LN(msg)
+#define DEBUG_LOG(msg)
+#define DEBUG_LOG_NO_LN(msg)
 #endif
 
 LoraCommunication::LoraCommunication(long frequency, uint8_t localAdd, uint8_t desti, RoleType role)
@@ -21,23 +24,23 @@ void LoraCommunication::startLoRa() {
         int retries = 3;
         while (retries--) {
             if (LoRa.begin(freq)) {
-                active = true;
-                LORA_LOG_LN("LoRa started.");
+                this -> active = true;
+                DEBUG_LOG("LoRa started.");
                 return;
             } else {
-                LORA_LOG_LN("LoRa failed to start, retrying...");
+                DEBUG_LOG("LoRa failed to start, retrying...");
                 delay(1000);
             }
         }
-        LORA_LOG_LN("Starting LoRa failed after retries.");
+        DEBUG_LOG("Starting LoRa failed after retries.");
     }
 }
 
 void LoraCommunication::stopLoRa() {
     if (active) {
         LoRa.end();
-        active = false;
-        LORA_LOG_LN("LoRa stopped.");
+        this -> active = false;
+        DEBUG_LOG("LoRa stopped.");
     }
 }
 
@@ -46,13 +49,13 @@ void LoraCommunication::setdesttodefault() {
 }
 
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
-    if (!active) { LORA_LOG_LN("LoRa inactive"); return; }
+    if (!active) { DEBUG_LOG("LoRa inactive"); return; }
 
     uint8_t b = random(10, 80);
     delay(100 + b);
 
     if (!LoRa.beginPacket()) {
-        LORA_LOG_LN("LoRa busy, cannot send packet");
+        DEBUG_LOG("LoRa busy, cannot send packet");
         return;
     }
 
@@ -65,7 +68,7 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     LoRa.print(payload);
     LoRa.endPacket();
 
-    LORA_LOG("Packet sent: "); LORA_LOG_LN(payload);
+    DEBUG_LOG("Packet sent: "); DEBUG_LOG(payload);
 
 }
 
@@ -93,7 +96,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             uint8_t calculatedChecksum = calculateChecksum(recipient, dest, packetNumber, requestType, payload);
             if (calculatedChecksum != receivedChecksum) return false;
 
-            LORA_LOG_LN("Packet received: " + payload);
+            DEBUG_LOG("Packet received: " + payload);
             return true;
         }
     }
@@ -120,7 +123,7 @@ bool LoraCommunication::isLoRaActive() { return active; }
 bool LoraCommunication::handshake(uint8_t &shift) {
     if (deviceRole == MASTER) {
         sendPacket(0, SYN, "SYN");
-        LORA_LOG_LN("MASTER: SYN sent");
+        DEBUG_LOG("MASTER: SYN sent");
 
         String payload; uint8_t packetNumber; RequestType requestType;
         int retries = 0;
@@ -129,12 +132,12 @@ bool LoraCommunication::handshake(uint8_t &shift) {
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN-ACK") {
                 shift = packetNumber;
                 sendPacket(packetNumber, ACK, "ACK");
-                LORA_LOG_LN("MASTER: Received SYN-ACK, ACK sent");
+                DEBUG_LOG("MASTER: Received SYN-ACK, ACK sent");
                 return true;
             } else {
                 delay(100 * (retries + 1));
                 sendPacket(0, SYN, "SYN");
-                LORA_LOG_LN("MASTER: Retrying SYN");
+                DEBUG_LOG("MASTER: Retrying SYN");
                 retries++;
             }
         }
@@ -148,11 +151,11 @@ bool LoraCommunication::handshake(uint8_t &shift) {
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
                 shift = packetNumber;
                 sendPacket(shift, SYN, "SYN-ACK");
-                LORA_LOG_LN("SLAVE: SYN-ACK sent");
+                DEBUG_LOG("SLAVE: SYN-ACK sent");
                 break;
             }
         if (n == 50) {
-            LORA_LOG_LN("SLAVE: No SYN received");
+            DEBUG_LOG("SLAVE: No SYN received");
             return false;
         }
 
