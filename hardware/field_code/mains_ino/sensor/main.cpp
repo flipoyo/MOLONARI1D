@@ -134,6 +134,19 @@ void setup() {
     InitialiseRTC();
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     DEBUG_LOG ("Setup finished");
+
+    uint32_t uid[4];
+
+    uid[0] = *(uint32_t*)0x0080A00C;
+    uid[1] = *(uint32_t*)0x0080A040;
+    uid[2] = *(uint32_t*)0x0080A044;
+    uid[3] = *(uint32_t*)0x0080A048;
+
+    String uidString = "0x";
+    for (int i = 0; i < 4; i++) {
+        // Ajoute des zéros de tête pour avoir toujours 8 caractères par mot
+        uidString += String(uid[i], HEX);
+    }
 }
 
 // ----- Loop -----
@@ -214,7 +227,6 @@ void loop() {
 
         // --- Réception éventuelle de mise à jour config ---
         Serial.println("Vérification de mise à jour descendante...");
-        lora.startLoRa();
 
         if (lora.receiveConfigUpdate(configFilePath)) {
 

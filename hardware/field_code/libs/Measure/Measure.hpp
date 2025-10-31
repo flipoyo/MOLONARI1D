@@ -49,7 +49,7 @@ class Measure {
     int ncapteur;
 
     std::vector<double> channel;
-
+    String uidString;
  
     String oneLine();
     String ToString();

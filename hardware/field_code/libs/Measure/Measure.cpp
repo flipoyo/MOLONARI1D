@@ -19,7 +19,7 @@ Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur, String _id_bo
 }
 
 
-double Sensor::get_voltage() {
+double Sensor::get_voltage() { 
   digitalWrite(enablePin, HIGH);
   delay(200);
   double voltage = analogRead(dataPin);
@@ -45,8 +45,8 @@ String Measure::oneLine() {
   DEBUG_LOG(ncapteur);
 
   // Construction de la ligne
-  String str = String(id);
-  str += " ; " + date + " ; " + hour + "  ; ";
+  String str = uidString;
+  str += " ; " + String(id) + " ; " + date + " ; " + hour + "  ; ";
 
   // Ajouter les valeurs des capteurs
   for (int i = 0; i < ncapteur; i++) {
