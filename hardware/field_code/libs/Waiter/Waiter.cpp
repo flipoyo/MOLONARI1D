@@ -5,6 +5,7 @@
 #include "Waiter.hpp"
 #include "Reader.hpp"
 #include "LoRa_Molonari.hpp"
+#include "Time.hpp"
 
 #define DEBUG
 #ifdef DEBUG
@@ -33,13 +34,12 @@ Waiter::Waiter() {}
 
 // Start tracking time
 void Waiter::startTimer() {
-    starting_time = millis();
+    starting_time = GetSecondsSinceMidnight();
 }
 
 // Sleep the Arduino until the desired waiting time passes
 void Waiter::sleepUntil(unsigned long desired_waiting_time) {
-    
-    unsigned long time_to_wait = (starting_time + desired_waiting_time) - millis();//BIG ISSUE, INTERNAL TIME USED HERE
+    unsigned long time_to_wait = (starting_time + desired_waiting_time) - GetSecondsSinceMidnight();
 
     // Log the waiting time for debugging
     Serial.println("Sleeping for " + String(time_to_wait) + " ms");
@@ -54,7 +54,7 @@ void Waiter::delayUntil(uint32_t desired_waiting_time, int role) {
     unsigned long end_date = starting_time + desired_waiting_time;
 
     // Loop until the time is up
-    while (millis() < end_date) {
+    while (GetSecondsSinceMidnight() < end_date) {
         Serial.println("Starting new communication session...");
 
         // Set up LoRa communication
