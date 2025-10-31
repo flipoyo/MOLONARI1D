@@ -188,8 +188,8 @@ void loop() {
         for (int it = 0; it<ncapt; it++) {
             double v = sens[it]->get_voltage();
             DEBUG_LOG("voltage preleved");
-            toute_mesure[ncapt] = v;
-            DEBUG_LOG("value written in toute_mesure");
+            toute_mesure[it] = v;
+            DEBUG_LOG("value " + String(v) + "written in toute_mesure");
             //delay(500);//decreased for demo version
             DEBUG_LOG("memory after " + String(it+1) + " iterations : " + freeMemory());
         }
