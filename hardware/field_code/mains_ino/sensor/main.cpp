@@ -12,14 +12,23 @@
 #include "Time.hpp"
 #include "Waiter.hpp"
 #include "Reader.hpp"
+#include "Memory_monitor.cpp"
 
-// define DEBUG_LOG
-#ifndef DEBUG_LOG
+#define DEBUG_MAIN
+#define DEBUG_MEASURE
+#define DEBUG_WRITER
+#define DEBUG_READER
+
+#ifdef DEBUG_MAIN
 #define DEBUG_LOG(msg) Serial.println(msg)
+#define DEBUG_LOG_NO_LN(msg) Serial.print(msg)
+#else
+#define DEBUG_LOG(msg)
+#define DEBUG_LOG_NO_LN(msg)
 #endif
-Sensor** sens;
-double *toute_mesure;
 
+Sensor** sens;
+std::vector<double> toute_mesure;
 
 GeneralConfig config;
 std::vector<SensorConfig> liste_capteurs;
@@ -44,6 +53,7 @@ uint16_t newMeasureInterval = 0;
 uint16_t newLoraInterval = 0;
 
 const long sec_in_day = 86400;
+
 
 void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
 
@@ -88,12 +98,13 @@ bool rattrapage = false;
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
-
+    
     Serial.begin(115200);
     long end_date = millis() + 5000;
     while (!Serial && millis() < end_date) {}
-
+    
     DEBUG_LOG("\n\n\n\n");
+    DEBUG_LOG("memory when setup started : " + String(freeMemory()));
     // Lecture de la configuration CSV
     Reader reader;
 
@@ -118,15 +129,17 @@ void setup() {
     }
     // Allocation dynamique
     sens = new Sensor*[ncapt];
-    toute_mesure = new double[ncapt];
-
+    
     // Initialisation des capteurs
     int it = 0;
-    for (const auto & _c : liste_capteurs) {
+    for (int it = 0; it<ncapt; it++) {
+        SensorConfig _c = liste_capteurs[it];
         sens[it] = new Sensor(_c.pin, 1, _c.type_capteur, _c.id_box);
-        toute_mesure[it] = 0;
-        it++;
+        toute_mesure.push_back(0);
+        DEBUG_LOG("inserted new Sensor ptr at position " + String(it) + " of sens with attributes :");
+        DEBUG_LOG("_c.pin : " + String(_c.pin) + "  _c.type_capteur : " + String(_c.type_capteur) + "  _c.id_box : " + String(_c.id_box) + "\n\n");
     }
+    DEBUG_LOG("sens contains " + String(it) + " elements");
 
     // Initialisation SD et logger
     if (!SD.begin(CSPin)) { while(true) {} }
@@ -141,30 +154,57 @@ void setup() {
 void loop() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
+    #ifdef DEBUG_MAIN
+    // Asses the good shape of sens. The issue is : sens contains pointers, which may raise seg fault if not initialised properly
+    DEBUG_LOG ("starting sens debug loop");
+    for (int it = 0; it<ncapt; it++){
+     sens[it]->get_voltage();   
+    DEBUG_LOG("sens [" + String(it) + "] voltage exists");
+    }
+    DEBUG_LOG("loop complete, sens seems fine");
 
+    String date = GetCurrentDate();
+    DEBUG_LOG("GetCurrentDate finished in main_debug");
+    String hour = GetCurrentHour();
+    DEBUG_LOG("GetCurrentHour finished in main_debug");
+    DEBUG_LOG(String(ncapt));
+    DEBUG_LOG("debug messages still work1");
+    DEBUG_LOG("Heure actuelle : " + hour);
+    DEBUG_LOG("debug messages still work2");
+    
+    #endif
+    
+    
     // --- Prendre mesures ---
     long current_Time=GetSecondsSinceMidnight();
     DEBUG_LOG("Temps actuel : " + String(current_Time));
     bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 1));
+    
+    DEBUG_LOG("ncapt : " + String(ncapt));//so far
 
     if (IsTimeToMeasure) {
-        DEBUG_LOG('starting measurement process');
-        for (auto &c : liste_capteurs) {
-            toute_mesure[ncapt] = sens[ncapt]->get_voltage();
+        DEBUG_LOG("starting measurement process");
+        DEBUG_LOG("memory before things break : " + String(freeMemory()));
+        for (int it = 0; it<ncapt; it++) {
+            double v = sens[it]->get_voltage();
+            DEBUG_LOG("voltage preleved");
+            toute_mesure[it] = v;
+            DEBUG_LOG("value " + String(v) + "written in toute_mesure");
             delay(2000);
+            DEBUG_LOG("memory after " + String(it+1) + " iterations : " + freeMemory());
         }
         lastMeasure = current_Time;
+        DEBUG_LOG("Voltage recording finished");
     }
 
-    DEBUG_LOG(ncapt);//so far
     
     // --- Stocker sur SD ---
+    DEBUG_LOG("launch LogData");
     logger.LogData(ncapt, toute_mesure);
-  // --- Envoyer LoRa si intervalle atteint ---
-
+    DEBUG_LOG("LogData instruction done");
     // --- Envoyer LoRa si intervalle atteint ---
     
-    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 180));
+    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
 
     if (IsTimeToLoRa || rattrapage) {
         lora.startLoRa();
