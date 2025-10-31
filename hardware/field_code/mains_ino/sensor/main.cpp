@@ -164,17 +164,19 @@ void loop() {
 
     // --- Envoyer LoRa si intervalle atteint ---
     
-    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 180UL));
+    bool IsTimeToLoRa = (current_Time - lastLoRaSend >= lora_intervalle_secondes - 60UL); // 60 secondes de marge
+
 
     if (IsTimeToLoRa || rattrapage) {
-        lora.startLoRa();
-
+        
         File dataFile = SD.open(filename, FILE_READ);
         if (!dataFile) {
             Serial.println("Impossible d'ouvrir le fichier de données pour LoRa");
             lora.closeSession(0);
             return;
         }
+
+        lora.startLoRa();
 
         dataFile.seek(lastSDOffset);
 
@@ -183,13 +185,13 @@ void loop() {
             std::queue<String> lineToSend;
             lineToSend.push(dataFile.readStringUntil('\n'));
 
-            // S'il n'y a plus rien à envoyer
+            // Si la ligne est vide aka plus rien à envoyer
             if (lineToSend.front().length() == 0) {
                 rattrapage = false;
                 break;
             }
 
-            // Tentative d'envoi 3 fois
+            // Tentative d'envoi 3 fois de suite 
             for (int attempt = 1; attempt <= 3; attempt++) {
 
                 if (lora.sendPackets(lineToSend)) {
@@ -203,8 +205,8 @@ void loop() {
             }
 
             rattrapage = dataFile.available();
-            
-        } // <-- fermeture du while !
+
+        } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
 
         dataFile.close();
         lora.closeSession(0);
@@ -213,6 +215,7 @@ void loop() {
         // --- Réception éventuelle de mise à jour config ---
         Serial.println("Vérification de mise à jour descendante...");
         lora.startLoRa();
+
         if (lora.receiveConfigUpdate(configFilePath)) {
 
             Serial.println("Mise à jour config reçue du master.");
@@ -225,6 +228,7 @@ void loop() {
         } else {
             Serial.println("Pas de mise à jour reçue.");
         }
+
         lora.stopLoRa();
     }
     // --- Sommeil jusqu'à prochaine mesure ---
