@@ -30,7 +30,7 @@ int intervalle_de_mesure_secondes;
 Writer logger;
 const int CSPin = 5;
 const char filename[] = "RECORDS.CSV";
-const char* configFilePath = "/config_sensor.csv";
+const char* configFilePath = "conf_sen.csv";
 
 // LoRa
 LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE);
@@ -42,43 +42,6 @@ std::queue<String> sendQueue;
 uint16_t newMeasureInterval = 0;
 uint16_t newLoraInterval = 0;
 
-
-void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
-
-    File file = SD.open("/conf_sen.csv", FILE_READ);
-    if (!file) {
-        Serial.println("ERREUR : impossible de lire conf_sen.csv");
-        return;
-    }
-
-    std::vector<String> lignes;
-    while (file.available()) {
-        lignes.push_back(file.readStringUntil('\n'));
-    }
-    file.close();
-
-    for (auto &ligne : lignes) {
-        if (ligne.startsWith("intervalle_de_mesure_secondes")) {
-            ligne = "intervalle_de_mesure_secondes," + String(measureInterval);
-        }
-        else if (ligne.startsWith("intervalle_lora_secondes")) {
-            ligne = "intervalle_lora_secondes," + String(loraInterval);
-        }
-    }
-    
-    file = SD.open("/conf_sen.csv", FILE_WRITE | O_TRUNC);
-    if (!file) {
-        Serial.println("ERREUR : impossible d'écrire conf_sen.csv");
-        return;
-    }
-
-    for (auto &ligne : lignes) {
-        file.println(ligne);
-    }
-
-    file.close();
-    Serial.println("Fichier conf_sen.csv mis à jour sans toucher aux autres paramètres.");
-}
 
 bool rattrapage = false;
 
@@ -185,7 +148,7 @@ void loop() {
         File dataFile = SD.open(filename, FILE_READ);
         if (!dataFile) {
             Serial.println("Impossible d'ouvrir le fichier de données pour LoRa");
-            lora.closeSession(0);
+            lora.stopLoRa();
             return;
         }
 
@@ -216,13 +179,13 @@ void loop() {
                     if (attempt < 3) delay(20000);
                 }
             }
-
-            rattrapage = dataFile.available();
+            if (!dataFile.available()) {
+                rattrapage = false;
+            }
 
         } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
 
         dataFile.close();
-        lora.closeSession(0);
         lastLoRaSend = current_Time;
 
         // --- Réception éventuelle de mise à jour config ---
@@ -230,13 +193,11 @@ void loop() {
 
         if (lora.receiveConfigUpdate(configFilePath)) {
 
+        uint16_t recvMeasure = 0, recvLora = 0;
+        if (lora.receiveConfigUpdate(configFilePath, &recvMeasure, &recvLora, 15000)) {
             Serial.println("Mise à jour config reçue du master.");
-
-            updateConfigFile(newMeasureInterval, newLoraInterval);
-
-            // On met à jour les variables déjà existantes dans le programme :
-            lora_intervalle_secondes = newLoraInterval;
-
+            intervalle_de_mesure_secondes = recvMeasure;
+            lora_intervalle_secondes = recvLora;
         } else {
             Serial.println("Pas de mise à jour reçue.");
         }
