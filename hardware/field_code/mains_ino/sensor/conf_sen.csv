@@ -18,4 +18,4 @@ max_secondes_par_jour, 850
 lora_intervalle_secondes,3600
 intervalle_de_mesure_secondes,900
 
-
+devEUI, 0

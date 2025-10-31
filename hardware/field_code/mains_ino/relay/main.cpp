@@ -1,13 +1,15 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <queue>
+#include "ArduinoLowPower.h"
+#include <MKRWAN.h>
 
 #include "LoRaWan_Molonari.hpp"
 #include "LoRa_Molonari.hpp"
 #include "Waiter.hpp"
 #include "Reader.hpp"
-#include "ArduinoLowPower.h"
-#include <MKRWAN.h>
+#include "Time.hpp"
+
 
 LoRaModem modem;
 
@@ -67,7 +69,7 @@ void loop() {
     waiter.startTimer();
     // le temps d’intervalle est écoulé depuis la dernière tentative LoRa
 
-    unsigned long currentTime = millis();
+    unsigned long currentTime = GetSecondsSinceMidnight();
     if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes * 1000UL) {
 
         std::queue<String> receiveQueue;
@@ -82,7 +84,7 @@ void loop() {
             lora.stopLoRa();
 
             // Met à jour le temps de la dernière tentative de réception
-            lastAttempt = millis() ;
+            lastAttempt = GetSecondsSinceMidnight();
 
             // Transfert vers la queue globale
             while (!receiveQueue.empty()) {
@@ -113,7 +115,7 @@ void loop() {
             lora.stopLoRa();
 
             // Met quand même à jour lastAttempt pour réessayer après l'intervalle de temps
-            lastAttempt = millis() ;
+            lastAttempt = GetSecondsSinceMidnight();
         }
 
         Serial.println("Relais en veille jusqu’à la prochaine fenêtre de communication...");
