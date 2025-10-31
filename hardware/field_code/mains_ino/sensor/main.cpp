@@ -31,6 +31,7 @@ Writer logger;
 const int CSPin = 5;
 const char filename[] = "RECORDS.CSV";
 const char* configFilePath = "conf_sen.csv";
+int ncapt = 0;
 
 // LoRa
 LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE);
@@ -223,4 +224,5 @@ void loop() {
         lastMeasure -= current_Time;
         current_Time = 0;
     }
+}
 }
