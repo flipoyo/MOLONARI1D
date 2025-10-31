@@ -55,6 +55,7 @@ device_ids.h
 field_data/
 test_logs/
 calibration_data/
+Trash/
 
 # Documentation build artifacts
 docs/build/
