@@ -80,16 +80,9 @@ unsigned long CalculateSleepTimeUntilNextMeasurement(unsigned long previousMeasu
   return (time_to_sleep);
 }
 
-unsigned long CalculateSleepTimeUntilNextCommunication() {
+unsigned long CalculateSleepTimeUntilNextCommunication(unsigned long previousCommunicationTime, int communicationInterval) {
+  //retourne en ms
   unsigned long currentTime = GetSecondsSinceMidnight();
-
-  int totalCommunicationPerDay = 86400 / freq_envoi_lora_seconds;
-  for (int i = 0; i < totalCommunicationPerDay; i++) {
-    if (currentTime < communicationTimesVec[i]) {
-      unsigned long nextTime = communicationTimesVec[i];
-      return (nextTime - currentTime) * 1000UL;
-    }
-  }
-  unsigned long nextDayFirstTime = communicationTimesVec[0] + 86400UL;
-  return (nextDayFirstTime - currentTime) * 1000UL;
+  unsigned long timeToSleep = (communicationInterval - (currentTime - previousCommunicationTime)) * 1000UL;
+  return (timeToSleep);
 }
