@@ -86,6 +86,8 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         self._H_res = None
         # le tableau contenant le débit spécifique à tout temps et à toute profondeur (lignes : débit) (colonnes : temps)
         self._flows = None
+        # le tableau contenant le flux advectif latéral (pseudo2D) à tout temps et à toute profondeur (lignes : flux) (colonnes : temps)
+        self._lateral_advec_heat_flux = None
 
         # liste contenant des objets de classe état et de longueur le nombre d'états acceptés par la MCMC (<=nb_iter), passe à un moment par une longueur de 1000 pendant l'initialisation de MCMC
         self._states = list()
@@ -313,6 +315,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 N_update_Mu=N_UPDATE_MU,
             )
             T_res = T_strat.compute_T_stratified()
+
+            #on récupère le flux de chaleur latéral (W.m-3) et on convertit en (W.m-2) en multipliant par dz
+            if hasattr(T_strat, 'source_heat_flux'):
+                self._lateral_advec_heat_flux = T_strat.source_heat_flux * dz
 
             # calcule toutes les températures à tout temps et à toute profondeur
 
@@ -744,12 +750,26 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     # récupération des températures au cours du temps à toutes les profondeurs (par défaut) ou bien à une profondeur donnée
 
     # erreur si pas déjà éxécuté compute_solve_transi, sinon l'attribut pas encore affecté à une valeur
+    #on renomme le getter pour distinguer l'advectif vertical et latéral
     @compute_solve_transi.needed
-    def get_advec_flows_solve(self):
+    def get_vertical_advec_flows_solve(self):
         return RHO_W * C_W * self._flows * (self.temperatures_solve - ZERO_CELSIUS)
 
-    advec_flows_solve = property(get_advec_flows_solve)
+    vertical_advec_flows_solve = property(get_vertical_advec_flows_solve)
     # récupération des flux advectifs = masse volumnique*capacité calorifique*débit spécifique*température
+
+    # nouveau getter
+    def get_lateral_advec_heat_flux_solve(self, z=None):
+        """
+        Retourne le flux de chaleur surfacique (W/m2) généré par le terme source latéral.
+        """
+        if z is None:
+            return self._lateral_advec_heat_flux
+        
+        z_ind = np.argmin(np.abs(self.depths_solve - z))
+        return self._lateral_advec_heat_flux[z_ind, :]
+
+    lateral_advec_heat_flux_solve = property(get_lateral_advec_heat_flux_solve)
 
     # erreur si pas déjà éxécuté compute_solve_transi, sinon l'attribut pas encore affecté à une valeur
     @compute_solve_transi.needed
@@ -811,47 +831,71 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         cr_vec,
         pcr,
         ranges,
+        is_param_fixed,  # <-- NOUVEL ARGUMENT
     ):
         X_proposal = np.zeros((nb_layer, nb_param), np.float32)
         dX = np.zeros((nb_layer, nb_param), np.float32)
-        for l in range(nb_layer):
-            # actualiation des paramètres DREAM pour la couche l
 
+        for l in range(nb_layer):
+            # --- LOGIQUE MODIFIÉE POUR IGNORER LES PARAMÈTRES FIXES ---
+
+            # On identifie les paramètres avec lesquels on a le droit de "jouer".
+            variable_indices = np.where(is_param_fixed[l] == False)[0]
+            n_variable_params = len(variable_indices)
+
+            # Si tous les paramètres de cette couche sont fixes, on ne fait rien.
+            if n_variable_params == 0:
+                X_proposal[l] = X[j, l]
+                continue # On passe à la couche suivante
+
+            # La logique de DREAM ne s'applique que sur les paramètres variables.
             id_layer[l] = np.random.choice(ncr, p=pcr[l])
-            z = np.random.uniform(0, 1, nb_param)
-            A = z <= cr_vec[id_layer[l]]
-            d_star = np.sum(A)
-            if d_star == 0:
-                A[np.argmin(z)] = True
+            z = np.random.uniform(0, 1, n_variable_params) # On ne tire que pour les variables
+            
+            # On décide quels paramètres VARIABLES seront perturbés
+            A_variable = z <= cr_vec[id_layer[l]]
+            d_star = np.sum(A_variable)
+
+            if d_star == 0: # On s'assure d'en perturber au moins un
+                A_variable[np.argmin(z)] = True
                 d_star = 1
+
+            # On reconstruit le masque de perturbation complet 'A'
+            A = np.zeros(nb_param, dtype=bool)
+            jump_indices = variable_indices[A_variable]
+            A[jump_indices] = True
+            
+            # Le reste du calcul du saut ne change pas, car le masque 'A'
+            # sélectionnera automatiquement les bons paramètres.
             lambd = np.random.uniform(-c, c, d_star)
             zeta = np.random.normal(0, c_star, d_star)
-
-            # Exclude the current chain index 'j' from the list of chain indices
+            
             available_indices = np.delete(np.arange(nb_chain), j)
-
-            # Randomly select 'delta' unique indices for 'a' from the available indices
             a = np.random.choice(available_indices, delta, replace=False)
-
-            # Exclude the indices selected in 'a' from the available indices
             remaining_indices = np.setdiff1d(available_indices, a)
-
-            # Randomly select 'delta' unique indices for 'b' from the remaining indices
             b = np.random.choice(remaining_indices, delta, replace=False)
-
             gamma = 2.38 / np.sqrt(2 * d_star * delta)
             gamma = np.random.choice([gamma, 1], 1, [0.8, 0.2])
+
+            # Le calcul de dX ne se fait que sur les indices où A est True.
             dX[l][A] = zeta + (1 + lambd) * gamma * np.sum(
                 X[a, l][:, A] - X[b, l][:, A], axis=0
             )
 
-            X_proposal[l] = X[j, l] + dX[l]  # caclul du potentiel nouveau paramètre
+            X_proposal[l] = X[j, l] + dX[l]
 
-            # On vérifie que les paramètres sont dans les bornes
-            # Si ce n'est pas le cas on les ramène dans les bornes à la manière d'un tore
+            # On calcule la largeur de l'intervalle pour tous les paramètres
             width = ranges[l][:, 1] - ranges[l][:, 0]
-            X_proposal[l] = ranges[l][:, 0] + np.mod(X_proposal[l] - ranges[l][:, 0], width)
-
+            
+            # On crée un masque pour identifier les paramètres qui sont réellement variables (width > 0)
+            variable_mask = width > 0
+            
+            # On applique la condition aux bords UNIQUEMENT aux paramètres variables.
+            # Les paramètres fixes (où width=0) ne sont pas touchés par cette ligne.
+            X_proposal[l][variable_mask] = ranges[l][variable_mask, 0] + np.mod(
+                X_proposal[l][variable_mask] - ranges[l][variable_mask, 0], 
+                width[variable_mask]
+            )
 
         return (X_proposal, dX, id_layer)
 
@@ -874,7 +918,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         n_sous_ech_space=1,
         threshold=GELMANRCRITERIA,
     ):
-
 
         if verbose:
             print(
@@ -920,6 +963,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         nb_param = N_PARAM_MCMC  # nombre de paramètres à estimer par couche
         nb_accepted = 0  # nombre de propositions acceptées
         nb_burn_in_iter = 0  # nombre d'itération de burn-in
+
+        is_param_fixed = np.zeros((nb_layer, nb_param), dtype=bool)
+        for l, layer in enumerate(self.all_layers):
+            for p, prior in enumerate(layer.Prior_list):
+                if prior.is_fixed:
+                    is_param_fixed[l, p] = True
+
   
         # variables pour l'état courant
         temp_proposal = np.zeros((self._nb_cells, len(self._times)), np.float32)
@@ -1015,12 +1065,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for i in trange(nitmaxburning, desc="Burn in phase"):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
+                # afin d'éviter la division par zéro dans le calcul du saut dans le cas d'un paramètre fixe
+                std_X[std_X == 0] = 1.0
 
                 for j, column in enumerate(multi_chain):
                     
                     # On lance la perturbation DREAM pour cette colonne, on en tire un nouveau jeu de paramètre X_proposal, 
                     # l'ensemble des indices de crossover choisis et la perturbation dX_colonne
-                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges)                    
+                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges, is_param_fixed)                    
                     sigma2_temp_proposal = sigma2_temp_prior.perturb(self._states[j].sigma2_temp)  # On tire un nouveau sigma2
 
                     # On met à jour les paramètres de la colonne j selon X_proposal pour appeler le modèle direct et calculer l'énergie:
@@ -1065,8 +1117,18 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         
                 # Mise à jour du pcr pour chaque couche pour DREAM
                 for l in range(nb_layer):
+
+                    # On met à jour pcr avec la qualité des sauts J
                     pcr[l][n_id[l] != 0] = J[l][n_id[l] != 0] / n_id[l][n_id[l] != 0]
-                    pcr[l] = pcr[l] / np.sum(pcr[l])
+                    
+                    # On vérifie si la somme des probabilités est nulle
+                    if np.sum(pcr[l]) == 0:
+                        # Si oui (ce qui arrive si seul le paramètre fixe a été perturbé),
+                        # on réinitialise les probabilités à une distribution uniforme.
+                        pcr[l][:] = 1.0 / n_CR
+                    else:
+                        # Sinon, on normalise comme d'habitude.
+                        pcr[l] = pcr[l] / np.sum(pcr[l])
 
                 # Fin d'une itération, on vérifie si on peut sortir du burn-in
                 XBurnIn[i + 1] = X
@@ -1097,9 +1159,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for i in trange(nb_iter, desc="DREAM MCMC Computation", file=sys.stdout):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
+                std_X[std_X == 0] = 1.0 # afin d'éviter la division par zéro dans le calcul du saut dans le cas d'un paramètre fixe
 
                 for j, column in enumerate(multi_chain):
-                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges)
+                    X_proposal, dX, id_layer = self.perturbation_DREAM(nb_chain,nb_layer,nb_param,X,id_layer,j,delta,n_CR,c,c_star,cr_vec,pcr,ranges, is_param_fixed)
                     sigma2_temp_proposal = sigma2_temp_prior.perturb(self._states[j].sigma2_temp)  # On tire un nouveau sigma2
                     
                     # Mise à jour des paramètres de la colonne j :
@@ -1689,6 +1752,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         plt.show()
 
     @compute_solve_transi.needed
+    @compute_solve_transi.needed
     def plot_CALC_results(self, fontsize=15):
         print(
             f"Plotting Température in column. time series have nrecords =  {len(self._times)}"
@@ -1710,9 +1774,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         """Plots des profils de température"""
 
-        fig, ax = plt.subplots(2, 3, sharey=False, figsize=(22, 14))
+        # Créer une grille 3x3 et ajuster la taille
+        fig, ax = plt.subplots(3, 3, sharey=False, figsize=(22, 21))
         plt.subplots_adjust(wspace=0.3, hspace=0.4)
         fig.suptitle("Résultats calcul : simulateur de données", fontsize=fontsize + 6)
+
+        # LIGNE 1, PLOT 1 : Températures mesurées
         ax[0, 0].plot(self._T_riv[:nt][:nt] - K_offset, label="Triv")
         for i in range(n_sens):
             ax[0, 0].plot(
@@ -1731,6 +1798,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         ax[0, 0].secax.set_xlabel("t (jour)", fontsize=fontsize)
         ax[0, 0].set_title("Température mesurées", fontsize=fontsize, pad=20)
 
+        # LIGNE 1, PLOT 2 : Evolution du profil de température
         for i in range(nt):
             ax[0, 1].plot(self._temperatures[:nt, i] - K_offset, -self._z_solve)
         ax[0, 1].set_ylabel("Depth (m)", fontsize=fontsize)
@@ -1740,25 +1808,12 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             "Evolution du profil de température", fontsize=fontsize, pad=20
         )
 
-        """Plots des frises"""
+        #  Masquer l'axe inutilisé de la première ligne
+        ax[0, 2].axis('off')
 
-        im0 = ax[0, 2].imshow(
+        # LIGNE 2, PLOT 1 : Frise température
+        im0 = ax[1, 0].imshow(
             self._temperatures[:, :nt] - K_offset, aspect="auto", cmap="Spectral_r"
-        )
-        ax[0, 2].set_xlabel("t (15min)", fontsize=fontsize)
-        ax[0, 2].set_ylabel("z (m)", fontsize=fontsize)
-        ax[0, 2].xaxis.tick_top()
-        ax[0, 2].xaxis.set_label_position("top")
-        ax[0, 2].secax = ax[0, 2].secondary_xaxis(
-            "bottom", functions=(min2jour, jour2min)
-        )
-        ax[0, 2].secax.set_xlabel("t (jour)", fontsize=fontsize)
-        cbar0 = fig.colorbar(im0, ax=ax[0, 2], shrink=1, location="right")
-        cbar0.set_label("Température (°C)", fontsize=fontsize)
-        ax[0, 2].set_title("Frise température MD", fontsize=fontsize, pad=20)
-
-        im1 = ax[1, 0].imshow(
-            self.get_conduc_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
         )
         ax[1, 0].set_xlabel("t (15min)", fontsize=fontsize)
         ax[1, 0].set_ylabel("z (m)", fontsize=fontsize)
@@ -1768,12 +1823,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             "bottom", functions=(min2jour, jour2min)
         )
         ax[1, 0].secax.set_xlabel("t (jour)", fontsize=fontsize)
-        cbar1 = fig.colorbar(im1, ax=ax[1, 0], shrink=1, location="right")
-        cbar1.set_label("Flux conductif (W/m²)", fontsize=fontsize)
-        ax[1, 0].set_title("Frise Flux conductif MD", fontsize=fontsize, pad=20)
+        cbar0 = fig.colorbar(im0, ax=ax[1, 0], shrink=1, location="right")
+        cbar0.set_label("Température (°C)", fontsize=fontsize)
+        ax[1, 0].set_title("Frise température MD", fontsize=fontsize, pad=20)
 
-        im2 = ax[1, 1].imshow(
-            self.get_advec_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
+        # LIGNE 2, PLOT 2 : Frise Flux d'eau
+        im3 = ax[1, 1].imshow(
+            self.get_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
         )
         ax[1, 1].set_xlabel("t (15min)", fontsize=fontsize)
         ax[1, 1].set_ylabel("z (m)", fontsize=fontsize)
@@ -1783,24 +1839,64 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             "bottom", functions=(min2jour, jour2min)
         )
         ax[1, 1].secax.set_xlabel("t (jour)", fontsize=fontsize)
-        cbar2 = fig.colorbar(im2, ax=ax[1, 1], shrink=1, location="right")
-        cbar2.set_label("Flux advectif (W/m²)", fontsize=fontsize)
-        ax[1, 1].set_title("Frise Flux advectif MD", fontsize=fontsize, pad=20)
+        cbar3 = fig.colorbar(im3, ax=ax[1, 1], shrink=1, location="right")
+        cbar3.set_label("Water flow (m/s)", fontsize=fontsize)
+        ax[1, 1].set_title("Frise Flux d'eau MD", fontsize=fontsize, pad=20)
+        
+        # Masquer l'axe inutilisé de la deuxième ligne
+        ax[1, 2].axis('off')
 
-        im3 = ax[1, 2].imshow(
-            self.get_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
+        # LIGNE 3, PLOT 1 : Frise Flux conductif 
+        im1 = ax[2, 0].imshow(
+            self.get_conduc_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
         )
-        ax[1, 2].set_xlabel("t (15min)", fontsize=fontsize)
-        ax[1, 2].set_ylabel("z (m)", fontsize=fontsize)
-        ax[1, 2].xaxis.tick_top()
-        ax[1, 2].xaxis.set_label_position("top")
-        ax[1, 2].secax = ax[1, 2].secondary_xaxis(
+        ax[2, 0].set_xlabel("t (15min)", fontsize=fontsize)
+        ax[2, 0].set_ylabel("z (m)", fontsize=fontsize)
+        ax[2, 0].xaxis.tick_top()
+        ax[2, 0].xaxis.set_label_position("top")
+        ax[2, 0].secax = ax[2, 0].secondary_xaxis(
             "bottom", functions=(min2jour, jour2min)
         )
-        ax[1, 2].secax.set_xlabel("t (jour)", fontsize=fontsize)
-        cbar3 = fig.colorbar(im3, ax=ax[1, 2], shrink=1, location="right")
-        cbar3.set_label("Water flow (m/s)", fontsize=fontsize)
-        ax[1, 2].set_title("Frise Flux d'eau MD", fontsize=fontsize, pad=20)
+        ax[2, 0].secax.set_xlabel("t (jour)", fontsize=fontsize)
+        cbar1 = fig.colorbar(im1, ax=ax[2, 0], shrink=1, location="right")
+        cbar1.set_label("Flux conductif (W/m²)", fontsize=fontsize)
+        ax[2, 0].set_title("Frise Flux conductif MD", fontsize=fontsize, pad=20)
+
+        # LIGNE 3, PLOT 2 : Frise Flux advectif vertical
+        im2 = ax[2, 1].imshow(
+            self.get_vertical_advec_flows_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
+        )
+        ax[2, 1].set_xlabel("t (15min)", fontsize=fontsize)
+        ax[2, 1].set_ylabel("z (m)", fontsize=fontsize)
+        ax[2, 1].xaxis.tick_top()
+        ax[2, 1].xaxis.set_label_position("top")
+        ax[2, 1].secax = ax[2, 1].secondary_xaxis(
+            "bottom", functions=(min2jour, jour2min)
+        )
+        ax[2, 1].secax.set_xlabel("t (jour)", fontsize=fontsize)
+        cbar2 = fig.colorbar(im2, ax=ax[2, 1], shrink=1, location="right")
+        cbar2.set_label("Vertical Advective Flux (W/m²)", fontsize=fontsize)
+        ax[2, 1].set_title("Frise Flux advectif vertical MD", fontsize=fontsize, pad=20)
+
+        # LIGNE 3, PLOT 3 : Frise Flux advectif latéral
+        if self._lateral_advec_heat_flux is not None:
+            im4 = ax[2, 2].imshow(
+                self.get_lateral_advec_heat_flux_solve()[:, :nt], aspect="auto", cmap="Spectral_r"
+            )
+            ax[2, 2].set_xlabel("t (15min)", fontsize=fontsize)
+            ax[2, 2].set_ylabel("z (m)", fontsize=fontsize)
+            ax[2, 2].xaxis.tick_top()
+            ax[2, 2].xaxis.set_label_position("top")
+            ax[2, 2].secax = ax[2, 2].secondary_xaxis(
+                "bottom", functions=(min2jour, jour2min)
+            )
+            ax[2, 2].secax.set_xlabel("t (jour)", fontsize=fontsize)
+            cbar4 = fig.colorbar(im4, ax=ax[2, 2], shrink=1, location="right")
+            cbar4.set_label("Lateral Advective Flux (W/m²)", fontsize=fontsize)
+            ax[2, 2].set_title("Frise Flux advectif latéral MD", fontsize=fontsize, pad=20)
+        else:
+            # S'il n'y a pas de flux latéral, on masque aussi ce dernier axe
+            ax[2, 2].axis('off')
 
     @compute_solve_transi.needed
     def plot_all_results(self):
@@ -1823,15 +1919,21 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         title = "Temperatures"
         self.plot_it_Zt(temperatures, title, unitLeg)
 
-        flux_advectifs = self.get_advec_flows_solve()
+        flux_advectifs_verticaux = self.get_vertical_advec_flows_solve()
         unitLeg = "W/m2"
-        title = "Advective heat flux"
-        self.plot_it_Zt(flux_advectifs, title, unitLeg, 1.04, 2)
+        title = "Vertical Advective heat flux"
+        self.plot_it_Zt(flux_advectifs_verticaux, title, unitLeg, 1.04, 2)
 
         flux_conductifs = self.get_conduc_flows_solve()
         unitLeg = "W/m2"
         title = "Conductive heat flux"
         self.plot_it_Zt(flux_conductifs, title, unitLeg, 1.04, 2)
+
+        if self._lateral_advec_heat_flux is not None:
+            flux_advectif_lateral = self.get_lateral_advec_heat_flux_solve()
+            unitLeg = "W/m2"
+            title = "Lateral Advective Heat Flux"
+            self.plot_it_Zt(flux_advectif_lateral, title, unitLeg, 1.04, 2)
 
         self.plot_CALC_results()
 
