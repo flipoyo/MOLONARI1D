@@ -207,14 +207,15 @@ void loop() {
     bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
 
     if (IsTimeToLoRa || rattrapage) {
-        lora.startLoRa();
-
+        
         File dataFile = SD.open(filename, FILE_READ);
         if (!dataFile) {
-            DEBUG_LOG("Impossible d'ouvrir le fichier de données pour LoRa");
-            lora.closeSession(0);
+            Serial.println("Impossible d'ouvrir le fichier de données pour LoRa");
+            lora.stopLoRa();
             return;
         }
+
+        lora.startLoRa();
 
         dataFile.seek(lastSDOffset);
 
@@ -223,13 +224,13 @@ void loop() {
             std::queue<String> lineToSend;
             lineToSend.push(dataFile.readStringUntil('\n'));
 
-            // S'il n'y a plus rien à envoyer
+            // Si la ligne est vide aka plus rien à envoyer
             if (lineToSend.front().length() == 0) {
                 rattrapage = false;
                 break;
             }
 
-            // Tentative d'envoi 3 fois
+            // Tentative d'envoi 3 fois de suite 
             for (int attempt = 1; attempt <= 3; attempt++) {
 
                 if (lora.sendPackets(lineToSend)) {
@@ -239,33 +240,31 @@ void loop() {
 
                 } else {
                     DEBUG_LOG("Attempt n " + String(attempt) +" failed");
-                    if (attempt < 3) delay(1000);//delay significally reduced for demo version
+                    if (attempt < 3) delay(20000);
                 }
             }
+            if (!dataFile.available()) {
+                rattrapage = false;
+            }
 
-            rattrapage = dataFile.available();
-            
-        } // <-- fermeture du while !
+        } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
 
         dataFile.close();
-        lora.closeSession(0);
         lastLoRaSend = current_Time;
 
         // --- Réception éventuelle de mise à jour config ---
-        DEBUG_LOG("Vérification de mise à jour descendante...");
-        lora.startLoRa();
-        if (lora.receiveConfigUpdate(configFilePath)) {
+        Serial.println("Vérification de mise à jour descendante...");
 
-            DEBUG_LOG("Mise à jour config reçue du master.");
 
-            updateConfigFile(newMeasureInterval, newLoraInterval);
-
-            // On met à jour les variables déjà existantes dans le programme :
-            lora_intervalle_secondes = newLoraInterval;
-
+        uint16_t recvMeasure = 0, recvLora = 0;
+        if (lora.receiveConfigUpdate(configFilePath, &recvMeasure, &recvLora, 15000)) {
+            Serial.println("Mise à jour config reçue du master.");
+            intervalle_de_mesure_secondes = recvMeasure;
+            lora_intervalle_secondes = recvLora;
         } else {
             DEBUG_LOG("Pas de mise à jour reçue.");
         }
+
         lora.stopLoRa();
     }
     // --- Sommeil jusqu'à prochaine mesure ---
