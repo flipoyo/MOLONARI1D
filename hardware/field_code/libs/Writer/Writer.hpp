@@ -20,7 +20,7 @@ class Writer
         int CSPin; // Pin number for Chip Select (CS) to control the SD card
 
         // Append a measurement (of type Measure) to a new line in the CSV file
-        void WriteInNewLine(Measure data);
+        void WriteInNewLine(Measure& data);
 
         // Populate a Measure object using the raw data provided
         void ApplyContent(Measure* measure, int ncapteur, double *toute_mesure);

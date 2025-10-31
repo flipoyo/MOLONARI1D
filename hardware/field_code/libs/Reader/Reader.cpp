@@ -3,7 +3,7 @@
 #include <queue>
 
 // ----- Debug macros -----
-#ifdef SD_DEBUG
+#ifdef DEBUG_READER
 #define SD_LOG(msg) Serial.print(msg)
 #define SD_LOG_LN(msg) Serial.println(msg)
 #else

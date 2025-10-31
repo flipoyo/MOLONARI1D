@@ -2,8 +2,11 @@
 #include "Time.hpp"
 
 
-#ifndef DEBUG_LOG
+#define DEBUG_MEASURE
+#ifdef DEBUG_MEASURE
 #define DEBUG_LOG(msg) Serial.println(msg)
+#else 
+#define DEBUG_LOG(msg)
 #endif
 
 // Constructeur par défaut
@@ -27,31 +30,37 @@ double Sensor::get_voltage() {
   return voltage;
 }
 
-Measure::Measure(const int& ncapt, const double* toute_mesure):ncapteur(ncapt){
-  for (int iterator = 0; iterator < ncapteur; iterator ++){
+Measure::Measure(const int& ncapt, const double* toute_mesure):ncapt(ncapt){
+  for (int iterator = 0; iterator < ncapt; iterator ++){
     channel.push_back(toute_mesure[iterator]);
-  } 
+  }
+  DEBUG_LOG("Initialised channel attribute of a Measure object");
   this->time = GetCurrentHour();
   this->date = GetCurrentDate();
+  DEBUG_LOG("Measure object well initialised");
 }
 
 // Retourne une ligne formatée pour une mesure
 String Measure::oneLine() {
+  DEBUG_LOG("starting oneLine");
   String date = GetCurrentDate();
-
+  DEBUG_LOG("GetCurrentDate finished in oneLine");
   String hour = GetCurrentHour();
-  DEBUG_LOG("Heure actuelle : " + hour);
-
-  DEBUG_LOG(ncapteur);
+  DEBUG_LOG("GetCurrentHour finished in oneLine");
+  DEBUG_LOG(String(ncapt));
+  DEBUG_LOG("debug messages still work1");
+  
+  DEBUG_LOG("Heure actuelle : " + date);
+  DEBUG_LOG("debug messages still work2");
 
   // Construction de la ligne
   String str = String(id);
   str += " ; " + date + " ; " + hour + "  ; ";
 
   // Ajouter les valeurs des capteurs
-  for (int i = 0; i < ncapteur; i++) {
+  for (int i = 0; i < ncapt; i++) {
     str += " " + String(channel[i]);
-    if (i < ncapteur) str += "; ";
+    if (i < ncapt) str += "; ";
 
   }
   DEBUG_LOG("end of initialization of one LineMeasure" + str);
@@ -59,7 +68,8 @@ String Measure::oneLine() {
 }
 // Retourne une version complète et lisible de la mesure
 String Measure::ToString() {
+  DEBUG_LOG("going to oneLine");
   String str = oneLine();
-
+  DEBUG_LOG("oneLine finished");
   return str;
 }

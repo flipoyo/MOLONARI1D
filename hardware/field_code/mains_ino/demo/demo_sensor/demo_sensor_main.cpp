@@ -12,14 +12,23 @@
 #include "Time.hpp"
 #include "Waiter.hpp"
 #include "Reader.hpp"
+#include "Memory_monitor.cpp"
 
-// define DEBUG_LOG
-#ifndef DEBUG_LOG
+#define DEBUG_MAIN
+#define DEBUG_MEASURE
+#define DEBUG_WRITER
+#define DEBUG_READER
+
+#ifdef DEBUG_MAIN
 #define DEBUG_LOG(msg) Serial.println(msg)
+#define DEBUG_LOG_NO_LN(msg) Serial.print(msg)
+#else
+#define DEBUG_LOG(msg)
+#define DEBUG_LOG_NO_LN(msg)
 #endif
+
 Sensor** sens;
 double *toute_mesure;
-
 
 GeneralConfig config;
 std::vector<SensorConfig> liste_capteurs;
@@ -31,16 +40,19 @@ Writer logger;
 const int CSPin = 5;
 const char filename[] = "RECORDS.CSV";
 const char* configFilePath = "/config_sensor.csv";
+int ncapt = 0; 
 
 // LoRa
 LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE);
-unsigned long lastLoRaSend = 0;
-unsigned long lastMeasure = 0;
-unsigned long lastSDOffset = 0;
+long lastLoRaSend = 0;
+long lastMeasure = 0;
+long lastSDOffset = 0;
 std::queue<String> sendQueue;
 
 uint16_t newMeasureInterval = 0;
 uint16_t newLoraInterval = 0;
+
+const long sec_in_day = 86400;
 
 
 void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
@@ -86,12 +98,13 @@ bool rattrapage = false;
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
-
+    
     Serial.begin(115200);
-    unsigned long end_date = millis() + 5000;
+    long end_date = millis() + 5000;
     while (!Serial && millis() < end_date) {}
-
+    
     DEBUG_LOG("\n\n\n\n");
+    DEBUG_LOG("memory when setup started : " + String(freeMemory()));
     // Lecture de la configuration CSV
     Reader reader;
 
@@ -111,21 +124,23 @@ void setup() {
 
 
     // Compter les capteurs
-    int ncapteur = 0; 
     for (auto & _c : liste_capteurs) {
-        ncapteur++;
+        ncapt++;
     }
     // Allocation dynamique
-    sens = new Sensor*[ncapteur];
-    toute_mesure = new double[ncapteur];
+    sens = new Sensor*[ncapt];
+    toute_mesure = new double[ncapt];
 
     // Initialisation des capteurs
     int it = 0;
-    for (const auto & _c : liste_capteurs) {
+    for (int it = 0; it<ncapt; it++) {
+        SensorConfig _c = liste_capteurs[it];
         sens[it] = new Sensor(_c.pin, 1, _c.type_capteur, _c.id_box);
+        DEBUG_LOG("inserted new Sensor ptr at position " + String(it) + " of sens with attributes :");
+        DEBUG_LOG("_c.pin : " + String(_c.pin) + "  _c.type_capteur : " + String(_c.type_capteur) + "  _c.id_box : " + String(_c.id_box) + "\n\n");
         toute_mesure[it] = 0;
-        it++;
     }
+    DEBUG_LOG("sens contains " + String(it) + " elements");
 
     // Initialisation SD et logger
     if (!SD.begin(CSPin)) { while(true) {} }
@@ -140,38 +155,64 @@ void setup() {
 void loop() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
+    #ifdef DEBUG_MAIN
+    // Asses the good shape of sens. The issue is : sens contains pointers, which may raise seg fault if not initialised properly
+    DEBUG_LOG ("starting sens debug loop");
+    for (int it = 0; it<ncapt; it++){
+     sens[it]->get_voltage();   
+    DEBUG_LOG("sens [" + String(it) + "] voltage exists");
+    }
+    DEBUG_LOG("loop complete, sens seems fine");
 
+    String date = GetCurrentDate();
+    DEBUG_LOG("GetCurrentDate finished in main_debug");
+    String hour = GetCurrentHour();
+    DEBUG_LOG("GetCurrentHour finished in main_debug");
+    DEBUG_LOG(String(ncapt));
+    DEBUG_LOG("debug messages still work1");
+    DEBUG_LOG("Heure actuelle : " + hour);
+    DEBUG_LOG("debug messages still work2");
+    
+    #endif
+    
+    
     // --- Prendre mesures ---
-    unsigned long current_Time=GetSecondsSinceMidnight();
-    bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 180UL));
-
-    int ncapt = 0;
+    long current_Time=GetSecondsSinceMidnight();
+    DEBUG_LOG("Temps actuel : " + String(current_Time));
+    bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 1));
+    
+    DEBUG_LOG("ncapt : " + String(ncapt));//so far
 
     if (IsTimeToMeasure) {
-        for (auto &c : liste_capteurs) {
-            toute_mesure[ncapt] = sens[ncapt]->get_voltage();
-            ncapt++;
-            delay(2000);
+        DEBUG_LOG("starting measurement process");
+        DEBUG_LOG("memory before things break : " + String(freeMemory()));
+        for (int it = 0; it<ncapt; it++) {
+            double v = sens[it]->get_voltage();
+            DEBUG_LOG("voltage preleved");
+            toute_mesure[ncapt] = v;
+            DEBUG_LOG("value written in toute_mesure");
+            //delay(500);//decreased for demo version
+            DEBUG_LOG("memory after " + String(it+1) + " iterations : " + freeMemory());
         }
         lastMeasure = current_Time;
+        DEBUG_LOG("Voltage recording finished");
     }
 
-    DEBUG_LOG(ncapt);//so far so good
     
     // --- Stocker sur SD ---
+    DEBUG_LOG("launch LogData");
     logger.LogData(ncapt, toute_mesure);
-  // --- Envoyer LoRa si intervalle atteint ---
-
+    DEBUG_LOG("LogData instruction done");
     // --- Envoyer LoRa si intervalle atteint ---
     
-    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 180UL));
+    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
 
     if (IsTimeToLoRa || rattrapage) {
         lora.startLoRa();
 
         File dataFile = SD.open(filename, FILE_READ);
         if (!dataFile) {
-            Serial.println("Impossible d'ouvrir le fichier de données pour LoRa");
+            DEBUG_LOG("Impossible d'ouvrir le fichier de données pour LoRa");
             lora.closeSession(0);
             return;
         }
@@ -193,12 +234,13 @@ void loop() {
             for (int attempt = 1; attempt <= 3; attempt++) {
 
                 if (lora.sendPackets(lineToSend)) {
+                    DEBUG_LOG("Packet successfully sent");
                     lastSDOffset = dataFile.position();
                     break;
 
                 } else {
-                    Serial.println(attempt);
-                    if (attempt < 3) delay(20000);
+                    DEBUG_LOG("Attempt n " + String(attempt) +" failed");
+                    if (attempt < 3) delay(1000);//delay significally reduced for demo version
                 }
             }
 
@@ -211,11 +253,11 @@ void loop() {
         lastLoRaSend = current_Time;
 
         // --- Réception éventuelle de mise à jour config ---
-        Serial.println("Vérification de mise à jour descendante...");
+        DEBUG_LOG("Vérification de mise à jour descendante...");
         lora.startLoRa();
         if (lora.receiveConfigUpdate(configFilePath)) {
 
-            Serial.println("Mise à jour config reçue du master.");
+            DEBUG_LOG("Mise à jour config reçue du master.");
 
             updateConfigFile(newMeasureInterval, newLoraInterval);
 
@@ -223,7 +265,7 @@ void loop() {
             lora_intervalle_secondes = newLoraInterval;
 
         } else {
-            Serial.println("Pas de mise à jour reçue.");
+            DEBUG_LOG("Pas de mise à jour reçue.");
         }
         lora.stopLoRa();
     }
@@ -232,9 +274,17 @@ void loop() {
     Waiter waiter;
 
     if (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) <= CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes)){
+        DEBUG_LOG('sleeping until next measure, sleeping for ' + String (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)*1000UL));
         waiter.sleepUntil(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes));
     } else {
+        DEBUG_LOG('sleeping until next communication ' + String (CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes)*1000UL));
         waiter.sleepUntil(CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes));
     }
+    // Prevent time variables (current_time) to diverge (time domain is 24 hours, to preserve coherence with GetSecondsSinceMidnight)
     
+    if(current_Time >= sec_in_day){
+        lastLoRaSend -= current_Time;
+        lastMeasure -= current_Time;
+        current_Time = 0;
+    }
 }

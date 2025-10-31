@@ -13,13 +13,13 @@
 #include "Time.hpp"
 #include "Measure.hpp"
 
-
-#ifdef SD_DEBUG
-#define SD_LOG(msg) Serial.print(msg)
-#define SD_LOG_LN(msg) Serial.println(msg)
+#define DEBUG_WRITER
+#ifdef DEBUG_WRITER
+#define SD_LOG(msg) Serial.println(msg)
+#define SD_LOG_NO_LN(msg) Serial.print(msg)
 #else
 #define SD_LOG(msg)
-#define SD_LOG_LN(msg)
+#define SD_LOG_NO_LN(msg)
 #endif
 
 // Define a comma string for separating CSV columns
@@ -47,17 +47,19 @@ unsigned int GetNextLine() {
 //Class methods
 
 // WriteInNewLine: Writes a new line to the CSV file with all the fields from a Measure object
-void Writer::WriteInNewLine(Measure data){
+void Writer::WriteInNewLine(Measure& data){
     
-    SD_LOG("Writing data ..."); // Debug log
+    SD_LOG_NO_LN("Writing data ..."); // Debug log
     // Write measurement data as a single CSV line
     //this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.chanel1) + COMA + String(data.chanel2) + COMA + String(data.chanel3) + COMA + String(data.chanel4));
-    this->file.println(data.ToString()); // CHANGE TOSTRING TO USE STD::STRING
-    SD_LOG_LN(" Done");
+    String to_be_printed =data.ToString();
+    SD_LOG("to be written set.");
+    this->file.println(to_be_printed); // CHANGE TOSTRING TO USE STD::STRING
+    SD_LOG_NO_LN(" Done");
 
     SD_LOG("Flushing ..."); // Ensure data is saved immediately
     this->file.flush();
-    SD_LOG_LN(" Done");
+    SD_LOG_NO_LN(" Done");
 }
 
 
@@ -76,37 +78,38 @@ bool Writer::Reconnect() {
 void Writer::EstablishConnection(const int CSpin) {
     this->CSPin = CSpin;
     if (!SD.begin(this->CSPin)) {
-        SD_LOG_LN("SD initialization failed!");
+        SD_LOG_NO_LN("SD initialization failed!");
         return;
     }
-    SD_LOG_LN("SD initialization done.");
+    SD_LOG_NO_LN("SD initialization done.");
     this->next_id = GetNextLine();
     this->file = SD.open(filename, FILE_WRITE);
 }
 
 // LogData: Processes raw data, applies a timestamp, and writes it to the CSV file as a new entry
 void Writer::LogData(int ncapteur, double *toute_mesure) {
-
+    SD_LOG("about to create data");
     // Create a new Measure object
     Measure data (ncapteur, toute_mesure);
+    SD_LOG("data initialised");
     data.id = this->next_id; // Set unique ID for the measurement
     // Check if the connection is still established
     bool is_connected = SD.begin(this->CSPin) && this->file;
     if (!is_connected) {
-        SD_LOG_LN("SD connection lost.");
-        SD_LOG_LN("Trying to reconnect ...");
+        SD_LOG_NO_LN("SD connection lost.");
+        SD_LOG_NO_LN("Trying to reconnect ...");
         
         // Try to reconnect if lost
         is_connected = this->Reconnect();
         if (!is_connected) {
-            SD_LOG_LN("Connection could not be established."); // Log failure if reconnect fails
+            SD_LOG("Connection could not be established."); // Log failure if reconnect fails
             return; // Exit if reconnection fails
         }
     }
 
 // Write data if connected
     if (is_connected) {
-        SD_LOG_LN("SD connection established WHEN LOG DATA.");
+        SD_LOG_NO_LN("SD connection established WHEN LOG DATA.");
         this->WriteInNewLine(data); // Write data to a new CSV line
     }
     this->next_id++; // Increment ID for next measurement

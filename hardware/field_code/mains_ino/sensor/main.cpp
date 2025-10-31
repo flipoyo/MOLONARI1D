@@ -31,17 +31,19 @@ Writer logger;
 const int CSPin = 5;
 const char filename[] = "RECORDS.CSV";
 const char* configFilePath = "/config_sensor.csv";
+int ncapt = 0; 
 
 // LoRa
 LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE);
-unsigned long lastLoRaSend = 0;
-unsigned long lastMeasure = 0;
-unsigned long lastSDOffset = 0;
+long lastLoRaSend = 0;
+long lastMeasure = 0;
+long lastSDOffset = 0;
 std::queue<String> sendQueue;
 
 uint16_t newMeasureInterval = 0;
 uint16_t newLoraInterval = 0;
 
+const long sec_in_day = 86400;
 
 void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
 
@@ -88,7 +90,7 @@ void setup() {
     digitalWrite(LED_BUILTIN, HIGH);
 
     Serial.begin(115200);
-    unsigned long end_date = millis() + 5000;
+    long end_date = millis() + 5000;
     while (!Serial && millis() < end_date) {}
 
     DEBUG_LOG("\n\n\n\n");
@@ -111,13 +113,12 @@ void setup() {
 
 
     // Compter les capteurs
-    int ncapteur = 0; 
     for (auto & _c : liste_capteurs) {
-        ncapteur++;
+        ncapt++;
     }
     // Allocation dynamique
-    sens = new Sensor*[ncapteur];
-    toute_mesure = new double[ncapteur];
+    sens = new Sensor*[ncapt];
+    toute_mesure = new double[ncapt];
 
     // Initialisation des capteurs
     int it = 0;
@@ -142,21 +143,20 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
 
     // --- Prendre mesures ---
-    unsigned long current_Time=GetSecondsSinceMidnight();
-    bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 180UL));
-
-    int ncapt = 0;
+    long current_Time=GetSecondsSinceMidnight();
+    DEBUG_LOG("Temps actuel : " + String(current_Time));
+    bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 1));
 
     if (IsTimeToMeasure) {
+        DEBUG_LOG('starting measurement process');
         for (auto &c : liste_capteurs) {
             toute_mesure[ncapt] = sens[ncapt]->get_voltage();
-            ncapt++;
             delay(2000);
         }
         lastMeasure = current_Time;
     }
 
-    DEBUG_LOG(ncapt);//so far so good
+    DEBUG_LOG(ncapt);//so far
     
     // --- Stocker sur SD ---
     logger.LogData(ncapt, toute_mesure);
@@ -164,14 +164,14 @@ void loop() {
 
     // --- Envoyer LoRa si intervalle atteint ---
     
-    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 180UL));
+    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 180));
 
     if (IsTimeToLoRa || rattrapage) {
         lora.startLoRa();
 
         File dataFile = SD.open(filename, FILE_READ);
         if (!dataFile) {
-            Serial.println("Impossible d'ouvrir le fichier de données pour LoRa");
+            DEBUG_LOG("Impossible d'ouvrir le fichier de données pour LoRa");
             lora.closeSession(0);
             return;
         }
@@ -193,11 +193,12 @@ void loop() {
             for (int attempt = 1; attempt <= 3; attempt++) {
 
                 if (lora.sendPackets(lineToSend)) {
+                    DEBUG_LOG("Packet successfully sent");
                     lastSDOffset = dataFile.position();
                     break;
 
                 } else {
-                    Serial.println(attempt);
+                    DEBUG_LOG("Attempt n " + String(attempt) +" failed");
                     if (attempt < 3) delay(20000);
                 }
             }
@@ -211,11 +212,11 @@ void loop() {
         lastLoRaSend = current_Time;
 
         // --- Réception éventuelle de mise à jour config ---
-        Serial.println("Vérification de mise à jour descendante...");
+        DEBUG_LOG("Vérification de mise à jour descendante...");
         lora.startLoRa();
         if (lora.receiveConfigUpdate(configFilePath)) {
 
-            Serial.println("Mise à jour config reçue du master.");
+            DEBUG_LOG("Mise à jour config reçue du master.");
 
             updateConfigFile(newMeasureInterval, newLoraInterval);
 
@@ -223,7 +224,7 @@ void loop() {
             lora_intervalle_secondes = newLoraInterval;
 
         } else {
-            Serial.println("Pas de mise à jour reçue.");
+            DEBUG_LOG("Pas de mise à jour reçue.");
         }
         lora.stopLoRa();
     }
@@ -232,9 +233,17 @@ void loop() {
     Waiter waiter;
 
     if (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) <= CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes)){
+        DEBUG_LOG('sleeping until next measure, sleeping for ' + String (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)*1000UL));
         waiter.sleepUntil(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes));
     } else {
+        DEBUG_LOG('sleeping until next communication ' + String (CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes)*1000UL));
         waiter.sleepUntil(CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes));
     }
+    // Prevent time variables (current_time) to diverge (time domain is 24 hours, to preserve coherence with GetSecondsSinceMidnight)
     
+    if(current_Time >= sec_in_day){
+        lastLoRaSend -= current_Time;
+        lastMeasure -= current_Time;
+        current_Time = 0;
+    }
 }

@@ -23,7 +23,7 @@ class Sensor {
         // dataPin -> Analog input to read data from (Analog pin)
         // enablePin -> Digital output to enable/disable the sensor 
         Sensor(int dataPin, int enablePin, String type_capteur, String id_box);
-        
+        int exists = 1;//temporary, just for debug, should be discarded when code is functional
         // Measure the pressure
         double get_voltage();
 
@@ -46,7 +46,7 @@ class Measure {
     String time;
     unsigned long time_in_second;
 
-    int ncapteur;
+    int ncapt;
 
     std::vector<double> channel;
 
