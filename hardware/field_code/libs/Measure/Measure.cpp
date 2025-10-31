@@ -32,7 +32,13 @@ double Sensor::get_voltage() {
   return voltage;
 }
 
-Measure::Measure(int ncapt_arg, const std::vector<double>& toute_mesure):ncapt(ncapt_arg), channel(){
+Measure::Measure(int ncapt_arg, const std::vector<double>& toute_mesure):
+  ncapt(ncapt_arg),
+  channel(),
+  time(GetCurrentHour()),
+  date(GetCurrentDate())
+  {
+    DEBUG_LOG("creating Measure object with attributes time : " + String(time) + "; and date : " + String(date) + ";");
   #ifdef DEBUG_MEASURE
   for (int it = 0; it < ncapt; it++){
     double temp = toute_mesure[it];
@@ -44,9 +50,6 @@ Measure::Measure(int ncapt_arg, const std::vector<double>& toute_mesure):ncapt(n
     DEBUG_LOG("set channel element number " + String(iterator) + " to " + String(toute_mesure[iterator]));
     channel.push_back(toute_mesure[iterator]);
   }
-  DEBUG_LOG("Initialised channel attribute of a Measure object");
-  this->time = GetCurrentHour();
-  this->date = GetCurrentDate();
   DEBUG_LOG("Measure object well initialised");
 }
 
