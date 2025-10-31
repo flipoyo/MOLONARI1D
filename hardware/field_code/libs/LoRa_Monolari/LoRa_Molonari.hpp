@@ -41,8 +41,7 @@ public:
     int receivePackets(std::queue<String> &receiveQueue);
     void closeSession(int lastPacket);
 
-    bool receiveConfigUpdate(const char* filepath);
-
+    bool receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms = 15000);
 private:
     long freq;
     uint8_t localAddress;
