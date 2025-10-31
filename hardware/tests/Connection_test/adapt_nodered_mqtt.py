@@ -22,6 +22,7 @@ import sqlite3
 import sys
 import threading
 import time
+import os
 from datetime import datetime
 
 import pandas as pd
@@ -31,10 +32,10 @@ import paho.mqtt.client as mqtt
 
 # ---- MQTT configuration ----
 
-MQTT_BROKER = "terra-forma-obs.fr"
-MQTT_PORT = 10088
-MQTT_TOPIC = "application/+/device/+/event/up"
-MQTT_CLIENT_ID = "chirpstack_to_sqlite"
+MQTT_BROKER = "localhost"
+MQTT_PORT = 1883
+MQTT_TOPIC = "devices/{dev_eui}/up"
+MQTT_CLIENT_ID = "emulator-poc"
 MQTT_KEEPALIVE = 60
 
 # paths to TLS files
@@ -239,18 +240,22 @@ class MQTTWorker:
 
         # TLS config if provided
         if self.ca and self.cert and self.key:
-            try:
-                self.client.tls_set(ca_certs=self.ca, certfile=self.cert, keyfile=self.key)
-                logger.info("TLS configuration applied (ca=%s cert=%s key=%s)",
-                            self.ca, self.cert, self.key)
-            except Exception as e:
-                logger.exception("Error in TLS configuration: %s", e)
-                raise
+            if not (os.path.exists(self.ca) and os.path.exists(self.cert) and os.path.exists(self.key)):
+                logger.error("TLS files not found: ca=%s cert=%s key=%s. Skipping TLS setup.",
+                             self.ca, self.cert, self.key)
+            else:
+                try:
+                    self.client.tls_set(ca_certs=self.ca, certfile=self.cert, keyfile=self.key)
+                    logger.info("TLS configuration applied (ca=%s cert=%s key=%s)",
+                                self.ca, self.cert, self.key)
+                except Exception as e:
+                    logger.exception("Error in TLS configuration: %s", e)
+                    raise
 
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
             logger.info("Connected to broker %s:%d (rc=%s). Subscription to topic: %s",
-                        self.broker, self.port, self.topic)
+                        self.broker, self.port, rc, self.topic)
             client.subscribe(self.topic)
         else:
             logger.error("Error MQTT connexion, rc=%s", rc)
