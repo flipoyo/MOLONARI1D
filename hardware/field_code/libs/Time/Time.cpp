@@ -15,11 +15,7 @@ int freq_mesure_seconds = 0;
 std::vector<unsigned long> measurementTimesVec;
 std::vector<unsigned long> communicationTimesVec;
 
-GeneralConfig res;
 
-// ------------------------------------------------------------
-// Lecture et mise à jour de la configuration
-// ------------------------------------------------------------
 
 
 // ------------------------------------------------------------
