@@ -235,8 +235,8 @@ void loop() {
                 }
             }
 
-            uint8_t lastPacket = sendPackets(linesToSend);
-            closeSession(lastPacket);
+            uint8_t lastPacket = lora.sendPackets(linesToSend);
+            lora.closeSession(lastPacket);
 
             rattrapage = (lastSDOffset == dataFile.position());
             dataFile.seek(lastSDOffset);
