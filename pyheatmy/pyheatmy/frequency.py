@@ -905,3 +905,92 @@ class frequency_analysis:
         a_, b_ = np.real(alpha), np.imag(alpha)
         return a_, b_
 
+    def critere_2D(self, period_index: int = 0, deg_max: int = 2, show_reg: bool = False):
+        """
+        Decide whether the attenuation behaviour is best described by a 1D exponential
+        (linear fit of ln(A/A0) vs z) or requires a 2D (polynomial) model.
+
+        Parameters
+        ----------
+        period_index : int
+            Index of the period (column) in self._AMPS_AT_PEAKS to use for the test.
+        deg_max : int
+            Maximum polynomial degree to test (will test degrees 1..deg_max).
+        show_reg : bool
+            If True, show regression plots for each tested degree.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys: 'modele' ('1D' or '2D'), 'r2_list', 'coeffs'.
+        """
+        # Basic availability checks
+        if not hasattr(self, '_AMPS_AT_PEAKS') or self._AMPS_AT_PEAKS is None:
+            raise ValueError("_AMPS_AT_PEAKS not set. Run estimate_a(...) before calling critere_2D().")
+        if not hasattr(self, '_depths') or self._depths is None:
+            raise ValueError("_depths not set. Provide depths via set_inputs(depths=...) before calling critere_2D().")
+
+        brut = np.asarray(self._AMPS_AT_PEAKS)
+        if brut.ndim != 2:
+            raise ValueError(f"_AMPS_AT_PEAKS must be 2D (n_signals x n_periods), got shape {brut.shape}")
+
+        n_signals, n_periods = brut.shape
+        if period_index < 0 or period_index >= n_periods:
+            raise IndexError(f"period_index {period_index} out of range (0..{n_periods-1})")
+
+        # build log ratio ln(A(z)/A0) across signals for the requested period
+        A_col = brut[:, period_index].astype(float)
+        if A_col[0] == 0 or not np.isfinite(A_col[0]):
+            raise ValueError("Reference amplitude A0 is zero or invalid for chosen period_index")
+        traite = np.log(A_col / A_col[0])
+
+        # depths: use internal _depths (should include river at z=0 if needed)
+        z_values = np.asarray(self._depths, float)
+
+        # Align lengths: trim to the shortest
+        min_len = min(z_values.size, traite.size)
+        z_values = z_values[:min_len]
+        traite = traite[:min_len]
+
+        # Remove non-finite entries
+        mask = np.isfinite(z_values) & np.isfinite(traite)
+        z_values = z_values[mask]
+        traite = traite[mask]
+
+        if z_values.size < 2:
+            raise ValueError("Not enough valid depth/amplitude points for regression")
+
+        def regression_poly(reg, z_vals, deg, show_plot=False, return_coeffs=False):
+            coeffs = np.polyfit(z_vals, reg, deg)
+            p = np.poly1d(coeffs)
+            y_pred = p(z_vals)
+            r2 = r2_score(reg, y_pred)
+            if show_plot:
+                plt.scatter(z_vals, reg, label='Données FFT mesurées')
+                plt.plot(z_vals, y_pred, 'r--', label=f'Ajustement poly {deg}: R²={r2:.3f}')
+                plt.xlabel('Profondeur z (m)')
+                plt.ylabel('Log amplitude ln(A(z)/A0)')
+                plt.title(f"Régression polynomiale de degré {deg}, R²={r2:.3f}")
+                plt.legend()
+                plt.show()
+            if return_coeffs:
+                return coeffs, r2
+            else:
+                return r2
+
+        r2_list = []
+        coeffs_list = []
+        # test degrees 1 .. deg_max (inclusive)
+        for deg in range(1, deg_max + 1):
+            coeff, r2 = regression_poly(traite, z_values, deg, show_plot=show_reg, return_coeffs=True)
+            r2_list.append(r2)
+            coeffs_list.append(coeff)
+
+        # Decision rule: prefer 1D unless higher-degree R² significantly improves and leading coeff is meaningful
+        modele = '1D'
+        if len(r2_list) >= 2:
+            if r2_list[0] < 0.99 and r2_list[1] > r2_list[0] and abs(coeffs_list[1][0]) > 0.1:
+                modele = '2D'
+
+        return {'modele': modele, 'r2_list': np.array(r2_list), 'coeffs': coeffs_list}
+
