@@ -63,6 +63,7 @@ void setup() {
 void loop() {
     static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
     static Waiter waiter; //pour ne pas l'indenter dans le loop
+    static long lastSDOffset = 0;
 
     unsigned long currentTime = GetSecondsSinceMidnight();
     if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes * 1000UL) {
@@ -83,25 +84,16 @@ void loop() {
             //envoie du csv
             if (modif==true) {
                 File config = SD.open(configFilePath, FILE_READ);
-                config.seek(0);
+                config.seek(lastSDOffset);
+                std::queue<String> lines_config;
 
                 while (config.available()) {
-                    std::queue<String> line_config;
-                    line_config.push(config.readStringUntil('\n'));
+                    lines_config.push(config.readStringUntil('\n'));
                     
-                for (int attempt = 1; attempt <= 3; attempt++) {
+                uint8_t lastPacket = lora.sendPackets(lines_config);
+                lora.closeSession(lastPacket);
 
-                    if (lora.sendPackets(line_config)) {
-                        uint8_t lastPacket = sendPackets(sendQueue);
-                        closeSession(lastPacket);
-                        break;
-
-                    } else {
-                        if (attempt < 3) delay(20000);
-                        }
-                    }
-                }   
-                modif = false;
+                modif = !(lastSDOffset == config.position());
             }
 
             lora.stopLoRa();
@@ -152,6 +144,7 @@ void loop() {
 
     LowPower.idle();
 
+}
 }
 
 
