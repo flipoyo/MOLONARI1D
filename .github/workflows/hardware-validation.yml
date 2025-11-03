@@ -23,7 +23,7 @@ jobs:
           echo "Checking hardware directory structure..."
           
           # Check if main directories exist
-          for dir in sensors relay shared tests docs deployment; do
+          for dir in 'sensors/pressure' 'field_code' docs; do
             if [ -d "hardware/$dir" ]; then
               echo "✓ hardware/$dir exists"
             else
