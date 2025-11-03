@@ -152,6 +152,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         while (n < 50) {
             n++;
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
+                DEBUG_LOG("j'airecu");
                 shift = packetNumber;
                 sendPacket(shift, SYN, "SYN-ACK");
                 DEBUG_LOG("SLAVE: SYN-ACK sent");
