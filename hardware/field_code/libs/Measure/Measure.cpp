@@ -1,5 +1,7 @@
-#include<vector>
+// Measure.cpp
+// Implementation of the Measure and Sensor classes, in order to handle sensor measurements.
 
+#include<vector>
 #include "Measure.hpp"
 #include "Time.hpp"
 
@@ -38,19 +40,13 @@ Measure::Measure(int ncapt_arg, const std::vector<double>& toute_mesure):
   time(GetCurrentHour()),
   date(GetCurrentDate())
   {
-    DEBUG_LOG("creating Measure object with attributes time : " + String(time) + "; and date : " + String(date) + ";");
-  #ifdef DEBUG_MEASURE
-  for (int it = 0; it < ncapt; it++){
-    double temp = toute_mesure[it];
-    DEBUG_LOG("toute_mesure [" + String(it) + "] exists and equals " + String(temp));
-  }
-  #endif
+    DEBUG_LOG("Taking measure at time : " + String(time) + "; and date : " + String(date) + ";");
   
   for (int iterator = 0; iterator < ncapt; iterator ++){
-    DEBUG_LOG("set channel element number " + String(iterator) + " to " + String(toute_mesure[iterator]));
+    //DEBUG_LOG("set channel element number " + String(iterator) + " to " + String(toute_mesure[iterator]));
     channel.push_back(toute_mesure[iterator]);
   }
-  DEBUG_LOG("Measure object well initialised");
+  //DEBUG_LOG("Measure object well initialised");
 }
 
 // Retourne une ligne formatée pour une mesure
@@ -60,12 +56,8 @@ String Measure::oneLine() {
   DEBUG_LOG("GetCurrentDate finished in oneLine");
   String hour = GetCurrentHour();
   DEBUG_LOG("GetCurrentHour finished in oneLine");
-  DEBUG_LOG(String(ncapt));
-  DEBUG_LOG("debug messages still work1");
-  
-  DEBUG_LOG("Heure actuelle : " + date);
-  DEBUG_LOG("debug messages still work2");
-
+  DEBUG_LOG(String(ncapt) + " capteurs détectés");
+  DEBUG_LOG("Heure actuelle : " + time);
   // Construction de la ligne
   String str = uidString;
   str += " ; " + String(id) + " ; " + date + " ; " + hour + "  ; ";
