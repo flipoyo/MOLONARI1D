@@ -176,6 +176,7 @@ It has its onw documentation it the repertory.
 - **DS18B20**: Temperature sensors
 - **Differential pressure sensors**: For flow measurement
 - **LoRa antennas**: 868MHz (EU) or 915MHz (US)
+- **SD card**
 
 ### Power Requirements
 
