@@ -5,7 +5,6 @@
 #include <LoRa.h>
 #include <string>
 #include <ArduinoLowPower.h>
-#include <MKRWAN.h>
 
 #include "Measure.hpp"
 #include "Writer.hpp"
@@ -28,7 +27,6 @@
 #define DEBUG_LOG_NO_LN(msg)
 #endif
 
-LoRaModem modem;
 Sensor** sens;
 std::vector<double> toute_mesure;
 
@@ -110,8 +108,8 @@ void setup() {
     
 
     DEBUG_LOG("\n\n\n\n");
-    String devEui_vrai = modem.deviceEUI();
-    DEBUG_LOG("Device EUI VRAI: " + devEui_vrai);
+
+
     
     //DEBUG_LOG("memory when setup started : " + String(freeMemory()));
     // Lecture de la configuration CSV
@@ -157,7 +155,6 @@ void setup() {
     // Initialisation SD et logger
     if (!SD.begin(CSPin)) { while(true) {} }
     logger.EstablishConnection(CSPin);
-    
     InitialiseRTC();
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     DEBUG_LOG ("Setup finished");

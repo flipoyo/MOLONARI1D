@@ -5,7 +5,6 @@
 #include <LoRa.h>
 #include <string>
 #include <ArduinoLowPower.h>
-#include <MKRWAN.h>
 
 #include "Measure.hpp"
 #include "Writer.hpp"
@@ -28,7 +27,6 @@
 #define DEBUG_LOG_NO_LN(msg)
 #endif
 
-LoRaModem modem;
 
 Sensor** sens;
 std::vector<double> toute_mesure;
@@ -110,7 +108,6 @@ void setup() {
     while (!Serial && millis() < end_date) {}
     
     DEBUG_LOG("\n\n\n\n");
-    DEBUG_LOG("memory when setup started : " + String(freeMemory()));
     // Lecture de la configuration CSV
     Reader reader;
 
