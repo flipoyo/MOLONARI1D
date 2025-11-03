@@ -36,8 +36,8 @@ std::queue<String> sendingQueue;
 
 GeneralConfig res;
 
-unsigned long lastLoraSend = 0;
-unsigned long lastAttempt = 0;
+long lastLoraSend = 0;
+long lastAttempt = 0;
 
 String appEui;
 String devEui;
@@ -72,6 +72,7 @@ void setup() {
         Serial.println("Erreur SD - arrêt système.");
         while (true) {}
     }
+    InitialiseRTC();
 
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
@@ -81,11 +82,9 @@ void setup() {
 
 // ----- Loop -----
 void loop() {
-    static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
     static Waiter waiter; //pour ne pas l'indenter dans le loop
     
-    unsigned long currentTime = GetSecondsSinceMidnight();
-    DEBUG_LOG("Intervalle restant pour agir :"+ String(currentTime - lastAttempt) + " / " + String(res.int_config.lora_intervalle_secondes));
+    long currentTime = GetSecondsSinceMidnight();
     if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes en vrai, change pour les besoins du test
         DEBUG_LOG("Fenêtre de communication LoRa atteinte, tentative de réception des paquets...");
 
@@ -152,7 +151,6 @@ void loop() {
                 Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
             }
             lastLoraSend = currentTime;
-            }
 
         } else {
             Serial.println("Handshake échoué, aucune donnée reçue.");
@@ -160,7 +158,7 @@ void loop() {
 
             // Met quand même à jour lastAttempt pour réessayer après l'intervalle de temps
             lastAttempt = GetSecondsSinceMidnight();
-        }
+            }
 
         // reception csv et modification
         while (modem.available()) {
@@ -171,11 +169,12 @@ void loop() {
         Serial.println("Relais en veille jusqu’à la prochaine fenêtre de communication...");
 
     // Calcule le temps restant avant le prochain réveil (non bloquant)
-    unsigned long nextWakeUp = res.int_config.lora_intervalle_secondes * 1000UL - (currentTime - lastAttempt);
+    unsigned long nextWakeUp = res.int_config.lora_intervalle_secondes - (currentTime - lastAttempt);
     if ((long)nextWakeUp < 0) nextWakeUp = 0; // sécurité si dépassement
 
     LowPower.idle();
 
+}
 }
 
 
