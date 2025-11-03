@@ -63,9 +63,7 @@ void setup() {
 void loop() {
     static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
     static Waiter waiter; //pour ne pas l'indenter dans le loop
-    waiter.startTimer();
-    // le temps d’intervalle est écoulé depuis la dernière tentative LoRa
-
+    
     unsigned long currentTime = GetSecondsSinceMidnight();
     if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes * 1000UL) {
 
