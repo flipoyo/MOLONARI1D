@@ -32,7 +32,7 @@ CREATE TABLE ParametersDistribution (ID INTEGER PRIMARY KEY AUTOINCREMENT, Perme
 CREATE TABLE Point (ID INTEGER PRIMARY KEY AUTOINCREMENT, SamplingPoint INTEGER REFERENCES SamplingPoint (ID), IncertK REAL, IncertLambda REAL, DiscretStep INTEGER, IncertRho REAL, TempUncertainty REAL, IncertPressure REAL);
 
 -- Table: PressureSensor
-CREATE TABLE PressureSensor (ID INTEGER PRIMARY KEY AUTOINCREMENT, Name VARCHAR, Datalogger VARCHAR, Calibration DATETIME, Intercept REAL, DuDH REAL, DuDT REAL, Error REAL, ThermoModel INTEGER REFERENCES Thermometer (ID), Labo INTEGER REFERENCES Labo (ID));
+CREATE TABLE PressureSensor (ID INTEGER PRIMARY KEY AUTOINCREMENT, Name VARCHAR, Datalogger VARCHAR, DataloggerID INTEGER REFERENCES Datalogger (ID), Calibration DATETIME, Intercept REAL, DuDH REAL, DuDT REAL, Error REAL, ThermoModel INTEGER REFERENCES Thermometer (ID), Labo INTEGER REFERENCES Labo (ID));
 
 -- Table: Quantile
 CREATE TABLE Quantile (ID INTEGER PRIMARY KEY AUTOINCREMENT, Quantile REAL NOT NULL, PointKey REFERENCES Point (ID));
@@ -50,7 +50,7 @@ CREATE TABLE RMSE (ID INTEGER PRIMARY KEY AUTOINCREMENT, Depth1 INTEGER REFERENC
 CREATE TABLE SamplingPoint (ID INTEGER PRIMARY KEY AUTOINCREMENT, Name VARCHAR, Notice VARCHAR, Setup DATETIME, LastTransfer DATETIME, "Offset" REAL, RiverBed REAL, Shaft INTEGER REFERENCES Shaft (ID), PressureSensor INTEGER REFERENCES PressureSensor (ID), Study INTEGER REFERENCES Study (ID), Scheme VARCHAR, CleanupScript VARCHAR);
 
 -- Table: Shaft
-CREATE TABLE Shaft (ID INTEGER PRIMARY KEY AUTOINCREMENT, Name VARCHAR NOT NULL, Datalogger VARCHAR NOT NULL, Depth1 REAL NOT NULL, Depth2 REAL NOT NULL, Depth3 REAL NOT NULL, Depth4 REAL NOT NULL, ThermoModel INTEGER REFERENCES Thermometer (ID), Labo INTEGER REFERENCES Labo (ID));
+CREATE TABLE Shaft (ID INTEGER PRIMARY KEY AUTOINCREMENT, Name VARCHAR NOT NULL, Datalogger VARCHAR NOT NULL, DataloggerID INTEGER REFERENCES Datalogger (ID), Depth1 REAL NOT NULL, Depth2 REAL NOT NULL, Depth3 REAL NOT NULL, Depth4 REAL NOT NULL, ThermoModel INTEGER REFERENCES Thermometer (ID), Labo INTEGER REFERENCES Labo (ID));
 
 -- Table: Study
 CREATE TABLE Study (ID INTEGER PRIMARY KEY AUTOINCREMENT, Name VARCHAR NOT NULL UNIQUE, Labo INTEGER REFERENCES Labo (ID));
@@ -80,5 +80,36 @@ CREATE TABLE WaterFlow (
             Quantile            INTEGER REFERENCES Quantile (ID)
         );
 
+-- Table: Gateway
+CREATE TABLE Gateway (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name VARCHAR NOT NULL UNIQUE,
+    gatewayEUI VARCHAR NOT NULL UNIQUE,    -- Identifiant LoRaWAN unique de la gateway
+    TLS_Cert BLOB,               -- Certificat TLS
+    TLS_Key BLOB,                -- Clé privée TLS
+    CA_Cert BLOB,                -- Certificat d'autorité
+    Labo INTEGER REFERENCES Labo (ID)
+);
+
+-- Table: Relay
+CREATE TABLE Relay (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name VARCHAR NOT NULL,
+    RelayEUI VARCHAR NOT NULL UNIQUE,  -- Identifiant LoRaWAN unique du relay
+    Gateway INTEGER NOT NULL REFERENCES Gateway (ID),  -- Lien vers la gateway parente
+    Labo INTEGER REFERENCES Labo (ID),
+    UNIQUE(Gateway, Name)                           -- Un nom de relay unique par gateway
+    );
+
+-- Table: Datalogger
+CREATE TABLE Datalogger (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name VARCHAR NOT NULL,
+    DevEUI VARCHAR NOT NULL UNIQUE,     -- Ceci est l'identifiant unique (le 'datalogger EUI')
+    Relay INTEGER NOT NULL REFERENCES Relay (ID),    
+    Labo INTEGER REFERENCES Labo (ID),
+    UNIQUE(Relay, Name)
+);
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;
+
