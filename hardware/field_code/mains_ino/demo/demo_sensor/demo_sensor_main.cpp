@@ -221,39 +221,25 @@ void loop() {
         lora.startLoRa();
         DEBUG_LOG("LoRa ok");
 
-        dataFile.seek(lastSDOffset);
-
         DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
 
         while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
-
-
-            std::queue<String> lineToSend;
-            lineToSend.push(dataFile.readStringUntil('\n'));
+            //at this point, lastSDOffset must point to the first memory address of the first line to be sent
+            std::queue<memory_line> linesToSend;
+            while (dataFile.available()) {
+                memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                linesToSend.push(new_line);
 
             // Si la ligne est vide aka plus rien à envoyer
-            if (lineToSend.front().length() == 0) {
-                rattrapage = false;
-                break;
-            }
-
-            // Tentative d'envoi 3 fois de suite 
-            for (int attempt = 1; attempt <= 3; attempt++) {
-
-                if (lora.sendPackets(lineToSend)) {
-                    DEBUG_LOG("Packet successfully sent");
-                    lastSDOffset = dataFile.position();
+                if (linesToSend.front().flush.length() == 0) {
                     break;
-
-                } else {
-                    DEBUG_LOG("Attempt n " + String(attempt) +" failed");
-                    if (attempt < 3) delay(20000);
                 }
             }
-            if (!dataFile.available()) {
-                rattrapage = false;
-            }
+            int end_document_address = dataFile.position();
+            uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(linesToSend, lastSDOffset, dataFile);
+            rattrapage = (lastSDOffset == end_document_address);
 
+            lora.closeSession(lastPacket);
         } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
 
         dataFile.close();

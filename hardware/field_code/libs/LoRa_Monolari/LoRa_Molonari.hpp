@@ -39,7 +39,8 @@ public:
 
     // Sessions
     bool handshake(uint8_t &shift);
-    uint8_t handle_packets_sending(std::queue<memory_line> sendQueue);
+    uint8_t sendAllPacketsAndManageMemory(std::queue<memory_line>& sendQueue, long& initial_adress, File& dataFile);
+    uint8_t sendAllPackets(std::queue<String> &sendQueue);
     int receivePackets(std::queue<String> &receiveQueue);
     bool closeSession(int lastPacket);
 

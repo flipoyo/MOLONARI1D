@@ -47,7 +47,8 @@ void Waiter::sleepUntil(unsigned long desired_waiting_time) {
 
 
 // Wait without sleeping to handle other tasks // cette fonction n'est jamais utilisée et doit etre supprimée
-void Waiter::delayUntil(uint32_t desired_waiting_time, int role) {
+//is delayUntill used ?
+/*void Waiter::delayUntil(uint32_t desired_waiting_time, int role) {
     unsigned long end_date = starting_time + desired_waiting_time;
 
     // Loop until the time is up
@@ -67,7 +68,7 @@ void Waiter::delayUntil(uint32_t desired_waiting_time, int role) {
         // If everything works, send the data
         if (handshake && readerConnected) {
             std::queue<String> sendQueue = reader.loadDataIntoQueue();
-            int nbofACK = lora.sendPackets(sendQueue);
+            int nbofACK = lora.sendAllPackets(sendQueue);
 
             // Update the cursor and close session
             reader.UpdateCursor(nbofACK);
@@ -87,3 +88,4 @@ void Waiter::delayUntil(uint32_t desired_waiting_time, int role) {
         delay(1); // Small delay to prevent the loop from running too fast
     }
 }
+*/

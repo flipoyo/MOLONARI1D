@@ -236,13 +236,10 @@ void loop() {
                 }
             }
             int end_document_address = dataFile.position();
+            uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(linesToSend, lastSDOffset, dataFile);
+            rattrapage = (lastSDOffset == end_document_address);
 
-            uint8_t lastPacket = lora.handle_packets_sending(linesToSend);
             lora.closeSession(lastPacket);
-
-            rattrapage = (lastSDOffset == dataFile.position());
-            dataFile.seek(lastSDOffset);
-
         } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
 
         dataFile.close();
