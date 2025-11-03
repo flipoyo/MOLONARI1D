@@ -144,14 +144,8 @@ void setup() {
         SensorConfig _c = liste_capteurs[it];
         sens[it] = new Sensor(_c.pin, 1, _c.type_capteur);
         toute_mesure.push_back(0);
-<<<<<<< HEAD
         DEBUG_LOG("inserted new Sensor ptr at position " + String(it) + " of sens with attributes :");
         DEBUG_LOG("_c.pin : " + String(_c.pin) + "  _c.type_capteur : " + String(_c.type_capteur) + "\n\n");
-=======
-        //DEBUG_LOG("inserted new Sensor ptr at position " + String(it) + " of sens with attributes :");
-        DEBUG_LOG("_c.pin : " + String(_c.pin) + "  _c.type_capteur : " + String(_c.type_capteur) + "  _c.devEUI : " + String(_c.devEUI) + "\n\n");
-        //DEBUG_LOG("sens contains at least" + String(it) + " elements");
->>>>>>> 4852f3d4fdbfaaad31ab6b65038cd528e829b4a3
     }
 
     // Initialisation SD et logger
@@ -170,16 +164,8 @@ void loop() {
 
     String date = GetCurrentDate();
     String hour = GetCurrentHour();
-<<<<<<< HEAD
-    DEBUG_LOG("GetCurrentHour finished in main_debug");
-    DEBUG_LOG("Heure actuelle : " + hour);
-
-    
-    #endif
-=======
     DEBUG_LOG(String(ncapt) + " capteurs détectés.");
 
->>>>>>> 4852f3d4fdbfaaad31ab6b65038cd528e829b4a3
     
     
     // --- Prendre mesures ---
