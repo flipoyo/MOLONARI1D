@@ -11,6 +11,20 @@
 #include "Time.hpp"
 
 
+#define DEBUG_MAIN
+#define DEBUG_MEASURE
+#define DEBUG_WRITER
+#define DEBUG_READER
+
+#ifdef DEBUG_MAIN
+#define DEBUG_LOG(msg) Serial.println(msg)
+#define DEBUG_LOG_NO_LN(msg) Serial.print(msg)
+#else
+#define DEBUG_LOG(msg)
+#define DEBUG_LOG_NO_LN(msg)
+#endif
+
+
 LoRaModem modem;
 
 
@@ -71,7 +85,9 @@ void loop() {
     static Waiter waiter; //pour ne pas l'indenter dans le loop
     
     unsigned long currentTime = GetSecondsSinceMidnight();
-    if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes * 1000UL) {
+    DEBUG_LOG("Intervalle restant pour agir :"+ String(currentTime - lastAttempt) + " / " + String(res.int_config.lora_intervalle_secondes));
+    if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes en vrai, change pour les besoins du test
+        DEBUG_LOG("Fenêtre de communication LoRa atteinte, tentative de réception des paquets...");
 
         std::queue<String> receiveQueue;
         lora.startLoRa();
