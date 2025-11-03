@@ -34,6 +34,9 @@ GeneralConfig config;
 std::vector<SensorConfig> liste_capteurs;
 int lora_intervalle_secondes;
 int intervalle_de_mesure_secondes;
+String devEui;
+String appEui;
+
 
 //std::string FileName = "conf_sen.csv"; Impossible to use that because SD.open() takes squid string arguments
 Writer logger;
@@ -43,7 +46,7 @@ const char* configFilePath = "conf.csv";
 int ncapt = 0; 
 
 // LoRa
-LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE);
+LoraCommunication lora(868E6, devEui, appEui, MASTER);
 long lastLoRaSend = 0;
 long lastMeasure = 0;
 long lastSDOffset = 0;
@@ -114,6 +117,8 @@ void setup() {
     liste_capteurs = temp_config_container.liste_capteurs;
     lora_intervalle_secondes = int_conf.lora_intervalle_secondes;
     intervalle_de_mesure_secondes = int_conf.intervalle_de_mesure_secondes;
+    devEui= temp_config_container.rel_config.devEui;
+    appEui= temp_config_container.rel_config.appEui;
 
     if (temp_config_container.succes){
         DEBUG_LOG("lecture config terminée avec succès");
@@ -134,10 +139,10 @@ void setup() {
     int it = 0;
     for (int it = 0; it<ncapt; it++) {
         SensorConfig _c = liste_capteurs[it];
-        sens[it] = new Sensor(_c.pin, 1, _c.type_capteur, _c.devEUI);
+        sens[it] = new Sensor(_c.pin, 1, _c.type_capteur);
         toute_mesure.push_back(0);
         DEBUG_LOG("inserted new Sensor ptr at position " + String(it) + " of sens with attributes :");
-        DEBUG_LOG("_c.pin : " + String(_c.pin) + "  _c.type_capteur : " + String(_c.type_capteur) + "  _c.devEUI : " + String(_c.devEUI) + "\n\n");
+        DEBUG_LOG("_c.pin : " + String(_c.pin) + "  _c.type_capteur : " + String(_c.type_capteur) + "\n\n");
     }
     DEBUG_LOG("sens contains " + String(it) + " elements");
 

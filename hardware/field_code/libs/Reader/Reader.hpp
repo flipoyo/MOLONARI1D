@@ -10,7 +10,6 @@
 struct SensorConfig {
     String id;
     String type_capteur;
-    String devEUI; //pour l'export des données
     int pin;//TODO rename dataPin 
 };
 
@@ -23,6 +22,7 @@ struct IntervallConfig{
 struct RelayConfig {
     String appEui;
     String appKey;
+    String devEui; // utile pour le sensor
     int CSPin;
     float lora_freq;
     int intervalle_de_mesure_secondes;

@@ -55,13 +55,15 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
             String key = tokens[0];
             String val = tokens[1];
 
-            if (key == "appEui") res.rel_config.appEui = val;
-            else if (key == "appKey") res.rel_config.appKey = val;
+            if (key == "appEui") res.rel_config.appEui = String(val);
+            else if (key == "appKey") res.rel_config.appKey = String(val);
             else if (key == "CSPin") res.rel_config.CSPin = val.toInt();
             else if (key == "lora_freq") res.rel_config.lora_freq = val.toFloat();
+            else if (key== "devEui") res.rel_config.devEui = String(val);
 
 
-            //config générale des intervalles
+
+            //config générale des intervallesww
             else if (key == "intervalle_de_mesure_secondes") {
                 res.int_config.intervalle_de_mesure_secondes = val.toInt();
             }
@@ -75,7 +77,7 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
         }
 
         // ---------- CAPTEURS ----------
-        else if (tokens.size() == 4) {
+        else if (tokens.size() == 3) {
             SensorConfig c;
             c.id = tokens[0];
             c.type_capteur = tokens[1];
@@ -86,7 +88,6 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
             else
                 c.pin = tokens[2].toInt();
 
-            c.devEUI = tokens[3];
             res.liste_capteurs.push_back(c);
         }
 
