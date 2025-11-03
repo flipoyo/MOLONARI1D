@@ -39,7 +39,7 @@ public:
 
     // Sessions
     bool handshake(uint8_t &shift);
-    uint8_t sendPackets(std::queue<memory_line> sendQueue);
+    uint8_t handle_packets_sending(std::queue<memory_line> sendQueue);
     int receivePackets(std::queue<String> &receiveQueue);
     bool closeSession(int lastPacket);
 
