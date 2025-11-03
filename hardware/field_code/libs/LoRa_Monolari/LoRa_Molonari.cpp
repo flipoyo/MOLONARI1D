@@ -1,3 +1,6 @@
+// LoRa_Molonari.cpp
+// This file defines the LoraCommunication class for handling LoRa communication.
+
 #include <SD.h>
 #include <Arduino.h> 
 #include "LoRa_Molonari.hpp"

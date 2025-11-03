@@ -1,3 +1,4 @@
+// Writer.cpp
 // This file defines the Writer class, which is used to write a serie of measurements to a CSV file.
 
 #ifndef WRITER_CLASS
