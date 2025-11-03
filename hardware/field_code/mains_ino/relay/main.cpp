@@ -76,13 +76,13 @@ void setup() {
 
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
-
     digitalWrite(LED_BUILTIN, LOW);
 }
 
 // ----- Loop -----
 void loop() {
     static Waiter waiter; //pour ne pas l'indenter dans le loop
+    DEBUG_LOG("Waiter instancié dans le relay");
     
     long currentTime = GetSecondsSinceMidnight();
     if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes en vrai, change pour les besoins du test
