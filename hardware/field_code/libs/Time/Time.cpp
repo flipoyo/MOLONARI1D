@@ -53,7 +53,7 @@ String GetCurrentHour() {
          UIntTo2DigitString(now.second());
 }
 
-unsigned long GetSecondsSinceMidnight() {
+long GetSecondsSinceMidnight() {
   DateTime now = externalRtc.now();
   return now.hour() * 3600UL + now.minute() * 60UL + now.second();
 }

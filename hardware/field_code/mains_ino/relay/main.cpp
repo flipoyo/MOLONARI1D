@@ -73,6 +73,10 @@ void setup() {
         while (true) {}
     }
     InitialiseRTC();
+<<<<<<< HEAD
+=======
+
+>>>>>>> ab7f49e834cb3c58b05844d578993a796af76ead
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     digitalWrite(LED_BUILTIN, LOW);
@@ -80,12 +84,14 @@ void setup() {
 
 // ----- Loop -----
 void loop() {
+<<<<<<< HEAD
     DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
+=======
+>>>>>>> ab7f49e834cb3c58b05844d578993a796af76ead
     static Waiter waiter; //pour ne pas l'indenter dans le loop
     DEBUG_LOG("Waiter instancié dans le relay");
     
-    unsigned long currentTime = GetSecondsSinceMidnight();
-    DEBUG_LOG("Intervalle restant pour agir :"+ String(currentTime - lastAttempt) + " / " + String(res.int_config.lora_intervalle_secondes));
+    long currentTime = GetSecondsSinceMidnight();
     if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes en vrai, change pour les besoins du test
         DEBUG_LOG("Fenêtre de communication LoRa atteinte, tentative de réception des paquets...");
 
@@ -174,5 +180,6 @@ void loop() {
     LowPower.idle();
 
 }
+
 
 
