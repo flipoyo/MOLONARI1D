@@ -24,7 +24,7 @@ jobs:
           echo "Checking Arduino file structure..."
           
           # Check if main Arduino files exist
-          if [ -f "hardware/field_code/mains_ino/sensor/Sensor.ino" ]; then
+          if [ -f "hardware/field_code/mains_ino/sensor/sensor.ino" ]; then
             echo "✓ sensor Arduino file exists"
           else
             echo "✗ sensor Arduino file missing"
