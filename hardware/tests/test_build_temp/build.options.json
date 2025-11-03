@@ -1,0 +1,9 @@
+{
+  "additionalFiles": "",
+  "compiler.optimization_flags": "-Os",
+  "customBuildProperties": "",
+  "fqbn": "arduino:samd:mkrwan1310",
+  "hardwareFolders": "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages",
+  "otherLibrariesFolders": "C:\\Users\\rbarr\\Documents\\Arduino\\libraries",
+  "sketchLocation": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\Relay_Lora"
+}
