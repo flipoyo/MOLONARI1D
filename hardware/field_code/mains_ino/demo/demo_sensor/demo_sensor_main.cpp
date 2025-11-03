@@ -154,11 +154,6 @@ void setup() {
 void loop() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
-    // Asses the good shape of sens. The issue is : sens contains pointers, which may raise seg fault if not initialised properly
-    for (int it = 0; it<ncapt; it++){
-     sens[it]->get_voltage();   
-    //DEBUG_LOG("sens [" + String(it) + "] voltage exists");
-    }
 
     String date = GetCurrentDate();
     String hour = GetCurrentHour();
@@ -192,7 +187,7 @@ void loop() {
     
     bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
 
-    IsTimeToLoRa = true; //a supprimer, pour les besoins du debugs
+    //IsTimeToLoRa = true; //a supprimer, pour les besoins du debugs
     if (IsTimeToLoRa || rattrapage) {
 
         File dataFile = SD.open(filename, FILE_READ);
