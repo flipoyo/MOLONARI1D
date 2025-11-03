@@ -1,13 +1,15 @@
 
 # Configuration générale
+# Les deux délais ci-dessous ne doivent pas être inférieurs respectivement à 900s et 3600s
 intervalle_de_mesure_secondes,900
 lora_intervalle_secondes,3600
-# Les deux délais ci-dessus ne doivent pas être inférieurs respectivement à 900s et 3600s
+
 
 max_pload_octet, 20
 periode_lora_min_secondes, 1
 periode_mesure_min_secondes, 2
 max_secondes_par_jour, 850 
+
 
 #Configuration des capteurs
 # id,type,pin
@@ -18,8 +20,10 @@ T3,temperature,A3
 T4,temperature,A4
 T5,temperature,A5
 
+
 #Configuration lorawan
 devEUI,123456789012345 
+
 
 #Configuration relay 
 appEui,0000000000000000
