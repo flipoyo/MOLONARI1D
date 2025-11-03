@@ -1,5 +1,9 @@
+// Time.cpp
+// This file defines functions for handling time and date using an external RTC module.
+
 #include <RTClib.h>
 #include <vector>
+
 #include "Time.hpp"
 #include "Reader.hpp"
 

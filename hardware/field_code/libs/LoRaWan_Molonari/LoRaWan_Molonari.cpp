@@ -1,3 +1,6 @@
+// LoRaWan_Molonari.cpp
+// This file defines the LoraWANCommunication class for handling LoRaWAN communication.
+
 #include "LoRaWan_Molonari.hpp"
 
 #ifdef LORA_DEBUG
