@@ -14,7 +14,7 @@
 
 // Constructeur par défaut
 Sensor::Sensor() 
-  : dataPin(-1), enablePin(-1), type_capteur("-1") {}
+  : dataPin(-1), enablePin(4), type_capteur("-1") {}
 // Constructeur complet
 Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur)
   : dataPin(_dataPin), enablePin(_enablePin), type_capteur(_type_capteur)
@@ -27,7 +27,7 @@ Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur)
 
 double Sensor::get_voltage() { 
   digitalWrite(enablePin, HIGH);
-  delay(200);
+  delay(5000);
   double voltage = analogRead(dataPin);
   DEBUG_LOG("measured voltage of Pin " + String(dataPin) + " of " + String (voltage));
   digitalWrite(enablePin, LOW);

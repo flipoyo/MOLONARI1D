@@ -146,7 +146,7 @@ void setup() {
 
     for (int it = 0; it<ncapt; it++) {
         SensorConfig _c = liste_capteurs[it];
-        sens[it] = new Sensor(_c.pin, 1, _c.type_capteur);
+        sens[it] = new Sensor(_c.pin, 4, _c.type_capteur);
         toute_mesure.push_back(0);
         DEBUG_LOG("inserted new Sensor ptr at position " + String(it) + " of sens with attributes :");
         DEBUG_LOG("_c.pin : " + String(_c.pin) + "  _c.type_capteur : " + String(_c.type_capteur) + "\n\n");
