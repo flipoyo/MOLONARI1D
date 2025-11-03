@@ -3,6 +3,7 @@ This firmware is part of the MOLONARI 1D project, designed for river bed monitor
 It combines LoRa communication, SD card logging, and low-power management for long-term autonomous measurements and transfer.
 
 
+--- 
 
 ## Summary 
 This code implements the complete workflow of an arduino used ofr the sensor.
@@ -12,6 +13,7 @@ It :
 - Measures data periodicaly
 - Stores it on the SD card and sends it to the relay
 
+--- 
 
 ## *Core Functionalities*
 
@@ -41,6 +43,7 @@ It :
 - "Waiter.hpp"
 - "Writer.hpp"
 
+---
 
 ## Sensors
 Each line of the CSV file defines a sensor with:
@@ -54,10 +57,20 @@ the Sensor class (both public and private members) in Measure.hpp,
 the Sensor constructor in Measure.cpp,
 and the sensor initialization section in the setup() function of main.cpp. ⚠️ 
 
+---
 
 ## Code Structure
 
-2. Main Loop (loop)
+### 1. Setup (`setup`)
+
+The setup routine:
+- Initializes serial communication and the built-in LED.  
+- Reads configuration data from `conf.csv` on the SD card.  
+- Initializes LoRa and LoRaWAN communication parameters.  
+- Checks SD card availability and halts if missing.  
+- Prints system status messages for debugging.
+
+### 2. Main Loop (`loop`)
 The main loop performs the following operations:
 
 a) Measurement
@@ -78,6 +91,8 @@ d) Sleep Management
 - Calculates the time remaining until the next measurement or LoRa communication.
 - Puts the Arduino into sleep mode using Waiter.sleepUntil() to save energy.
 
+---
+
 ## Configuration : using this particular code (for the general method see the README in hardware)
 
 ### Filling conf.csv
@@ -89,3 +104,9 @@ b) Do not modify the second paragraph.
 c) Change sensor configuration for it to match the pins oon your arduino.
 
 d) 
+
+### Using the code
+
+- Upload the code on the arduino via platformio. 
+- Put the conf.csv in the SD card, that goes in the arduino.
+- You're set up !

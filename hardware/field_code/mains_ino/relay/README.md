@@ -1,125 +1,101 @@
-# LoRa Relay Station - Data Aggregation and Forwarding
+# **Relay – Data Forwarding Node (MOLONARI 1D)**
 
-This firmware implements the LoRa relay functionality for the MOLONARI1D monitoring system, serving as an intermediate data aggregation point between river bed sensors and the LoRaWAN gateway.
+This firmware is part of the **MOLONARI 1D** project, acting as the **relay unit** between a sensor node and the gateway.
+It ensures reliable data forwarding, configuration management, and low-power operation.
 
-## Overview
+Before using this code, please read the README.md in the hardware section to understand the overall system architecture.
 
-The relay station collects sensor data from underwater monitoring devices and forwards the aggregated information to the LoRaWAN gateway for internet transmission to the server.
+---
 
-## Hardware Requirements
+## Summary
 
-- **Arduino MKR WAN 1310** - Main microcontroller with LoRa/LoRaWAN capabilities
-- **External antenna** - High-gain antenna for extended range
-- **Power supply** - Solar panel + battery system for autonomous operation
-- **Weatherproof enclosure** - Protection for above-water installation
+This code implements the complete workflow of the **relay node** in the MOLONARI 1D system.
 
-## Functionalities
+It:
+- Reads configuration parameters from a CSV file stored on the SD card.  
+- Establishes LoRa communication with sensor nodes (slaves).
+- Forwards data packets via LoRaWAN.  
+- Operates in low-power mode between transmissions.
 
-### Current Features
-- **Sensor Data Collection**: Receive measurements from sensors
-- **LoRa Communication**: Custom protocol for sensor-to-relay communication
-- **Serial Output**: Real-time data monitoring and debugging
-- **Multi-sensor Management**: Handle up to 10 sensors per relay
+---
 
-### Planned Features (Long-term Roadmap)
-- **LoRaWAN Gateway Integration**: Direct server communication
-- **Data Buffering**: Local storage for offline scenarios
-- **Adaptive Scheduling**: Dynamic measurement timing optimization
-- **Mesh Networking**: Inter-relay communication for extended coverage
+## *Core Functionalities*
 
-## Communication Architecture
+- LoRa receiver for communication with multiple sensor nodes.  
+- Forwarding of received packets to a LoRaWAN network.  
+- Dynamic configuration via CSV file (`conf_rel.csv`).  
+- SD card management for configuration storage and updates.  
+- Retry mechanisms for robust data transmission.  
+- Downlink configuration updates via LoRaWAN.  
+- Low-power idle mode between communication windows.
 
-### Sensor-to-Relay Protocol
-- **Custom LoRa Protocol**: Optimized for low-power sensor communication
-- **Request-Response Model**: Relay initiates communication with sensors
-- **Collision Avoidance**: Time-division multiple access (TDMA)
-- **Range**: Up to 1km surface, 100m underwater
+**Libraries Used:**
 
-### Network Topology
-```
-Sensors (underwater) → Relay (surface) → Gateway → Server
-                    LoRa            LoRaWAN    Internet
-```
+- `Arduino.h`  
+- `SD.h`  
+- `queue`  
+- `ArduinoLowPower.h`  
+- `MKRWAN.h`  
 
-## Configuration
+- `"LoRaWan_Molonari.hpp"`  
+- `"LoRa_Molonari.hpp"`  
+- `"Waiter.hpp"`  
+- `"Reader.hpp"`  
+- `"Time.hpp"`
 
-### Basic Settings
-```cpp
-#define MEASURE_T double    // Measurement data type
-#define DEBUG              // Enable serial debugging
-// #define LORA_DEBUG      // Enable LoRa operation logs
-```
+---
 
-### Communication Parameters
-```cpp
-uint8_t MyAddres = 0xaa;           // Relay station address
-uint8_t defaultdestination = 0xff;  // Broadcast destination
-LoraCommunication lora(868E6, MyAddres, defaultdestination);
-```
 
-## Operational Cycle
+## Code Structure
 
-1. **Initialization**: Setup LoRa radio and communication parameters
-2. **Sensor Discovery**: Identify active sensors in range
-3. **Data Collection**: Sequential polling of registered sensors
-4. **Data Aggregation**: Combine measurements with timestamps
-5. **Forwarding**: Transmit to LoRaWAN gateway
-6. **Status Monitoring**: Track sensor health and communication quality
+### 1. Setup (`setup`)
 
-## Power Management
+The setup routine:
+- Initializes serial communication and the built-in LED.  
+- Reads configuration data from `conf.csv` on the SD card.  
+- Initializes LoRa and LoRaWAN communication parameters.  
+- Checks SD card availability and halts if missing.  
+- Prints system status messages for debugging.
 
-- **Always-On Operation**: Relay stations require continuous power
-- **Solar Charging**: Recommended 20W panel with 12V battery
-- **Low-Power LoRa**: Optimized duty cycles for sensor communication
-- **Adaptive Scheduling**: Reduce polling frequency during low activity
+### 2. Main Loop (`loop`)
 
-## Installation Guidelines
+The loop performs the following operations:
 
-### Site Selection
-- **Elevated Position**: Clear line-of-sight to sensor locations
-- **Gateway Coverage**: Within LoRaWAN range (typically 2-10km)
-- **Power Access**: Solar panel placement or grid connection
-- **Environmental Protection**: Weatherproof mounting
+#### a) LoRa Reception
+- Waits until the configured LoRa interval (`lora_intervalle_secondes`) is reached.  
+- Initiates a handshake with sensor nodes.  
+- Receives data packets and closes the LoRa session.  
+- Stores received packets in a sending queue.
 
-### Configuration Steps
-1. Install Arduino libraries and dependencies
-2. Configure relay address and sensor network parameters
-3. Upload firmware and verify serial output
-4. Deploy in field location with appropriate antenna
-5. Test communication with sensors and gateway
 
-## File Structure
+#### b) LoRaWAN Transmission
+- Establishes a LoRaWAN session using `appEui` and `devEui`.  
+- Sends all queued packets to the LoRaWAN network.  
+- Retries automatically if some packets fail.  
+- Reports transmission success or failure via Serial output.
 
-```
-Relay/
-├── Relay.ino                    # Main relay firmware
-└── Dependencies:
-    ├── ../../shared/Lora.hpp    # LoRa communication library
-    └── ../../shared/Waiter.hpp  # Timing and scheduling utilities
-```
 
-## Debug and Monitoring
+#### c) Low-Power Management
+- Calculates the remaining time before the next communication window.  
+- Puts the Arduino into **idle low-power mode** using `LowPower.idle()`.
 
-### Serial Output
-- Real-time sensor data display
-- Communication status monitoring
-- Error reporting and diagnostics
+---
 
-### LED Indicators
-- **Initialization**: LED on during startup
-- **Communication**: Visual feedback for LoRa operations
-- **Error States**: Flash patterns for troubleshooting
+## Configuration and using this code
 
-## Network Scalability
+### Filling conf.csv
 
-- **Sensor Capacity**: Up to 10 sensors per relay
-- **Coverage Area**: 1km² surface, 0.1km² underwater
-- **Data Throughput**: 1KB per sensor per day
-- **Expansion**: Multiple relays for large river systems
+a) You can change the intervals used for measurement and sending but it's porbably unnecessary.
 
-## Related Documentation
+b) Do not modify the second paragraph.
 
-- [Sensor Communication Protocol](../../protocols/lora-protocol.md)
-- [LoRaWAN Integration Guide](../../protocols/lorawan-integration.md)
-- [Field Installation Manual](../../deployment/relay-installation.md)
-- [Network Planning Guide](../../docs/network-design.md)
+c) Change sensor configuration for it to match the pins oon your arduino.
+
+d) 
+
+### Using the code
+
+- Upload the code on the arduino via platformio. 
+- Put the conf.csv in the SD card, that goes in the arduino.
+- You're set up !
+
