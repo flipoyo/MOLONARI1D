@@ -3,12 +3,10 @@ name: Protocol Validation
 on:
   push:
     paths:
-      - 'hardware/protocols/**'
       - 'hardware/docs/**'
       - '.github/workflows/protocol-tests.yml'
   pull_request:
     paths:
-      - 'hardware/protocols/**'
       - 'hardware/docs/**'
       - '.github/workflows/protocol-tests.yml'
 
