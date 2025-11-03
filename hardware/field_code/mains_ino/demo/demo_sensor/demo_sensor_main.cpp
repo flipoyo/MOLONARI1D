@@ -167,10 +167,8 @@ void loop() {
     DEBUG_LOG("GetCurrentDate finished in main_debug");
     String hour = GetCurrentHour();
     DEBUG_LOG("GetCurrentHour finished in main_debug");
-    DEBUG_LOG(String(ncapt));
-    DEBUG_LOG("debug messages still work1");
     DEBUG_LOG("Heure actuelle : " + hour);
-    DEBUG_LOG("debug messages still work2");
+
     
     #endif
     
