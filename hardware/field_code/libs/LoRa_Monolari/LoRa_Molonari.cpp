@@ -249,12 +249,13 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
                 // ACK **après** avoir stocké en RAM (et idéalement après écriture SD, mais on postpose)
                 sendPacket(packetNumber, ACK, "ACK");
             }
-            // close session ? 
             continue;
         }
 
         if (requestType == FIN) {
             // Écriture atomique : on écrit d'abord sur un fichier temporaire
+            int last = receivePackets(receiveQueue);
+            sendPacket(last, FIN, "");
             const char* tmpPath = "tmp_conf.csv";
             File tmp = SD.open(tmpPath, FILE_WRITE | O_TRUNC);
             if (!tmp) {
