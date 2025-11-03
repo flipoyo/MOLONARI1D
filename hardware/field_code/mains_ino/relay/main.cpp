@@ -73,10 +73,6 @@ void setup() {
         while (true) {}
     }
     InitialiseRTC();
-<<<<<<< HEAD
-=======
-
->>>>>>> ab7f49e834cb3c58b05844d578993a796af76ead
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     digitalWrite(LED_BUILTIN, LOW);
@@ -84,10 +80,7 @@ void setup() {
 
 // ----- Loop -----
 void loop() {
-<<<<<<< HEAD
     DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
-=======
->>>>>>> ab7f49e834cb3c58b05844d578993a796af76ead
     static Waiter waiter; //pour ne pas l'indenter dans le loop
     DEBUG_LOG("Waiter instancié dans le relay");
     
