@@ -128,9 +128,9 @@ The data is returned in the form “ ‘Measure no.’ ID, date, time, measureme
                 ▼                           ▼
     ┌───────────────────────┐     ┌───────────────────────┐
     │ Measure::oneLine()    │     │ Measure::ToString()   │
-    │ - Gets date/hour      │     │ - Préfix "Measure n°" │
+    │ - Gets date/hour      │     │ - Prefix "Measure n°" │
     │ - Loop vecteur        │     │ - Call oneLine()      │
-    │   channel[] for       │     │ - Retunr strinf       │
+    │   channel[] for       │     │ - Return string       │
     │   formatting values.  │     └───────────────────────┘
     │ - Return ligne CSV    │
     └───────────────────────┘
@@ -217,8 +217,8 @@ Reader is a library that allows you to retrieve data stored on the SD card after
  ┌─────────────────────┐                           ┌─────────────────────────┐
  │ UpdateCursor(shift) │                           │ loadDataIntoQueue()     │
  │ - Moves line_cursor │                           │ - Reads following.      │
- │ - Sauvegarde curseur│                           │   lines dans la SD      │
- │   dans cursor.txt   │                           │ - fills queue<String>   │
+ │ - Saves curseur     │                           │   lines dans la SD      │
+ │   in cursor.txt     │                           │ - fills queue<String>   │
  └─────────────────────┘                           └─────────┬───────────────┘
                                      │
                                      ▼
@@ -244,7 +244,7 @@ This file manages the time and measurement schedules for the MKR board-based sys
                                ▼
                   ┌─────────────────────────┐
                   │ Initialisation RTC      │
-                  │ internalRtc & externalRtc │
+                  │ internalRtc&externalRtc │
                   └─────────────┬───────────┘
                                 │
           ┌─────────────────────┴─────────────────────┐
@@ -272,15 +272,15 @@ This file manages the time and measurement schedules for the MKR board-based sys
                       ┌─────────────────────────┐
                       │ CalculateSleepTimeUntil │
                       │ NextMeasurement()       │
-                      │  → retourne ms jusqu’à  │
-                      │    prochaine mesure     │
+                      │  → return ms until      │
+                      │    next measure         │
                       └─────────────────────────┘
                                  │
                                  ▼
                       ┌─────────────────────────┐
-                      │ Microcontrôleur dort    │
-                      │ jusqu’à la prochaine    │
-                      │ mesure (low power)      │
+                      │ Microcontroler sleeps   │
+                      │ until next              │
+                      │ measure (low power)     │
                       └─────────────────────────┘
                                  │
                                  ▼
@@ -316,7 +316,7 @@ This file manages the wait time and task synchronization for the Arduino, partic
       └───────────────┘
              │
  ┌───────────┴───────────┐
- │ Loop active           │
+ │      Loop active      │
  └───────────┬───────────┘
              │
    ┌─────────┴─────────┐
@@ -339,7 +339,7 @@ This file manages the wait time and task synchronization for the Arduino, partic
              ▼
       ┌───────────────┐
       │ PrintQueue()  │
-      │ - afficher et │
-      │   vider queue │
+      │ - show and.   │
+      │   empty queue │
       └───────────────┘
 
