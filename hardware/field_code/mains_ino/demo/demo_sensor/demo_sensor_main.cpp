@@ -230,17 +230,19 @@ void loop() {
 
             // Tentative d'envoi 3 fois de suite 
             for (int attempt = 1; attempt <= 3; attempt++) {
+                uint8_t deviceId = 0;
+                if (lora.handshake(deviceId)) {
 
-                if (lora.sendPackets(lineToSend)) {
-                    DEBUG_LOG("Packet successfully sent");
-                    lastSDOffset = dataFile.position();
-                    break;
+                    if (lora.sendPackets(lineToSend)) {
+                        DEBUG_LOG("Packet successfully sent");
+                        lastSDOffset = dataFile.position();
+                        break;
 
-                } else {
-                    DEBUG_LOG("Attempt n " + String(attempt) +" failed");
-                    if (attempt < 3) delay(5000);//decreased for demo version
-                }
-            }
+                    } else {
+                        DEBUG_LOG("Attempt n " + String(attempt) +" failed");
+                        if (attempt < 3) delay(5000);//decreased for demo version
+                    }
+            }}
             if (!dataFile.available()) {
                 rattrapage = false;
             }

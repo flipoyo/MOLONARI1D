@@ -1,0 +1,11 @@
+adafruit/Adafruit BusIO @ ^1.14.0
+SD
+LoRaModem
+MKRWAN
+Arduino Low Power
+RTCLib
+LoRa
+RTCZero
+LoRaWAN
+Queue
+FlashStorage
