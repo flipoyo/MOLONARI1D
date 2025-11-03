@@ -1,17 +1,8 @@
 # MOLONARI Hardware Programming
 
-This directory contains all hardware-related code and documentation for the MOLONARI ecosystem, organized for efficient collaboration between hardware developers, protocol engineers, and system integrators.
+This directory contains all hardware-related documentation and code for the MOLONARI1D sensors network, organized for efficient collaboration between hardware developers, protocol engineers, and system integrators.
 
-## Integration with Device/ Structure
-
-This `hardware/` directory provides a reorganized, team-oriented view of the hardware components found in the original `Device/` structure:
-
-- **hardware/** ↔ **Device/hardwareProgramming/** - Organized firmware development  
-- **hardware/docs/** ↔ **Device/hardwareProgramming/Documentation/** - Consolidated documentation
-- **hardware/deployment/** ↔ **Device/installationSystem/** - Field deployment guides
-- **hardware/shared/** - Replaces duplicated `internals/` directories across projects
-
-This reorganization maintains backward compatibility while improving development workflows and reducing code duplication.
+If you want to build a MOLONARI1D device, you can dive directly into the `docs/` folder.
 
 ## Directory Structure
 
@@ -95,7 +86,7 @@ arduino-cli compile --fqbn arduino:samd:mkrwan1310 testArduinoLoRaWAN.ino
 
 ## Component Overview
 
-### Sensor Nodes
+### 🔍 Sensor Nodes
 
 **Temperature Sensors** (`sensors/temperature/`) :
 - **Purpose**: Underwater temperature monitoring with 15-minute intervals
@@ -107,7 +98,7 @@ arduino-cli compile --fqbn arduino:samd:mkrwan1310 testArduinoLoRaWAN.ino
   - Automatic retry mechanism (up to 6 attempts)
 
 
-### Relay Stations
+### 🛜 Relay Stations
 
 **Main Relay** :
 - **Purpose**: Aggregate data from multiple sensor nodes
@@ -202,3 +193,14 @@ It has its onw documentation it the repertory.
 - **Energy Harvesting**: Solar and thermal energy collection
 - **Data Compression**: Reduced transmission bandwidth
 - **Fault Tolerance**: Redundant communication pathways
+
+## Integration with Device/ Structure
+
+This `hardware/` directory provides a reorganized, team-oriented view of the hardware components found in the original `Device/` structure:
+
+- **hardware/** ↔ **Device/hardwareProgramming/** - Organized firmware development  
+- **hardware/docs/** ↔ **Device/hardwareProgramming/Documentation/** - Consolidated documentation
+- **hardware/deployment/** ↔ **Device/installationSystem/** - Field deployment guides
+- **hardware/shared/** - Replaces duplicated `internals/` directories across projects
+
+This reorganization maintains backward compatibility while improving development workflows and reducing code duplication.
