@@ -243,11 +243,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10IntrinK, n, lambda_s, rhos_cs, q_s = layer.params
+            IntrinK, n, lambda_s, rhos_cs, q_s = layer.get_physical_params()
             if verbose:
                 print(
                     "--- Compute Solve Transi ---",
-                    f"One layer : moinslog10IntrinK = {moinslog10IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}, q_s = {q_s}",
+                    f"One layer : IntrinK = {IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}, q_s = {q_s}",
                     sep="\n",
                 )
 
@@ -255,15 +255,15 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             Ss = n / heigth  # l'emmagasinement spécifique = porosité sur la hauteur
 
             ## pour le cas uni-couche, on le simule dans H_stratified avec deux couches de mêmes paramètres
-            array_moinslog10IntrinK = np.array([moinslog10IntrinK, moinslog10IntrinK])
-            # array_K = 10 ** (-array_moinslog10IntrinK * 1.0)
-            array_K = (RHO_W * G * 10.0**-array_moinslog10IntrinK) * 1.0 / MU
+            array_IntrinK = np.array([IntrinK, IntrinK])
+            # array_K = 10 ** (-array_IntrinK * 1.0)
+            array_K = (RHO_W * G * 10.0**-array_IntrinK) * 1.0 / MU
             array_q_s = np.array([q_s, q_s])
             array_Ss = np.array([Ss, Ss])
             list_zLow = np.array([0.2])
             inter_cara = np.array([[nb_cells // 2, 0]])
             z_solve = self._z_solve.copy()
-            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_s_list = (
+            IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_s_list = (
                 getListParameters(layersList, nb_cells)
             )
             Ss_list = n_list / heigth
@@ -272,7 +272,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             H_strat = H_stratified(
                 Ss_list,
-                moinslog10IntrinK_list,
+                IntrinK_list,
                 n_list,
                 lambda_s_list,
                 rhos_cs_list,
@@ -298,7 +298,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_strat = T_stratified(
                 nablaH,
                 Ss_list,
-                moinslog10IntrinK_list,
+                IntrinK_list,
                 n_list,
                 lambda_s_list,
                 rhos_cs_list,
@@ -325,15 +325,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             self._temperatures = T_res
             self._H_res = H_res  # stocke les résultats
 
-            k = 10 ** (
-                -moinslog10IntrinK
-            )  # NF This is wrong since we are now using the intrinsec permeability
+            
             K = calc_K(
-                k
+                IntrinK
             )  # NF it will need to be changed with the dependency to temperature
             if verbose:
                 print(
-                    f"Solving the flow with intrinsec permeability {k}, and permeability {K}"
+                    f"Solving the flow with intrinsec permeability {IntrinK}, and permeability {K}"
                 )
             self._flows = -K * nablaH  # calcul du débit spécifique
 
@@ -375,14 +373,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_riv = self._T_riv
             T_aq = self._T_aq
 
-            moinslog10IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_s_list = getListParameters(
+            IntrinK_list, n_list, lambda_s_list, rhos_cs_list, q_s_list = getListParameters(
                 layersList, nb_cells)
         
-            array_moinslog10IntrinK = np.array([float(layer.params.moinslog10IntrinK) for layer in self.all_layers])
-            array_k = 10 ** (-array_moinslog10IntrinK)
+            array_IntrinK = np.array([float(layer.get_physical_params().IntrinK) for layer in self.all_layers])
+            array_k = 10 ** (-array_IntrinK)
             array_K = calc_K(array_k)
             heigth = abs(self._real_z[-1] - self._real_z[0])
-            array_Ss = np.array([float(x.params.n) for x in layersList]) / heigth
+            array_Ss = np.array([float(x.get_physical_params().n) for x in layersList]) / heigth
             array_eps = np.zeros(len(layersList))  # eps de chaque couche
             array_eps[0] = layersList[0].zLow
 
@@ -523,7 +521,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             a = 1  # à adapter
             H_strat = H_stratified(
                 Ss_list,
-                moinslog10IntrinK_list,
+                IntrinK_list,
                 n_list,
                 lambda_s_list,
                 rhos_cs_list,
@@ -547,14 +545,13 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             self._H_res = H_res  # stocke les résultats
 
             # ###
-            # H_res = HTK_stratified(a,Ss_list,moinslog10IntrinK_list,n_list,lambda_s_list,rhos_cs_list,all_dt,dz,H_init,H_riv,H_aq,T_init,T_riv,T_aq,array_K,array_Ss,list_zLow,z_solve,inter_cara,isdtconstant,q_s_list,alpha=ALPHA,N_update_Mu=N_UPDATE_MU,).compute_HTK_stratified()
+            # H_res = HTK_stratified(a,Ss_list,IntrinK_list,n_list,lambda_s_list,rhos_cs_list,all_dt,dz,H_init,H_riv,H_aq,T_init,T_riv,T_aq,array_K,array_Ss,list_zLow,z_solve,inter_cara,isdtconstant,q_s_list,alpha=ALPHA,N_update_Mu=N_UPDATE_MU,).compute_HTK_stratified()
             # ###
 
             # création d'un tableau du gradient de la charge selon la profondeur, calculé à tout temps
             # conversion of intrinsec permeability to permeability missing
-            k_list = 10**-moinslog10IntrinK_list
             # K_list = RHO_W * G * k_list * 1.0 / MU
-            K_list = calc_K(k_list)
+            K_list = calc_K(IntrinK_list)
             # print(f"calculating flow in multilayer with permeability {K_list}")
 
             nablaH = H_strat.nablaH()
@@ -626,7 +623,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_strat = T_stratified(
                 nablaH,
                 Ss_list,
-                moinslog10IntrinK_list,
+                IntrinK_list,
                 n_list,
                 lambda_s_list,
                 rhos_cs_list,
@@ -997,7 +994,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             ranges = np.empty((nb_layer, nb_param, 2))
             for l in range(nb_layer):
                 for p in range(nb_param):
-                    lower_bound, upper_bound = self.all_layers[l].Prior_list[p].range
+                    lower_bound, upper_bound = self.all_layers[l].Prior_list[p].mcmc_range
                     ranges[l, p] = [lower_bound, upper_bound]  # On prend les priors du paramètre p de la couche l. 
 
 
@@ -1031,7 +1028,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             for j, column in enumerate(multi_chain):
                 column.sample_params_from_priors()
-                X[j] = column.get_list_current_params()
+                X[j] = column._get_list_mcmc_params()
                 Energy[j] = compute_energy(
                         _temp_iter_chain[j][ind_ref], temp_ref, sigma2, sigma2_distrib
                     )
@@ -1077,7 +1074,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                     # On met à jour les paramètres de la colonne j selon X_proposal pour appeler le modèle direct et calculer l'énergie:
                     for l, layer in enumerate(column.all_layers):
-                        layer.params = Param(*X_proposal[l])
+                        layer.mcmc_params = Param(*X_proposal[l])
 
                     
                     # Calcul du profil de température associé aux nouveaux paramètres
@@ -1108,7 +1105,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         dX = np.zeros((nb_layer, nb_param))
                         # On remet les anciens paramètres pour la colonne :
                         for l, layer in enumerate(column.all_layers):
-                            layer.params = Param(*X[j][l])
+                            layer.mcmc_params = Param(*X[j][l])
 
                     # Mise à jour du vecteur saut pour chaque couche
                     for l in range(nb_layer):
@@ -1167,7 +1164,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     
                     # Mise à jour des paramètres de la colonne j :
                     for l, layer in enumerate(column.all_layers):
-                        layer.params = Param(*X_proposal[l])
+                        layer.mcmc_params = Param(*X_proposal[l])
                     
                     # Calcul du profil de température associé aux nouveaux paramètres
                     column.compute_solve_transi(verbose=False)
@@ -1199,7 +1196,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                         self._states.append(self._states[-nb_chain])
                         # On remet les anciens paramètres pour la colonne :
                         for l, layer in enumerate(column.all_layers):
-                            layer.params = Param(*X[j][l])
+                            layer.mcmc_params = Param(*X[j][l])
                     
                 if i % n_sous_ech_iter == 0:  # sous échantillonnage
                     # Si le numéro de l'itération i est un multiple de n_sous_ech_iter, on stocke
@@ -1265,7 +1262,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             # on initialise la colonnne pour les paramètres qui minimisent l'énergie
             for l, layer in enumerate(self.all_layers):
-                layer.params = Param(*self._states[0].layers[l])
+                layer.mcmc_params = Param(*self._states[0].layers[l])
 
             self._acceptance = np.zeros(nb_iter)
 
@@ -1277,7 +1274,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             for i in trange(nb_iter, desc="Mcmc Computation", file=sys.stdout):
 
                 # on stocke les paramètres avant la proposition de pas
-                X = self.get_list_current_params()
+                X = self._get_list_mcmc_params()
 
                 # on fait une proposition de pas 
                 self.perturb_params()
@@ -1313,7 +1310,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         
                     # On remet les paramètres précédent pour la colonne
                     for l, layer in enumerate(self.all_layers):
-                        layer.params = Param(*X[l])
+                        layer.mcmc_params = Param(*X[l])
                             
 
                 if i % n_sous_ech_iter == 0:
@@ -1370,7 +1367,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     def sample_param(self):
         # retourne aléatoirement un des couples de paramètres parlesquels est passé la MCMC
         return choice(
-            [[layer.params for layer in state.layers] for state in self._states]
+            [[layer.mcmc_params for layer in state.layers] for state in self._states]
         )
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
@@ -1378,7 +1375,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     def get_best_param(self):
         """return the params that minimize the energy"""
         return [
-            layer.params for layer in min(self._states, key=attrgetter("energy")).layers
+            layer.mcmc_params for layer in min(self._states, key=attrgetter("energy")).layers
         ]  # retourne le couple de paramètres minimisant l'énergie par lequels est passé la MCMC
 
     @compute_mcmc.needed
@@ -1392,66 +1389,66 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         """works independently of the type of MCMC"""
         best_layers = min(self._states, key=attrgetter("energy")).layers
         for l, layer in enumerate(self.all_layers):
-            layer.params = Param(*best_layers[l])
+            layer.mcmc_params = Param(*best_layers[l])
 
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
     def get_all_params(self):
-        n_layers = len(self.all_layers)
-        n_params = len(self.all_layers[0].params)
-        n_states = len(self._states)
-        res = np.empty((n_layers, n_states, n_params))
-        for i in range(n_layers):
-            for j, state in enumerate(self._states):
-                res[i][j] = np.array(state.layers[i])
-        return res
+        """
+        Retourne l'historique complet des paramètres PHYSIQUES pour chaque couche.
+        Cette version corrigée sait comment traduire l'historique des valeurs MCMC.
+        """
+        all_physical_params_history = []
+        # self.all_layers contient les vrais objets Layer avec leurs Priors (les "traducteurs")
+        layers_with_priors = self.all_layers
+        
+        # self._states contient l'historique des valeurs de la MCMC (des tableaux NumPy)
+        for state in self._states:
+            # state.layers est un tableau NumPy de la forme (nb_couches, nb_parametres)
+            mcmc_params_for_state = state.layers
+            physical_state_params = []
+            
+            # On parcourt chaque couche du modèle
+            for l, layer_obj in enumerate(layers_with_priors):
+                # On récupère les paramètres MCMC pour cette couche à cet état de la chaîne
+                mcmc_params_for_layer = mcmc_params_for_state[l]
+                
+                # On utilise les Priors de la couche pour traduire les valeurs MCMC en valeurs physiques
+                physical_vals = [
+                    prior.mcmc_to_physical(val)
+                    for prior, val in zip(layer_obj.Prior_list, mcmc_params_for_layer)
+                ]
+                physical_state_params.append(Param(*physical_vals))
+            
+            all_physical_params_history.append(physical_state_params)
+        return all_physical_params_history
 
-    all_params = property(get_all_params)
+    # Les autres getters deviennent beaucoup plus simples car ils utilisent la fonction ci-dessus
+    def get_all_IntrinK(self):
+        """Retourne l'historique des valeurs PHYSIQUES de IntrinK."""
+        all_params = self.get_all_params()
+        return [[p.IntrinK for p in state_params] for state_params in all_params]
 
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
-    def get_all_moinslog10IntrinK(self):
-        # retourne toutes les valeurs de moinslog10IntrinK (K : perméabilité) par lesquels est passé la MCMC
-        return [
-            [layer.params.moinslog10IntrinK for layer in state.layers]
-            for state in self._states
-        ]
-
-    all_moinslog10IntrinK = property(get_all_moinslog10IntrinK)
-
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
     def get_all_n(self):
-        # retourne toutes les valeurs de n (n : porosité) par lesquels est passé la MCMC
-        return [[layer.params.n for layer in state.layers] for state in self._states]
+        all_params = self.get_all_params()
+        return [[p.n for p in state_params] for state_params in all_params]
 
-    all_n = property(get_all_n)
-
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
     def get_all_lambda_s(self):
-        # retourne toutes les valeurs de lambda_s (lambda_s : conductivité thermique du solide) par lesquelles est passé la MCMC
-        return [
-            [layer.params.lambda_s for layer in state.layers] for state in self._states
-        ]
+        all_params = self.get_all_params()
+        return [[p.lambda_s for p in state_params] for state_params in all_params]
 
-    all_lambda_s = property(get_all_lambda_s)
-
-    # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
-    @compute_mcmc.needed
     def get_all_rhos_cs(self):
-        # retourne toutes les valeurs de rho_cs (rho_cs : produite de la densité par la capacité calorifique spécifique du solide) par lesquelles est passé la MCMC
-        return [
-            [layer.params.rhos_cs for layer in state.layers] for state in self._states
-        ]
-
-    all_rhos_cs = property(get_all_rhos_cs)
+        all_params = self.get_all_params()
+        return [[p.rhos_cs for p in state_params] for state_params in all_params]
 
     def get_all_q_s(self):
-        # retourne toutes les valeurs de q_s (q_s : débit spécifique de source en s-1) par lesquelles est passé la MCMC
-        return [[layer.params.q_s for layer in state.layers] for state in self._states]
+        all_params = self.get_all_params()
+        return [[p.q_s for p in state_params] for state_params in all_params]
 
+    # Les propriétés pointent vers les nouvelles méthodes
+    all_IntrinK = property(get_all_IntrinK)
+    all_n = property(get_all_n)
+    all_lambda_s = property(get_all_lambda_s)
+    all_rhos_cs = property(get_all_rhos_cs)
     all_q_s = property(get_all_q_s)
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
@@ -1939,54 +1936,57 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     @compute_mcmc.needed
     def plot_all_param_pdf(self):
+        """
+        Affiche les fonctions de densité de probabilité (PDF) a posteriori pour chaque
+        paramètre de chaque couche, sous forme d'histogrammes.
+        Version finale corrigée.
+        """
         nb_layers = len(self.all_layers)
-        nb_params = len(self.all_layers[0].params)
-        fig, axes = plt.subplots(nb_layers, nb_params, figsize=(30, 20))
+        nb_params = len(PARAM_LIST)
+        
+        all_params_history_list = self.get_all_params()
 
-        if nb_layers == 1:
-            axes = axes[np.newaxis, :]
+        if not all_params_history_list:
+            print("Aucune donnée MCMC à afficher.")
+            return
 
-        for id_l, layer_distribs in enumerate(self.get_all_params()):
+        # On convertit la liste en un tableau NumPy 3D pour une manipulation facile.
+        all_params_array = np.array(all_params_history_list)
 
-            axes[id_l, 0].hist(layer_distribs[::, 0])
-            axes[id_l, 0].set_title(f"Couche {id_l + 1} : moinslog10IntrinK")
-            axes[id_l, 1].hist(layer_distribs[::, 1])
+        # CORRECTION : On simplifie la création des axes.
+        # L'argument squeeze=False garantit que 'axes' est TOUJOURS un tableau 2D,
+        # même s'il n'y a qu'une seule couche (forme (1, 5)).
+        fig, axes = plt.subplots(
+            nrows=nb_layers, 
+            ncols=nb_params, 
+            figsize=(15, 3 * nb_layers if nb_layers > 1 else 5), 
+            squeeze=False
+        )
+        fig.suptitle("Distribution a posteriori des paramètres (PDF)", fontsize=16)
+        
+        # On supprime le bloc 'if nb_layers == 1:' qui était la source de l'erreur.
+
+        for id_l in range(nb_layers):
+            # On extrait l'historique de tous les paramètres pour cette couche.
+            layer_distribs = all_params_array[:, id_l, :]
+
+            # Le reste du code est maintenant correct.
+            axes[id_l, 0].hist(layer_distribs[:, 0]) # On utilise [:, 0] qui est plus standard
+            axes[id_l, 0].set_title(f"Couche {id_l + 1} : IntrinK")
+            
+            axes[id_l, 1].hist(layer_distribs[:, 1])
             axes[id_l, 1].set_title(f"Couche {id_l + 1} : n")
-            axes[id_l, 2].hist(layer_distribs[::, 2])
+            
+            axes[id_l, 2].hist(layer_distribs[:, 2])
             axes[id_l, 2].set_title(f"Couche {id_l + 1} : lambda_s")
-            axes[id_l, 3].hist(layer_distribs[::, 3])
+            
+            axes[id_l, 3].hist(layer_distribs[:, 3])
             axes[id_l, 3].set_title(f"Couche {id_l + 1} : rhos_cs")
-            axes[id_l, 4].hist(layer_distribs[::, 4])
+            
+            axes[id_l, 4].hist(layer_distribs[:, 4])
             axes[id_l, 4].set_title(f"Couche {id_l + 1} : q_s")
 
-    @compute_mcmc.needed
-    def plot_darcy_flow_quantile(self):
-        temps_en_jours = self.create_time_in_day()
-
-        fig, axes = plt.subplots(
-            1, 3, figsize=(20, 10), sharex="col", sharey="row", constrained_layout=True
-        )
-        axes[0].set_ylabel("Débit en m/s")
-
-        # Store the image objects to use for the color bar
-        im_list = []
-        for i, q_s in enumerate(self.get_quantiles()):
-            im = axes[i].imshow(
-                self.get_flows_quantile(q_s),
-                aspect="auto",
-                cmap="Spectral_r",
-                extent=[0, temps_en_jours[-1], self._real_z[-1], self._real_z[0]],
-            )
-            axes[i].set_title(f"Darcy flow quantile : {100*q_s} %")
-            axes[i].set_xlabel("Time in days)")
-            im_list.append(im)
-
-        # Add a common color bar
-        cbar = fig.colorbar(
-            im_list[0], ax=axes, orientation="vertical", fraction=0.02, pad=0.04
-        )
-        cbar.set_label("Flow Rate (m/s)")
-
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.show()
 
     def print_sensor_file(self, fp, senType, senName):
@@ -2097,22 +2097,33 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     # Function updating the parameters of the different layers of the column with the sampled values from the priors
         
         for layer in self.all_layers:
-            layer.params = Param(layer.Prior_moinslog10IntrinK.sample(), layer.Prior_n.sample(), layer.Prior_lambda_s.sample(), layer.Prior_rhos_cs.sample(), layer.Prior_q_s.sample())
+            layer.mcmc_params = Param(layer.Prior_IntrinK.sample(), layer.Prior_n.sample(), layer.Prior_lambda_s.sample(), layer.Prior_rhos_cs.sample(), layer.Prior_q_s.sample())
 
+    def _get_list_mcmc_params(self):
+        """
+        Retourne les paramètres de TRAVAIL (MCMC) actuels de chaque couche.
+        Cette méthode est destinée à un usage INTERNE par l'algorithme MCMC.
+        """
+        return [layer.mcmc_params for layer in self.all_layers]
+    
     def get_list_current_params(self):
-        return [layer.params for layer in self.all_layers]
+        """
+        Retourne les paramètres PHYSIQUES actuels de chaque couche
+        en appelant la méthode de traduction.
+        """
+        return [layer.get_physical_params() for layer in self.all_layers]
     
     def perturb_params(self):
 
     # Function that updates the parameters of the different layers of the column with perturbated with restpect to the priors   
 
         for layer in self.all_layers:
-            layer.params = Param(
-                layer.Prior_moinslog10IntrinK.perturb(layer.params.moinslog10IntrinK),  # on perturbe la valeur précédente du paramètre moinslog10IntrinK selon l'écart type donné dans le prior
-                layer.Prior_n.perturb(layer.params.n),
-                layer.Prior_lambda_s.perturb(layer.params.lambda_s),
-                layer.Prior_rhos_cs.perturb(layer.params.rhos_cs),
-                layer.Prior_q_s.perturb(layer.params.q_s)
+            layer.mcmc_params = Param(
+                layer.Prior_IntrinK.perturb(layer.mcmc_params.IntrinK),  # on perturbe la valeur précédente du paramètre IntrinK selon l'écart type donné dans le prior
+                layer.Prior_n.perturb(layer.mcmc_params.n),
+                layer.Prior_lambda_s.perturb(layer.mcmc_params.lambda_s),
+                layer.Prior_rhos_cs.perturb(layer.mcmc_params.rhos_cs),
+                layer.Prior_q_s.perturb(layer.mcmc_params.q_s)
             )
 
 def compute_energy(temp_simul, temp_ref, sigma2, sigma2_distrib):
