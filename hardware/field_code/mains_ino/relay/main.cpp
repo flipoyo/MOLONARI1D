@@ -63,8 +63,6 @@ void setup() {
 void loop() {
     static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
     static Waiter waiter; //pour ne pas l'indenter dans le loop
-    waiter.startTimer();
-    // le temps d’intervalle est écoulé depuis la dernière tentative LoRa
 
     unsigned long currentTime = GetSecondsSinceMidnight();
     if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes * 1000UL) {
@@ -73,11 +71,11 @@ void loop() {
         lora.startLoRa();
 
         // Réception des paquets via LoRa
-        uint8_t deviceId = 0;
+        uint8_t deviceId = 0; // initialise avec packetNumber = 0 
         if (lora.handshake(deviceId)) {
             Serial.println("Handshake réussi. Réception des paquets...");
             int last = lora.receivePackets(receiveQueue);
-            lora.closeSession(last);
+            lora.sendPacket(last, FIN, ""); // Répond par un FIN de confirmation;
 
             // Met à jour le temps de la dernière tentative de réception
             lastAttempt = GetSecondsSinceMidnight();
@@ -94,6 +92,8 @@ void loop() {
                 for (int attempt = 1; attempt <= 3; attempt++) {
 
                     if (lora.sendPackets(line_config)) {
+                        uint8_t lastPacket = sendPackets(sendQueue);
+                        closeSession(lastPacket);
                         break;
 
                     } else {

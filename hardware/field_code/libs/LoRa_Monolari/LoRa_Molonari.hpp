@@ -39,7 +39,7 @@ public:
     bool handshake(uint8_t &shift);
     uint8_t sendPackets(std::queue<String> &sendQueue);
     int receivePackets(std::queue<String> &receiveQueue);
-    void closeSession(int lastPacket);
+    bool closeSession(int lastPacket);
 
     bool receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms = 15000);
 private:

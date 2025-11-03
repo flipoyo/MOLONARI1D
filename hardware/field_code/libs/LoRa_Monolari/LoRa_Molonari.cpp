@@ -181,6 +181,7 @@ uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue) {
             if (receivePacket(receivedPacketNumber, requestType, payload) && requestType == ACK && receivedPacketNumber == packetNumber) {
                 sendQueue.pop();
                 packetNumber++;
+                lastSDOffset = memoryline.nextmemoryoffset;
                 break;
             }
             retries++;
@@ -210,16 +211,17 @@ int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {
     return packetNumber;
 }
 
-void LoraCommunication::closeSession(int lastPacket) {
+bool LoraCommunication::closeSession(int lastPacket) {
     sendPacket(lastPacket, FIN, "");
     String payload; uint8_t packetNumber; RequestType requestType;
     int retries = 0;
     while (retries < 3) {
-        if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket) return;
+        if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket) return true;
         delay(100 * (retries + 1));
         sendPacket(lastPacket, FIN, "");
         retries++;
     }
+    return false
 }
 
 bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms) {
@@ -247,6 +249,7 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
                 // ACK **après** avoir stocké en RAM (et idéalement après écriture SD, mais on postpose)
                 sendPacket(packetNumber, ACK, "ACK");
             }
+            // close session ? 
             continue;
         }
 

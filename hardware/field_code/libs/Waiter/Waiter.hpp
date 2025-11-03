@@ -15,8 +15,6 @@ public:
     // Default constructor, no setup needed here
     Waiter();
 
-    void startTimer();
-
     void sleepUntil(uint32_t desired_waiting_time);
     
     void delayUntil(uint32_t desired_waiting_time, int role);

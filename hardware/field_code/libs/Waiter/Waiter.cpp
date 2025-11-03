@@ -32,11 +32,6 @@ void PrintQueue(std::queue<String> &receiveQueue) {
 // Default constructor
 Waiter::Waiter() {}
 
-// Start tracking time
-void Waiter::startTimer() {
-    starting_time = GetSecondsSinceMidnight();
-}
-
 // Sleep the Arduino until the desired waiting time passes
 void Waiter::sleepUntil(unsigned long desired_waiting_time) {
 
