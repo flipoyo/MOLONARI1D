@@ -16,12 +16,6 @@ std::vector<unsigned long> measurementTimesVec;
 std::vector<unsigned long> communicationTimesVec;
 
 
-
-
-// ------------------------------------------------------------
-// Initialisation RTC externe uniquement
-// ------------------------------------------------------------
-
 void InitialiseRTC() {
   if (!externalRtc.begin()) {
     Serial.println("Erreur lors de l'initialisation de la RTC externe !");
@@ -35,9 +29,6 @@ void InitialiseRTC() {
   Serial.println("RTC externe initialisée.");
 }
 
-// ------------------------------------------------------------
-// Fonctions utilitaires
-// ------------------------------------------------------------
 
 String UIntTo2DigitString(uint8_t x) {
   String str = String(x);
@@ -45,10 +36,6 @@ String UIntTo2DigitString(uint8_t x) {
   if (x >= 100) str.remove(2);
   return str;
 }
-
-// ------------------------------------------------------------
-// Fonctions temporelles
-// ------------------------------------------------------------
 
 String GetCurrentDate() {
   DateTime now = externalRtc.now();

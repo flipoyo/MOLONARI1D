@@ -43,52 +43,8 @@ void Waiter::sleepUntil(unsigned long desired_waiting_time) {
     //modifier cette fonction : pourquoi cet ajustement et ne pas juste faire dormir desiredWaitingTime ??
     unsigned long time_to_wait = (starting_time + desired_waiting_time) - GetSecondsSinceMidnight();
 
-    // Log the waiting time for debugging
     Serial.println("Sleeping for " + String(time_to_wait) + " ms");
 
-    // Sleep for the calculated time
     LowPower.deepSleep(time_to_wait);
 }
 
-
-// Wait without sleeping to handle other tasks // cette fonction n'est jamais utilisée et doit etre supprimée
-void Waiter::delayUntil(uint32_t desired_waiting_time, int role) {
-    unsigned long end_date = starting_time + desired_waiting_time;
-
-    // Loop until the time is up
-    while (GetSecondsSinceMidnight() < end_date) {
-        Serial.println("Starting new communication session...");
-
-        // Set up LoRa communication
-        LoraCommunication lora(868E6, 0xbb, 0xaa, static_cast<RoleType>(role));
-        Reader reader;
-        lora.startLoRa();
-        uint8_t shift = 0;
-
-        // Perform handshake and connect to the reader
-        bool handshake = lora.handshake(shift);
-        bool readerConnected = reader.EstablishConnection(shift);
-
-        // If everything works, send the data
-        if (handshake && readerConnected) {
-            std::queue<String> sendQueue = reader.loadDataIntoQueue();
-            int nbofACK = lora.sendPackets(sendQueue);
-
-            // Update the cursor and close session
-            reader.UpdateCursor(nbofACK);
-            lora.closeSession(nbofACK);
-
-            // Clean up
-            lora.stopLoRa();
-            reader.Dispose();
-
-            return; // Exit since the task is done
-        }
-
-        // Clean up and retry on failure
-        lora.stopLoRa();
-        reader.Dispose();
-
-        delay(1); // Small delay to prevent the loop from running too fast
-    }
-}

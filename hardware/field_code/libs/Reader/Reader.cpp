@@ -1,3 +1,6 @@
+// Reader.cpp
+// Implementation of the Reader class to read configuration and measurement data from SD card.
+
 #include "Reader.hpp"
 #include <SD.h>
 #include <queue>
@@ -11,11 +14,9 @@
 #define SD_LOG_LN(msg)
 #endif
 
-// ----- Variables globales -----
 unsigned long LORA_INTERVAL_S = 3UL * 3600UL; // valeur par défaut
-
-// ----- Static member initialization -----
 unsigned int Reader::line_cursor = 0;
+
 
 // ==================== Lecture CSV ====================
 GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
@@ -104,37 +105,6 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
     return res;
 }
 
-// ==================== Waiter Methods ====================
-bool Reader::EstablishConnection(unsigned int shift)
-{
-    SD_LOG("SD Reader : establishing connection ...");
-
-    this->file = SD.open("data.csv"); // à adapter selon ton fichier réel
-    if (!this->file) {
-        SD_LOG_LN("Failed to open file");
-        return false;
-    }
-
-    this->file.seek(0);
-    if (shift > line_cursor) return false;
-    line_cursor -= shift;
-
-    unsigned int lineId = 0;
-    while ((lineId < line_cursor) && this->file.available()) {
-        this->file.readStringUntil('\n');
-        lineId++;
-    }
-
-    SD_LOG_LN(" Done");
-    return true;
-}
-
-void Reader::UpdateCursor(unsigned int shift)
-{
-    line_cursor += shift;
-    writetomyrecourdfile();
-    SD_LOG_LN("--------------UpdateCursor-------------" + String(line_cursor));
-}
 
 void Reader::writetomyrecourdfile()
 {
@@ -147,6 +117,16 @@ void Reader::writetomyrecourdfile()
         SD_LOG_LN("Failed to save message");
     }
 }
+
+
+void Reader::UpdateCursor(unsigned int shift)
+{
+    line_cursor += shift;
+    writetomyrecourdfile();
+    SD_LOG_LN("--------------UpdateCursor-------------" + String(line_cursor));
+}
+
+
 
 // toutes les fonctions jusqu'ici sont potentiellement inutiles 
 
