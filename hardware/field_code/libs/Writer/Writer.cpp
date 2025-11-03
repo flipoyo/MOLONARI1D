@@ -1,7 +1,6 @@
+// Writer.cpp
 // This file defines the Writer class, which is used to write a serie of measurements to a CSV file.
-// See internals/Writer.hpp for the class declarations.
 
-// Check that this file is included only once
 #ifndef WRITER_CLASS
 #define WRITER_CLASS
 
@@ -25,8 +24,6 @@
 // Define a comma string for separating CSV columns
 const std::string COMA = ";";
 
-// GetNextLine function: Returns the number of lines in the CSV file, representing the next ID.
-// SHOULD BE CALLED ONLY ONCE to initialize next_id
 unsigned int GetNextLine() {
   // TODO : Now, the function counts the number of lines. It would be more stable if it got the index of the last measurement.
 
@@ -44,7 +41,6 @@ unsigned int GetNextLine() {
   return number_of_lines;
 }
 
-//Class methods
 
 // WriteInNewLine: Writes a new line to the CSV file with all the fields from a Measure object
 void Writer::WriteInNewLine(Measure& data){

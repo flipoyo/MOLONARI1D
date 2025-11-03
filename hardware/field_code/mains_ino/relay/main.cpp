@@ -11,18 +11,37 @@
 #include "Time.hpp"
 
 
+#define DEBUG_MAIN
+#define DEBUG_MEASURE
+#define DEBUG_WRITER
+#define DEBUG_READER
+
+#ifdef DEBUG_MAIN
+#define DEBUG_LOG(msg) Serial.println(msg)
+#define DEBUG_LOG_NO_LN(msg) Serial.print(msg)
+#else
+#define DEBUG_LOG(msg)
+#define DEBUG_LOG_NO_LN(msg)
+#endif
+
+
 LoRaModem modem;
 
-LoraCommunication lora(3600000, 0xAA, 0xFF, RoleType::MASTER);
+
 
 LoraWANCommunication loraWAN;
 std::queue<String> sendingQueue;
+
+
 
 GeneralConfig res;
 
 unsigned long lastLoraSend = 0;
 unsigned long lastAttempt = 0;
 
+String appEui;
+String devEui;
+LoraCommunication lora(868E6, devEui, appEui, MASTER);
 bool modif = false;
 int CSPin = 5; // Pin CS par défaut
 
@@ -39,13 +58,14 @@ void setup() {
 
     Serial.println("\n=== Initialisation du Relais Molonari ===");
 
+
     // Lecture configuration CSV
     Reader reader;
     res=reader.lireConfigCSV("conf.csv", CSPin);
     Serial.println("Configuration chargée.");
 
     // Initialisation LoRa communication
-    lora = LoraCommunication(res.int_config.lora_intervalle_secondes, 0xAA, 0xFF, RoleType::MASTER);
+    lora = LoraCommunication(res.int_config.lora_intervalle_secondes, res.rel_config.appEui, res.rel_config.devEui, RoleType::MASTER);
 
     // Vérification SD
     if (!SD.begin(res.rel_config.CSPin)) {
@@ -63,11 +83,11 @@ void setup() {
 void loop() {
     static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
     static Waiter waiter; //pour ne pas l'indenter dans le loop
-    waiter.startTimer();
-    // le temps d’intervalle est écoulé depuis la dernière tentative LoRa
-
+    
     unsigned long currentTime = GetSecondsSinceMidnight();
-    if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes * 1000UL) {
+    DEBUG_LOG("Intervalle restant pour agir :"+ String(currentTime - lastAttempt) + " / " + String(res.int_config.lora_intervalle_secondes));
+    if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes en vrai, change pour les besoins du test
+        DEBUG_LOG("Fenêtre de communication LoRa atteinte, tentative de réception des paquets...");
 
         std::queue<String> receiveQueue;
         lora.startLoRa();
@@ -114,7 +134,11 @@ void loop() {
 
             // Envoi via LoRaWAN si intervalle complet atteint
 
-            if (loraWAN.begin(res.rel_config.appEui, res.rel_config.appKey)) {
+            appEui=res.rel_config.appEui;
+            devEui=res.rel_config.devEui;
+            
+
+            if (loraWAN.begin(appEui, devEui)) {
                 Serial.print("Envoi de ");
                 Serial.print(sendingQueue.size());
                     
