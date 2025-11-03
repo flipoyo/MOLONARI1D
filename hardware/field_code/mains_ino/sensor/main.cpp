@@ -5,6 +5,7 @@
 #include <LoRa.h>
 #include <string>
 #include <ArduinoLowPower.h>
+#include <MKRWAN.h>
 
 #include "Measure.hpp"
 #include "Writer.hpp"
@@ -26,6 +27,8 @@
 #define DEBUG_LOG(msg)
 #define DEBUG_LOG_NO_LN(msg)
 #endif
+
+LoRaModem modem;
 
 Sensor** sens;
 std::vector<double> toute_mesure;
