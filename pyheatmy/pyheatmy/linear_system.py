@@ -15,7 +15,7 @@ class Linear_system:
     def __init__(
         self,
         Ss_list,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         n_list,
         lambda_s_list,
         rhos_cs_list,
@@ -24,7 +24,7 @@ class Linear_system:
         H_init,
         T_init,
     ):
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.T_init = T_init
         self.n_list = n_list
         self.rhos_cs_list = rhos_cs_list
@@ -43,8 +43,8 @@ class Linear_system:
         return mu
 
     # @njit
-    def compute_K(self, moinslog10IntrinK_list):
-        return (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / self.mu_list
+    def compute_K(self, IntrinK_list):
+        return (RHO_W * G * IntrinK_list) * 1.0 / self.mu_list
 
     def compute_n_cell(self):
         return len(self.H_init)
@@ -87,7 +87,7 @@ class Linear_system:
         self.n_cell = self.compute_n_cell()
         self.n_times = self.compute_n_times()
         self.mu_list = self.compute_Mu(self.T_init)
-        self.K_list = self.compute_K(self.moinslog10IntrinK_list)
+        self.K_list = self.compute_K(self.IntrinK_list)
         self.rho_mc_m_list = self.compute_rho_mc_m_list()
         self.lambda_m_list = self.compute_lambda_m_list()
         self.ke_list = self.compute_ke_list()
@@ -102,7 +102,7 @@ class H_stratified(Linear_system):
     def __init__(
         self,
         Ss_list,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         n_list,
         lambda_s_list,
         rhos_cs_list,
@@ -123,7 +123,7 @@ class H_stratified(Linear_system):
     ):
         super().__init__(
             Ss_list,
-            moinslog10IntrinK_list,
+            IntrinK_list,
             n_list,
             lambda_s_list,
             rhos_cs_list,
@@ -138,7 +138,7 @@ class H_stratified(Linear_system):
         self.z_solve = z_solve
         self.T_init = T_init
         self.inter_cara = inter_cara
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.Ss_list = Ss_list
         self.all_dt = all_dt
         self.isdtconstant = isdtconstant
@@ -350,7 +350,7 @@ class T_stratified(Linear_system):
         self,
         nablaH,
         Ss_list,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         n_list,
         lambda_s_list,
         rhos_cs_list,
@@ -368,7 +368,7 @@ class T_stratified(Linear_system):
     ):
         super().__init__(
             Ss_list,
-            moinslog10IntrinK_list,
+            IntrinK_list,
             n_list,
             lambda_s_list,
             rhos_cs_list,
@@ -378,7 +378,7 @@ class T_stratified(Linear_system):
             T_init,
         )
         self.Ss_list = Ss_list
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.n_list = n_list
         self.lambda_s_list = lambda_s_list
         self.rhos_cs_list = rhos_cs_list
@@ -586,7 +586,7 @@ class HTK_stratified(Linear_system):
         list_zLow,
         z_solve,
         inter_cara,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         Ss_list,
         all_dt,
         isdtconstant,
@@ -599,7 +599,7 @@ class HTK_stratified(Linear_system):
     ):
         super().__init__(
             Ss_list,
-            moinslog10IntrinK_list,
+            IntrinK_list,
             n_list,
             lambda_s_list,
             rhos_cs_list,
@@ -617,7 +617,7 @@ class HTK_stratified(Linear_system):
         self.list_zLow = list_zLow
         self.z_solve = z_solve
         self.inter_cara = inter_cara
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.Ss_list = Ss_list
         self.all_dt = all_dt
         self.isdtconstant = isdtconstant

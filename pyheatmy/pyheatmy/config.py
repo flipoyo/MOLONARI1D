@@ -38,11 +38,16 @@ DEFAULT_sigmaT = CODE_scalar
 DEFAULT_time_step = 15  # 15mn
 DEFAULT_period = 1  # 1j
 
-# prior initialisation
+# paramètre pour les échelles de paramètres
+ZERO_DIVISION_THRESHOLD=1e-20
+LOG_SCALE_THRESHOLD= 1000**0.5 # Moyenne géométrique entre 1e1 et 1e2
+SYMLOG_MAGNITUDE_THRESHOLD = 0.1
+SYMLOG_LINTHRESH_RATIO= 1e2
 
-MOINSLOG10INTRINK_INTERVAL = (11, 15)
-MOINSLOG10INTRINK_SIGMA = 0.01
-MOINSLOG10INTRINK_DEFAULT = 13
+# prior initialisation 
+INTRINK_INTERVAL = (11, 15)
+INTRINK_SIGMA = 0.01
+INTRINK_DEFAULT = 13
 
 N_INTERVAL = (0.01, 0.25)
 N_SIGMA = 0.01
@@ -131,7 +136,7 @@ DEFAULT_MU = 1e-3
 # VALEURS
 NB_CELLS = 60
 GELMANRCRITERIA = 1.2
-PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q_s") #a priori sigma2 a un statut particulier
+PARAM_LIST = ("IntrinK", "n", "lambda_s", "rhos_cs", "q_s") #a priori sigma2 a un statut particulier
 NBCHAINS = 10
 # MCMC parametrization
 NITMCMC = 200
