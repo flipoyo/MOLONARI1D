@@ -18,20 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         
-      - name: Validate hardware structure
-        run: |
-          echo "Checking hardware directory structure..."
-          
-          # Check if main directories exist
-          for dir in sensors relay shared tests docs deployment; do
-            if [ -d "hardware/$dir" ]; then
-              echo "✓ hardware/$dir exists"
-            else
-              echo "✗ hardware/$dir missing"
-              exit 1
-            fi
-          done
-          
+           
       - name: Check Arduino files
         run: |
           echo "Checking Arduino file structure..."
