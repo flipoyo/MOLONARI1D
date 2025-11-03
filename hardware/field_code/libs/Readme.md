@@ -1,98 +1,99 @@
-# **Présentation des librairies**
+# **Presentation of libraries**
 
-Ce document présente les différentes libraires utilisées dans le projet Molonari pour les applications In the Air, ainsi que leur fonctionnement basique avec des schémas. 
+This document presents the various libraries used in the Molonari project for In the Air applications, as well as their basic operation with diagrams. 
 
 ## *LoRa_Molonari*
-LoRa_Molonari est une librairie permettant la communication sans fil entre deux cartes via le protocole LoRa : 
+LoRa_Molonari is a library enabling wireless communication between two boards via the LoRa protocol: 
 
-- Initialisation et gestion de la connexion LoRa : Démarrage et arrêt du module LoRa.
-- Envoi et réception de paquets : Avec gestion des checksums et des acquittements.
-- Handshake (poignée de main) : Établissement d’une connexion fiable entre un maître et un esclave.
-- Fermeture de session : Clôture propre de la communication.
+- Initialization and management of the LoRa connection: Starting and stopping the LoRa module.
+- Sending and receiving packets: With checksum and acknowledgment management.
+- Handshake: Establishing a reliable connection between a master and a slave.
+- Session closure: Clean termination of communication.
 
-+--------------------+
-| startLoRa()        |
-+--------------------+
-          |
-          v
-+--------------------+
-| Handshake MASTER   |
-|  SYN -> SYN-ACK    |
-|  ACK               |
-+--------------------+
-          |
-          v
-+--------------------+
-| sendPackets()      |
-|  - sendPacket()    |
-|  - attendre ACK    |
-+--------------------+
-          |
-          v
-+--------------------+
-| receivePackets()   |
-|  - receivePacket() |
-|  - envoyer ACK     |
-+--------------------+
-          |
-          v
-+--------------------+
-| closeSession()     |
-|  - envoyer FIN     |
-|  - attendre FIN    |
-+--------------------+
+
+
+       ┌────────────────────┐
+       │ startLoRa()        │
+       └────────────────────┘
+              │
+              ▼
+       ┌────────────────────┐
+       │ Handshake MASTER   │
+       │ SYN → SYN-ACK → ACK│
+       └────────────────────┘
+              │
+              ▼
+       ┌────────────────────┐
+       │ sendPackets()      │
+       │  - sendPacket()    │
+       │  - attendre ACK    │
+       └────────────────────┘
+              │
+              ▼
+       ┌────────────────────┐
+       │ receivePackets()   │
+       │  - receivePacket() │
+       │  - envoyer ACK     │
+       └────────────────────┘
+              │
+              ▼
+       ┌────────────────────┐
+       │ closeSession()     │
+       │  - envoyer FIN     │
+       │  - attendre FIN    │
+       └────────────────────┘
 
 
 ## *LoRaWan_Molonari*
-LoRaWAN_Molonari est une librairie permettant l’envoi de données via le réseau LoRaWAN :
+LoRaWAN_Molonari is a library that enables data to be sent via the LoRaWAN network:
 
-- Connexion OTAA : Activation du module LoRaWAN via AppEUI et AppKey.
-- Envoi de données : Gestion d’une file d’attente de messages à envoyer.
-- Gestion des erreurs : Retry automatique en cas d’échec d’envoi.
-- Configuration réseau : Adaptation du débit (ADR) et intervalle de poll.
+- OTAA connection: Activation of the LoRaWAN module via AppEUI and AppKey.
+- Data transmission: Management of a queue of messages to be sent.
+- Error handling: Automatic retry in case of transmission failure.
+- Network configuration: Adaptive data rate (ADR) and poll interval.
 
-┌────────────────────────┐
-|  File de messages      |
-|   (std::queue<String>) |
-└───────────┬────────────┘
-            |
-            v
-+------------------------+
-| LoraWANCommunication   |
-| sendQueue()            |
-+------------------------+
-            |
-            v
-+------------------------+
-| Boucle sur chaque msg  |
-|  - Modem.beginPacket() |
-|  - Modem.print(payload)|
-|  - Modem.endPacket()   |
-+------------------------+
-            |
-            v
-+------------------------+
-| Vérification d'erreur  |
-|  - si ok : supprimer  |
-|    message de la file  |
-|  - sinon : retry max 6 |
-+------------------------+
-            |
-            v
-+------------------------+
-| Transmission réussie ? |
-|  - Oui -> message log  |
-|  - Non -> abandon msg  |
-+------------------------+
+       ┌────────────────────────┐
+       │ Queue of messages      │
+       │ (std::queue<String>)   │
+       └───────────┬────────────┘
+              │
+              ▼
+       ┌────────────────────────┐
+       │ LoraWANCommunication   │
+       │ sendQueue()            │
+       └────────────────────────┘
+              │
+              ▼
+       ┌────────────────────────┐
+       │ Loop on every msg      │
+       │  - beginPacket()       │
+       │  - print(payload)      │
+       │  - endPacket()         │
+       └────────────────────────┘
+              │
+              ▼
+       ┌────────────────────────┐
+       │ Check error            │
+       │  - if ok : delete.     │
+       │  - else : retry (max6) │
+       └────────────────────────┘
+              │
+              ▼
+       ┌────────────────────────┐
+       │ Transmission sucess ?  │
+       │  - Yes → log message   │
+       │  - No  → quit msg      │
+       └────────────────────────┘
+
 
 
 ## *Measure*
-Measure est une librairie permettant de récupérer les données des capteurs et de les mettre en formes : 
+Measure is a library that allows you to retrieve data from sensors and format it:
 
-- une classe Sensor qui récupère les données des capteurs
-- une classe Measure qui met en forme les mesures que on lui envoie
+- a Sensor class that retrieves data from sensors
+- a Measure class that formats the measurements sent to it
 
-Les données sont renvoyées sous la forme " 'Measure n°' ID, date, heure, mesures " puis sont ensuite renvoyées à Writer.
+The data is returned in the form “ ‘Measure no.’ ID, date, time, measurements” and is then sent to Writer.
 
                   ┌───────────────────────────┐
                   │        Sensor             │
@@ -101,57 +102,60 @@ Les données sont renvoyées sous la forme " 'Measure n°' ID, date, heure, mesu
              ┌──────────────────┴──────────────────┐
              │                                     │
              ▼                                     ▼
-    ┌───────────────────┐                  ┌───────────────────┐
-    │ Constructeur par  │                  │ Constructeur complet│
-    │ défaut            │                  │ avec pins, offset,│
-    │ (dataPin=-1,...)  │                  │ scale, type, id   │
-    └─────────┬─────────┘                  └─────────┬─────────┘
+    ┌────────────────────┐                 ┌─────────────────────┐
+    │ Default constructor│                 │ Full constructor.   │
+    │                    │                 │ with pins, etc... │
+    │ (dataPin=-1,...)   │                 │                     │
+    └─────────┬──────────┘                 └─────────┬───────────┘
               │                                      │
-              └──────────────┐──────────────────────┘
+              └──────────────┐───────────────────────┘
                              ▼
-                    ┌─────────────────┐
-                    │ Sensor::Measure │
-                    │ 1. Active capteur (enablePin HIGH) │
-                    │ 2. Attente 200 ms                   │
-                    │ 3. Lecture analogique sur dataPin  │
-                    │ 4. Désactive capteur (LOW)         │
-                    │ 5. Retourne valeur (MESURE)        │
-                    └─────────┬─────────┘
+                    ┌────────────────────────────────────┐
+                    │ Sensor::Measure                    │
+                    │ 1. Active sensor (enablePin HIGH)  │
+                    │ 2. Wait 200 ms                     │
+                    │ 3. Read analogic on dataPin        │
+                    │ 4. Desactivates sensor (LOW)       │
+                    │ 5. Return measure (MESURE)         │
+                    └─────────┬──────────────────────────┘
                               │
                               ▼
                     ┌─────────────────┐
                     │   Measure       │
-                    └─────────┬─────────┘
+                    └─────────┬───────┘
                               │
                 ┌─────────────┴─────────────┐
                 ▼                           ▼
     ┌───────────────────────┐     ┌───────────────────────┐
     │ Measure::oneLine()    │     │ Measure::ToString()   │
-    │ - Récupère date/heure │     │ - Préfixe "Measure n°"│
-    │ - Parcourt vecteur    │     │ - Appelle oneLine()   │
-    │   channel[] pour      │     │ - Retourne chaîne     │
-    │   formater les valeurs│     └───────────────────────┘
-    │ - Retourne ligne CSV  │
+    │ - Gets date/hour      │     │ - Préfix "Measure n°" │
+    │ - Loop vecteur        │     │ - Call oneLine()      │
+    │   channel[] for       │     │ - Retunr strinf       │
+    │   formatting values.  │     └───────────────────────┘
+    │ - Return ligne CSV    │
     └───────────────────────┘
 
-## *Writer*
-Writer est une librairie permettant d'écrire les données sur la carte SD : 
 
-- Gestion des connexions (reconnexion automatique en cas de perte)
-- Logs de debug optionnels
-- IDs uniques pour chaque mesure
-- Formatage CSV standardisé et écriture sur la carte
+## *Writer*
+Writer is a library that allows you to write data to the SD card:
+
+- Connection management (automatic reconnection in case of loss)
+- Optional debug logs
+- Unique IDs for each measurement
+- Standardized CSV formatting and writing to the card
+
+
 
 ┌───────────────────────────────┐
 │          CAPTEURS             │
-│ (Mesure via Sensor/Measure)   │
+│ (Measure via Sensor/Measure)  │
 └───────────────┬───────────────┘
                 │
                 ▼
 ┌───────────────────────────────┐
 │          MEASURE              │
-│ - Contient les valeurs        │
-│ - Formate en CSV (ToString)  │
+│ - Contains values.            │
+│ - Formats as CSV (ToString)   │
 └───────────────┬───────────────┘
                 │
                 ▼
@@ -159,32 +163,31 @@ Writer est une librairie permettant d'écrire les données sur la carte SD :
 │           WRITER              │
 │                               │
 │ LogData()                     │
-│ ├─ ApplyContent() → Remplit    │
-│ │   les channels               │
-│ ├─ Vérifie la connexion SD     │
-│ ├─ WriteInNewLine() → Écriture│
-│ │   CSV et flush               │
-│ └─ Incrémente next_id          │
+│ ├─ ApplyContent() → Fills     │
+│ │    channels                 │
+│ ├─ Check SD connexion.        │
+│ ├─ WriteInNewLine() → Write   │
+│ │   CSV and flush             │
+│ └─ Increments next_id         │
 │                               │
-│ Reconnect() → Restaure SD si  │
-│ perte de connexion             │
-│ Dispose() → Ferme fichier      │
+│ Reconnect() → Restaure SD if  │
+│ loss of connexion             │
+│ Dispose() → Close file        │
 └───────────────┬───────────────┘
                 │
                 ▼
 ┌───────────────────────────────┐
 │             SD                │
-│ - Stocke les mesures au format│
-│   CSV                         │
+│ - Keeps measures as CSV.      │
 └───────────────────────────────┘
 
 ## *Reader*
-Reader est une librairie permettant de récupérer les données enregistrées sur la carte SD après qu'elles aient écrites par Writer: 
+Reader is a library that allows you to retrieve data stored on the SD card after it has been written by Writer:
 
-- Lire un fichier CSV de configuration pour un système embarqué (paramètres LoRa, capteurs, etc.)
-- Gérer un curseur de lecture pour un fichier de données (data.csv)
-- Charger les données dans une file d’attente pour traitement ultérieur
-- Sauvegarder la position du curseur pour reprendre la lecture après une coupu
+- Read a CSV configuration file for an embedded system (LoRa settings, sensors, etc.)
+- Manage a read cursor for a data file (data.csv)
+- Load data into a queue for later processing
+- Save the cursor position to resume reading after a power failure
 
                        ┌─────────────────────────────┐
                        │        Reader               │
@@ -192,52 +195,50 @@ Reader est une librairie permettant de récupérer les données enregistrées su
                                      │
            ┌─────────────────────────┴─────────────────────────┐
            ▼                                                   ▼
- ┌─────────────────────┐                           ┌─────────────────────────┐
- │ lireConfigCSV()     │                           │ SD file operations      
- │ - Ouvre fichier CSV │                           │ (data.csv, cursor_position.txt
- │ - Lit ligne par     │                           └─────────┬─────────────
- │   ligne             │                                     │
- │ - Ignore commentaires et vides                          ▼
- │ - Sépare en tokens (id, type, pin, offset, scale, id_capteur) 
- │ - Remplit liste_capteurs vector<SensorConfig> 
+ ┌─────────────────────┐                           ┌────────────────────────────────┐
+ │ lireConfigCSV()     │                           │ SD file operations             │
+ │ - Opens file CSV    │                           │ (data.csv, cursor_position.txt)│
+ │ - Lit line per      │                           └─────────┬──────────────────────┘
+ │   line              │                                     │
+ │ - Cuts in tokens    │
+ │ - Fills liste_capteurs vector<SensorConfig> 
  └─────────────────────┘
                                      │
                                      ▼
-                       ┌─────────────────────────────┐
-                       │ EstablishConnection(shift)  │
-                       │ - Ouvre fichier data.csv    │
-                       │ - Se place au curseur       │
-                       │ - Permet lecture séquentielle│
-                       └─────────────┬───────────────┘
+                       ┌──────────────────────────────┐
+                       │ EstablishConnection(shift)   │
+                       │ - Opens file data.csv        │
+                       │ - Gets cursor.               │
+                       │ - allows reading             │  
+                       └─────────────┬────────────────┘
                                      │
            ┌─────────────────────────┴─────────────────────────┐
            ▼                                                   ▼
  ┌─────────────────────┐                           ┌─────────────────────────┐
  │ UpdateCursor(shift) │                           │ loadDataIntoQueue()     │
- │ - Décale line_cursor│                           │ - Lit les prochaines    │
- │ - Sauvegarde curseur│                           │   lignes dans la SD     │
- │   dans cursor.txt   │                           │ - Remplit queue<String> │
- └─────────────────────┘                           └─────────┬─────────────┘
+ │ - Moves line_cursor │                           │ - Reads following.      │
+ │ - Sauvegarde curseur│                           │   lines dans la SD      │
+ │   dans cursor.txt   │                           │ - fills queue<String>   │
+ └─────────────────────┘                           └─────────┬───────────────┘
                                      │
                                      ▼
-                       ┌─────────────────────────────┐
-                       │ ReadMeasure() / IsDataAvailable() │
-                       │ - Lit ligne suivante          │
-                       │ - Vérifie disponibilité       │
-                       └─────────────┬───────────────┘
+                       ┌─────────────────────────────────────┐
+                       │ ReadMeasure() / IsDataAvailable()   │
+                       │ - Reads following line              │
+                       │ - Check disponibility.              │
+                       └─────────────┬───────────────────────┘
                                      │
                                      ▼
                        ┌─────────────────────────────┐
                        │ Dispose()                   │
-                       │ - Ferme le fichier SD        │
+                       │ - close SD file.            │
                        └─────────────────────────────┘
 
 ## *Time*
-Ce fichier gère le temps et les horaires des mesures pour le système basé sur la carte MKR. Il utilise à la fois l’horloge interne de la carte (RTCZero) et une horloge externe (RTC_PCF8523) pour assurer la précision et la persistance après coupure d’alimentation.
-
+This file manages the time and measurement schedules for the MKR board-based system. It uses both the board's internal clock (RTCZero) and an external clock (RTC_PCF8523) to ensure accuracy and persistence after power loss.
                  ┌──────────────────────────┐
-                 │  Lecture config CSV      │
-                 │  (freq_mesure & freq_LoRa) │
+                 │  Read config CSV         │
+                 │  (freq_mesure&freq_LoRa) │
                  └─────────────┬────────────┘
                                │
                                ▼
@@ -249,21 +250,21 @@ Ce fichier gère le temps et les horaires des mesures pour le système basé sur
           ┌─────────────────────┴─────────────────────┐
           │                                           │
           ▼                                           ▼
- ┌─────────────────────┐                     ┌─────────────────────┐
- │ Synchronisation RTC  │                     │ Initialisation vecteur│
- │ interne ↔ externe    │                     │ measurementTimesVec │
- └─────────┬───────────┘                     └─────────┬───────────┘
+ ┌─────────────────────┐                     ┌───────────────────────┐
+ │ RTC synchro         │                     │ Initialisation vecteur│
+ │ intern ↔ extern.    │                     │ measurementTimesVec   │
+ └─────────┬───────────┘                     └─────────┬─────────────┘
            │                                           │
            ▼                                           ▼
-  ┌─────────────────────┐                   ┌─────────────────────────┐
-  │ Obtenir date/heure  │                   │ Calculer temps écoulé   │
-  │ GetCurrentDate/Hour │                   │ depuis minuit           │
-  └─────────┬───────────┘                   └─────────┬─────────────┘
+  ┌─────────────────────┐                   ┌────────────────────────┐
+  │ Get date/hour.      │                   │ Calculates time        │
+  │ GetCurrentDate/Hour │                   │ since midnight         │
+  └─────────┬───────────┘                   └─────────┬──────────────┘
             │                                            │
             ▼                                            ▼
-   ┌─────────────────────┐                     ┌─────────────────────────┐
-   │ Initialiser compteur│                     │ Déterminer prochain     │
-   │ de mesures           │                     │ instant de mesure       │
+   ┌─────────────────────┐                     ┌───────────────────────┐
+   │ Initialises loop    │                     │ Determines next       │
+   │ measures            │                     │ measurement time      │
    └─────────┬───────────┘                     └─────────┬─────────────┘
              │                                            │
              └───────────────────┬────────────────────────┘
@@ -284,15 +285,14 @@ Ce fichier gère le temps et les horaires des mesures pour le système basé sur
                                  │
                                  ▼
                       ┌─────────────────────────┐
-                      │ Réveil et prise mesure  │
+                      │ Wakes up and measueres  │
                       │ via Sensor::Measure()   │
                       └─────────────────────────┘
                                  │
-                                (boucle)
+                                (loop)
 
 ## *Waiter*
-Ce fichier gère le temps d’attente et la synchronisation des tâches pour l’Arduino, en particulier pour la communication LoRa et la lecture/écriture sur la carte SD.
-
+This file manages the wait time and task synchronization for the Arduino, particularly for LoRa communication and reading/writing to the SD card.
 ┌─────────────────────────┐
 │       Waiter            │
 └────────────┬────────────┘
@@ -300,13 +300,13 @@ Ce fichier gère le temps d’attente et la synchronisation des tâches pour l�
              ▼
       ┌───────────────┐
       │ startTimer()  │
-      │ - mémorise t0 │
+      │ - remembers t0│
       └───────────────┘
              │
              ▼
       ┌───────────────┐
       │ sleepUntil()  │
-      │ - calcule dt  │
+      │ - calculates  │
       │ - deepSleep   │
       └───────────────┘
              │
@@ -316,26 +316,25 @@ Ce fichier gère le temps d’attente et la synchronisation des tâches pour l�
       └───────────────┘
              │
  ┌───────────┴───────────┐
- │ Boucle active jusqu'à  │
- │ le temps souhaité      │
+ │ Loop active           │
  └───────────┬───────────┘
              │
    ┌─────────┴─────────┐
-   │ LoRa communication │
-   │ - startLoRa()      │
-   │ - handshake()      │
-   │ - sendPackets()    │
-   │ - closeSession()   │
-   │ - stopLoRa()       │
+   │ LoRa communication│
+   │ - startLoRa()     │
+   │ - handshake()     │
+   │ - sendPackets()   │
+   │ - closeSession()  │
+   │ - stopLoRa()      │
    └─────────┬─────────┘
              │
-   ┌─────────┴─────────┐
-   │ SD Reader          │
+   ┌─────────┴───────────────┐
+   │ SD Reader               │
    │ - EstablishConnection() │
-   │ - loadDataIntoQueue()  │
-   │ - UpdateCursor()       │
-   │ - Dispose()            │
-   └─────────┬─────────┘
+   │ - loadDataIntoQueue()   │
+   │ - UpdateCursor()        │
+   │ - Dispose()             │
+   └─────────┬───────────────┘
              │
              ▼
       ┌───────────────┐
