@@ -21,30 +21,22 @@
 
 // PrintQueue function definition
 void PrintQueue(std::queue<String> &receiveQueue) {
-    Serial.println("Session ended. Printing all received data:");
+    DEBUG_LOG("Session ended. Printing all received data:");
     while (!receiveQueue.empty()) {
-        Serial.println(receiveQueue.front()); // Show the first item in the queue
+        DEBUG_LOG(receiveQueue.front()); // Show the first item in the queue
         receiveQueue.pop();                   // Remove the printed item
     }
-    Serial.println("All data printed. Queue is now empty.");
+    DEBUG_LOG("All data printed. Queue is now empty.");
 }
 
 // Default constructor
 Waiter::Waiter() {}
 
-// Start tracking time
-void Waiter::startTimer() {
-    starting_time = GetSecondsSinceMidnight();
-}
-
 // Sleep the Arduino until the desired waiting time passes
-void Waiter::sleepUntil(unsigned long desired_waiting_time) {
+void Waiter::sleepUntil(long wainting_interval) {
 
-    //modifier cette fonction : pourquoi cet ajustement et ne pas juste faire dormir desiredWaitingTime ??
-    unsigned long time_to_wait = (starting_time + desired_waiting_time) - GetSecondsSinceMidnight();
-
-    Serial.println("Sleeping for " + String(time_to_wait) + " ms");
-
-    LowPower.deepSleep(time_to_wait);
+    DEBUG_LOG("Sleeping for " + String(wainting_interval) + " ms");
+    // Sleep for the calculated time
+    unsigned long waiting_interval_unsigned = uint32_t(wainting_interval);
+    LowPower.deepSleep(waiting_interval_unsigned); //Conversion rendue nécessaire par l'implémentation de deepSleep dans la librairie arduino
 }
-
