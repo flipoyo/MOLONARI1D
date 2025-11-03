@@ -27,6 +27,7 @@ from datetime import datetime
 
 import pandas as pd
 import paho.mqtt.client as mqtt
+import ssl
 
 
 
@@ -39,9 +40,9 @@ MQTT_CLIENT_ID = "emulator-poc"
 MQTT_KEEPALIVE = 60
 
 # paths to TLS files
-MQTT_CA_CERT = "/TLS/ca.crt"
-MQTT_CLIENT_CERT = "/TLS/client.crt"
-MQTT_CLIENT_KEY = "/TLS/client.key"
+MQTT_CA_CERT = "MOLONARI1D/hardware/tests/Connection_test/TLS/CA.crt"
+MQTT_CLIENT_CERT = "MOLONARI1D/hardware/tests/Connection_test/TLS/TLS.crt"
+MQTT_CLIENT_KEY = "MOLONARI1D/hardware/tests/Connection_test/TLS/TLS.key"
 
 # SQLite DB configuration
 DB_FILENAME = "measurements.db"
@@ -63,46 +64,12 @@ logging.basicConfig(
 logger = logging.getLogger("chirpstack")
 
 
-
-# ---- Utilitary functions ----
-
 def normalize_eui(eui):
     '''Normalizes a DeviceEUI in lowercase without spaces. Returns None if input is None.'''
     if eui is None:
         return None
     return str(eui).strip().lower()
 
-### voir fonction decode de Gabriel
-"""
-def decode_base64_to_text(b64str):
-    '''Décode une chaîne base64 en texte UTF-8. Retourne texte ou None.'''
-    if not b64str or not isinstance(b64str, str):
-        return None
-    try:
-        b = base64.b64decode(b64str, validate=False)
-        return b.decode("utf-8", errors="replace")
-    except Exception as e:
-        logger.warning("Erreur décodage base64: %s", e)
-        return None
-
-def try_parse_json(text):
-    '''Tente de parser du JSON ; remplace NaN par null. Retourne un objet ou None.'''
-    if text is None:
-        return None
-    txt = text.strip()
-    if not txt:
-        return None
-    # heuristique : n'essayer de parser que si commence par { ou [
-    if not (txt.startswith("{") or txt.startswith("[")):
-        return None
-    # remplace NaN/NaN-like par null pour éviter JSON.parse errors
-    cleaned = txt.replace("NaN", "null").replace("nan", "null")
-    try:
-        return json.loads(cleaned)
-    except Exception as e:
-        logger.debug("JSON parse error (ignored): %s", e)
-        return None
-"""
 
 
 # ---- Database setup ----
@@ -224,13 +191,14 @@ def extract_fields_from_payload(payload: dict):
 class MQTTWorker:
     '''Client MQTT with queue for messages and callbacks
     Goal: free the worker from NodeRED'''
-    def __init__(self, broker, port, topic, ca_cert=None, client_cert=None, client_key=None):
+    def __init__(self, broker, port, topic, ca_cert=None, client_cert=None, client_key=None, use_tls=True):
         self.broker = broker
         self.port = port
         self.topic = topic
         self.ca = ca_cert
         self.cert = client_cert
         self.key = client_key
+        self.use_tls = use_tls
         self.client = mqtt.Client(client_id=MQTT_CLIENT_ID)
         self.msg_queue = queue.Queue(maxsize=MESSAGE_QUEUE_MAX)
         # attach callbacks
@@ -239,20 +207,23 @@ class MQTTWorker:
         self.client.on_disconnect = self.on_disconnect
 
         # TLS config if provided
-        if self.ca and self.cert and self.key:
-            if not (os.path.exists(self.ca) and os.path.exists(self.cert) and os.path.exists(self.key)):
-                logger.error("TLS files not found: ca=%s cert=%s key=%s. Skipping TLS setup.",
-                             self.ca, self.cert, self.key)
+        if self.use_tls:
+            if not (self.ca and self.cert and self.key):
+                logger.error("TLS enabled but ca/cert/key not provided. Skipping TLS setup.")
             else:
-                try:
-                    self.client.tls_set(ca_certs=self.ca, certfile=self.cert, keyfile=self.key)
-                    logger.info("TLS configuration applied (ca=%s cert=%s key=%s)",
+                if not (os.path.exists(self.ca) and os.path.exists(self.cert) and os.path.exists(self.key)):
+                    logger.error("TLS files not found: ca=%s cert=%s key=%s. Skipping TLS setup.",
+                             self.ca, self.cert, self.key)
+                else:
+                    try:
+                        self.client.tls_set(ca_certs=self.ca, certfile=self.cert, keyfile=self.key)
+                        logger.info("TLS configuration applied (ca=%s cert=%s key=%s)",
                                 self.ca, self.cert, self.key)
-                except Exception as e:
-                    logger.exception("Error in TLS configuration: %s", e)
-                    raise
+                    except Exception as e:
+                        logger.exception("Error in TLS configuration: %s", e)
+                        raise
 
-    def on_connect(self, client, userdata, flags, rc):
+    def on_connect(self, client, userdata, flags, rc, properties=None):
         if rc == 0:
             logger.info("Connected to broker %s:%d (rc=%s). Subscription to topic: %s",
                         self.broker, self.port, rc, self.topic)
@@ -260,7 +231,7 @@ class MQTTWorker:
         else:
             logger.error("Error MQTT connexion, rc=%s", rc)
         
-    def on_disconnect(self, client, userdata, rc):
+    def on_disconnect(self, client, userdata, rc, properties=None):
         logger.warning("Disconnected from broker (rc=%s)", rc)
 
     def on_message(self, client, userdata, msg):
@@ -283,9 +254,19 @@ class MQTTWorker:
         print(f"[MQTT] Payload: {payload_text}")
 
     def connect_and_loop_start(self):
-        self.client.connect(self.broker, self.port, keepalive=MQTT_KEEPALIVE)
-        # start loop in background thread
-        self.client.loop_start()
+        try:
+            logger.info("Connecting to MQTT broker %s:%d (use_tls=%s)", self.broker, self.port, self.use_tls)
+            self.client.connect(self.broker, self.port, keepalive=MQTT_KEEPALIVE)
+            # start loop in background thread
+            self.client.loop_start()
+        except ConnectionResetError as e:
+            logger.exception("Connection reset error: %s. Check broker TLS settings/port and broker logs.", e)
+            raise
+        except ssl.SSLError as e:
+            logger.exception("SSL error during connection: %s. Check TLS certificates", e)
+            raise
+        except Exception as e:
+            logger.exception("MQTT connection failed: %s", e)
 
     def disconnect(self):
         self.client.loop_stop()
@@ -379,6 +360,9 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--export", help="Export the DB into CSV and quit (file path)", default=None)
+    parser.add_argument("--no-tls", action="store_true", help="Disable TLS for MQTT connection (use local broker)")
+    parser.add_argument("--broker", default=MQTT_BROKER, help="MQTT broker host")
+    parser.add_argument("--port", type=int, default=MQTT_PORT, help="MQTT broker port")
     args = parser.parse_args()
 
     # If export CSV requested, open the DB, export then exit
@@ -388,4 +372,6 @@ if __name__ == "__main__":
         db_conn.close()
         sys.exit(0)
 
+    MQTT_BROKER = args.broker
+    MQTT_PORT = args.port
     main(args)
