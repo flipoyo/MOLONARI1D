@@ -23,13 +23,10 @@ GeneralConfig res;
 unsigned long lastLoraSend = 0;
 unsigned long lastAttempt = 0;
 
-volatile bool wakeUpFlag = false;
-void wakeUp() {
-    wakeUpFlag = true;
-}
+bool modif = false;
 int CSPin = 5; // Pin CS par défaut
 
-
+const char* configFilePath = "conf_rel.csv";
 
 // ----- Setup -----
 void setup() {
@@ -81,10 +78,33 @@ void loop() {
             Serial.println("Handshake réussi. Réception des paquets...");
             int last = lora.receivePackets(receiveQueue);
             lora.closeSession(last);
-            lora.stopLoRa();
 
             // Met à jour le temps de la dernière tentative de réception
             lastAttempt = GetSecondsSinceMidnight();
+
+            //envoie du csv
+            if (modif==true) {
+                File config = SD.open(configFilePath, FILE_READ);
+                config.seek(0);
+
+                while (config.available()) {
+                    std::queue<String> line_config;
+                    line_config.push(config.readStringUntil('\n'));
+                    
+                for (int attempt = 1; attempt <= 3; attempt++) {
+
+                    if (lora.sendPackets(line_config)) {
+                        break;
+
+                    } else {
+                        if (attempt < 3) delay(20000);
+                        }
+                    }
+                }   
+                modif = false;
+            }
+
+            lora.stopLoRa();
 
             // Transfert vers la queue globale
             while (!receiveQueue.empty()) {
@@ -116,6 +136,12 @@ void loop() {
 
             // Met quand même à jour lastAttempt pour réessayer après l'intervalle de temps
             lastAttempt = GetSecondsSinceMidnight();
+        }
+
+        // reception csv et modification
+        while (modem.available()) {
+            loraWAN.receiveConfig(configFilePath, modif);
+            modif = true;
         }
 
         Serial.println("Relais en veille jusqu’à la prochaine fenêtre de communication...");

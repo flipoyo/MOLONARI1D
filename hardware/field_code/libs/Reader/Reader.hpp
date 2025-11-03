@@ -10,7 +10,7 @@
 struct SensorConfig {
     String id;
     String type_capteur;
-    String id_box; //pour l'export des données
+    String devEUI; //pour l'export des données
     int pin;//TODO rename dataPin 
 };
 
@@ -39,8 +39,8 @@ struct GeneralConfig {
 // Variables globales (extern pour éviter redéfinitions)
 
 // Variables globales associées à la logique du programme : à supprimer plus tard ?
-extern int FREQUENCE_MINUTES;
-extern unsigned long LORA_INTERVAL_S;
+//extern int FREQUENCE_MINUTES;
+//extern unsigned long LORA_INTERVAL_S;
 
 // ---- Classe Reader ----
 class Reader {

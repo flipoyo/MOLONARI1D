@@ -134,10 +134,10 @@ void setup() {
     int it = 0;
     for (int it = 0; it<ncapt; it++) {
         SensorConfig _c = liste_capteurs[it];
-        sens[it] = new Sensor(_c.pin, 1, _c.type_capteur, _c.id_box);
+        sens[it] = new Sensor(_c.pin, 1, _c.type_capteur, _c.devEUI);
         toute_mesure.push_back(0);
         DEBUG_LOG("inserted new Sensor ptr at position " + String(it) + " of sens with attributes :");
-        DEBUG_LOG("_c.pin : " + String(_c.pin) + "  _c.type_capteur : " + String(_c.type_capteur) + "  _c.id_box : " + String(_c.id_box) + "\n\n");
+        DEBUG_LOG("_c.pin : " + String(_c.pin) + "  _c.type_capteur : " + String(_c.type_capteur) + "  _c.devEUI : " + String(_c.devEUI) + "\n\n");
     }
     DEBUG_LOG("sens contains " + String(it) + " elements");
 
@@ -204,7 +204,7 @@ void loop() {
     DEBUG_LOG("LogData instruction done");
     // --- Envoyer LoRa si intervalle atteint ---
     
-    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
+    bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 60));
 
     IsTimeToLoRa = true; //a supprimer, pour les besoins du debugs
     if (IsTimeToLoRa || rattrapage) {
