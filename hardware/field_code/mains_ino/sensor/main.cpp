@@ -235,6 +235,7 @@ void loop() {
                     break;
                 }
             }
+            int end_document_address = dataFile.position();
 
             uint8_t lastPacket = lora.sendPackets(linesToSend);
             lora.closeSession(lastPacket);

@@ -1,6 +1,7 @@
 #include <SD.h>
 #include <Arduino.h> 
 #include "LoRa_Molonari.hpp"
+
 #define DEBUG_MAIN
 #define DEBUG_MEASURE
 #define DEBUG_WRITER
@@ -170,7 +171,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
     }
 }}
 
-uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue) {
+uint8_t LoraCommunication::sendPackets(std::queue<String>sendQueue) {
     uint8_t packetNumber = 0;
     String payload; RequestType requestType; uint8_t receivedPacketNumber;
     while (!sendQueue.empty()) {
