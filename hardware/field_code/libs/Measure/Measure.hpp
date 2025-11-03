@@ -31,7 +31,7 @@ class Sensor {
         // Pin to read data from (Analog pin)
         const int dataPin;
         // Pin to enable/disable the sensor
-        const int enablePin = 1;  
+        const int enablePin = 4;  
         const String type_capteur;
         const String id_box;
 };

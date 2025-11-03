@@ -39,6 +39,8 @@ void Waiter::startTimer() {
 
 // Sleep the Arduino until the desired waiting time passes
 void Waiter::sleepUntil(unsigned long desired_waiting_time) {
+
+    //modifier cette fonction : pourquoi cet ajustement et ne pas juste faire dormir desiredWaitingTime ??
     unsigned long time_to_wait = (starting_time + desired_waiting_time) - GetSecondsSinceMidnight();
 
     // Log the waiting time for debugging

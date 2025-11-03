@@ -41,7 +41,7 @@ void setup() {
 
     // Lecture configuration CSV
     Reader reader;
-    res=reader.lireConfigCSV("conf_rel.csv", CSPin);
+    res=reader.lireConfigCSV("conf.csv", CSPin);
     Serial.println("Configuration chargée.");
 
     // Initialisation LoRa communication
