@@ -905,7 +905,7 @@ class frequency_analysis:
         a_, b_ = np.real(alpha), np.imag(alpha)
         return a_, b_
 
-    def critere_2D(self, period_index: int = 0, deg_max: int = 2, show_reg: bool = False):
+    def critere_2D(self, period_index: int = 0, deg_max: int = 2, show_reg: bool = False, intercept: bool = False):
         """
         Decide whether the attenuation behaviour is best described by a 1D exponential
         (linear fit of ln(A/A0) vs z) or requires a 2D (polynomial) model.
@@ -918,6 +918,9 @@ class frequency_analysis:
             Maximum polynomial degree to test (will test degrees 1..deg_max).
         show_reg : bool
             If True, show regression plots for each tested degree.
+        intercept : bool
+            If True, force degree-1 (linear) regression through the origin (intercept = 0).
+            If False, allow a free intercept (ordinary least squares).
 
         Returns
         -------
@@ -960,14 +963,29 @@ class frequency_analysis:
         if z_values.size < 2:
             raise ValueError("Not enough valid depth/amplitude points for regression")
 
-        def regression_poly(reg, z_vals, deg, show_plot=False, return_coeffs=False):
-            coeffs = np.polyfit(z_vals, reg, deg)
-            p = np.poly1d(coeffs)
+        def regression_poly(reg, z_vals, deg, show_plot=False, return_coeffs=False, force_origin=False):
+            """Perform polynomial regression. If force_origin=True and deg==1, fit through origin."""
+            if deg == 1 and force_origin:
+                # closed-form slope through origin: slope = sum(z*y)/sum(z^2)
+                denom = np.sum(z_vals * z_vals)
+                if denom == 0:
+                    raise ValueError("Degenerate z values for origin-constrained fit")
+                slope = np.sum(z_vals * reg) / denom
+                coeffs = np.array([slope, 0.0])
+                p = np.poly1d(coeffs)
+            else:
+                coeffs = np.polyfit(z_vals, reg, deg)
+                p = np.poly1d(coeffs)
+
             y_pred = p(z_vals)
             r2 = r2_score(reg, y_pred)
             if show_plot:
+
+                z = np.linspace(np.min(z_vals), np.max(z_vals), 100)
+
                 plt.scatter(z_vals, reg, label='Données FFT mesurées')
-                plt.plot(z_vals, y_pred, 'r--', label=f'Ajustement poly {deg}: R²={r2:.3f}')
+                plt.plot(z, p(z), 'r--', label=f'Ajustement poly {deg}: R²={r2:.3f}')
+                #plt.plot(z_vals, y_pred, 'r--', label=f'Ajustement poly {deg}: R²={r2:.3f}')
                 plt.xlabel('Profondeur z (m)')
                 plt.ylabel('Log amplitude ln(A(z)/A0)')
                 plt.title(f"Régression polynomiale de degré {deg}, R²={r2:.3f}")
@@ -982,7 +1000,7 @@ class frequency_analysis:
         coeffs_list = []
         # test degrees 1 .. deg_max (inclusive)
         for deg in range(1, deg_max + 1):
-            coeff, r2 = regression_poly(traite, z_values, deg, show_plot=show_reg, return_coeffs=True)
+            coeff, r2 = regression_poly(traite, z_values, deg, show_plot=show_reg, return_coeffs=True, force_origin=(intercept and deg == 1))
             r2_list.append(r2)
             coeffs_list.append(coeff)
 
