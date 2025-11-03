@@ -1,0 +1,306 @@
+[
+  {
+    "added_include_path": "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino"
+  },
+  {
+    "added_include_path": "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\variants\\mkrwan1300"
+  },
+  {
+    "compile": {
+      "source_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp",
+      "object_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp.o",
+      "depfile_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp.d"
+    },
+    "compile_task": {
+      "args": [
+        "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4/bin/arm-none-eabi-g++",
+        "-mcpu=cortex-m0plus",
+        "-mthumb",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-nostdlib",
+        "--param",
+        "max-inline-insns-single=500",
+        "-fno-rtti",
+        "-fno-exceptions",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-DF_CPU=48000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_SAMD_MKRWAN1310",
+        "-DARDUINO_ARCH_SAMD",
+        "-DUSE_ARDUINO_MKR_PIN_LAYOUT",
+        "-D__SAMD21G18A__",
+        "-DUSB_VID=0x2341",
+        "-DUSB_PID=0x8059",
+        "-DUSBCON",
+        "-DUSB_MANUFACTURER=\"Arduino LLC\"",
+        "-DUSB_PRODUCT=\"Arduino MKR WAN 1310\"",
+        "-DUSE_BQ24195L_PMIC",
+        "-DVERY_LOW_POWER",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS\\4.5.0/CMSIS/Include/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS-Atmel\\1.2.0/CMSIS/Device/ATMEL/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated-avr-comp",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\variants\\mkrwan1300",
+        "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp",
+        "-o",
+        "nul"
+      ]
+    }
+  },
+  {
+    "missing_include_h": "LoRa.h"
+  },
+  {
+    "added_include_path": "C:\\Users\\rbarr\\Documents\\Arduino\\libraries\\LoRa\\src"
+  },
+  {
+    "compile": {
+      "source_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp",
+      "object_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp.o",
+      "depfile_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp.d"
+    },
+    "compile_task": {
+      "args": [
+        "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4/bin/arm-none-eabi-g++",
+        "-mcpu=cortex-m0plus",
+        "-mthumb",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-nostdlib",
+        "--param",
+        "max-inline-insns-single=500",
+        "-fno-rtti",
+        "-fno-exceptions",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-DF_CPU=48000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_SAMD_MKRWAN1310",
+        "-DARDUINO_ARCH_SAMD",
+        "-DUSE_ARDUINO_MKR_PIN_LAYOUT",
+        "-D__SAMD21G18A__",
+        "-DUSB_VID=0x2341",
+        "-DUSB_PID=0x8059",
+        "-DUSBCON",
+        "-DUSB_MANUFACTURER=\"Arduino LLC\"",
+        "-DUSB_PRODUCT=\"Arduino MKR WAN 1310\"",
+        "-DUSE_BQ24195L_PMIC",
+        "-DVERY_LOW_POWER",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS\\4.5.0/CMSIS/Include/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS-Atmel\\1.2.0/CMSIS/Device/ATMEL/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated-avr-comp",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\variants\\mkrwan1300",
+        "-IC:\\Users\\rbarr\\Documents\\Arduino\\libraries\\LoRa\\src",
+        "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp",
+        "-o",
+        "nul"
+      ]
+    }
+  },
+  {
+    "missing_include_h": "SPI.h"
+  },
+  {
+    "added_include_path": "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\libraries\\SPI"
+  },
+  {
+    "compile": {
+      "source_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp",
+      "object_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp.o",
+      "depfile_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp.d"
+    },
+    "compile_task": {
+      "args": [
+        "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4/bin/arm-none-eabi-g++",
+        "-mcpu=cortex-m0plus",
+        "-mthumb",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-nostdlib",
+        "--param",
+        "max-inline-insns-single=500",
+        "-fno-rtti",
+        "-fno-exceptions",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-DF_CPU=48000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_SAMD_MKRWAN1310",
+        "-DARDUINO_ARCH_SAMD",
+        "-DUSE_ARDUINO_MKR_PIN_LAYOUT",
+        "-D__SAMD21G18A__",
+        "-DUSB_VID=0x2341",
+        "-DUSB_PID=0x8059",
+        "-DUSBCON",
+        "-DUSB_MANUFACTURER=\"Arduino LLC\"",
+        "-DUSB_PRODUCT=\"Arduino MKR WAN 1310\"",
+        "-DUSE_BQ24195L_PMIC",
+        "-DVERY_LOW_POWER",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS\\4.5.0/CMSIS/Include/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS-Atmel\\1.2.0/CMSIS/Device/ATMEL/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated-avr-comp",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\variants\\mkrwan1300",
+        "-IC:\\Users\\rbarr\\Documents\\Arduino\\libraries\\LoRa\\src",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\libraries\\SPI",
+        "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\sketch\\Relay_Lora.ino.cpp",
+        "-o",
+        "nul"
+      ]
+    }
+  },
+  {
+    "missing_include_h": ""
+  },
+  {
+    "compile": {
+      "source_path": "C:\\Users\\rbarr\\Documents\\Arduino\\libraries\\LoRa\\src\\LoRa.cpp",
+      "object_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\libraries\\LoRa\\LoRa.cpp.o",
+      "depfile_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\libraries\\LoRa\\LoRa.cpp.d"
+    },
+    "compile_task": {
+      "args": [
+        "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4/bin/arm-none-eabi-g++",
+        "-mcpu=cortex-m0plus",
+        "-mthumb",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-nostdlib",
+        "--param",
+        "max-inline-insns-single=500",
+        "-fno-rtti",
+        "-fno-exceptions",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-DF_CPU=48000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_SAMD_MKRWAN1310",
+        "-DARDUINO_ARCH_SAMD",
+        "-DUSE_ARDUINO_MKR_PIN_LAYOUT",
+        "-D__SAMD21G18A__",
+        "-DUSB_VID=0x2341",
+        "-DUSB_PID=0x8059",
+        "-DUSBCON",
+        "-DUSB_MANUFACTURER=\"Arduino LLC\"",
+        "-DUSB_PRODUCT=\"Arduino MKR WAN 1310\"",
+        "-DUSE_BQ24195L_PMIC",
+        "-DVERY_LOW_POWER",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS\\4.5.0/CMSIS/Include/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS-Atmel\\1.2.0/CMSIS/Device/ATMEL/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated-avr-comp",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\variants\\mkrwan1300",
+        "-IC:\\Users\\rbarr\\Documents\\Arduino\\libraries\\LoRa\\src",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\libraries\\SPI",
+        "C:\\Users\\rbarr\\Documents\\Arduino\\libraries\\LoRa\\src\\LoRa.cpp",
+        "-o",
+        "nul"
+      ]
+    }
+  },
+  {
+    "missing_include_h": ""
+  },
+  {
+    "compile": {
+      "source_path": "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\libraries\\SPI\\SPI.cpp",
+      "object_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\libraries\\SPI\\SPI.cpp.o",
+      "depfile_path": "C:\\Users\\rbarr\\Documents\\2A_S3\\MOLONARI\\TD3\\MOLONARI1D\\hardware\\tests\\test_build_temp\\libraries\\SPI\\SPI.cpp.d"
+    },
+    "compile_task": {
+      "args": [
+        "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4/bin/arm-none-eabi-g++",
+        "-mcpu=cortex-m0plus",
+        "-mthumb",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-nostdlib",
+        "--param",
+        "max-inline-insns-single=500",
+        "-fno-rtti",
+        "-fno-exceptions",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-DF_CPU=48000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_SAMD_MKRWAN1310",
+        "-DARDUINO_ARCH_SAMD",
+        "-DUSE_ARDUINO_MKR_PIN_LAYOUT",
+        "-D__SAMD21G18A__",
+        "-DUSB_VID=0x2341",
+        "-DUSB_PID=0x8059",
+        "-DUSBCON",
+        "-DUSB_MANUFACTURER=\"Arduino LLC\"",
+        "-DUSB_PRODUCT=\"Arduino MKR WAN 1310\"",
+        "-DUSE_BQ24195L_PMIC",
+        "-DVERY_LOW_POWER",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS\\4.5.0/CMSIS/Include/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS-Atmel\\1.2.0/CMSIS/Device/ATMEL/",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino/api/deprecated-avr-comp",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\cores\\arduino",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\variants\\mkrwan1300",
+        "-IC:\\Users\\rbarr\\Documents\\Arduino\\libraries\\LoRa\\src",
+        "-IC:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\libraries\\SPI",
+        "C:\\Users\\rbarr\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.14\\libraries\\SPI\\SPI.cpp",
+        "-o",
+        "nul"
+      ]
+    }
+  },
+  {
+    "missing_include_h": ""
+  }
+]

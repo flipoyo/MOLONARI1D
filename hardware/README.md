@@ -17,60 +17,62 @@ This reorganization maintains backward compatibility while improving development
 
 ```
 hardware/
-├── sensors/                    # Sensor node implementations
-│   ├── temperature/           # Temperature monitoring sensors
-│   │   └── Sensor/           # Main temperature sensor code
-│   ├── pressure/             # Pressure monitoring sensors (future)
-│   ├── demo/                 # Demonstration and testing sensors
-│   └── common/               # Common sensor utilities
-├── relay/                    # Relay station implementations  
-│   └── Relay/               # Main relay station code
-├── protocols/                # Communication protocol implementations
-│   ├── lora/                # Local LoRa communication
-│   └── lorawan/             # Wide-area LoRaWAN communication
-├── shared/                   # Shared libraries and utilities
-│   ├── Lora.hpp/cpp         # LoRa communication classes
-│   ├── Temp_Sensor.hpp/cpp  # Temperature sensor drivers
-│   ├── Pressure_Sensor.hpp  # Pressure sensor drivers
-│   ├── Writer.hpp/cpp       # SD card data logging
-│   ├── Low_Power.hpp/cpp    # Power management
-│   └── ...                  # Other shared components
-├── tests/                    # Hardware testing and validation
-│   ├── testArduinoLoRaWAN/  # LoRaWAN connectivity tests
-│   ├── testArduinoLowPower/ # Power consumption tests
-│   ├── Sender/              # LoRa sender test
-│   ├── Receiver/            # LoRa receiver test
-│   └── ...                  # Other test programs
-├── docs/                     # Hardware documentation
+├── field_code/ 
+│   ├── libs/                           # Librairies handmade for the project
+│   │    ├── LoRa_Molonari/
+│   │    ├── LoRaWan_Molonari/
+│   │    ├── Measure/
+│   │    ├── Reader/
+│   │    ├── Time/
+│   │    ├── Waiter/
+│   │    └── Writer/
+│   ├── mains/                          # Main codes we use    
+│   │    └── relay/
+│   │    │   ├── main.cpp
+│   │    │   ├── config_relay.csv
+│   │    │   └── README
+│   │    └── sensor/
+│   │        ├── main.cpp
+│   │        ├── config_sensor.csv
+│   │        └── README
+├── tests/
+│   ├── testArduinoLoRaWAN/  
+│   ├── testArduinoLowPower/ 
+│   ├── Sender/
+│   ├── Receiver/
+│   └── ...                  
+├── docs/                               # Hardware documentation
 │   ├── 1 - Installation guide_ENG.md
 │   ├── 3 - Sensor's hardware-ENG.md
 │   ├── 4 - Our LoRa protocol_ENG.md
-│   └── 5 - Gateway and server configurations.md
-├── deployment/               # Installation and deployment guides
-├── archived/                 # Historical code and contributions
-│   ├── Archive_2022/        # 2022 student contributions
-│   └── Archive_2023/        # 2023 student contributions
-└── README.md                # This file
+│   └── ...
+├── deployment/         
+├── archived/               
+│   ├── Archive_2022/
+│   └── ...
+└── README.md
 ```
 
 ## Quick Start
 
 ### Prerequisites
 
-- **Arduino IDE** 2.x or **Arduino CLI**
+- Platformio (to install on VScode)
 - **Arduino MKR WAN 1310** boards
 - Required libraries:
-  - LoRa
-  - MKRWAN
-  - RTCZero
-  - ArduinoLowPower
+  - Arduino Low Power
   - SD
-  - OneWire
-  - DallasTemperature
+  - LoRa
+  - RTCLib
+  - MKRWAN
+  - Queue
+  - RTCZero
+  - FlashStorage
+
 
 ### Installation
 
-1. **Install Arduino IDE** and required libraries
+1. **Install Platformio**
 2. **Clone the repository**:
    ```bash
    git clone --depth=1 https://github.com/flipoyo/MOLONARI1D.git
@@ -78,19 +80,10 @@ hardware/
    ```
 
 3. **Compile and upload** sensor code:
-   ```bash
-   cd sensors/temperature/Sensor
-   # Open Sensor.ino in Arduino IDE or use Arduino CLI:
-   arduino-cli compile --fqbn arduino:samd:mkrwan1310 Sensor.ino
-   arduino-cli upload --fqbn arduino:samd:mkrwan1310 Sensor.ino --port /dev/ttyACM0
-   ```
 
 4. **Compile and upload** relay code:
-   ```bash
-   cd relay/Relay
-   arduino-cli compile --fqbn arduino:samd:mkrwan1310 Relay.ino
-   arduino-cli upload --fqbn arduino:samd:mkrwan1310 Relay.ino --port /dev/ttyACM1
-   ```
+
+
 
 ### Testing
 
@@ -104,7 +97,7 @@ arduino-cli compile --fqbn arduino:samd:mkrwan1310 testArduinoLoRaWAN.ino
 
 ### Sensor Nodes
 
-**Temperature Sensors** (`sensors/temperature/`):
+**Temperature Sensors** (`sensors/temperature/`) :
 - **Purpose**: Underwater temperature monitoring with 15-minute intervals
 - **Hardware**: Arduino MKR WAN 1310 + DS18B20 sensors + SD card
 - **Features**: 
@@ -113,135 +106,30 @@ arduino-cli compile --fqbn arduino:samd:mkrwan1310 testArduinoLoRaWAN.ino
   - Daily LoRa transmission to relay
   - Automatic retry mechanism (up to 6 attempts)
 
-**Demo Sensors** (`sensors/demo/`):
-- Simplified versions for testing and presentations
-- Reduced functionality for rapid prototyping
 
 ### Relay Stations
 
-**Main Relay** (`relay/Relay/`):
+**Main Relay** :
 - **Purpose**: Aggregate data from multiple sensor nodes
 - **Communication**: 
   - Receives data via custom LoRa protocol
   - Forwards to gateway via LoRaWAN
 - **Coverage**: Up to 10 sensors per relay, 1km range
 
-### Shared Libraries
+### Libraries
 
-The `shared/` directory contains common code used across all hardware components:
+The `/field_code/libs/` directory contains common code used across all hardware components.
 
-- **`Lora.hpp`**: Custom LoRa communication protocol implementation
-- **`Temp_Sensor.hpp`**: Temperature sensor interface and drivers
-- **`Writer.hpp`**: SD card logging with CSV format
-- **`Low_Power.hpp`**: Power management and sleep modes
-- **`Waiter.hpp`**: Timing and scheduling utilities
+It has its onw documentation it the repertory.
 
-### Communication Protocols
-
-**Custom LoRa Protocol** (sensor ↔ relay):
-- Three-way handshake: SYN → ACK → DATA → FIN
-- Scheduled transmission windows (daily at 23:45 for temperature)
-- Retry mechanism with exponential backoff
-- Tree topology support for scalability
-
-**LoRaWAN Protocol** (relay ↔ gateway):
-- Standard LoRaWAN implementation
-- Wide-area coverage (kilometers)
-- Internet connectivity via gateway
-
-## Development Workflows
-
-### For Hardware Developers
-
-1. **Sensor Development**:
-   - Create new sensor types in `sensors/[sensor_type]/`
-   - Use shared libraries from `shared/` directory
-   - Follow existing code structure and commenting conventions
-   - Test with provided validation scripts
-
-2. **Protocol Development**:
-   - Modify communication protocols in `shared/Lora.hpp`
-   - Update both sensor and relay implementations
-   - Validate with `tests/Sender` and `tests/Receiver`
-
-3. **Power Optimization**:
-   - Use `Low_Power.hpp` utilities
-   - Test power consumption with `tests/testArduinoLowPower`
-   - Target 8-12 months battery life for sensors
-
-### For Protocol Engineers
-
-1. **LoRa Protocol Modification**:
-   - Edit `shared/Lora.hpp` and `shared/Lora.cpp`
-   - Update protocol documentation in `docs/4 - Our LoRa protocol_ENG.md`
-   - Test with sender/receiver pairs
-
-2. **LoRaWAN Integration**:
-   - Modify relay LoRaWAN code
-   - Update gateway configuration in `docs/5 - Gateway and server configurations.md`
-   - Test end-to-end communication
-
-### For System Integrators
-
-1. **Deployment Planning**:
-   - Review installation guides in `deployment/`
-   - Plan sensor placement and relay coverage
-   - Configure gateway connectivity
-
-2. **Field Testing**:
-   - Use demo sensors for initial validation
-   - Test communication range and reliability
-   - Validate power consumption in field conditions
-
-## Testing and Validation
-
-### Automated Testing
-
-The hardware codebase includes CI/CD workflows:
-
-- **Hardware Validation** (`.github/workflows/hardware-validation.yml`)
-  - Compiles all Arduino code
-  - Validates library dependencies
-  - Checks code formatting and documentation
-
-- **Protocol Testing** (`.github/workflows/protocol-tests.yml`)
-  - Tests LoRa communication code
-  - Validates LoRaWAN connectivity
-  - Verifies protocol documentation
-
-### Manual Testing
-
-1. **Communication Range Testing**:
-   ```bash
-   # Terminal 1: Receiver
-   cd tests/Receiver
-   arduino-cli upload --fqbn arduino:samd:mkrwan1310 Receiver.ino --port /dev/ttyACM0
-   
-   # Terminal 2: Sender  
-   cd tests/Sender
-   arduino-cli upload --fqbn arduino:samd:mkrwan1310 Sender.ino --port /dev/ttyACM1
-   ```
-
-2. **Power Consumption Testing**:
-   ```bash
-   cd tests/testArduinoLowPower
-   arduino-cli upload --fqbn arduino:samd:mkrwan1310 testArduinoLowPower.ino
-   # Measure current consumption with multimeter
-   ```
-
-3. **End-to-End System Testing**:
-   - Deploy sensor and relay with actual hardware
-   - Monitor communication logs
-   - Validate data transmission to server
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Compilation Errors**:
-   - Verify all required libraries are installed
    - Check Arduino board selection (arduino:samd:mkrwan1310)
-   - Ensure shared library paths are correct
+   - Check the imports of the .ini file
 
 2. **Communication Failures**:
    - Check antenna connections
@@ -261,7 +149,6 @@ The hardware codebase includes CI/CD workflows:
 ### Getting Help
 
 - **Documentation**: Check `docs/` directory for detailed guides
-- **Examples**: Review `tests/` directory for working examples
 - **Archived Code**: Reference `archived/` for historical implementations
 - **Community**: Open issues on GitHub for support
 
@@ -270,8 +157,7 @@ The hardware codebase includes CI/CD workflows:
 ### Code Standards
 
 - **Commenting**: All Arduino files must have functionality header
-- **Include Paths**: Use shared libraries from `shared/` directory
-- **Testing**: Validate compilation with Arduino CLI
+- **Testing**: Validate compilation
 - **Documentation**: Update relevant docs when modifying protocols
 
 ### Pull Request Process
@@ -307,10 +193,8 @@ The hardware codebase includes CI/CD workflows:
 
 ### Planned Enhancements
 
-- **Additional Sensor Types**: pH, conductivity, turbidity
 - **Protocol Improvements**: Mesh networking, adaptive power control
 - **Gateway Integration**: Direct cellular connectivity
-- **Edge Computing**: Local data processing on relay stations
 
 ### Research Areas
 
