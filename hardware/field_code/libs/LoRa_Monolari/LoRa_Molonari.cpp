@@ -1,6 +1,7 @@
 #include <SD.h>
 #include <Arduino.h> 
 #include "LoRa_Molonari.hpp"
+
 #define DEBUG_MAIN
 #define DEBUG_MEASURE
 #define DEBUG_WRITER
@@ -170,25 +171,26 @@ bool LoraCommunication::handshake(uint8_t &shift) {
     }
 }}
 
-uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue) {
-    uint8_t packetNumber = 0;
-    String payload; RequestType requestType; uint8_t receivedPacketNumber;
+uint8_t LoraCommunication::handle_packets_sending(std::queue<memory_line>sendQueue) {//changed previous name "sendPackets" ambiguous with "sendPacket"
+    uint8_t nb_packets_sent = 0;
+    int lastSDOffset;
+    String payload; RequestType requestType; uint8_t received_nb_packets_sent;
     while (!sendQueue.empty()) {
-        String msg = sendQueue.front();
-        sendPacket(packetNumber, DATA, msg);
+        memory_line packet = sendQueue.front();
+        sendPacket(nb_packets_sent, DATA, packet.flush);
         int retries = 0;
         while (retries < 6) {
-            if (receivePacket(receivedPacketNumber, requestType, payload) && requestType == ACK && receivedPacketNumber == packetNumber) {
+            if (receivePacket(received_nb_packets_sent, requestType, payload) && requestType == ACK && received_nb_packets_sent == nb_packets_sent) {
                 sendQueue.pop();
-                packetNumber++;
-                lastSDOffset = memoryline.nextmemoryoffset;
+                nb_packets_sent++;
+                lastSDOffset = packet.memory_successor;
                 break;
             }
             retries++;
         }
         if (retries == 6) { while (!sendQueue.empty()) sendQueue.pop(); break; }
     }
-    return packetNumber;
+    return nb_packets_sent;
 }
 
 int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {

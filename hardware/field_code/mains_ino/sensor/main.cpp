@@ -224,18 +224,20 @@ void loop() {
         DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
 
         while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
-            
-            std::queue<String> linesToSend;
+            //at this point, lastSDOffset must point to the first memory address of the first line to be sent
+            std::queue<memory_line> linesToSend;
             while (dataFile.available()) {
-                linesToSend.push(dataFile.readStringUntil('\n'));
+                memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                linesToSend.push(new_line);
 
             // Si la ligne est vide aka plus rien à envoyer
-                if (linesToSend.front().length() == 0) {
+                if (linesToSend.front().flush.length() == 0) {
                     break;
                 }
             }
+            int end_document_address = dataFile.position();
 
-            uint8_t lastPacket = lora.sendPackets(linesToSend);
+            uint8_t lastPacket = lora.handle_packets_sending(linesToSend);
             lora.closeSession(lastPacket);
 
             rattrapage = (lastSDOffset == dataFile.position());

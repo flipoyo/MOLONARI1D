@@ -64,4 +64,10 @@ public:
     void Dispose();
 };
 
+struct memory_line{
+    memory_line(String flush, int offset);
+    String flush;
+    int memory_successor;//adresse mémoire de la SD successeuse de la dernière adresse occupée par la ligne
+};
+
 #endif // READER_HPP
