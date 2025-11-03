@@ -43,8 +43,7 @@ void setup() {
     while (!Serial && millis() < end_date) {}
 
     Serial.println("\n=== Initialisation du Relais Molonari ===");
-    String appEui_vrai= modem.deviceEUI();
-    Serial.println("APP EUI VRAI: " + appEui_vrai);
+
 
     // Lecture configuration CSV
     Reader reader;
