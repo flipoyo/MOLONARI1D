@@ -22,7 +22,7 @@ class Sensor {
         // Initialise the sensor for the first time. 
         // dataPin -> Analog input to read data from (Analog pin)
         // enablePin -> Digital output to enable/disable the sensor 
-        Sensor(int dataPin, int enablePin, String type_capteur, String id_box);
+        Sensor(int dataPin, int enablePin, String type_capteur);
         int exists = 1;//temporary, just for debug, should be discarded when code is functional
         // Measure the pressure
         double get_voltage();
@@ -33,7 +33,7 @@ class Sensor {
         // Pin to enable/disable the sensor
         const int enablePin = 4;  
         const String type_capteur;
-        const String id_box;
+
 };
 
 class Measure {

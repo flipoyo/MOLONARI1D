@@ -10,14 +10,16 @@ periode_mesure_min_secondes, 2
 max_secondes_par_jour, 850 
 
 #Configuration des capteurs
-# id,type,pin,devEUI
-P1,pression,A0,123456789012345
-T1,temperature,A1,123456789012345
-T2,temperature,A6,123456789012345
-T3,temperature,A3,123456789012345
-T4,temperature,A4,123456789012345
-T5,temperature,A5,123456789012345
+# id,type,pin
+P1,pression,A0
+T1,temperature,A1
+T2,temperature,A6
+T3,temperature,A3
+T4,temperature,A4
+T5,temperature,A5
 
+#Configuration du sensor
+devEui,123456789012345 
 
 #Configuration relay 
 appEui,0000000000000000

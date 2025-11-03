@@ -13,16 +13,21 @@
 
 LoRaModem modem;
 
-LoraCommunication lora(3600000, 0xAA, 0xFF, RoleType::MASTER);
+
 
 LoraWANCommunication loraWAN;
 std::queue<String> sendingQueue;
+
+
 
 GeneralConfig res;
 
 unsigned long lastLoraSend = 0;
 unsigned long lastAttempt = 0;
 
+String appEui;
+String devEui;
+LoraCommunication lora(868E6, devEui, appEui, MASTER);
 bool modif = false;
 int CSPin = 5; // Pin CS par défaut
 
@@ -45,7 +50,7 @@ void setup() {
     Serial.println("Configuration chargée.");
 
     // Initialisation LoRa communication
-    lora = LoraCommunication(res.int_config.lora_intervalle_secondes, 0xAA, 0xFF, RoleType::MASTER);
+    lora = LoraCommunication(res.int_config.lora_intervalle_secondes, res.rel_config.appEui, res.rel_config.devEui, RoleType::MASTER);
 
     // Vérification SD
     if (!SD.begin(res.rel_config.CSPin)) {
@@ -114,7 +119,11 @@ void loop() {
 
             // Envoi via LoRaWAN si intervalle complet atteint
 
-            if (loraWAN.begin(res.rel_config.appEui, res.rel_config.appKey)) {
+            appEui=res.rel_config.appEui;
+            devEui=res.rel_config.devEui;
+            
+
+            if (loraWAN.begin(appEui, devEui)) {
                 Serial.print("Envoi de ");
                 Serial.print(sendingQueue.size());
                     

@@ -22,7 +22,7 @@ const int MAX_QUEUE_SIZE = 255; // Limite pour les queues
 
 class LoraCommunication {
 public:
-    LoraCommunication(long frequency, uint8_t localAdd, uint8_t desti, RoleType role);
+    LoraCommunication(long frequency, String localAdd, String desti, RoleType role);
 
     void startLoRa();
     void stopLoRa();
@@ -31,8 +31,8 @@ public:
     // Communication
     void sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload);
     bool receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload);
-    bool isValidDestination(int recipient, int dest, RequestType requestType);
-    uint8_t calculateChecksum(int recipient, int dest, uint8_t packetNumber, RequestType requestType, const String &payload);
+    bool isValidDestination(const String &recipient, const String &dest, RequestType requestType);
+    uint8_t calculateChecksum(const String &recipient, const String &dest, uint8_t packetNumber, RequestType requestType, const String &payload);
     bool isLoRaActive();
 
     // Sessions
@@ -44,8 +44,8 @@ public:
     bool receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms = 15000);
 private:
     long freq;
-    uint8_t localAddress;
-    uint8_t destination;
+    String localAddress;
+    String destination;
     bool active;
     RoleType deviceRole;
     std::unordered_set<uint8_t> myNet = {0xaa, 0xbb, 0xcc};

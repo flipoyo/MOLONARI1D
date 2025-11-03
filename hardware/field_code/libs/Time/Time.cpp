@@ -15,9 +15,6 @@ int freq_mesure_seconds = 0;
 std::vector<unsigned long> measurementTimesVec;
 std::vector<unsigned long> communicationTimesVec;
 
-
-
-
 // ------------------------------------------------------------
 // Initialisation RTC externe uniquement
 // ------------------------------------------------------------
@@ -26,12 +23,10 @@ void InitialiseRTC() {
   if (!externalRtc.begin()) {
     Serial.println("Erreur lors de l'initialisation de la RTC externe !");
   }
-
   if (externalRtc.lostPower()) {
     
     externalRtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
-
   Serial.println("RTC externe initialisée.");
 }
 

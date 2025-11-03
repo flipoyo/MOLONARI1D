@@ -60,7 +60,7 @@ void Waiter::delayUntil(uint32_t desired_waiting_time, int role) {
         Serial.println("Starting new communication session...");
 
         // Set up LoRa communication
-        LoraCommunication lora(868E6, 0xbb, 0xaa, static_cast<RoleType>(role));
+        LoraCommunication lora(868E6, String(0xbb), String(0xaa), static_cast<RoleType>(role));
         Reader reader;
         lora.startLoRa();
         uint8_t shift = 0;
