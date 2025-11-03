@@ -75,14 +75,15 @@ void setup() {
 
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
-
     digitalWrite(LED_BUILTIN, LOW);
 }
 
 // ----- Loop -----
 void loop() {
+    DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
     static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
     static Waiter waiter; //pour ne pas l'indenter dans le loop
+    DEBUG_LOG("Waiter instancié dans le relay");
     
     unsigned long currentTime = GetSecondsSinceMidnight();
     DEBUG_LOG("Intervalle restant pour agir :"+ String(currentTime - lastAttempt) + " / " + String(res.int_config.lora_intervalle_secondes));
