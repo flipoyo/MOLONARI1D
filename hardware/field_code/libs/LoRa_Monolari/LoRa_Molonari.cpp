@@ -223,7 +223,7 @@ bool LoraCommunication::closeSession(int lastPacket) {
         sendPacket(lastPacket, FIN, "");
         retries++;
     }
-    return false
+    return false;
 }
 
 bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms) {
