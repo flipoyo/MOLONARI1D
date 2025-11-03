@@ -19,10 +19,10 @@ T4,temperature,A4
 T5,temperature,A5
 
 #Configuration lorawan
-devEUI,123456789012345 
+devEui,a8610a33392f8a11 
 
 #Configuration relay 
-appEui,0000000000000000
+appEui,a8610a35391d6f08
 appKey,72C5FBBF2AB954D3316A1EE13AA3F141
 CSPin,5
 lora_freq,868000000
