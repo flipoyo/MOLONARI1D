@@ -85,7 +85,7 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
             else
                 c.pin = tokens[2].toInt();
 
-            c.id_box = tokens[3];
+            c.devEUI = tokens[3];
             res.liste_capteurs.push_back(c);
         }
 

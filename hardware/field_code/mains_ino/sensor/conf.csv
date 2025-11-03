@@ -1,17 +1,16 @@
 
 # Configuration générale
 intervalle_de_mesure_secondes,900
-intervalle_lora_secondes,3600
+lora_intervalle_secondes,3600
 # Les deux délais ci-dessus ne doivent pas être inférieurs respectivement à 900s et 3600s
 
 max_pload_octet, 20
 periode_lora_min_secondes, 1
 periode_mesure_min_secondes, 2
 max_secondes_par_jour, 850 
-devEUI, 0
 
 #Configuration des capteurs
-# id,type,pin,id_box
+# id,type,pin,devEUI
 P1,pression,A0,123456789012345
 T1,temperature,A1,123456789012345
 T2,temperature,A6,123456789012345
