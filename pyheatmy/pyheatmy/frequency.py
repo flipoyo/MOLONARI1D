@@ -455,7 +455,7 @@ class frequency_analysis:
         plt.show()
 
 
-    def estimate_a(self, dates=None, signals=None, depths=None, periods_days=None, verbose=True, draw=True):
+    def estimate_a(self, dates=None, signals=None, depths=None, periods_days=None, verbose=True, draw=True, intercept=True):
         """For each signal, compute the amplitudes at peaks of dominant periods.
         Then for each period, estimate the exponential decay of the corresponding amplitude A(z, omega)/A(0, omega) = e^(-a*z)"""
 
@@ -583,16 +583,34 @@ class frequency_analysis:
             y_m = log_ratio[m]
 
             # perform linear fit on finite data (1D assumption accepted)
-            coeffs = np.polyfit(z_m, y_m, 1)
-            a_fit = -coeffs[0]
+            if intercept:
+                # fit slope and intercept (ordinary least squares)
+                coeffs = np.polyfit(z_m, y_m, 1)
+                slope = coeffs[0]
+                intercept_val = coeffs[1]
+            else:
+                # force fit through origin: slope = sum(z*y)/sum(z^2)
+                denom = np.sum(z_m * z_m)
+                if denom == 0:
+                    if verbose:
+                        print(f"Degenerate depths for period {Pd}: sum(z^2)==0, skipping")
+                    a_values.append(np.nan)
+                    a_R2_values.append(np.nan)
+                    plot_items.append({'Pd': Pd, 'skipped': True, 'reason': 'degenerate depths'})
+                    continue
+                slope = np.sum(z_m * y_m) / denom
+                intercept_val = 0.0
+                coeffs = np.array([slope, intercept_val])
+
+            a_fit = -slope
             # compute R^2
-            y_pred = np.polyval(coeffs, z_m)
+            y_pred = slope * z_m + intercept_val
             ss_res = np.sum((y_m - y_pred) ** 2)
             ss_tot = np.sum((y_m - np.mean(y_m)) ** 2)
             r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else np.nan
 
             # store plot data for later combined plotting
-            plot_items.append({'Pd': Pd, 'skipped': False, 'z': z.copy(), 'log_ratio': log_ratio.copy(), 'coeffs': coeffs.copy(), 'a_fit': a_fit, 'r2': r2, 'model': '1D'})
+            plot_items.append({'Pd': Pd, 'skipped': False, 'z': z.copy(), 'log_ratio': log_ratio.copy(), 'coeffs': np.array(coeffs).copy(), 'a_fit': a_fit, 'r2': r2, 'model': '1D'})
 
             # Store the fitted a value and the R^2 value
             a_values.append(a_fit)
@@ -644,7 +662,7 @@ class frequency_analysis:
         return self._a_values, self._a_R2
 
 
-    def estimate_b(self, dates=None, signals=None, depths=None, periods_days=None, bw_frac=0.15, order=4, amp_thresh=None, verbose=True, draw=True):
+    def estimate_b(self, dates=None, signals=None, depths=None, periods_days=None, bw_frac=0.15, order=4, amp_thresh=None, verbose=True, draw=True, intercept=True):
         """Estimate b (phase decay) using bandpass+Hilbert method.
         periods_days: array-like in days
         Returns array of b values (rad/m)
@@ -774,12 +792,26 @@ class frequency_analysis:
                 continue
 
             # Fitting lineaire de la phase en beta*z = - b*z
-            coeffs = np.polyfit(depths_all[m], ph_unw[m], 1)
-            beta = coeffs[0]
+            if intercept:
+                coeffs = np.polyfit(depths_all[m], ph_unw[m], 1)
+                beta = coeffs[0]
+                intercept_val = coeffs[1]
+            else:
+                denom = np.sum(depths_all[m] * depths_all[m])
+                if denom == 0:
+                    if verbose:
+                        print(f"Degenerate depths for period {Pd}: sum(depths^2)==0, skipping")
+                    b_values.append(np.nan)
+                    b_R2_values.append(np.nan)
+                    continue
+                beta = np.sum(depths_all[m] * ph_unw[m]) / denom
+                intercept_val = 0.0
+                coeffs = np.array([beta, intercept_val])
+
             b_val = -beta
             b_values.append(b_val)
             # Compute R^2
-            residuals = ph_unw[m] - (coeffs[0] * depths_all[m] + coeffs[1])
+            residuals = ph_unw[m] - (beta * depths_all[m] + intercept_val)
             ss_res = np.sum(residuals**2)
             ss_tot = np.sum((ph_unw[m] - np.mean(ph_unw[m]))**2)
             r2 = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
@@ -857,7 +889,6 @@ class frequency_analysis:
 
         self._kappa_e_series, self._v_t_series = kappa_e, v_t
         return kappa_e, v_t
-
 
     def phys_to_a_b(self, kappa_e=None, v_t=None, periods_days=None):
         """Convert physical parameters kappa_e and v_t to attenuation (a) and phase-shift (b) coefficients.
