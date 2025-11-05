@@ -47,7 +47,7 @@ const char* configFilePath = "conf.csv";
 int ncapt = 0; 
 
 // LoRa
-LoraCommunication lora(868E6, devEui, appEui, MASTER);
+LoraCommunication lora(868E6, devEui, appEui, RoleType::SLAVE);
 long lastLoRaSend = 0;
 long lastMeasure = 0;
 unsigned long lastSDOffset = 0;
@@ -57,45 +57,6 @@ uint16_t newMeasureInterval = 0;
 uint16_t newLoraInterval = 0;
 
 const long sec_in_day = 86400;
-
-
-void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
-
-    File file = SD.open("conf.csv", FILE_READ);
-    if (!file) {
-        Serial.println("ERREUR : impossible de lire conf.csv");
-        return;
-    }
-
-    std::vector<String> lignes;
-    while (file.available()) {
-        lignes.push_back(file.readStringUntil('\n'));
-    }
-    file.close();
-
-    for (auto &ligne : lignes) {
-        if (ligne.startsWith("intervalle_de_mesure_secondes")) {
-            ligne = "intervalle_de_mesure_secondes," + String(measureInterval);
-        }
-        else if (ligne.startsWith("intervalle_lora_secondes")) {
-            ligne = "intervalle_lora_secondes," + String(loraInterval);
-        }
-    }
-    
-    file = SD.open("conf.csv", FILE_WRITE | O_TRUNC);
-    if (!file) {
-        Serial.println("ERREUR : impossible d'écrire conf.csv");
-        return;
-    }
-
-    for (auto &ligne : lignes) {
-        file.println(ligne);
-    }
-
-    file.close();
-    Serial.println("Fichier conf.csv mis à jour sans toucher aux autres paramètres.");
-}
-
 bool rattrapage = false;
 
 // ----- Setup -----
@@ -127,6 +88,7 @@ void setup() {
         DEBUG_LOG("échec de la lecture du fichier config");
     }
 
+    lora.LoraUpdateAttributes(868E6, appEui, devEui, RoleType::SLAVE);
 
     // Compter les capteurs
     for (auto & _c : liste_capteurs) {

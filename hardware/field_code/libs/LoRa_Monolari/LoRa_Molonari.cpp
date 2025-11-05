@@ -23,6 +23,13 @@ LoraCommunication::LoraCommunication(long frequency, String localAdd, String des
 {
 }
 
+void LoraCommunication::LoraUpdateAttributes(long frequency, String localAdd, String desti, RoleType role){
+    this -> freq = frequency;
+    this -> localAddress = localAdd;
+    this -> destination = desti;
+    this -> deviceRole = role;
+}
+
 void LoraCommunication::startLoRa() {
     if (!active) {
         int retries = 3;
@@ -55,8 +62,7 @@ void LoraCommunication::setdesttodefault() {
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
     if (!active) { DEBUG_LOG("LoRa inactive"); return; }
 
-    uint8_t b = random(10, 80);
-    delay(100 + b);
+    delay(100);
 
     if (!LoRa.beginPacket()) {
         DEBUG_LOG("LoRa busy, cannot send packet");
@@ -406,3 +412,40 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
     Serial.println("Timeout: pas de configuration complète reçue.");
     return false;
 }
+
+/*void updateConfigFile(uint16_t measureInterval, uint16_t loraInterval) {
+
+    File file = SD.open("conf.csv", FILE_READ);
+    if (!file) {
+        Serial.println("ERREUR : impossible de lire conf.csv");
+        return;
+    }
+
+    std::vector<String> lignes;
+    while (file.available()) {
+        lignes.push_back(file.readStringUntil('\n'));
+    }
+    file.close();
+
+    for (auto &ligne : lignes) {
+        if (ligne.startsWith("intervalle_de_mesure_secondes")) {
+            ligne = "intervalle_de_mesure_secondes," + String(measureInterval);
+        }
+        else if (ligne.startsWith("intervalle_lora_secondes")) {
+            ligne = "intervalle_lora_secondes," + String(loraInterval);
+        }
+    }
+    
+    file = SD.open("conf.csv", FILE_WRITE | O_TRUNC);
+    if (!file) {
+        Serial.println("ERREUR : impossible d'écrire conf.csv");
+        return;
+    }
+
+    for (auto &ligne : lignes) {
+        file.println(ligne);
+    }
+
+    file.close();
+    Serial.println("Fichier conf.csv mis à jour sans toucher aux autres paramètres.");
+}*/

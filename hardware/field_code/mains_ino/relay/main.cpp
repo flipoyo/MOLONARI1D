@@ -27,12 +27,8 @@
 
 LoRaModem modem;
 
-
-
 LoraWANCommunication loraWAN;
 std::queue<String> sendingQueue;
-
-
 
 GeneralConfig res;
 
@@ -41,7 +37,7 @@ long lastAttempt = 0;// mémorise la dernière tentative de réception (en milli
 
 String appEui;
 String devEui;
-LoraCommunication lora(868E6, devEui, appEui, MASTER);
+LoraCommunication lora(868E6, devEui, appEui, RoleType::MASTER);
 bool modif = false;
 int CSPin = 5; // Pin CS par défaut
 
@@ -49,6 +45,7 @@ const char* configFilePath = "conf_rel.csv";
 
 Waiter waiter; //pour ne pas l'indenter dans le loop
 unsigned long lastSDOffset = 0;
+
 
 // ----- Setup -----
 void setup() {
@@ -68,7 +65,7 @@ void setup() {
     Serial.println("Configuration chargée.");
 
     // Initialisation LoRa communication
-    lora = LoraCommunication(res.int_config.lora_intervalle_secondes, res.rel_config.appEui, res.rel_config.devEui, RoleType::MASTER);
+    lora.LoraUpdateAttributes(868E6, res.rel_config.appEui, res.rel_config.devEui, RoleType::MASTER);
 
     // Vérification SD
     if (!SD.begin(res.rel_config.CSPin)) {
@@ -81,6 +78,7 @@ void setup() {
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     digitalWrite(LED_BUILTIN, LOW);
 }
+
 
 // ----- Loop -----
 void loop() {
@@ -96,7 +94,8 @@ void loop() {
         // Réception des paquets via LoRa
         uint8_t deviceId = 0; // initialise avec packetNumber = 0 
         if (lora.handshake(deviceId)) {
-            Serial.println("Handshake réussi. Réception des paquets...");
+
+            DEBUG_LOG("Handshake réussi. Réception des paquets...");
             int last = lora.receivePackets(receiveQueue);
             lora.sendPacket(last, FIN, ""); // Répond par un FIN de confirmation;
 
@@ -144,9 +143,7 @@ void loop() {
                     Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
                 }
             lastLoraSend = currentTime;
-            
-
-
+            }
         } else {
             Serial.println("Handshake échoué, aucune donnée reçue.");
             lora.stopLoRa();
@@ -155,21 +152,22 @@ void loop() {
             lastAttempt = GetSecondsSinceMidnight();
         }
     }
+    
     DEBUG_LOG("about to loop on modem.available()");
     // reception csv et modification
-    while (modem.available()) {
+    /*while (modem.available()) {
         loraWAN.receiveConfig(configFilePath, modif);
         modif = true;
-    }
+    }*/
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
 
     // Calcule le temps restant avant le prochain réveil (non bloquant)
     lastAttempt=GetSecondsSinceMidnight();
     LowPower.idle();
-
-    }
 }
+
+
 
 
 

@@ -25,7 +25,7 @@ const int MAX_QUEUE_SIZE = 255; // Limite pour les queues
 class LoraCommunication {
 public:
     LoraCommunication(long frequency, String localAdd, String desti, RoleType role);
-
+    void LoraUpdateAttributes(long frequency, String localAdd, String desti, RoleType role);
     void startLoRa();
     void stopLoRa();
     void setdesttodefault();
