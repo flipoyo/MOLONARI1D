@@ -6,6 +6,8 @@
 #include <queue>
 #include <unordered_set>
 
+#include <Reader.hpp>
+
 enum RequestType : uint8_t {
     SYN  = 0xcc,
     ACK  = 0x33,
@@ -37,9 +39,10 @@ public:
 
     // Sessions
     bool handshake(uint8_t &shift);
-    uint8_t sendPackets(std::queue<String> &sendQueue);
+    uint8_t sendAllPacketsAndManageMemory(std::queue<memory_line>& sendQueue, long& initial_adress, File& dataFile);
+    uint8_t sendAllPackets(std::queue<String> &sendQueue);
     int receivePackets(std::queue<String> &receiveQueue);
-    void closeSession(int lastPacket);
+    bool closeSession(int lastPacket);
 
     bool receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms = 15000);
 private:

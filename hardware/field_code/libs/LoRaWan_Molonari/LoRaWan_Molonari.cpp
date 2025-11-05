@@ -67,6 +67,7 @@ bool LoraWANCommunication::receiveConfig(const char* configFilePath, bool modif)
     File tmp = SD.open(tmpPath, FILE_WRITE | O_TRUNC);
     tmp.println(rcv);
     tmp.close();
+    
     File newF = SD.open(configFilePath, FILE_WRITE | O_TRUNC);
     if (!newF) {
         Serial.print("Impossible de créer ");

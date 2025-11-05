@@ -72,7 +72,7 @@ void setup() {
         Serial.println("Erreur SD - arrêt système.");
         while (true) {}
     }
-    InitialiseRTC();
+
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     digitalWrite(LED_BUILTIN, LOW);
@@ -81,46 +81,41 @@ void setup() {
 // ----- Loop -----
 void loop() {
     DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
+    static long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
     static Waiter waiter; //pour ne pas l'indenter dans le loop
-    DEBUG_LOG("Waiter instancié dans le relay");
-    
-    long currentTime = GetSecondsSinceMidnight();
-    if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes en vrai, change pour les besoins du test
-        DEBUG_LOG("Fenêtre de communication LoRa atteinte, tentative de réception des paquets...");
+    DEBUG_LOG("Waiter instancié dans le relay");    
+    static long lastSDOffset = 0;
 
+    long currentTime = GetSecondsSinceMidnight();
+    if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes
+        DEBUG_LOG("Fenêtre de communication LoRa atteinte, tentative de réception des paquets...");
         std::queue<String> receiveQueue;
         lora.startLoRa();
 
         // Réception des paquets via LoRa
-        uint8_t deviceId = 0;
+        uint8_t deviceId = 0; // initialise avec packetNumber = 0 
         if (lora.handshake(deviceId)) {
             Serial.println("Handshake réussi. Réception des paquets...");
             int last = lora.receivePackets(receiveQueue);
-            lora.closeSession(last);
+            lora.sendPacket(last, FIN, ""); // Répond par un FIN de confirmation;
 
             // Met à jour le temps de la dernière tentative de réception
             lastAttempt = GetSecondsSinceMidnight();
 
             //envoie du csv
-            if (modif==true) {
+            if (modif==true) { // normalement modif est toujours false pour l'instant : la focntion de modif n'est pa sbien implémentée
                 File config = SD.open(configFilePath, FILE_READ);
-                config.seek(0);
+                config.seek(lastSDOffset);
+                std::queue<memory_line> lines_config;
 
                 while (config.available()) {
-                    std::queue<String> line_config;
-                    line_config.push(config.readStringUntil('\n'));
+                    memory_line new_line = memory_line(config.readStringUntil('\n'), config.position());
+                    lines_config.push(new_line);
                     
-                for (int attempt = 1; attempt <= 3; attempt++) {
+                uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffset, config);
+                lora.closeSession(lastPacket);
 
-                    if (lora.sendPackets(line_config)) {
-                        break;
-
-                    } else {
-                        if (attempt < 3) delay(20000);
-                        }
-                    }
-                }   
-                modif = false;
+                modif = !(lastSDOffset == config.position());
             }
 
             lora.stopLoRa();
@@ -173,6 +168,8 @@ void loop() {
     LowPower.idle();
 
 }
+}
+
 
 
 

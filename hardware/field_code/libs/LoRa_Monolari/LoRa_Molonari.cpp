@@ -4,6 +4,7 @@
 #include <SD.h>
 #include <Arduino.h> 
 #include "LoRa_Molonari.hpp"
+
 #define DEBUG_MAIN
 #define DEBUG_MEASURE
 #define DEBUG_WRITER
@@ -152,12 +153,14 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         while (n < 50) {
             n++;
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
-                DEBUG_LOG("j'airecu");
+                DEBUG_LOG("SLAVE: SYN received");
                 shift = packetNumber;
                 sendPacket(shift, SYN, "SYN-ACK");
                 DEBUG_LOG("SLAVE: SYN-ACK sent");
                 break;
             }
+        }
+
         if (n == 50) {
             DEBUG_LOG("SLAVE: No SYN received");
             return false;
@@ -172,29 +175,99 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         }
         return false;
     }
-}}
-
-uint8_t LoraCommunication::sendPackets(std::queue<String> &sendQueue) {
-    uint8_t packetNumber = 0;
-    String payload; RequestType requestType; uint8_t receivedPacketNumber;
-    while (!sendQueue.empty()) {
-        String msg = sendQueue.front();
-        sendPacket(packetNumber, DATA, msg);
-        int retries = 0;
-        while (retries < 6) {
-            if (receivePacket(receivedPacketNumber, requestType, payload) && requestType == ACK && receivedPacketNumber == packetNumber) {
-                sendQueue.pop();
-                packetNumber++;
-                break;
-            }
-            retries++;
-        }
-        if (retries == 6) { while (!sendQueue.empty()) sendQueue.pop(); break; }
-    }
-    return packetNumber;
 }
 
-int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {
+uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>& sendQueue, long& SDOffset, File& dataFile) {//changed previous name "sendPackets" ambiguous with "sendPacket"
+    // handles packet sending and acknowledgement verificaiton, SDOffset updating, and ensures dataFile.position() is at the right place (terminal SDOffset).
+
+    uint8_t nb_packets_sent = 0;
+    String payload; RequestType requestType; uint8_t nb_packets_sent_received;
+    while (!sendQueue.empty()) {
+        memory_line packet = sendQueue.front();
+        sendPacket(nb_packets_sent, DATA, packet.flush);
+        int send_retries = 0;
+        while(send_retries<4){
+            int receive_retries = 0;
+            while (receive_retries < 6) {
+                if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet.flush) {
+                    sendQueue.pop();
+                    nb_packets_sent++;
+                    SDOffset = packet.memory_successor;
+                    DEBUG_LOG("one packet successfully sent");
+                    break;
+                }
+                #ifdef DEBUG_MAIN
+                else{
+                    DEBUG_LOG("pas d'acknowledgement adequat reçu à " + String(receive_retries) + "e écoute parce que : ");
+                    if(!receivePacket(nb_packets_sent_received, requestType, payload)){
+                        DEBUG_LOG("recivePacket est faux");
+                    }
+                    if(requestType != ACK){
+                        DEBUG_LOG("le packet reçu n'est pas un acknowledgement");
+                    }
+                    if(payload != packet.flush){
+                        DEBUG_LOG("le contenu du message reçu n'est pas identique au contenu du message envoyé");
+                    }
+                }
+                #endif
+                DEBUG_LOG("Re-sending...");
+                receive_retries++;
+            }
+        send_retries++;
+        }
+        if (send_retries == 4) { while (!sendQueue.empty()) sendQueue.pop(); break;
+            DEBUG_LOG("aborting send after " + String(send_retries) + " attempts");
+        }
+    }
+    dataFile.seek(SDOffset);
+    return nb_packets_sent;
+}
+
+uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
+    // handles only packet sending and acknowledgement verificaiton, and returns the number of packets that were sent and acknwoleged.
+    // WARNING not needed so far exept in appearently useless Waiter::delayUntil, please errase this message if you call sendAllPackets.
+    uint8_t nb_packets_sent = 0;
+    String payload; RequestType requestType; uint8_t nb_packets_sent_received;
+    while (!sendQueue.empty()) {
+        String packet_flush = sendQueue.front();
+        sendPacket(nb_packets_sent, DATA, packet_flush);
+        int send_retries = 0;
+        while(send_retries<4){
+            int receive_retries = 0;
+            while (receive_retries < 6) {
+                if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet_flush) {
+                    sendQueue.pop();
+                    nb_packets_sent++;
+                    DEBUG_LOG("one packet successfully sent");
+                    break;
+                }
+                #ifdef DEBUG_MAIN
+                else{
+                    DEBUG_LOG("pas d'acknowledgement adequat reçu à " + String(receive_retries) + "e écoute parce que : ");
+                    if(!receivePacket(nb_packets_sent_received, requestType, payload)){
+                        DEBUG_LOG("recivePacket est faux");
+                    }
+                    if(requestType != ACK){
+                        DEBUG_LOG("le packet reçu n'est pas un acknowledgement");
+                    }
+                    if(payload != packet_flush){
+                        DEBUG_LOG("le contenu du message reçu n'est pas identique au contenu du message envoyé");
+                    }
+                }
+                #endif
+                DEBUG_LOG("Re-sending...");
+                receive_retries++;
+            }
+        send_retries++;
+        }
+        if (send_retries == 4) { while (!sendQueue.empty()) sendQueue.pop(); break;
+            DEBUG_LOG("aborting send after " + String(send_retries) + " attempts");
+        }
+    }
+    return nb_packets_sent;
+}
+
+int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {// is it really used somewhear ?
     uint8_t packetNumber = 0; String payload; RequestType requestType; uint8_t prevPacket = -1;
     unsigned long startTime = millis(); int ackTimeout = 60000;
 
@@ -214,16 +287,17 @@ int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {
     return packetNumber;
 }
 
-void LoraCommunication::closeSession(int lastPacket) {
+bool LoraCommunication::closeSession(int lastPacket) {
     sendPacket(lastPacket, FIN, "");
     String payload; uint8_t packetNumber; RequestType requestType;
     int retries = 0;
     while (retries < 3) {
-        if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket) return;
+        if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket) return true;
         delay(100 * (retries + 1));
         sendPacket(lastPacket, FIN, "");
         retries++;
     }
+    return false;
 }
 
 bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms) {
@@ -232,6 +306,7 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
     String payload;
 
     std::vector<String> newConfigLines; // stockage temporaire des lignes
+    std::queue<String> receiveQueue;
 
     Serial.println("Écoute de la nouvelle configuration LoRa...");
 
@@ -256,6 +331,8 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
 
         if (requestType == FIN) {
             // Écriture atomique : on écrit d'abord sur un fichier temporaire
+            int last = receivePackets(receiveQueue);
+            sendPacket(last, FIN, "");
             const char* tmpPath = "tmp_conf.csv";
             File tmp = SD.open(tmpPath, FILE_WRITE | O_TRUNC);
             if (!tmp) {

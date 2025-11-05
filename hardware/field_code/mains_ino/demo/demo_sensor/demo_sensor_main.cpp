@@ -210,63 +210,53 @@ void loop() {
         }
 
         lora.startLoRa();
-        DEBUG_LOG("LoRa ok");
+        DEBUG_LOG("LoRa ok et handshake démarré");
 
-        dataFile.seek(lastSDOffset);
+        uint8_t id = 0;
+        if (lora.handshake(id)) {
+            Serial.println("handshake réussi");
+            DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
 
-        DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)) + "ms.");
+            while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
+                //at this point, lastSDOffset must point to the first memory address of the first line to be sent
+                std::queue<memory_line> linesToSend;
+                while (dataFile.available()) {
+                    memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                    linesToSend.push(new_line);
 
-        while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
-
-
-            std::queue<String> lineToSend;
-            lineToSend.push(dataFile.readStringUntil('\n'));
-
-            // Si la ligne est vide aka plus rien à envoyer
-            if (lineToSend.front().length() == 0) {
-                rattrapage = false;
-                break;
-            }
-
-            // Tentative d'envoi 3 fois de suite 
-            for (int attempt = 1; attempt <= 3; attempt++) {
-                uint8_t deviceId = 0;
-                if (lora.handshake(deviceId)) {
-
-                    if (lora.sendPackets(lineToSend)) {
-                        DEBUG_LOG("Packet successfully sent");
-                        lastSDOffset = dataFile.position();
+                // Si la ligne est vide aka plus rien à envoyer
+                    if (linesToSend.front().flush.length() == 0) {
                         break;
-
-                    } else {
-                        DEBUG_LOG("Attempt n " + String(attempt) +" failed");
-                        if (attempt < 3) delay(5000);//decreased for demo version
                     }
-            }}
-            if (!dataFile.available()) {
-                rattrapage = false;
-            }
+                }
+                int end_document_address = dataFile.position();
+                uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(linesToSend, lastSDOffset, dataFile);
+                rattrapage = (lastSDOffset == end_document_address);
 
-        } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
+                lora.closeSession(lastPacket);
+            } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
 
-        dataFile.close();
-        lastLoRaSend = current_Time;
+            dataFile.close();
+            lastLoRaSend = current_Time;
 
         // --- Réception éventuelle de mise à jour config ---
         DEBUG_LOG("Vérification de mise à jour descendante...");
 
 
-        uint16_t recvMeasure = 0, recvLora = 0;
-        if (lora.receiveConfigUpdate(configFilePath, &recvMeasure, &recvLora, 15000)) {
-            DEBUG_LOG("Mise à jour config reçue du master.");
-            intervalle_de_mesure_secondes = recvMeasure;
-            lora_intervalle_secondes = recvLora;
-        } else {
-            DEBUG_LOG("Pas de mise à jour reçue.");
-        }
+            uint16_t recvMeasure = 0, recvLora = 0;
+            if (lora.receiveConfigUpdate(configFilePath, &recvMeasure, &recvLora, 15000)) {
+                DEBUG_LOG("Mise à jour config reçue du master.");
+                intervalle_de_mesure_secondes = recvMeasure;
+                lora_intervalle_secondes = recvLora;
+            } else {
+                DEBUG_LOG("Pas de mise à jour reçue.");
+            }
 
-        lora.stopLoRa();
-    }
+            lora.stopLoRa();
+        }
+    } else {
+            Serial.println("Handshake échoué");
+        }
     // --- Sommeil jusqu'à prochaine mesure ---
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     Waiter waiter;
