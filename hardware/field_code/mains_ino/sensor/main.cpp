@@ -88,6 +88,7 @@ void setup() {
         DEBUG_LOG("échec de la lecture du fichier config");
     }
 
+    lora.LoraUpdateAttributes(868E6, appEui, devEui, RoleType::SLAVE);
 
     // Compter les capteurs
     for (auto & _c : liste_capteurs) {
