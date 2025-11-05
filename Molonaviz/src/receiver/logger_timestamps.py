@@ -10,13 +10,13 @@ logger = logging.getLogger("timestamps_logger")
 logger.setLevel(logging.INFO)
 
 if not logger.handlers:
-    # Handler basique pour écrire dans un fichier
+    # Basic handler to write in a file
     file_handler = logging.FileHandler(LOG_PATH)
     formatter = logging.Formatter('%(asctime)s | %(message)s', '%Y-%m-%dT%H:%M:%S')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-def get_logger(obj: str, obj_id: str, timestamp):
+def logger_timestamps(obj: str, obj_id: str, timestamp):
     '''
     Logs the timestamps from either a device, relay or gateway into timestamps.log` file.
     Args:
@@ -26,11 +26,11 @@ def get_logger(obj: str, obj_id: str, timestamp):
     Returns:
         `None` (just logs the information in the log file)
     '''
-    # Vérification de l'objet
+    # Verification of object type
     if obj not in ['device', 'relay', 'gateway']:
         raise ValueError("obj must be 'device', 'relay' or 'gateway'")
     
-    # Format d'affichage
+    # Display formatting
     if obj == 'device':
         log_message = f"DEVICE: DeviceEUI: {obj_id} | sent at: {timestamp}"
     elif obj == 'relay':

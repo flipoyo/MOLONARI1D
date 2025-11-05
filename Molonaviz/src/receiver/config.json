@@ -1,0 +1,23 @@
+{
+  "mqtt": {
+    "broker": "terra-forma-obs.fr",
+    "port": 10088,
+    "topic": "application/+/device/+/event/up",
+    "client_id": "chirpstack_to_sqlite",
+    "keepalive": 60,
+    "ca_cert": "MOLONARI1D/Molonaviz/src/molonaviz/TLS/CA.crt",
+    "client_cert": "MOLONARI1D/Molonaviz/src/molonaviz/TLS/TLS.crt",
+    "client_key": "MOLONARI1D/Molonaviz/src/molonaviz/TLS/TLS.key",
+    "device_euis": [],
+    "message_queue_max": 1000
+  },
+  "database": {
+    "filename": "./TestDatabase/raw_measurements.db",
+    "table": "RawMeasurements",
+    "realdb_config": {
+        "sampling_point_name" : "main-sampling",
+        "study_name" : "main-study",
+        "labo_id" : 1
+    }
+  }
+}

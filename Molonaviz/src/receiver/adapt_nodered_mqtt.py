@@ -13,47 +13,47 @@ Usage :
     python chirpstack_mqtt_to_sqlite.py --export out.csv  # CSV export and exit
 """
 
-import argparse
-import base64
+from PyQt5.QtSql import QSqlDatabase, QSqlQuery
 import json
 import logging
 import queue
-import sqlite3
 import sys
 import threading
 import time
 import os
-from datetime import datetime
 
 import pandas as pd
 import paho.mqtt.client as mqtt
-import ssl
 
+from . import decoder
+from .db_insertion import insert_payload, REALDB_CONFIG
+from receiver.logger_timestamps import logger_timestamps
 
+# Load configuration from JSON file
+with open(os.path.join(os.path.dirname(__file__), 'config.json')) as config_file:
+    config = json.load(config_file)
 
 # ---- MQTT configuration ----
 
-MQTT_BROKER = "localhost"
-MQTT_PORT = 1883
-MQTT_TOPIC = "devices/{dev_eui}/up"
-MQTT_CLIENT_ID = "emulator-poc"
-MQTT_KEEPALIVE = 60
+MQTT_BROKER = config["mqtt"]["broker"]
+MQTT_PORT = config["mqtt"]["port"]
+MQTT_TOPIC = config["mqtt"]["topic"]
+MQTT_CLIENT_ID = config["mqtt"]["client_id"]
+MQTT_KEEPALIVE = config["mqtt"]["keepalive"]
 
 # paths to TLS files
-MQTT_CA_CERT = "MOLONARI1D/hardware/tests/Connection_test/TLS/CA.crt"
-MQTT_CLIENT_CERT = "MOLONARI1D/hardware/tests/Connection_test/TLS/TLS.crt"
-MQTT_CLIENT_KEY = "MOLONARI1D/hardware/tests/Connection_test/TLS/TLS.key"
+MQTT_CA_CERT = config["mqtt"]["ca_cert"]
+MQTT_CLIENT_CERT = config["mqtt"]["client_cert"]
+MQTT_CLIENT_KEY = config["mqtt"]["client_key"]
 
 # SQLite DB configuration
-DB_FILENAME = "measurements.db"
-SQLITE_TABLE = "uplinks"
+DB_FILENAME = config["database"]["filename"]
+SQLITE_TABLE = config["database"]["table"]
 
-DEVICE_EUIS = [
-    # list of deviceEUIs to collect
-]
+DEVICE_EUIS = config["mqtt"]["device_euis"] # list of DeviceEUIs to filter (empty = all devices)
 
 # Queue size for incoming messages (to not block the MQTT callback)
-MESSAGE_QUEUE_MAX = 1000
+MESSAGE_QUEUE_MAX = config["mqtt"]["message_queue_max"]
 
 # Logging to better control infos and alerts displayed
 logging.basicConfig(
@@ -63,7 +63,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("chirpstack")
 
-
 def normalize_eui(eui):
     '''Normalizes a DeviceEUI in lowercase without spaces. Returns None if input is None.'''
     if eui is None:
@@ -72,13 +71,18 @@ def normalize_eui(eui):
 
 
 
-# ---- Database setup ----
+# ---- Temporary database logic ----
 
 def init_db(db_path=DB_FILENAME):
-    '''Initializes the SQLite DB and creates the table if necessary. Returns the connexion.'''
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    cur = conn.cursor()
-    cur.execute(f'''
+    '''Initializes the SQLite DB and creates the table if necessary using PyQt5.'''
+    db = QSqlDatabase.addDatabase("QSQLITE")
+    db.setDatabaseName(db_path)
+    if not db.open():
+        logger.error("Failed to open database: %s", db.lastError().text())
+        return None
+
+    query = QSqlQuery(db)
+    query.exec(f'''
     CREATE TABLE IF NOT EXISTS {SQLITE_TABLE} (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         device_eui TEXT,
@@ -93,41 +97,44 @@ def init_db(db_path=DB_FILENAME):
         a4 REAL
     )
     ''')
-    conn.commit()
-    logger.info("Table '%s' initialized in DB '%s'", SQLITE_TABLE, db_path)
-    return conn
-    
-from logger_timestamps import get_logger
+    if query.lastError().isValid():
+        logger.error("Failed to create table: %s", query.lastError().text())
+    else:
+        logger.info("Table '%s' initialized in DB '%s'", SQLITE_TABLE, db_path)
+    return db
 
-def insert_record(conn, rec):
-    '''ATTENTION: *`rec`* should be a dict with keys:
-      `device_eui`, `timestamp`, `relay_id`, `relay_ts`, `gateway_id`, `gateway_ts`,
-      `fcnt`, `a0`, `a1`, `a2`, `a3`, `a4`'''
-    cur = conn.cursor()
-    cur.execute(f"""
+
+def insert_record(db, rec):
+    '''Insert a record into the database using PyQt5.'''
+    query = QSqlQuery(db)
+    query.prepare(f'''
         INSERT INTO {SQLITE_TABLE} (
             device_eui, timestamp, relay_id, gateway_id, fcnt, a0, a1, a2, a3, a4
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        rec.get("device_eui"),
-        rec.get("timestamp"),
-        rec.get("relay_id"),
-        rec.get("gateway_id"),
-        rec.get("fcnt"),
-        rec.get("a0"),
-        rec.get("a1"),
-        rec.get("a2"),
-        rec.get("a3"),
-        rec.get("a4")
-    ))
-    conn.commit()
+        ) VALUES (:device_eui, :timestamp, :relay_id, :gateway_id, :fcnt, :a0, :a1, :a2, :a3, :a4)
+    ''')
+
+    query.bindValue(":device_eui", rec.get("device_eui"))
+    query.bindValue(":timestamp", rec.get("timestamp"))
+    query.bindValue(":relay_id", rec.get("relay_id"))
+    query.bindValue(":gateway_id", rec.get("gateway_id"))
+    query.bindValue(":fcnt", rec.get("fcnt"))
+    query.bindValue(":a0", rec.get("a0"))
+    query.bindValue(":a1", rec.get("a1"))
+    query.bindValue(":a2", rec.get("a2"))
+    query.bindValue(":a3", rec.get("a3"))
+    query.bindValue(":a4", rec.get("a4"))
+
+    if not query.exec():
+        logger.error("Failed to insert record: %s", query.lastError().text())
+    else:
+        logger.info("Record inserted successfully.")
 
     # Log timestamps
-    get_logger("device", rec.get("device_eui"), rec.get("timestamp"))
-    get_logger("relay", rec.get("relay_id"), rec.get("relay_ts"))
-    get_logger("gateway", rec.get("gateway_id"), rec.get("gateway_ts"))
+    logger_timestamps("device", rec.get("device_eui"), rec.get("timestamp"))
+    logger_timestamps("relay", rec.get("relay_id"), rec.get("relay_ts"))
+    logger_timestamps("gateway", rec.get("gateway_id"), rec.get("gateway_ts"))
 
-    return cur.lastrowid # Returns the inserted row ID
+    return query.lastInsertId()
 
 
 def export_csv(conn, out_path):
@@ -138,8 +145,6 @@ def export_csv(conn, out_path):
 
 
 # ---- Message handling ----
-
-import decoder # assuming decoder.py is in the same directory
 
 def extract_fields_from_payload(payload: dict):
     '''Extracts the useful fields of the MQTT request (sent by ChirpStack)
@@ -189,16 +194,17 @@ def extract_fields_from_payload(payload: dict):
 # ---- MQTT Client and worker ----
 
 class MQTTWorker:
-    '''Client MQTT with queue for messages and callbacks
-    Goal: free the worker from NodeRED'''
-    def __init__(self, broker, port, topic, ca_cert=None, client_cert=None, client_key=None, use_tls=True):
+    '''
+    Client MQTT with queue for messages and callbacks
+    '''
+    def __init__(self, broker, port, topic, real_database_insertion=False, ca_cert=None, client_cert=None, client_key=None):
         self.broker = broker
         self.port = port
         self.topic = topic
+        self.real_database_insertion = real_database_insertion
         self.ca = ca_cert
         self.cert = client_cert
         self.key = client_key
-        self.use_tls = use_tls
         self.client = mqtt.Client(client_id=MQTT_CLIENT_ID)
         self.msg_queue = queue.Queue(maxsize=MESSAGE_QUEUE_MAX)
         # attach callbacks
@@ -207,21 +213,14 @@ class MQTTWorker:
         self.client.on_disconnect = self.on_disconnect
 
         # TLS config if provided
-        if self.use_tls:
-            if not (self.ca and self.cert and self.key):
-                logger.error("TLS enabled but ca/cert/key not provided. Skipping TLS setup.")
-            else:
-                if not (os.path.exists(self.ca) and os.path.exists(self.cert) and os.path.exists(self.key)):
-                    logger.error("TLS files not found: ca=%s cert=%s key=%s. Skipping TLS setup.",
-                             self.ca, self.cert, self.key)
-                else:
-                    try:
-                        self.client.tls_set(ca_certs=self.ca, certfile=self.cert, keyfile=self.key)
-                        logger.info("TLS configuration applied (ca=%s cert=%s key=%s)",
-                                self.ca, self.cert, self.key)
-                    except Exception as e:
-                        logger.exception("Error in TLS configuration: %s", e)
-                        raise
+        if self.ca and self.cert and self.key:
+            try:
+                self.client.tls_set(ca_certs=self.ca, certfile=self.cert, keyfile=self.key)
+                logger.info("TLS configuration applied (ca=%s cert=%s key=%s)",
+                            self.ca, self.cert, self.key)
+            except Exception as e:
+                logger.exception("Error in TLS configuration: %s", e)
+                raise
 
     def on_connect(self, client, userdata, flags, rc, properties=None):
         if rc == 0:
@@ -254,8 +253,13 @@ class MQTTWorker:
         print(f"[MQTT] Payload: {payload_text}")
 
     def connect_and_loop_start(self):
+        logger.info("Connecting to MQTT broker %s:%d (use_tls=%s)", self.broker, self.port, self.use_tls)
+        self.client.connect(self.broker, self.port, keepalive=MQTT_KEEPALIVE)
+        # start loop in background thread
+        self.client.loop_start()
+        '''
+        if errors occur, handle them here
         try:
-            logger.info("Connecting to MQTT broker %s:%d (use_tls=%s)", self.broker, self.port, self.use_tls)
             self.client.connect(self.broker, self.port, keepalive=MQTT_KEEPALIVE)
             # start loop in background thread
             self.client.loop_start()
@@ -266,7 +270,7 @@ class MQTTWorker:
             logger.exception("SSL error during connection: %s. Check TLS certificates", e)
             raise
         except Exception as e:
-            logger.exception("MQTT connection failed: %s", e)
+            logger.exception("MQTT connection failed: %s", e)'''
 
     def disconnect(self):
         self.client.loop_stop()
@@ -298,13 +302,17 @@ def processing_worker(mqtt_worker:MQTTWorker, db_conn, device_euis_normalized):
 
             device_eui = normalize_eui(device_eui)
             # filter by DeviceEUI if exists
-            if device_euis_normalized and device_eui not in device_euis_normalized:
+            if len(device_euis_normalized) != 0 and device_eui not in device_euis_normalized:
                 logger.debug("DeviceEUI %s not in list - Ignored", device_eui)
                 continue
 
             # insert into DB
             try:
-                rowid = insert_record(db_conn, fields)
+                if mqtt_worker.real_database_insertion:
+                    transform_payload = transform_payload(fields)
+                    insert_payload(db_conn, REALDB_CONFIG, transform_payload) # utiliser le fichier annexe real DB
+                else:
+                    rowid = insert_record(db_conn, fields)
                 logger.info("Inserted id=%d device=%s ts=%s", rowid, device_eui,
                             time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
             except Exception as e:
@@ -319,7 +327,7 @@ def processing_worker(mqtt_worker:MQTTWorker, db_conn, device_euis_normalized):
 
 # ---- Main ----
 
-def main(args):
+def main_mqtt(real_database_insertion=False):
     # normalize list of deviceEUIs
     device_euis_normalized = set(normalize_eui(x) for x in DEVICE_EUIS) if DEVICE_EUIS else set()
 
@@ -332,6 +340,7 @@ def main(args):
         broker=MQTT_BROKER,
         port=MQTT_PORT,
         topic=MQTT_TOPIC,
+        real_database_insertion=real_database_insertion,
         ca_cert=MQTT_CA_CERT,
         client_cert=MQTT_CLIENT_CERT,
         client_key=MQTT_CLIENT_KEY
@@ -356,22 +365,3 @@ def main(args):
         mqtt_worker.disconnect()
         conn.close()
         logger.info("Done.")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--export", help="Export the DB into CSV and quit (file path)", default=None)
-    parser.add_argument("--no-tls", action="store_true", help="Disable TLS for MQTT connection (use local broker)")
-    parser.add_argument("--broker", default=MQTT_BROKER, help="MQTT broker host")
-    parser.add_argument("--port", type=int, default=MQTT_PORT, help="MQTT broker port")
-    args = parser.parse_args()
-
-    # If export CSV requested, open the DB, export then exit
-    if args.export:
-        db_conn = init_db(DB_FILENAME)
-        export_csv(db_conn, args.export)
-        db_conn.close()
-        sys.exit(0)
-
-    MQTT_BROKER = args.broker
-    MQTT_PORT = args.port
-    main(args)
