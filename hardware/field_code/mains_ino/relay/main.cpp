@@ -85,7 +85,7 @@ void setup() {
 // ----- Loop -----
 void loop() {
     long currentTime = GetSecondsSinceMidnight();
-    DEBUG_LOG("il est " + String(currentTime) + " temps");
+
     
     if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes
         DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
