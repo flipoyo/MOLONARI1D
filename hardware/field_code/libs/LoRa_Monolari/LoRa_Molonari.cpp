@@ -1,3 +1,6 @@
+// LoRa_Molonari.cpp
+// This file defines the LoraCommunication class for handling LoRa communication.
+
 #include <SD.h>
 #include <Arduino.h> 
 #include "LoRa_Molonari.hpp"
@@ -15,7 +18,7 @@
 #define DEBUG_LOG_NO_LN(msg)
 #endif
 
-LoraCommunication::LoraCommunication(long frequency, uint8_t localAdd, uint8_t desti, RoleType role)
+LoraCommunication::LoraCommunication(long frequency, String localAdd, String desti, RoleType role)
     : freq(frequency), localAddress(localAdd), destination(desti), active(false), deviceRole(role)
 {
 }
@@ -46,7 +49,7 @@ void LoraCommunication::stopLoRa() {
 }
 
 void LoraCommunication::setdesttodefault() {
-    destination = 0xff;
+    destination = String(0xff);
 }
 
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
@@ -62,8 +65,8 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 
     uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
     LoRa.write(checksum);
-    LoRa.write(destination);
-    LoRa.write(localAddress);
+    LoRa.write(uint8_t(destination.toInt()));
+    LoRa.write(uint8_t(localAddress.toInt()));
     LoRa.write(packetNumber);
     LoRa.write(requestType);
     LoRa.print(payload);
@@ -84,8 +87,8 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
         int packetSize = LoRa.parsePacket();
         if (packetSize) {
             uint8_t receivedChecksum = LoRa.read();
-            uint8_t recipient = LoRa.read();
-            uint8_t dest = LoRa.read();
+            String recipient = LoRa.readString();
+            String dest = LoRa.readString();
             packetNumber = LoRa.read();
             requestType = static_cast<RequestType>(LoRa.read());
 
@@ -104,17 +107,17 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
     return false;
 }
 
-bool LoraCommunication::isValidDestination(int recipient, int dest, RequestType requestType) {
+bool LoraCommunication::isValidDestination(const String &recipient, const String &dest, RequestType requestType) {
     if (recipient != localAddress) return false;
-    if (destination == dest || (requestType == SYN && destination == 0xff && myNet.find(dest) != myNet.end())) {
+    if (destination == dest || (requestType == SYN && destination == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
         destination = dest;
         return true;
     }
     return false;
 }
 
-uint8_t LoraCommunication::calculateChecksum(int recipient, int dest, uint8_t packetNumber, RequestType requestType, const String &payload) {
-    uint8_t checksum = recipient ^ dest ^ packetNumber ^ static_cast<uint8_t>(requestType);
+uint8_t LoraCommunication::calculateChecksum(const String &recipient, const String &dest, uint8_t packetNumber, RequestType requestType, const String &payload) {
+    uint8_t checksum = recipient.toInt() ^ dest.toInt() ^ packetNumber ^ static_cast<uint8_t>(requestType);
     for (char c : payload) checksum ^= c;
     return checksum;
 }

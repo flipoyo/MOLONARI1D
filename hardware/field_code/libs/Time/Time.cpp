@@ -1,5 +1,9 @@
+// Time.cpp
+// This file defines functions for handling time and date using an external RTC module.
+
 #include <RTClib.h>
 #include <vector>
+
 #include "Time.hpp"
 #include "Reader.hpp"
 
@@ -16,28 +20,17 @@ std::vector<unsigned long> measurementTimesVec;
 std::vector<unsigned long> communicationTimesVec;
 
 
-
-
-// ------------------------------------------------------------
-// Initialisation RTC externe uniquement
-// ------------------------------------------------------------
-
 void InitialiseRTC() {
   if (!externalRtc.begin()) {
     Serial.println("Erreur lors de l'initialisation de la RTC externe !");
   }
-
   if (externalRtc.lostPower()) {
     
     externalRtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
-
   Serial.println("RTC externe initialisée.");
 }
 
-// ------------------------------------------------------------
-// Fonctions utilitaires
-// ------------------------------------------------------------
 
 String UIntTo2DigitString(uint8_t x) {
   String str = String(x);
@@ -45,10 +38,6 @@ String UIntTo2DigitString(uint8_t x) {
   if (x >= 100) str.remove(2);
   return str;
 }
-
-// ------------------------------------------------------------
-// Fonctions temporelles
-// ------------------------------------------------------------
 
 String GetCurrentDate() {
   DateTime now = externalRtc.now();

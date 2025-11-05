@@ -1,5 +1,7 @@
-#include<vector>
+// Measure.cpp
+// Implementation of the Measure and Sensor classes, in order to handle sensor measurements.
 
+#include<vector>
 #include "Measure.hpp"
 #include "Time.hpp"
 
@@ -12,10 +14,10 @@
 
 // Constructeur par défaut
 Sensor::Sensor() 
-  : dataPin(-1), enablePin(-1), type_capteur("-1"), id_box("-1") {}
+  : dataPin(-1), enablePin(4), type_capteur("-1") {}
 // Constructeur complet
-Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur, String _id_box)
-  : dataPin(_dataPin), enablePin(_enablePin), type_capteur(_type_capteur), id_box(_id_box) 
+Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur)
+  : dataPin(_dataPin), enablePin(_enablePin), type_capteur(_type_capteur)
 {
   pinMode(enablePin, OUTPUT);
   pinMode(dataPin, INPUT);
@@ -25,7 +27,7 @@ Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur, String _id_bo
 
 double Sensor::get_voltage() { 
   digitalWrite(enablePin, HIGH);
-  delay(200);
+  delay(5000);
   double voltage = analogRead(dataPin);
   DEBUG_LOG("measured voltage of Pin " + String(dataPin) + " of " + String (voltage));
   digitalWrite(enablePin, LOW);
@@ -38,19 +40,13 @@ Measure::Measure(int ncapt_arg, const std::vector<double>& toute_mesure):
   time(GetCurrentHour()),
   date(GetCurrentDate())
   {
-    DEBUG_LOG("creating Measure object with attributes time : " + String(time) + "; and date : " + String(date) + ";");
-  #ifdef DEBUG_MEASURE
-  for (int it = 0; it < ncapt; it++){
-    double temp = toute_mesure[it];
-    DEBUG_LOG("toute_mesure [" + String(it) + "] exists and equals " + String(temp));
-  }
-  #endif
+    DEBUG_LOG("Taking measure at time : " + String(time) + "; and date : " + String(date) + ";");
   
   for (int iterator = 0; iterator < ncapt; iterator ++){
-    DEBUG_LOG("set channel element number " + String(iterator) + " to " + String(toute_mesure[iterator]));
+    //DEBUG_LOG("set channel element number " + String(iterator) + " to " + String(toute_mesure[iterator]));
     channel.push_back(toute_mesure[iterator]);
   }
-  DEBUG_LOG("Measure object well initialised");
+  //DEBUG_LOG("Measure object well initialised");
 }
 
 // Retourne une ligne formatée pour une mesure
@@ -60,12 +56,8 @@ String Measure::oneLine() {
   DEBUG_LOG("GetCurrentDate finished in oneLine");
   String hour = GetCurrentHour();
   DEBUG_LOG("GetCurrentHour finished in oneLine");
-  DEBUG_LOG(String(ncapt));
-  DEBUG_LOG("debug messages still work1");
-  
-  DEBUG_LOG("Heure actuelle : " + date);
-  DEBUG_LOG("debug messages still work2");
-
+  DEBUG_LOG(String(ncapt) + " capteurs détectés");
+  DEBUG_LOG("Heure actuelle : " + time);
   // Construction de la ligne
   String str = uidString;
   str += " ; " + String(id) + " ; " + date + " ; " + hour + "  ; ";
