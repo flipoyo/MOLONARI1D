@@ -160,9 +160,6 @@ void loop() {
     }
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
-
-    // Calcule le temps restant avant le prochain réveil (non bloquant)
-    lastAttempt=GetSecondsSinceMidnight();
     
     /*
     long time_to_sleep = CalculateSleepTimeUntilNextCommunication(lastAttempt, lora_intervalle_secondes); 
