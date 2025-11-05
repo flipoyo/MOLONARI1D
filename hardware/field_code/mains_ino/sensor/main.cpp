@@ -219,46 +219,52 @@ void loop() {
         }
 
         lora.startLoRa();
-        DEBUG_LOG("LoRa ok");
+        DEBUG_LOG("LoRa ok et handshake démarré");
 
-        DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
+        uint8_t id = 0;
+        if (lora.handshake(id)) {
+            Serial.println("Handshake réussi");
+            DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
 
-        while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
-            //at this point, lastSDOffset must point to the first memory address of the first line to be sent
-            std::queue<memory_line> linesToSend;
-            while (dataFile.available()) {
-                memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
-                linesToSend.push(new_line);
+            while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
+                //at this point, lastSDOffset must point to the first memory address of the first line to be sent
+                std::queue<memory_line> linesToSend;
+                while (dataFile.available()) {
+                    memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                    linesToSend.push(new_line);
 
-            // Si la ligne est vide aka plus rien à envoyer
-                if (linesToSend.front().flush.length() == 0) {
-                    break;
+                // Si la ligne est vide aka plus rien à envoyer
+                    if (linesToSend.front().flush.length() == 0) {
+                        break;
+                    }
                 }
+                int end_document_address = dataFile.position();
+                uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(linesToSend, lastSDOffset, dataFile);
+                rattrapage = (lastSDOffset == end_document_address);
+
+                lora.closeSession(lastPacket);
+            } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
+
+            dataFile.close();
+            lastLoRaSend = current_Time;
+
+            // --- Réception éventuelle de mise à jour config ---
+            Serial.println("Vérification de mise à jour descendante...");
+
+
+            uint16_t recvMeasure = 0, recvLora = 0;
+            if (lora.receiveConfigUpdate(configFilePath, &recvMeasure, &recvLora, 15000)) {
+                Serial.println("Mise à jour config reçue du master.");
+                intervalle_de_mesure_secondes = recvMeasure;
+                lora_intervalle_secondes = recvLora;
+            } else {
+                DEBUG_LOG("Pas de mise à jour reçue.");
             }
-            int end_document_address = dataFile.position();
-            uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(linesToSend, lastSDOffset, dataFile);
-            rattrapage = (lastSDOffset == end_document_address);
 
-            lora.closeSession(lastPacket);
-        } // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
-
-        dataFile.close();
-        lastLoRaSend = current_Time;
-
-        // --- Réception éventuelle de mise à jour config ---
-        Serial.println("Vérification de mise à jour descendante...");
-
-
-        uint16_t recvMeasure = 0, recvLora = 0;
-        if (lora.receiveConfigUpdate(configFilePath, &recvMeasure, &recvLora, 15000)) {
-            Serial.println("Mise à jour config reçue du master.");
-            intervalle_de_mesure_secondes = recvMeasure;
-            lora_intervalle_secondes = recvLora;
-        } else {
-            DEBUG_LOG("Pas de mise à jour reçue.");
+            lora.stopLoRa();
         }
-
-        lora.stopLoRa();
+    } else {
+        Serial.println("Handshake échoué");
     }
     // --- Sommeil jusqu'à prochaine mesure ---
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);

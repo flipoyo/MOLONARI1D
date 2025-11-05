@@ -150,11 +150,14 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         while (n < 50) {
             n++;
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
+                DEBUG_LOG("SLAVE: SYN received");
                 shift = packetNumber;
                 sendPacket(shift, SYN, "SYN-ACK");
                 DEBUG_LOG("SLAVE: SYN-ACK sent");
                 break;
             }
+        }
+
         if (n == 50) {
             DEBUG_LOG("SLAVE: No SYN received");
             return false;
@@ -169,7 +172,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         }
         return false;
     }
-}}
+}
 
 uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>& sendQueue, long& SDOffset, File& dataFile) {//changed previous name "sendPackets" ambiguous with "sendPacket"
     // handles packet sending and acknowledgement verificaiton, SDOffset updating, and ensures dataFile.position() is at the right place (terminal SDOffset).

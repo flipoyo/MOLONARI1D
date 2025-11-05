@@ -52,6 +52,7 @@ void setup() {
         Serial.println("Erreur SD - arrêt système.");
         while (true) {}
     }
+    InitialiseRTC();
 
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
@@ -66,7 +67,7 @@ void loop() {
     static long lastSDOffset = 0;
 
     long currentTime = GetSecondsSinceMidnight();
-    if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes) {
+    if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes
 
         std::queue<String> receiveQueue;
         lora.startLoRa();
@@ -85,12 +86,13 @@ void loop() {
             if (modif==true) {
                 File config = SD.open(configFilePath, FILE_READ);
                 config.seek(lastSDOffset);
-                std::queue<String> lines_config;
+                std::queue<memory_line> lines_config;
 
                 while (config.available()) {
-                    lines_config.push(config.readStringUntil('\n'));
+                    memory_line new_line = memory_line(config.readStringUntil('\n'), config.position());
+                    lines_config.push(new_line);
                     
-                uint8_t lastPacket = lora.sendAllPackets(lines_config);
+                uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffset, config);
                 lora.closeSession(lastPacket);
 
                 modif = !(lastSDOffset == config.position());

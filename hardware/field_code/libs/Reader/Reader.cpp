@@ -37,6 +37,7 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
 
     while (f.available()) {
         String line = f.readStringUntil('\n');
+        Serial.println("la ligne est : " + String(line));
         line.trim();
         if (line.length() == 0 || line.startsWith("#")) continue;
 
@@ -44,10 +45,13 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
         std::vector<String> tokens;
         int last = 0, next = 0;
         while ((next = line.indexOf(',', last)) != -1) {
+            Serial.println("le token : " + String(line.substring(last, next)));
             tokens.push_back(line.substring(last, next));
             last = next + 1;
         }
         tokens.push_back(line.substring(last)); // dernier token
+        Serial.println("le token : " + String(line.substring(last)));
+        Serial.println("la taille:" + String(tokens.size()));
 
         // ---------- PARAMÈTRES GLOBAUX ----------
         if (tokens.size() == 2) {
