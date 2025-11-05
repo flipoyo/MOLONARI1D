@@ -112,8 +112,8 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
         int packetSize = LoRa.parsePacket();
         if (packetSize) {
             uint8_t receivedChecksum = LoRa.read();
-            String recipient = LoRa.readString();
-            String dest = LoRa.readString();
+            String recipient = String(LoRa.read());
+            String dest = String(LoRa.read());
             packetNumber = LoRa.read();
             requestType = static_cast<RequestType>(LoRa.read());
 
