@@ -256,24 +256,25 @@ void loop() {
             Serial.println("Handshake échoué");
         }
     // --- Sommeil jusqu'à prochaine mesure ---
-    pinMode(LED_BUILTIN, INPUT_PULLDOWN);
-    Waiter waiter;
-    //DEBUG_LOG("waiter instancié");
+        pinMode(LED_BUILTIN, INPUT_PULLDOWN);
+        Waiter waiter;
+        //DEBUG_LOG("waiter instancié");
 
-    if (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) <= CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes)){
-        long time_to_sleep = CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes);
-        DEBUG_LOG("sleeping until next measure, sleeping for " + String (time_to_sleep)+ "ms");
-        waiter.sleepUntil(time_to_sleep);
-    } else {
-        long time_to_sleep = CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes); 
-        DEBUG_LOG("sleeping until next communication " + String (time_to_sleep) + "ms");
-        waiter.sleepUntil(time_to_sleep);
-    }
-    // Prevent time variables (current_time) to diverge (time domain is 24 hours, to preserve coherence with GetSecondsSinceMidnight)
-    
-    if(current_Time >= sec_in_day){
-        lastLoRaSend -= current_Time;
-        lastMeasure -= current_Time;
-        current_Time = 0;
+        if (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) <= CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes)){
+            long time_to_sleep = CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes);
+            DEBUG_LOG("sleeping until next measure, sleeping for " + String (time_to_sleep)+ "ms");
+            waiter.sleepUntil(time_to_sleep);
+        } else {
+            long time_to_sleep = CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes); 
+            DEBUG_LOG("sleeping until next communication " + String (time_to_sleep) + "ms");
+            waiter.sleepUntil(time_to_sleep);
+        }
+        // Prevent time variables (current_time) to diverge (time domain is 24 hours, to preserve coherence with GetSecondsSinceMidnight)
+        
+        if(current_Time >= sec_in_day){
+            lastLoRaSend -= current_Time;
+            lastMeasure -= current_Time;
+            current_Time = 0;
+        }
     }
 }
