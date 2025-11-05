@@ -23,6 +23,13 @@ LoraCommunication::LoraCommunication(long frequency, String localAdd, String des
 {
 }
 
+void LoraCommunication::LoraUpdateAttributes(long frequency, String localAdd, String desti, RoleType role){
+    this -> freq = frequency;
+    this -> localAddress = localAdd;
+    this -> destination = desti;
+    this -> deviceRole = role;
+}
+
 void LoraCommunication::startLoRa() {
     if (!active) {
         int retries = 3;
