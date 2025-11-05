@@ -1,7 +1,7 @@
 # This document review all the components of the MOLONARI System and paths to find how to design them 
 
 ## Components 
-### To put in the RiverBec
+### To put in the RiverBed
 - 3D printed shaft (glue needed?)
 - Plastic piece of tube (to connect the shaft to the box) 
 - Metallic box 
