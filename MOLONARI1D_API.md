@@ -1,6 +1,6 @@
 # MOLONARI1D API Documentation
 
-*Updated December 2024 - Based on current pyheatmy v0.4.0 implementation*
+*Updated November 5th 2025 - Based on current pyheatmy implementation*
 
 ## Project Overview
 
@@ -72,45 +72,69 @@ The Prior class defines parameter constraints and behavior for MCMC inference.
 
 #### Constructor Parameters
 
-- **range**: `tuple` - Interval within which the parameter can vary
-- **sigma**: `float` - Standard deviation of the Gaussian used for random walk for this parameter  
-- **density**: `callable` - Density of the prior law. By default, this is a constant function corresponding to a uniform law
+- **user_range**: `(tuple | float)` - Provides a tuple `(min, max)` for the parameter's physical bounds (in SI units), or a single `float` to fix the parameter to that specific value.
+- **user_sigma**: `float` - Standard deviation of the Gaussian used for random walk for this parameter, provided in SI units too.
+- **density**: `callable` - Density of the prior law. By default, this is a constant function corresponding to a uniform law.
 
-#### Usage Notes
+#### Key Features
 
-Users typically need to define a Prior object only for MCMC with estimation of the sigma2 parameter.
+-   **Automatic Scale Detection:** The class analyzes the `user_range` to automatically choose the best exploration strategy:
+    -   **`linear`:** For narrow intervals that do not require scaling (e.g., `(1, 5)` or `(-2, 2)`).
+    -   **`log`:** For strictly positive intervals spanning more than an order of magnitude (i.e., `max_val / min_val > 10`). Ideal for `IntrinK`.
+    -   **`symlog`:** For intervals that cross zero and have a small magnitude (e.g., `(-1e-6, 1e-6)`), allowing efficient exploration of positive and negative values. Ideal for `q_s`.
+
+-   **Automatic Sigma Translation:** The provided *physical* `user_sigma` is automatically translated by the class into an effective step size for the MCMC's chosen working space (`linear`, `log`, or `symlog`).
+
+-   **Fixed Parameters:** To fix a parameter, simply provide its value instead of a range tuple for `user_range`.
 
 #### Example
+
+This example shows the recommended way to define priors. All values are in physical units.
 
 ```python
 from pyheatmy import Prior
 
-# Define a prior for hydraulic conductivity
-prior_K = Prior(
-    range=(1e-6, 1e-3),     # Permeability range in m/s
-    sigma=0.1,              # Random walk standard deviation
-    density=None            # Uniform prior (default)
-)
+# --- For IntrinK (strictly positive, large range) ---
+# The class will auto-detect 'log' scale.
+# user_range is in m², usar_sigma is also a (small) step in m².
+p_intrinK = Prior(user_range=(1e-14, 1e-8), user_sigma=1e-12)
+
+# --- For q_s (crosses zero, small magnitude) ---
+# The class will auto-detect 'symlog' scale.
+# user_range and user_sigma are in m/s.
+p_q_s = Prior(user_range=(-1e-6, 1e-6), user_sigma=1e-7)
+
+# --- For n (narrow, linear range) ---
+# The class will auto-detect 'linear' scale.
+# user_range and user_sigma are in physical (unitless) units.
+p_n = Prior(user_range=(0.01, 0.25), user_sigma=0.02)
+
+# --- For fixing a parameter ---
+# Simply provide the fixed value as the user_range.
+p_lambda_s_fixed = Prior(user_range=2.0, user_sigma=0)
 ```
+
 
 ### Layer Class
 
-The Layer class defines geological strata properties for stratified subsurface modeling.
+The Layer class defines geological strata properties for stratified subsurface modeling and associated priors.
 
 #### Constructor Parameters
 
 - **name**: `str` - Layer identifier
 - **zLow**: `float` - Depth in meters of the bottom of the layer (positive, increasing downward from surface)
-- **moinslog10IntrinK**: `float` - Value of -log10(K) where K is intrinsic permeability (default: 13.0)
+- **IntrinK**: `float` - Intrinsic Permeability in m^2 (default: 1e-13)
 - **n**: `float` - Porosity (dimensionless, default: 0.1)
 - **lambda_s**: `float` - Solid thermal conductivity in W/m/K (default: 3.0)
 - **rhos_cs**: `float` - Solid volumetric heat capacity in J/m³/K (default: 2.5e6)
-- **q**: `float` - Heat source term (default: 0.0)
-- **Prior_moinslog10IntrinK**: `Prior` - Prior for intrinsic permeability (optional)
-- **Prior_n**: `Prior` - Prior for porosity (optional)
-- **Prior_lambda_s**: `Prior` - Prior for thermal conductivity (optional)
-- **Prior_rhos_cs**: `Prior` - Prior for heat capacity (optional)
-- **Prior_q**: `Prior` - Prior for heat source (optional)
+- **q_s**: `float` - Lateral volumetric water source term in s^-1. Volume of water added per unit volume of medium per second (default: 0.0)
+- **Prior_IntrinK**: `Prior` - Prior for intrinsic permeability (required for MCMC)
+- **Prior_n**: `Prior` - Prior for porosity (required for MCMC)
+- **Prior_lambda_s**: `Prior` - Prior for thermal conductivity (required for MCMC)
+- **Prior_rhos_cs**: `Prior` - Prior for heat capacity (required for MCMC)
+- **Prior_q_s**: `Prior` - Prior for heat source (required for MCMC)
+
+**Note:** For MCMC simulations, the `Prior` objects are now essential and msut be provided during the `Layer`'s initialization. The `Prior` class will automatically handle  the translation from physical parameters (like `IntrinK`) to the optimal MCMC working space (like `-log10(Initrnk)`).
 
 #### Layer Integration with Column
 
@@ -125,7 +149,7 @@ from pyheatmy import Column, Layer
 surface_layer = Layer(
     name="Surface_Sediment",
     zLow=0.5,
-    moinslog10IntrinK=5.0,
+    IntrinK=1e-5,
     n=0.3,
     lambda_s=2.5,
     rhos_cs=2.1e6
@@ -134,10 +158,11 @@ surface_layer = Layer(
 clay_layer = Layer(
     name="Clay_Layer", 
     zLow=1.2,
-    moinslog10IntrinK=7.0,
+    IntrinK=1e-7,
     n=0.2,
     lambda_s=1.8,
-    rhos_cs=2.3e6
+    rhos_cs=2.3e6,
+    q_s=-1e-8
 )
 
 # Pass layers directly to Column constructor
@@ -169,16 +194,19 @@ column.set_layers(layers)  # Automatically sorts by zLow
 
 #### Layer Methods
 
-- **sample()**: Sample parameters from priors
-- **perturb(param)**: Perturb parameters according to priors
-- **set_priors_from_dict(priors_dict)**: Set priors from dictionary
+- **sample()**: Sample parameters from priors and updates the layer's `mcmc_params`.
+- **perturb(param)**: Perturbs parameters according to priors and updates `mcmc_params`.
+- **set_priors_from_dict(priors_dict)**: Set priors from dictionary (Note: The recommended workflow is now to pass Priors at initialization).
 - **from_dict(monolayer_dict)**: Create layer from dictionary (class method)
+- **get_physical_params()**: This method translates the internal `mcmc_params`  (which might be in log or symlog space) back into physical values. This is used internally by the solver and by user-facing functions.
 
 #### Layer Utility Functions
 
 ```python
 def getListParameters(layersList, nbCells: int):
-    """Extract parameter arrays for all layers"""
+    """Extracts parameter arrays for all layers, ready for the solver.
+    This function now automatically calls layer.get_physical_params()
+    to ensure the solver receives the correct physical values."""
 ```
 
 #### Example: Complete Layer Definition
@@ -186,50 +214,52 @@ def getListParameters(layersList, nbCells: int):
 ```python
 from pyheatmy import Column, Layer, Prior
 
-# Create layers with priors for MCMC
-surface_layer = Layer(
-    name="Surface_Sediment",
-    zLow=0.5,
-    moinslog10IntrinK=5.0,
-    n=0.3,
-    lambda_s=2.5,
-    rhos_cs=2.1e6,
-    Prior_moinslog10IntrinK=Prior(range=(3, 8), sigma=0.1),
-    Prior_n=Prior(range=(0.1, 0.5), sigma=0.02),
-    Prior_lambda_s=Prior(range=(1, 4), sigma=0.1)
+# 1. Define the priors using physical intervals and sigmas.
+#    The Prior class will auto-detect the best scale (log, asinh, linear).
+priors = {
+    "Prior_IntrinK": Prior(user_range=(1e-14, 1e-8), user_sigma=1e-12),
+    "Prior_n": Prior(user_range=(0.01, 0.25), user_sigma=0.02),
+    "Prior_lambda_s": Prior(user_range=(1, 10), user_sigma=0.5),
+    "Prior_rhos_cs": Prior(user_range=(1e6, 1e7), user_sigma=5e5),
+    "Prior_q_s": Prior(user_range=(-1e-6, 1e-6), user_sigma=1e-7),
+}
+
+# 2. Define the initial physical values for the layer.
+initial_params = {
+    "IntrinK": 1e-11,
+    "n": 0.1,
+    "lambda_s": 2,
+    "rhos_cs": 4e6,
+    "q_s": 1e-8,
+}
+
+# 3. Create the Layer object by providing all information at once.
+#    The Layer needs the Priors at creation to correctly initialize its internal MCMC parameters.
+my_layer = Layer(
+    name="MyLayer",
+    zLow=0.4,
+    **initial_params,
+    **priors
 )
 
-clay_layer = Layer(
-    name="Clay_Layer",
-    zLow=1.2, 
-    moinslog10IntrinK=7.0,
-    n=0.2,
-    lambda_s=1.8,
-    rhos_cs=2.3e6,
-    Prior_moinslog10IntrinK=Prior(range=(5, 10), sigma=0.1),
-    Prior_n=Prior(range=(0.05, 0.3), sigma=0.02),
-    Prior_lambda_s=Prior(range=(1, 3), sigma=0.1)
-)
-
-# Create column with integrated layers
+# 4. Create column with the integrated layer
 column = Column(
     river_bed=245.3,
     depth_sensors=[0.1, 0.3, 0.5, 0.7],
     offset=0.05,
     dH_measures=[...],
     T_measures=[...],
-    all_layers=[surface_layer, clay_layer]
+    all_layers=[my_layer]
 )
 
-# Layers are now accessible via column.all_layers
-print(f"Number of layers: {len(column.all_layers)}")
-for layer in column.all_layers:
-    print(f"Layer {layer.name} extends to {layer.zLow}m depth")
+# The layer is now ready for MCMC
+print(f"Layer {my_layer.name} ready for MCMC.")
+print(my_layer.Prior_list)
 ```
 
 ### Column Class
 
-The Column class is the primary interface for hydrological analysis, representing a monitoring point with sensors. It contains 59 methods for data processing, modeling, and visualization.
+The Column class is the primary interface for hydrological analysis, representing a monitoring point with sensors. It contains methods for data processing, modeling, and visualization.
 
 #### Constructor Parameters
 
@@ -298,12 +328,12 @@ def from_dict(cls, col_dict, verbose=False):
 - **get_best_param()**: Get optimal parameter estimates
 - **get_best_sigma2()**: Get optimal measurement error variance
 - **get_best_layers()**: Get optimal layer parameters
-- **get_all_params()**: Get all MCMC parameter samples
-- **get_all_moinslog10IntrinK()**: Get all permeability samples
+- **get_all_params()**: Get all MCMC parameter samples (as physical values)
+- **get_all_IntrinK()**: Get all intrinsic permeability samples
 - **get_all_n()**: Get all porosity samples
 - **get_all_lambda_s()**: Get all thermal conductivity samples
 - **get_all_rhos_cs()**: Get all heat capacity samples
-- **get_all_q()**: Get all heat source samples
+- **get_all_q_s()**: Get all volumetric source term samples
 - **get_all_sigma2()**: Get all measurement error variance samples
 - **get_all_energy()**: Get all energy values from MCMC
 - **get_all_acceptance_ratio()**: Get MCMC acceptance ratios
@@ -340,7 +370,7 @@ def from_dict(cls, col_dict, verbose=False):
 
 - **create_time_in_day()**: Convert time to day units
 - **set_zeroT(tunits="K")**: Set temperature reference point
-- **get_list_current_params()**: Get current parameter state
+- **get_list_current_params()**: Get current parameter state (as physical values)
 - **perturb_params()**: Perturb current parameters
 
 #### Data Format Specifications
@@ -366,19 +396,22 @@ from datetime import datetime
 surface_layer = Layer(
     name="Surface_Sediment",
     zLow=0.5,
-    moinslog10IntrinK=5.0,
+    IntrinK=1e-5on,
     n=0.3,
     lambda_s=2.5,
-    rhos_cs=2.1e6
+    rhos_cs=2.1e6,
+    q_s=0.0
 )
 
 clay_layer = Layer(
     name="Clay_Layer",
     zLow=1.2,
-    moinslog10IntrinK=7.0,
+    IntrinK=1e-7,
     n=0.2,
     lambda_s=1.8,
-    rhos_cs=2.3e6
+    rhos_cs=2.3e6,
+    q_s=-1e-8
+
 )
 
 # Prepare measurement data
@@ -671,19 +704,21 @@ column = Column.from_dict(column_data)
 surface_layer = Layer(
     name="surface",
     zLow=0.3,
-    moinslog10IntrinK=5.0,
+    IntrinK=1e-5,
     n=0.35,
     lambda_s=2.5,
-    rhos_cs=2.1e6
+    rhos_cs=2.1e6,
+    q_s=0
 )
 
 clay_layer = Layer(
     name="clay", 
     zLow=1.0,
-    moinslog10IntrinK=7.0,
+    IntrinK=1e-7,
     n=0.25,
     lambda_s=1.8,
-    rhos_cs=2.3e6
+    rhos_cs=2.3e6,
+    q_s=0
 )
 
 layers = [surface_layer, clay_layer]
@@ -699,11 +734,11 @@ rmse = column.get_RMSE()
 # 7. Set up MCMC inference with priors
 for layer in layers:
     layer.set_priors_from_dict({
-        'Prior_moinslog10IntrinK': ((3, 8), 0.1),
+        'Prior_IntrinK': ((1e-8, 1e-3), 2e-6),
         'Prior_n': ((0.1, 0.5), 0.02),
         'Prior_lambda_s': ((1, 4), 0.1),
         'Prior_rhos_cs': ((1e6, 1e7), 1e5),
-        'Prior_q': ((0, 1), 1e2)
+        'Prior_q_s': ((-1, 1), 1e-1)
     })
 
 # 8. Run MCMC inference
@@ -711,7 +746,7 @@ column.compute_mcmc(
     layersList=layers,
     nb_iter=10000,
     nb_chains=4,
-    sigma2_T=Prior(range=(0.01, 10), sigma=0.1)
+    sigma2_T=Prior(user_range=(0.01, 10), user_sigma=0.1)
 )
 
 # 9. Get MCMC results
