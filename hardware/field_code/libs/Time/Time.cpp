@@ -62,6 +62,9 @@ long CalculateSleepTimeUntilNextMeasurement(long previousMeasurementTime, int me
   //retourne en ms
   long currentTime = GetSecondsSinceMidnight();
   long time_to_sleep = (measurementInterval - (currentTime - previousMeasurementTime))*1000;
+  if(time_to_sleep <= 0){
+    return time_to_sleep = 0;
+  }
   return (time_to_sleep);
 }
 
@@ -69,6 +72,9 @@ long CalculateSleepTimeUntilNextMeasurement(long previousMeasurementTime, int me
 long CalculateSleepTimeUntilNextCommunication(long previousCommunicationTime, int communicationInterval) {
   //retourne en ms
   long currentTime = GetSecondsSinceMidnight();
-  long timeToSleep = (communicationInterval - (currentTime - previousCommunicationTime)) * 1000;
-  return (timeToSleep);
+  long time_to_sleep = (communicationInterval - (currentTime - previousCommunicationTime)) * 1000;
+    if(time_to_sleep <= 0){
+    return time_to_sleep = 0;
+  }
+  return (time_to_sleep);
 }

@@ -174,7 +174,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         }
 
         int retries = 0;
-        while (retries < 6) {
+        while (retries < 600) {
             if (receivePacket(packetNumber, requestType, payload) && requestType == ACK && payload == "ACK") return true;
             delay(100 * (retries + 1));
             sendPacket(shift, SYN, "SYN-ACK");
@@ -193,9 +193,9 @@ uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>
         memory_line packet = sendQueue.front();
         sendPacket(nb_packets_sent, DATA, packet.flush);
         int send_retries = 0;
-        while(send_retries<4){
+        while(send_retries<100000){
             int receive_retries = 0;
-            while (receive_retries < 6) {
+            while (receive_retries < 100) {
                 if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet.flush) {
                     sendQueue.pop();
                     nb_packets_sent++;
