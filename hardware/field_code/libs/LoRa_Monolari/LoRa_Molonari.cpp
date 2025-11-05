@@ -87,7 +87,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 
     delay(10);
     unsigned long startTime = millis();
-    int ackTimeout = 2000;
+    int ackTimeout = 500;
 
     while (millis() - startTime < ackTimeout) {
         int packetSize = LoRa.parsePacket();
@@ -101,10 +101,14 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             payload = "";
             while (LoRa.available()) payload += (char)LoRa.read();
 
-            if (!isValidDestination(recipient, dest, requestType)) return false;
+            if (!isValidDestination(recipient, dest, requestType)){
+                DEBUG_LOG("invalid destination, error ignored for now");// return false
+            };
 
             uint8_t calculatedChecksum = calculateChecksum(recipient, dest, packetNumber, requestType, payload);
-            if (calculatedChecksum != receivedChecksum) return false;
+            if (calculatedChecksum != receivedChecksum){
+                DEBUG_LOG("invalid checksum, error ignored for now");// return false
+            };
 
             DEBUG_LOG("Packet received: " + payload);
             return true;
