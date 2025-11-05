@@ -88,24 +88,24 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 
     delay(10);
     unsigned long startTime = millis();
-    int ackTimeout = 2000;
+    int ackTimeout = 500;
 
     while (millis() - startTime < ackTimeout) {
         int packetSize = LoRa.parsePacket();
         if (packetSize) {
             uint8_t receivedChecksum = LoRa.read();
-            String recipient = LoRa.readString();
-            String dest = LoRa.readString();
+            String recipient = String(LoRa.read());
+            String dest = String(LoRa.read());
             packetNumber = LoRa.read();
             requestType = static_cast<RequestType>(LoRa.read());
 
             payload = "";
             while (LoRa.available()) payload += (char)LoRa.read();
 
-            if (!isValidDestination(recipient, dest, requestType)) return false;
+            // if (!isValidDestination(recipient, dest, requestType)) return false;
 
             uint8_t calculatedChecksum = calculateChecksum(recipient, dest, packetNumber, requestType, payload);
-            if (calculatedChecksum != receivedChecksum) return false;
+            // if (calculatedChecksum != receivedChecksum) return false;
 
             DEBUG_LOG("Packet received: " + payload);
             return true;

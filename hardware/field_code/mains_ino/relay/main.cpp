@@ -83,7 +83,6 @@ void setup() {
 // ----- Loop -----
 void loop() {
     long currentTime = GetSecondsSinceMidnight();
-    DEBUG_LOG("il est " + String(currentTime) + " temps");
     
     if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes
         DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
@@ -155,16 +154,22 @@ void loop() {
     
     DEBUG_LOG("about to loop on modem.available()");
     // reception csv et modification
-    /*while (modem.available()) {
+    while (modem.available()) {
         loraWAN.receiveConfig(configFilePath, modif);
         modif = true;
-    }*/
+    }
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
 
     // Calcule le temps restant avant le prochain réveil (non bloquant)
     lastAttempt=GetSecondsSinceMidnight();
-    LowPower.idle();
+    
+    /*
+    long time_to_sleep = CalculateSleepTimeUntilNextCommunication(lastAttempt, lora_intervalle_secondes); 
+    DEBUG_LOG("sleeping until next communication " + String (time_to_sleep) + "ms");
+    LowPower.idle(time_to_sleep);
+    */
+    delay(5000);
 }
 
 

@@ -1,4 +1,3 @@
-
 # Configuration générale
 intervalle_de_mesure_secondes,900
 lora_intervalle_secondes,3600
@@ -18,8 +17,8 @@ T3,temperature,A3
 T4,temperature,A4
 T5,temperature,A5
 
-#Configuration lorawan
-devEui,a8610a33392f8a11 
+#Configuration du sensor
+devEui,a8610a34334d710d
 
 #Configuration relay 
 appEui,a8610a35391d6f08
