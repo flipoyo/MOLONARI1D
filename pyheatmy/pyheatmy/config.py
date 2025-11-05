@@ -72,7 +72,7 @@ DEFAULT_sensor_depth = [0.1, 0.2, 0.3, 0.4]
 LAMBDA_W = 0.6071
 RHO_W = 1000
 C_W = 4185
-ALPHA = 0.6 # ALPHA tel le schéma est implicite pour ALPHA = 1. Pour une bonne stabilité tout en gardant une bonne précision, on prendra ALPHA = 0.6 (Crank-Nicolson)
+ALPHA = 0.4
 G = 9.81
 EPSILON = 1e-10
 N_UPDATE_MU = 96
