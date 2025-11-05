@@ -37,7 +37,7 @@ std::queue<String> sendingQueue;
 GeneralConfig res;
 
 long lastLoraSend = 0;
-long lastAttempt = 0;
+long lastAttempt = 0;// mémorise la dernière tentative de réception (en millisecondes)
 
 String appEui;
 String devEui;
@@ -46,6 +46,9 @@ bool modif = false;
 int CSPin = 5; // Pin CS par défaut
 
 const char* configFilePath = "conf_rel.csv";
+
+Waiter waiter; //pour ne pas l'indenter dans le loop
+unsigned long lastSDOffset = 0;
 
 // ----- Setup -----
 void setup() {
@@ -72,6 +75,7 @@ void setup() {
         Serial.println("Erreur SD - arrêt système.");
         while (true) {}
     }
+    InitialiseRTC();
 
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
@@ -80,13 +84,11 @@ void setup() {
 
 // ----- Loop -----
 void loop() {
-    DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
-    static long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
-    static Waiter waiter; //pour ne pas l'indenter dans le loop
-    static unsigned long lastSDOffset = 0;
-
     long currentTime = GetSecondsSinceMidnight();
+    DEBUG_LOG("il est " + String(currentTime) + " temps");
+    
     if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes
+        DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
         DEBUG_LOG("Fenêtre de communication LoRa atteinte, tentative de réception des paquets...");
         std::queue<String> receiveQueue;
         lora.startLoRa();
@@ -111,36 +113,36 @@ void loop() {
                     memory_line new_line = memory_line(config.readStringUntil('\n'), config.position());
                     lines_config.push(new_line);
                     
-                uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffset, config);
-                lora.closeSession(lastPacket);
+                        uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffset, config);
+                        lora.closeSession(lastPacket);
 
-                modif = !(lastSDOffset == config.position());
-            }
+                        modif = !(lastSDOffset == config.position());
+                }
 
-            lora.stopLoRa();
+                lora.stopLoRa();
 
-            // Transfert vers la queue globale
-            while (!receiveQueue.empty()) {
-                sendingQueue.push(receiveQueue.front());
-                receiveQueue.pop();
-            }
+                // Transfert vers la queue globale
+                while (!receiveQueue.empty()) {
+                    sendingQueue.push(receiveQueue.front());
+                    receiveQueue.pop();
+                }
 
-            // Envoi via LoRaWAN si intervalle complet atteint
+                // Envoi via LoRaWAN si intervalle complet atteint
             
 
-            if (loraWAN.begin(res.rel_config.appEui, res.rel_config.devEui)) {
-                Serial.print("Envoi de ");
-                Serial.print(sendingQueue.size());
-                    
+                if (loraWAN.begin(res.rel_config.appEui, res.rel_config.devEui)) {
+                    Serial.print("Envoi de ");
+                    Serial.print(sendingQueue.size());
+                        
 
-                if (loraWAN.sendQueue(sendingQueue)) {
-                    Serial.println("Tous les paquets ont été envoyés !");
+                    if (loraWAN.sendQueue(sendingQueue)) {
+                        Serial.println("Tous les paquets ont été envoyés !");
+                    } else {
+                        Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
+                    }
                 } else {
-                    Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
+                    Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
                 }
-            } else {
-                Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
-            }
             lastLoraSend = currentTime;
             
 
@@ -153,20 +155,20 @@ void loop() {
             lastAttempt = GetSecondsSinceMidnight();
         }
     }
+    DEBUG_LOG("about to loop on modem.available()");
+    // reception csv et modification
+    while (modem.available()) {
+        loraWAN.receiveConfig(configFilePath, modif);
+        modif = true;
+    }
 
-        // reception csv et modification
-        while (modem.available()) {
-            loraWAN.receiveConfig(configFilePath, modif);
-            modif = true;
-        }
-
-        Serial.println("Relais en veille jusqu’à la prochaine fenêtre de communication...");
+    DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
 
     // Calcule le temps restant avant le prochain réveil (non bloquant)
     lastAttempt=GetSecondsSinceMidnight();
     LowPower.idle();
 
-}
+    }
 }
 
 
