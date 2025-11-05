@@ -83,7 +83,6 @@ void setup() {
 // ----- Loop -----
 void loop() {
     long currentTime = GetSecondsSinceMidnight();
-
     
     if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes
         DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
@@ -162,8 +161,6 @@ void loop() {
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
 
-    // Calcule le temps restant avant le prochain réveil (non bloquant)
-    lastAttempt=GetSecondsSinceMidnight();
     delay(501);
 }
 

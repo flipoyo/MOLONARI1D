@@ -33,10 +33,10 @@ void PrintQueue(std::queue<String> &receiveQueue) {
 Waiter::Waiter() {}
 
 // Sleep the Arduino until the desired waiting time passes
-void Waiter::sleepUntil(long wainting_interval) {
+void Waiter::sleepUntil(long waiting_interval) {
 
-    DEBUG_LOG("Sleeping for " + String(wainting_interval) + " ms");
+    DEBUG_LOG("Sleeping for " + String(waiting_interval) + " ms");
     // Sleep for the calculated time
-    unsigned long waiting_interval_unsigned = uint32_t(wainting_interval);
+    unsigned long waiting_interval_unsigned = (unsigned long) waiting_interval;
     LowPower.deepSleep(waiting_interval_unsigned); //Conversion rendue nécessaire par l'implémentation de deepSleep dans la librairie arduino
 }
