@@ -94,7 +94,8 @@ def init_db(db_path=DB_FILENAME):
         a1 REAL,
         a2 REAL,
         a3 REAL,
-        a4 REAL
+        a4 REAL,
+        a5 REAL
     )
     ''')
     if query.lastError().isValid():
@@ -109,8 +110,8 @@ def insert_record(db, rec):
     query = QSqlQuery(db)
     query.prepare(f'''
         INSERT INTO {SQLITE_TABLE} (
-            device_eui, timestamp, relay_id, gateway_id, fcnt, a0, a1, a2, a3, a4
-        ) VALUES (:device_eui, :timestamp, :relay_id, :gateway_id, :fcnt, :a0, :a1, :a2, :a3, :a4)
+            device_eui, timestamp, relay_id, gateway_id, fcnt, a0, a1, a2, a3, a4, a5
+        ) VALUES (:device_eui, :timestamp, :relay_id, :gateway_id, :fcnt, :a0, :a1, :a2, :a3, :a4, :a5)
     ''')
 
     query.bindValue(":device_eui", rec.get("device_eui"))
@@ -123,6 +124,7 @@ def insert_record(db, rec):
     query.bindValue(":a2", rec.get("a2"))
     query.bindValue(":a3", rec.get("a3"))
     query.bindValue(":a4", rec.get("a4"))
+    query.bindValue(":a5", rec.get("a5"))
 
     if not query.exec():
         logger.error("Failed to insert record: %s", query.lastError().text())
@@ -163,15 +165,10 @@ def extract_fields_from_payload(payload: dict):
     Sensor = decoder.decode_proto_data(payload.get("data", ""))
     device_eui = normalize_eui(Sensor.UI)
     timestamp = Sensor.time
-    a0 = Sensor.a0
-    a1 = Sensor.a1
-    a2 = Sensor.a2
-    a3 = Sensor.a3
-    a4 = Sensor.a4
-    relay_id = payload.get("devEui")
+    relay_id = payload.get("deviceInfo").get("devEui")
     relay_ts = payload.get("time")
-    gateway_id = payload.get("gatewayId")
-    gateway_ts = payload.get("gwTime")
+    gateway_id = payload.get("rxInfo")[0].get("gatewayId")
+    gateway_ts = payload.get("rxInfo")[0].get("gwTime")
     fcnt = payload.get("fCnt")
 
     rec = {
@@ -182,11 +179,12 @@ def extract_fields_from_payload(payload: dict):
         "gateway_id": gateway_id,
         "gateway_ts": gateway_ts,
         "fcnt": fcnt,
-        "a0": a0,
-        "a1": a1,
-        "a2": a2,
-        "a3": a3, 
-        "a4": a4
+        "a0": Sensor.a0,
+        "a1": Sensor.a1,
+        "a2": Sensor.a2,
+        "a3": Sensor.a3,
+        "a4": Sensor.a4,
+        "a5": Sensor.a5
     }
 
     return rec
@@ -311,8 +309,7 @@ def processing_worker(mqtt_worker:MQTTWorker, db_conn, device_euis_normalized):
             # insert into DB
             try:
                 if mqtt_worker.real_database_insertion:
-                    transform_payload = transform_payload(fields)
-                    insert_payload(db_conn, REALDB_CONFIG, transform_payload) # utiliser le fichier annexe real DB
+                    insert_payload(db_conn, REALDB_CONFIG, fields) # utiliser le fichier annexe real DB
                 else:
                     rowid = insert_record(db_conn, fields)
                 logger.info("Inserted id=%d device=%s ts=%s", rowid, device_eui,

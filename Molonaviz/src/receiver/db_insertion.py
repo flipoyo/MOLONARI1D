@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import json
+from PyQt5.QtSql import QSqlQuery, QSqlDatabase
 from ..molonaviz.backend import SamplingPointManager as spm
 
 
@@ -19,8 +20,8 @@ def transform_payload(payload):
     transformed = {
         "date": pd.to_datetime(payload["timestamp"]),
         "temp_bed": [payload["a1"]],
-        "temperature_values": [[payload["a1"], payload["a2"], payload["a3"], payload["a4"]]],  # Example
-        "voltage_value": payload["a0"]
+        "temperature_volt": [payload["a2"], payload["a3"], payload["a4"], payload["a5"]],
+        "pressure_volt": payload["a0"]
     }
     return transformed
 
@@ -43,21 +44,88 @@ def create_sampling(con_db, config, sampling_dir, filename):
     return samp_id
 
 
-def insert_payload(con_db, config, payload):
+def get_sampling_point_id(con_db, payload):
+    """
+    Select the sampling point based on the payload information.
+    payload : dict containing the data to use for selection
+    Returns the sampling point ID or None if not found
+    """
+    query = QSqlQuery(con_db)
+    query.prepare(f""" SELECT sp.id FROM SamplingPoint sp
+                  JOIN Shaft s ON sp.Shaft = s.id
+                  JOIN Datalogger dl ON s.DataloggerID = dl.id AND dl.devEui = :devEui
+                  JOIN Relay r ON dl.relay_id = r.id AND r.relayEui = :relayEui
+                  JOIN Gateway g ON r.gateway_id = g.id AND g.gatewayEui = :gatewayEui
+    """)
+
+    query.bindValue(":devEui", payload["devEui"])
+    query.bindValue(":relayEui", payload.get("relayEui"))
+    query.bindValue(":gatewayEui", payload.get("gatewayEui"))
+
+    if not query.exec():
+        print(query.lastError())
+        return None
+    if not query.next():
+        return None
+    sp_id = query.value(0)
+    return sp_id
+
+def insert_payload(con_db, payload):
     """
     Insert temperature and pressure data from payload into the database for the sampling point defined in config.
     payload : dict containing the data to insert
     """
-    sampling_point_manager = spm.SamplingPointManager(con_db, config["study_name"])
-    sp_id = sampling_point_manager.get_spoint_id(config["sampling_point_name"])
+    useful_payload = transform_payload(payload)
+    sp_id = get_sampling_point_id(con_db, useful_payload)
     
     if sp_id is None:
-        print(f"Sampling point with name {config['sampling_point_name']} not found.")
+        print(f"SamplingPoint corresponding to device {payload['device_eui']},\
+               relay {payload['relay_id']}, gateway {payload['gateway_id']} not found.")
+        return
+
+    # Switch to right date format
+    useful_payload["timestamp"] = pd.to_datetime(useful_payload["timestamp"])
+    useful_payload["relay_ts"] = pd.to_datetime(useful_payload["relay_ts"])
+    useful_payload["gateway_ts"] = pd.to_datetime(useful_payload["gateway_ts"])
+
+    # Insert Pressure into actual database
+
+    query = QSqlQuery(con_db)
+    query.prepare(f"""INSERT INTO RawMeasuresPress (
+                        Date,
+                        TempBed,
+                        Voltage,
+                        SamplingPoint)
+        VALUES (:Date, :TempBed, :Voltage, :SamplingPoint)
+    """)
+    query.bindValue(":Date", useful_payload["timestamp"])
+    query.bindValue(":TempBed", useful_payload["temp_bed"])
+    query.bindValue(":Voltage", useful_payload["pressure_volt"])
+    query.bindValue(":SamplingPoint", sp_id)
+    if not query.exec():
+        print(query.lastError())
+        return
+
+
+    # Insert TemperatureVoltage into actual database
+
+    query = QSqlQuery(con_db)
+    query.prepare(f"""INSERT INTO RawMeasuresVolt (
+                        Date,
+                        Volt1,
+                        Volt2,
+                        Volt3,
+                        Volt4,
+                        SamplingPoint)
+        VALUES (:Date, :Volt1, :Volt2, :Volt3, :Volt4, :SamplingPoint)
+    """)
+    query.bindValue(":Date", useful_payload["timestamp"])
+    query.bindValue(":Volt1", useful_payload["temperature_volt"][0])
+    query.bindValue(":Volt2", useful_payload["temperature_volt"][1])
+    query.bindValue(":Volt3", useful_payload["temperature_volt"][2])
+    query.bindValue(":Volt4", useful_payload["temperature_volt"][3])
+    query.bindValue(":SamplingPoint", sp_id)
+    if not query.exec():
+        print(query.lastError())
         return
     
-    # Switch to dataframes to use the existing methods
-    payload_df = pd.DataFrame([payload])
-    payload_df["date"] = pd.to_datetime(payload_df["date"])
-    
-    sampling_point_manager.create_raw_temperature_point(sp_id, payload_df.copy())
-    sampling_point_manager.create_raw_pressure_point(sp_id, payload_df.copy())

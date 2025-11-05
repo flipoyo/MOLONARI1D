@@ -25,6 +25,7 @@ class Sensor:
     a2: float
     a3: float
     a4: float
+    a5: float
 
 def decode_proto_data(data_b64: str) -> Sensor | None:
     """
@@ -51,7 +52,8 @@ def decode_proto_data(data_b64: str) -> Sensor | None:
             a1=measurements[1],
             a2=measurements[2],
             a3=measurements[3],
-            a4=measurements[4]
+            a4=measurements[4],
+            a5=measurements[5]
         )
     except Exception as e:
         print("Error in Protobuf decoding:", e)
