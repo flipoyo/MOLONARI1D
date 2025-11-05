@@ -93,7 +93,7 @@ void setup() {
     }
 
     //lora Communication
-    lora = LoraCommunication(lora_intervalle_secondes, appEui, devEui, RoleType::SLAVE);
+    lora = LoraCommunication(868E6, appEui, devEui, RoleType::SLAVE);
 
     // Compter les capteurs
     for (auto & _c : liste_capteurs) {
