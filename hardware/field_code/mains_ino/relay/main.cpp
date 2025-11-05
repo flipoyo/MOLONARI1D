@@ -164,7 +164,7 @@ void loop() {
 
     // Calcule le temps restant avant le prochain réveil (non bloquant)
     lastAttempt=GetSecondsSinceMidnight();
-    LowPower.idle();
+    delay(501);
 }
 
 
