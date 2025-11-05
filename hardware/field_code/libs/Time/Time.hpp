@@ -16,9 +16,9 @@ void InitialiseRTC();
 
 String GetCurrentDate();
 String GetCurrentHour();
-unsigned long GetSecondsSinceMidnight();
+long GetSecondsSinceMidnight();
 
-unsigned long CalculateSleepTimeUntilNextMeasurement(unsigned long previousMeasurementTime, int measurementInterval);
-unsigned long CalculateSleepTimeUntilNextCommunication(unsigned long previousCommunicationTime, int communicationInterval);
+long CalculateSleepTimeUntilNextMeasurement(long previousMeasurementTime, int measurementInterval);
+long CalculateSleepTimeUntilNextCommunication(long previousCommunicationTime, int communicationInterval);
 
 #endif // MY_TIME

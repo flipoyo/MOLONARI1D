@@ -64,21 +64,22 @@ String GetCurrentHour() {
          UIntTo2DigitString(now.second());
 }
 
-unsigned long GetSecondsSinceMidnight() {
+long GetSecondsSinceMidnight() {
   DateTime now = externalRtc.now();
-  return now.hour() * 3600UL + now.minute() * 60UL + now.second();
+  return now.hour() * 3600 + now.minute() * 60 + now.second();
 }
 
-unsigned long CalculateSleepTimeUntilNextMeasurement(unsigned long previousMeasurementTime, int measurementInterval) {
+long CalculateSleepTimeUntilNextMeasurement(long previousMeasurementTime, int measurementInterval) {
   //retourne en ms
-  unsigned long currentTime = GetSecondsSinceMidnight();
-  unsigned long time_to_sleep = (measurementInterval - (currentTime - previousMeasurementTime)) * 1000UL;
+  long currentTime = GetSecondsSinceMidnight();
+  long time_to_sleep = (measurementInterval - (currentTime - previousMeasurementTime))*1000;
   return (time_to_sleep);
 }
 
-unsigned long CalculateSleepTimeUntilNextCommunication(unsigned long previousCommunicationTime, int communicationInterval) {
+
+long CalculateSleepTimeUntilNextCommunication(long previousCommunicationTime, int communicationInterval) {
   //retourne en ms
-  unsigned long currentTime = GetSecondsSinceMidnight();
-  unsigned long timeToSleep = (communicationInterval - (currentTime - previousCommunicationTime)) * 1000UL;
+  long currentTime = GetSecondsSinceMidnight();
+  long timeToSleep = (communicationInterval - (currentTime - previousCommunicationTime)) * 1000;
   return (timeToSleep);
 }

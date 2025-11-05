@@ -61,12 +61,12 @@ void setup() {
 
 // ----- Loop -----
 void loop() {
-    static unsigned long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
+    static long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
     static Waiter waiter; //pour ne pas l'indenter dans le loop
     static long lastSDOffset = 0;
 
-    unsigned long currentTime = GetSecondsSinceMidnight();
-    if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes * 1000UL) {
+    long currentTime = GetSecondsSinceMidnight();
+    if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes) {
 
         std::queue<String> receiveQueue;
         lora.startLoRa();
@@ -90,7 +90,7 @@ void loop() {
                 while (config.available()) {
                     lines_config.push(config.readStringUntil('\n'));
                     
-                uint8_t lastPacket = lora.sendPackets(lines_config);
+                uint8_t lastPacket = lora.sendAllPackets(lines_config);
                 lora.closeSession(lastPacket);
 
                 modif = !(lastSDOffset == config.position());

@@ -300,6 +300,7 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
     String payload;
 
     std::vector<String> newConfigLines; // stockage temporaire des lignes
+    std::queue<String> receiveQueue;
 
     Serial.println("Écoute de la nouvelle configuration LoRa...");
 
