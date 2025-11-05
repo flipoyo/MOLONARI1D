@@ -94,7 +94,8 @@ void loop() {
         // Réception des paquets via LoRa
         uint8_t deviceId = 0; // initialise avec packetNumber = 0 
         if (lora.handshake(deviceId)) {
-            Serial.println("Handshake réussi. Réception des paquets...");
+
+            DEBUG_LOG("Handshake réussi. Réception des paquets...");
             int last = lora.receivePackets(receiveQueue);
             lora.sendPacket(last, FIN, ""); // Répond par un FIN de confirmation;
 
@@ -142,9 +143,7 @@ void loop() {
                     Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
                 }
             lastLoraSend = currentTime;
-            
-
-
+            }
         } else {
             Serial.println("Handshake échoué, aucune donnée reçue.");
             lora.stopLoRa();
@@ -156,19 +155,19 @@ void loop() {
     
     DEBUG_LOG("about to loop on modem.available()");
     // reception csv et modification
-    while (modem.available()) {
+    /*while (modem.available()) {
         loraWAN.receiveConfig(configFilePath, modif);
         modif = true;
-    }
+    }*/
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
 
     // Calcule le temps restant avant le prochain réveil (non bloquant)
     lastAttempt=GetSecondsSinceMidnight();
     LowPower.idle();
-
-    }
 }
+
+
 
 
 
