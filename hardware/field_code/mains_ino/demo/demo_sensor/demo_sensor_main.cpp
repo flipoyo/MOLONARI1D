@@ -232,7 +232,7 @@ void loop() {
             waiter.sleepUntil(time_to_sleep);
         }
         // Prevent time variables (current_time) to diverge (time domain is 24 hours, to preserve coherence with GetSecondsSinceMidnight)
-        
+        DEBUG_LOG('fin de la boucle on recommence');
         if(current_Time >= sec_in_day){
             lastLoRaSend -= current_Time;
             lastMeasure -= current_Time;
