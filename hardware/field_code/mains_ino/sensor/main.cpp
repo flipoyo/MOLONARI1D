@@ -47,7 +47,7 @@ const char* configFilePath = "conf.csv";
 int ncapt = 0; 
 
 // LoRa
-LoraCommunication lora(868E6, devEui, appEui, SLAVE);
+LoraCommunication lora(868E6, devEui, appEui, RoleType::SLAVE);
 long lastLoRaSend = 0;
 long lastMeasure = 0;
 unsigned long lastSDOffset = 0;
@@ -88,6 +88,7 @@ void setup() {
         DEBUG_LOG("échec de la lecture du fichier config");
     }
 
+    lora.LoraUpdateAttributes(868E6, appEui, devEui, RoleType::SLAVE);
 
     // Compter les capteurs
     for (auto & _c : liste_capteurs) {

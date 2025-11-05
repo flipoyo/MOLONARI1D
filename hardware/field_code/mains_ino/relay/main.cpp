@@ -37,7 +37,7 @@ long lastAttempt = 0;// mémorise la dernière tentative de réception (en milli
 
 String appEui;
 String devEui;
-LoraCommunication lora(868E6, devEui, appEui, MASTER);
+LoraCommunication lora(868E6, devEui, appEui, RoleType::MASTER);
 bool modif = false;
 int CSPin = 5; // Pin CS par défaut
 
@@ -65,7 +65,7 @@ void setup() {
     Serial.println("Configuration chargée.");
 
     // Initialisation LoRa communication
-    lora = LoraCommunication(res.int_config.lora_intervalle_secondes, res.rel_config.appEui, res.rel_config.devEui, RoleType::MASTER);
+    lora.LoraUpdateAttributes(868E6, res.rel_config.appEui, res.rel_config.devEui, RoleType::MASTER);
 
     // Vérification SD
     if (!SD.begin(res.rel_config.CSPin)) {
