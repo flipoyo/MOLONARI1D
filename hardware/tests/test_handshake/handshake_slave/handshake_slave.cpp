@@ -11,19 +11,19 @@ Perfect for testing LoRa communication with a corresponding receiver script.*/
 
 bool handshake_once_worked = false;
 int counter = 0;
-String appEui = "70B3D57ED003C0A4";
-String devEui = "0018B20000000001";
+String appEui = "a8610a35391d6f08";
+String devEui = "a8610a34334d710d";
 LoraCommunication lora(868E6, devEui, appEui, RoleType::SLAVE);
-
+const int ledPin = LED_BUILTIN;
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(ledPin, OUTPUT);
 
   Serial.begin(9600);
   delay(4000);
 
-  digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(ledPin, HIGH);
   delay(1000);
-  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(ledPin, LOW);
 
   Serial.println("LoRa Sender");
 
@@ -34,7 +34,13 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("listen for handshake for the : " + String(counter) + "th time.");
+  digitalWrite(ledPin, HIGH);
+  int packetSize = LoRa.parsePacket();
+  if(packetSize){Serial.print("Received something !!!");}
+  delay(100);
+  digitalWrite(ledPin, LOW);
+  delay(200);
+  /*Serial.println("listen for handshake for the : " + String(counter) + "th time.");
   Serial.println("has already worked before ? " + String(handshake_once_worked));
   uint8_t bullshit_arg_shift = 0;
   if(lora.handshake(bullshit_arg_shift)){
@@ -42,7 +48,7 @@ void loop() {
     handshake_once_worked = true;
   }else{
     Serial.print("handshake failed");
-  }
+  }*/
 
   /*// send packet
   digitalWrite(LED_BUILTIN, HIGH);
@@ -54,5 +60,5 @@ void loop() {
   */
   counter++;
 
-  delay(200);
+  delay(500);
 }
