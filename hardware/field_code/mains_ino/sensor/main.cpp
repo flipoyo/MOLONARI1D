@@ -88,7 +88,6 @@ void setup() {
         DEBUG_LOG("échec de la lecture du fichier config");
     }
 
-    //Write real values in Lora
     lora.LoraUpdateAttributes(868E6, appEui, devEui, RoleType::SLAVE);
 
     // Compter les capteurs

@@ -216,6 +216,7 @@ void loop() {
         } else {
             Serial.println("Handshake échoué");
         }
+
     // --- Sommeil jusqu'à prochaine mesure ---
         pinMode(LED_BUILTIN, INPUT_PULLDOWN);
         Waiter waiter;
