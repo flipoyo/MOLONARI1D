@@ -1,3 +1,6 @@
+// Reader.cpp
+// Implementation of the Reader class to read configuration and measurement data from SD card.
+
 #include "Reader.hpp"
 #include <SD.h>
 #include <queue>
@@ -11,11 +14,9 @@
 #define SD_LOG_LN(msg)
 #endif
 
-// ----- Variables globales -----
 unsigned long LORA_INTERVAL_S = 3UL * 3600UL; // valeur par défaut
-
-// ----- Static member initialization -----
 unsigned int Reader::line_cursor = 0;
+
 
 // ==================== Lecture CSV ====================
 GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
@@ -58,13 +59,15 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
             String key = tokens[0];
             String val = tokens[1];
 
-            if (key == "appEui") res.rel_config.appEui = val;
-            else if (key == "appKey") res.rel_config.appKey = val;
+            if (key == "appEui") res.rel_config.appEui = String(val);
+            else if (key == "appKey") res.rel_config.appKey = String(val);
             else if (key == "CSPin") res.rel_config.CSPin = val.toInt();
             else if (key == "lora_freq") res.rel_config.lora_freq = val.toFloat();
+            else if (key== "devEui") res.rel_config.devEui = String(val);
 
 
-            //config générale des intervalles
+
+            //config générale des intervallesww
             else if (key == "intervalle_de_mesure_secondes") {
                 res.int_config.intervalle_de_mesure_secondes = val.toInt();
             }
@@ -78,7 +81,7 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
         }
 
         // ---------- CAPTEURS ----------
-        else if (tokens.size() == 4) {
+        else if (tokens.size() == 3) {
             SensorConfig c;
             c.id = tokens[0];
             c.type_capteur = tokens[1];
@@ -89,7 +92,6 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
             else
                 c.pin = tokens[2].toInt();
 
-            c.devEUI = tokens[3];
             res.liste_capteurs.push_back(c);
         }
 
@@ -108,37 +110,6 @@ GeneralConfig Reader::lireConfigCSV(const char* NomFichier, int CSPin) {
     return res;
 }
 
-// ==================== Waiter Methods ====================
-bool Reader::EstablishConnection(unsigned int shift)
-{
-    SD_LOG("SD Reader : establishing connection ...");
-
-    this->file = SD.open("data.csv"); // à adapter selon ton fichier réel
-    if (!this->file) {
-        SD_LOG_LN("Failed to open file");
-        return false;
-    }
-
-    this->file.seek(0);
-    if (shift > line_cursor) return false;
-    line_cursor -= shift;
-
-    unsigned int lineId = 0;
-    while ((lineId < line_cursor) && this->file.available()) {
-        this->file.readStringUntil('\n');
-        lineId++;
-    }
-
-    SD_LOG_LN(" Done");
-    return true;
-}
-
-void Reader::UpdateCursor(unsigned int shift)
-{
-    line_cursor += shift;
-    writetomyrecourdfile();
-    SD_LOG_LN("--------------UpdateCursor-------------" + String(line_cursor));
-}
 
 void Reader::writetomyrecourdfile()
 {
@@ -151,6 +122,16 @@ void Reader::writetomyrecourdfile()
         SD_LOG_LN("Failed to save message");
     }
 }
+
+
+void Reader::UpdateCursor(unsigned int shift)
+{
+    line_cursor += shift;
+    writetomyrecourdfile();
+    SD_LOG_LN("--------------UpdateCursor-------------" + String(line_cursor));
+}
+
+
 
 // toutes les fonctions jusqu'ici sont potentiellement inutiles 
 
