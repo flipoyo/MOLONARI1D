@@ -217,11 +217,11 @@ from pyheatmy import Column, Layer, Prior
 # 1. Define the priors using physical intervals and sigmas.
 #    The Prior class will auto-detect the best scale (log, asinh, linear).
 priors = {
-    "Prior_IntrinK": Prior(user_range=(1e-14, 1e-8), sigma=1e-12),
-    "Prior_n": Prior(user_range=(0.01, 0.25), sigma=0.02),
-    "Prior_lambda_s": Prior(user_range=(1, 10), sigma=0.5),
-    "Prior_rhos_cs": Prior(user_range=(1e6, 1e7), sigma=5e5),
-    "Prior_q_s": Prior(user_range=(-1e-6, 1e-6), sigma=1e-7),
+    "Prior_IntrinK": Prior(user_range=(1e-14, 1e-8), user_sigma=1e-12),
+    "Prior_n": Prior(user_range=(0.01, 0.25), user_sigma=0.02),
+    "Prior_lambda_s": Prior(user_range=(1, 10), user_sigma=0.5),
+    "Prior_rhos_cs": Prior(user_range=(1e6, 1e7), user_sigma=5e5),
+    "Prior_q_s": Prior(user_range=(-1e-6, 1e-6), user_sigma=1e-7),
 }
 
 # 2. Define the initial physical values for the layer.
@@ -746,7 +746,7 @@ column.compute_mcmc(
     layersList=layers,
     nb_iter=10000,
     nb_chains=4,
-    sigma2_T=Prior(range=(0.01, 10), sigma=0.1)
+    sigma2_T=Prior(user_range=(0.01, 10), user_sigma=0.1)
 )
 
 # 9. Get MCMC results
