@@ -199,8 +199,8 @@ void loop() {
             dataFile.close();
             lastLoRaSend = current_Time;
 
-        // --- Réception éventuelle de mise à jour config ---
-        DEBUG_LOG("Vérification de mise à jour descendante...");
+            // --- Réception éventuelle de mise à jour config ---
+            DEBUG_LOG("Vérification de mise à jour descendante...");
 
 
             uint16_t recvMeasure = 0, recvLora = 0;
@@ -222,7 +222,7 @@ void loop() {
         Waiter waiter;
         //DEBUG_LOG("waiter instancié");
 
-        if (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) <= CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes)){
+        /*if (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) <= CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes)){
             long time_to_sleep = CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes);
             DEBUG_LOG("sleeping until next measure, sleeping for " + String (time_to_sleep)+ "ms");
             waiter.sleepUntil(time_to_sleep);
@@ -230,9 +230,9 @@ void loop() {
             long time_to_sleep = CalculateSleepTimeUntilNextCommunication(lastLoRaSend, lora_intervalle_secondes); 
             DEBUG_LOG("sleeping until next communication " + String (time_to_sleep) + "ms");
             waiter.sleepUntil(time_to_sleep);
-        }
+        }*/
         // Prevent time variables (current_time) to diverge (time domain is 24 hours, to preserve coherence with GetSecondsSinceMidnight)
-        
+        DEBUG_LOG('fin de la boucle on recommence');
         if(current_Time >= sec_in_day){
             lastLoRaSend -= current_Time;
             lastMeasure -= current_Time;

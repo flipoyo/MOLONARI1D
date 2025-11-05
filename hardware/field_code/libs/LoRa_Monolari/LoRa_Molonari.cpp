@@ -71,10 +71,10 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 
     uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
     LoRa.write(checksum);
-
-    char dest_char = char(destination.c_str());
-    long int dest_number = strtol(&dest_char, NULL, 16);
-    LoRa.write(uint8_t(dest_number));//bon écoutez j'ai fait ça avec l'inspiration du moment, vérifier que ça marche vraiment (et les gens de l'année prochaine commencez pas à raler qu'on a pas vérifié notre code vous savez pas à quel point le repos était cassé avant notre session, on vous a fait un cadeau et là de toutes façons j'ai pas le temps. Le projet Molonari a fait un pas de géant en 2025. J'espère qu'il fera de même en 2026, je crois en vous, fillot.es et AST. Il y aura des moments de doute, de désespoir même mais peut-être aussi des moments de joie et de fierté. Je veux simplement vous dire que, quel que soit le retard que vous aurez l'impression d'avoir)
+    DEBUG_LOG("j'envoie le checksum :" + String(checksum));
+    //char dest_char = char(destination.c_str());
+    //long int dest_number = strtol(&dest_char, NULL, 16);
+    LoRa.write(uint8_t(0));//dest_number));//bon écoutez j'ai fait ça avec l'inspiration du moment, vérifier que ça marche vraiment (et les gens de l'année prochaine commencez pas à raler qu'on a pas vérifié notre code vous savez pas à quel point le repos était cassé avant notre session, on vous a fait un cadeau et là de toutes façons j'ai pas le temps. Le projet Molonari a fait un pas de géant en 2025. J'espère qu'il fera de même en 2026, je crois en vous, fillot.es et AST. Il y aura des moments de doute, de désespoir même mais peut-être aussi des moments de joie et de fierté. Je veux simplement vous dire que, quel que soit le retard que vous aurez l'impression d'avoir)
 //piche
 //piiicchhhheee
 //PIIICCCHHHHHHEEEEEEEEEEEEEEE
@@ -88,12 +88,16 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 //piche
 //piche
 //piche
-    char localAddress_char = char(localAddress.c_str());
-    long int localAddress_number = strtol(&localAddress_char, NULL, 16);
-    LoRa.write(uint8_t(localAddress_number));//inspiration du moment, vérifier que ça marche vraiment
+    //char localAddress_char = char(localAddress.c_str());
+    //long int localAddress_number = strtol(&localAddress_char, NULL, 16);
+    LoRa.write(uint8_t(0));//localAddress_number));//inspiration du moment, vérifier que ça marche vraiment
 
     LoRa.write(packetNumber);
+    DEBUG_LOG("j'envoie le numéro du paquet :" + String(packetNumber));
+
     LoRa.write(requestType);
+    DEBUG_LOG("j'envoie le requestType :" + String(requestType));
+
     LoRa.print(payload);
     LoRa.endPacket();
 
@@ -103,16 +107,18 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 
 bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload) {
     if (!active) return false;
+    DEBUG_LOG("lancement receive packet");
 
-    delay(10);
+    delay(100);
     unsigned long startTime = millis();
-    int ackTimeout = 500;
+    int ackTimeout = 2000;
 
     while (millis() - startTime < ackTimeout) {
         int packetSize = LoRa.parsePacket();
+        DEBUG_LOG("packet size :" + String(packetSize));
         if (packetSize) {
-            uint8_t receivedChecksum = LoRa.read();
             String recipient = String(LoRa.read());
+            uint8_t receivedChecksum = LoRa.read();
             String dest = String(LoRa.read());
             packetNumber = LoRa.read();
             requestType = static_cast<RequestType>(LoRa.read());
@@ -133,6 +139,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             return true;
         }
     }
+    DEBUG_LOG("no packet received");
     return false;
 }
 
@@ -181,6 +188,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         int n = 0;
         while (n < 50) {
             n++;
+            DEBUG_LOG("en attente de reception de SYN" + String(n));
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
                 DEBUG_LOG("SLAVE: SYN received");
                 shift = packetNumber;
@@ -343,7 +351,7 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
     while (millis() - start < timeout_ms) {
         // petite attente pour éviter busy-loop
         if (!receivePacket(packetNumber, requestType, payload)) {
-            delay(50);
+            delay(100);
             continue;
         }
 
