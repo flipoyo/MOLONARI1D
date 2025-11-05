@@ -27,12 +27,8 @@
 
 LoRaModem modem;
 
-
-
 LoraWANCommunication loraWAN;
 std::queue<String> sendingQueue;
-
-
 
 GeneralConfig res;
 
@@ -49,6 +45,7 @@ const char* configFilePath = "conf_rel.csv";
 
 Waiter waiter; //pour ne pas l'indenter dans le loop
 unsigned long lastSDOffset = 0;
+
 
 // ----- Setup -----
 void setup() {
@@ -81,6 +78,7 @@ void setup() {
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
     digitalWrite(LED_BUILTIN, LOW);
 }
+
 
 // ----- Loop -----
 void loop() {
@@ -155,6 +153,7 @@ void loop() {
             lastAttempt = GetSecondsSinceMidnight();
         }
     }
+    
     DEBUG_LOG("about to loop on modem.available()");
     // reception csv et modification
     while (modem.available()) {
