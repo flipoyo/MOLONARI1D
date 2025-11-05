@@ -82,7 +82,7 @@ void loop() {
             lastAttempt = GetSecondsSinceMidnight();
 
             //envoie du csv
-            if (modif==true) {
+            if (modif==true) { // normalement modif est toujours false pour l'instant : la focntion de modif n'est pa sbien implémentée
                 File config = SD.open(configFilePath, FILE_READ);
                 config.seek(lastSDOffset);
                 std::queue<String> lines_config;
