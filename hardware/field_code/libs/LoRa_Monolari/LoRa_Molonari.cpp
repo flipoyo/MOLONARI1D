@@ -75,7 +75,11 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     LoRa.write(uint8_t(destination.toInt()));
     LoRa.write(uint8_t(localAddress.toInt()));
     LoRa.write(packetNumber);
+    DEBUG_LOG("j'envoie le numéro du paquet :" + String(packetNumber));
+
     LoRa.write(requestType);
+    DEBUG_LOG("j'envoie le requestType :" + String(requestType));
+
     LoRa.print(payload);
     LoRa.endPacket();
 
@@ -85,17 +89,19 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 
 bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload) {
     if (!active) return false;
+    DEBUG_LOG("lancement receive packet");
 
-    delay(10);
+    delay(100);
     unsigned long startTime = millis();
     int ackTimeout = 2000;
 
     while (millis() - startTime < ackTimeout) {
         int packetSize = LoRa.parsePacket();
+        DEBUG_LOG("packet size :" + String(packetSize));
         if (packetSize) {
+            String recipient = String(LoRa.read());
             uint8_t receivedChecksum = LoRa.read();
-            String recipient = LoRa.readString();
-            String dest = LoRa.readString();
+            String dest = String(LoRa.read());
             packetNumber = LoRa.read();
             requestType = static_cast<RequestType>(LoRa.read());
 
@@ -111,6 +117,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             return true;
         }
     }
+    DEBUG_LOG("no packet received");
     return false;
 }
 
@@ -159,6 +166,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         int n = 0;
         while (n < 50) {
             n++;
+            DEBUG_LOG("en attente de reception de SYN" + String(n));
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
                 DEBUG_LOG("SLAVE: SYN received");
                 shift = packetNumber;
@@ -321,7 +329,7 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
     while (millis() - start < timeout_ms) {
         // petite attente pour éviter busy-loop
         if (!receivePacket(packetNumber, requestType, payload)) {
-            delay(50);
+            delay(100);
             continue;
         }
 
