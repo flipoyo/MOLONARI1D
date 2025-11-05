@@ -199,8 +199,8 @@ void loop() {
             dataFile.close();
             lastLoRaSend = current_Time;
 
-        // --- Réception éventuelle de mise à jour config ---
-        DEBUG_LOG("Vérification de mise à jour descendante...");
+            // --- Réception éventuelle de mise à jour config ---
+            DEBUG_LOG("Vérification de mise à jour descendante...");
 
 
             uint16_t recvMeasure = 0, recvLora = 0;
