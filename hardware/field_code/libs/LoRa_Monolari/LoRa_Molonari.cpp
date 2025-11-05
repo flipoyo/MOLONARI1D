@@ -55,8 +55,7 @@ void LoraCommunication::setdesttodefault() {
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
     if (!active) { DEBUG_LOG("LoRa inactive"); return; }
 
-    uint8_t b = random(10, 80);
-    delay(100 + b);
+    delay(100);
 
     if (!LoRa.beginPacket()) {
         DEBUG_LOG("LoRa busy, cannot send packet");
