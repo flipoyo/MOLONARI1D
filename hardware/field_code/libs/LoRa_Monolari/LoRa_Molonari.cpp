@@ -174,7 +174,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
     }
 }
 
-uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>& sendQueue, long& SDOffset, File& dataFile) {//changed previous name "sendPackets" ambiguous with "sendPacket"
+uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>& sendQueue, unsigned long& SDOffset, File& dataFile) {//changed previous name "sendPackets" ambiguous with "sendPacket"
     // handles packet sending and acknowledgement verificaiton, SDOffset updating, and ensures dataFile.position() is at the right place (terminal SDOffset).
 
     uint8_t nb_packets_sent = 0;

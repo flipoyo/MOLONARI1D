@@ -46,7 +46,7 @@ int ncapt = 0;
 LoraCommunication lora(868E6, 0x01, 0x02, RoleType::SLAVE);
 long lastLoRaSend = 0;
 long lastMeasure = 0;
-long lastSDOffset = 0;
+unsigned long lastSDOffset = 0;
 std::queue<String> sendQueue;
 
 uint16_t newMeasureInterval = 0;

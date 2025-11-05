@@ -64,7 +64,7 @@ void setup() {
 void loop() {
     static long lastAttempt = 0; // mémorise la dernière tentative de réception (en millisecondes)
     static Waiter waiter; //pour ne pas l'indenter dans le loop
-    static long lastSDOffset = 0;
+    static unsigned long lastSDOffset = 0;
 
     long currentTime = GetSecondsSinceMidnight();
     if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes
