@@ -8,7 +8,7 @@ def load_config(config_path):
         return json.load(config_file)
 
 if __name__ == "__main__":
-    config = load_config('src/receiver/config.json')
+    config = load_config('./src/receiver/config.json')
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--export", help="Export the DB into CSV and quit (file path)", default=None)
@@ -20,4 +20,4 @@ if __name__ == "__main__":
         db_conn.close()
         sys.exit(0)
 
-    anm.main()
+    anm.main_mqtt()

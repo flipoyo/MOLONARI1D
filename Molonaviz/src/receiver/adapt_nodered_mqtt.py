@@ -27,7 +27,7 @@ import paho.mqtt.client as mqtt
 
 from . import decoder
 from .db_insertion import insert_payload, REALDB_CONFIG
-from receiver.logger_timestamps import logger_timestamps
+from src.receiver.logger_timestamps import logger_timestamps
 
 # Load configuration from JSON file
 with open(os.path.join(os.path.dirname(__file__), 'config.json')) as config_file:
@@ -158,6 +158,8 @@ def extract_fields_from_payload(payload: dict):
     - `fCnt`'''
 
     # Received elements in the datapayload (decoded by decoder.py)
+    print(payload)
+    print("data : ", payload.get("data", ""))
     Sensor = decoder.decode_proto_data(payload.get("data", ""))
     device_eui = normalize_eui(Sensor.UI)
     timestamp = Sensor.time
@@ -253,7 +255,7 @@ class MQTTWorker:
         print(f"[MQTT] Payload: {payload_text}")
 
     def connect_and_loop_start(self):
-        logger.info("Connecting to MQTT broker %s:%d (use_tls=%s)", self.broker, self.port, self.use_tls)
+        logger.info("Connecting to MQTT broker %s:%d", self.broker, self.port)
         self.client.connect(self.broker, self.port, keepalive=MQTT_KEEPALIVE)
         # start loop in background thread
         self.client.loop_start()
