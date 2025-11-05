@@ -180,7 +180,7 @@ void loop() {
     DEBUG_LOG("Temps actuel : " + String(current_Time));
     bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 1));
     
-    DEBUG_LOG("ncapt : " + String(ncapt));//so far
+    DEBUG_LOG("ncapt : " + String(ncapt)); //so far
 
     if (IsTimeToMeasure) {
         DEBUG_LOG("starting measurement process");
