@@ -169,7 +169,7 @@ void loop() {
     DEBUG_LOG("sleeping until next communication " + String (time_to_sleep) + "ms");
     LowPower.idle(time_to_sleep);
     */
-    delay(5000);
+    delay(501);
 }
 
 

@@ -170,7 +170,7 @@ void loop() {
         }
 
         lora.startLoRa();
-        DEBUG_LOG("LoRa ok et handshake démarré");
+        DEBUG_LOG("LoRa ok, about to try handshake");
 
         uint8_t id = 0;
         if (lora.handshake(id)) {
@@ -216,6 +216,7 @@ void loop() {
         } else {
             Serial.println("Handshake échoué");
         }
+
     // --- Sommeil jusqu'à prochaine mesure ---
         pinMode(LED_BUILTIN, INPUT_PULLDOWN);
         Waiter waiter;
@@ -236,6 +237,7 @@ void loop() {
             lastLoRaSend -= current_Time;
             lastMeasure -= current_Time;
             current_Time = 0;
+            DEBUG_LOG("Dates have been updated");
         }
     }
 }

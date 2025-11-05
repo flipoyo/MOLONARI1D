@@ -27,7 +27,7 @@ Sensor::Sensor(int _dataPin, int _enablePin, String _type_capteur)
 
 double Sensor::get_voltage() { 
   digitalWrite(enablePin, HIGH);
-  delay(1000);
+  delay(200);
   double voltage = analogRead(dataPin);
   DEBUG_LOG("measured voltage of Pin " + String(dataPin) + " of " + String (voltage));
   digitalWrite(enablePin, LOW);
