@@ -160,12 +160,6 @@ void loop() {
     }
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
-    
-    /*
-    long time_to_sleep = CalculateSleepTimeUntilNextCommunication(lastAttempt, lora_intervalle_secondes); 
-    DEBUG_LOG("sleeping until next communication " + String (time_to_sleep) + "ms");
-    LowPower.idle(time_to_sleep);
-    */
     delay(501);
 }
 
