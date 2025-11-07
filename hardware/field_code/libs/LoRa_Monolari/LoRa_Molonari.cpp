@@ -20,6 +20,8 @@ LoraCommunication::LoraCommunication(long frequency, String localAdd, String des
     : freq(frequency), localAddress(localAdd), destination(desti), active(false), deviceRole(role)
 {
 }
+// Adress_sent c'est l'adresse que j'envoie quand j'envoie
+// Waited_adress c'est l'adresse de qui il s'attend recevoir
 
 void LoraCommunication::LoraUpdateAttributes(long frequency, String localAdd, String desti, RoleType role){
     this -> freq = frequency;
