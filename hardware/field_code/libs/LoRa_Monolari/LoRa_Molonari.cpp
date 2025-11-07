@@ -364,7 +364,7 @@ int LoraCommunication::receiveAllPackets(std::queue<String> &receiveQueue) {
                     if (prevPacket == packetNumber) { sendPacket(packetNumber, ACK, payload); break; }
                     prevPacket = packetNumber;
                     receiveQueue.push(payload);
-                    sendPacket(packetNumber, ACK, "ACK");
+                    sendPacket(packetNumber, ACK, payload);
             }
         }
         DEBUG_LOG("packet number :" + String(packetNumber));
