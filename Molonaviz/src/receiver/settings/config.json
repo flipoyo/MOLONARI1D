@@ -5,14 +5,16 @@
     "topic": "application/+/device/+/event/up",
     "client_id": "chirpstack_to_sqlite",
     "keepalive": 60,
-    "ca_cert": "./src/receiver/TLS/CA.crt",
-    "client_cert": "./src/receiver/TLS/TLS.crt",
-    "client_key": "./src/receiver/TLS/TLS.key",
+    "ca_cert": "./src/receiver/settings/CA.crt",
+    "client_cert": "./src/receiver/settings/TLS.crt",
+    "client_key": "./src/receiver/settings/TLS.key",
     "device_euis": [],
     "message_queue_max": 1000
   },
   "database": {
     "filename": "./TestDatabase/Molonari/Molonari.sqlite",
-    "table": "RawMeasurements"
+    "local_table": "RawMeasurements",
+    "real_database_insertion": true,
+    "ERD_structure": "./src/receiver/settings/ERD_structure.sql"
   }
 }

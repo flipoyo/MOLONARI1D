@@ -26,11 +26,11 @@ import pandas as pd
 import paho.mqtt.client as mqtt
 
 from . import decoder
-from .db_insertion import insert_payload, REALDB_CONFIG
+from .db_insertion import insert_payload
 from src.receiver.logger_timestamps import logger_timestamps
 
 # Load configuration from JSON file
-with open(os.path.join(os.path.dirname(__file__), 'config.json')) as config_file:
+with open(os.path.join(os.path.dirname(__file__), './settings/config.json')) as config_file:
     config = json.load(config_file)
 
 # ---- MQTT configuration ----
@@ -48,7 +48,8 @@ MQTT_CLIENT_KEY = config["mqtt"]["client_key"]
 
 # SQLite DB configuration
 DB_FILENAME = config["database"]["filename"]
-SQLITE_TABLE = config["database"]["table"]
+SQLITE_TABLE = config["database"]["local_table"]
+REAL_DB_INSERTION = config["database"]["real_database_insertion"]
 
 DEVICE_EUIS = config["mqtt"]["device_euis"] # list of DeviceEUIs to filter (empty = all devices)
 
@@ -339,7 +340,7 @@ def main_mqtt(real_database_insertion=False):
         broker=MQTT_BROKER,
         port=MQTT_PORT,
         topic=MQTT_TOPIC,
-        real_database_insertion=real_database_insertion,
+        real_database_insertion=REAL_DB_INSERTION,
         ca_cert=MQTT_CA_CERT,
         client_cert=MQTT_CLIENT_CERT,
         client_key=MQTT_CLIENT_KEY

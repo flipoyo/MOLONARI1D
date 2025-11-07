@@ -2,7 +2,42 @@ import pandas as pd
 import os
 import json
 from PyQt5.QtSql import QSqlQuery, QSqlDatabase
-from ..molonaviz.backend import SamplingPointManager as spm
+
+# Load configuration from JSON file
+with open(os.path.join(os.path.dirname(__file__), './settings/config.json')) as config_file:
+    config = json.load(config_file)
+
+def createDatabase():
+    """
+    Given a directory and the name of the database, create a folder with the name databaseName and the correct structure. Also create the empty database with correct table structure based on the sqlInitFile.
+    Return True if the directory was successfully created, False otherwise
+    """
+    databasePath = config['database']['filename']
+    databaseDirectory = os.path.dirname(databasePath)
+
+    if os.path.isdir(databaseDirectory):
+        return False
+    os.mkdir(databaseDirectory)
+    os.mkdir(os.path.join(databaseDirectory, "Notices"))
+    os.mkdir(os.path.join(databaseDirectory, "Schemes"))
+    os.mkdir(os.path.join(databaseDirectory, "Scripts"))
+    f = open(databasePath,"x")
+    f.close()
+
+    con = QSqlDatabase.addDatabase("QSQLITE")
+    con.setDatabaseName(databasePath)
+    con.open()
+
+    sqlInitFile = config['database']['ERD_structure']
+    f = open(sqlInitFile, 'r')
+    sqlQueries = f.read()
+    f.close()
+    sqlQueries = sqlQueries.split(";")
+    query = QSqlQuery(con)
+    for q in sqlQueries:
+        query.exec(q)
+    con.close()
+    return True
 
 
 def get_sampling_point_id(con_db, payload):
