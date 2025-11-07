@@ -267,11 +267,11 @@ uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>
     String payload; RequestType requestType; uint8_t nb_packets_sent_received;
     while (!sendQueue.empty()) {
         memory_line packet = sendQueue.front();
-        sendPacket(nb_packets_sent, DATA, packet.flush);
         int send_retries = 0;
-        while(send_retries<100){
+        while(send_retries<10){
+            sendPacket(nb_packets_sent, DATA, packet.flush);
             int receive_retries = 0;
-            while (receive_retries < 25) {
+            while (receive_retries < 10) {
                 if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet.flush) {
                     sendQueue.pop();
                     nb_packets_sent++;
@@ -364,7 +364,7 @@ int LoraCommunication::receiveAllPackets(std::queue<String> &receiveQueue) {
                     if (prevPacket == packetNumber) { sendPacket(packetNumber, ACK, payload); break; }
                     prevPacket = packetNumber;
                     receiveQueue.push(payload);
-                    sendPacket(packetNumber, ACK, "ACK");
+                    sendPacket(packetNumber, ACK, payload);
             }
         }
         DEBUG_LOG("packet number :" + String(packetNumber));

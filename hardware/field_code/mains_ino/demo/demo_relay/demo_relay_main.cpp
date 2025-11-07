@@ -84,7 +84,7 @@ void setup() {
 void loop() {
     long currentTime = GetSecondsSinceMidnight();
     
-    if (currentTime - lastAttempt >= res.int_config.lora_intervalle_secondes) {
+    if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes
         DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
         DEBUG_LOG("Fenêtre de communication LoRa atteinte, tentative de réception des paquets...");
         std::queue<String> receiveQueue;
@@ -160,9 +160,7 @@ void loop() {
     }
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
-    long time_to_sleep = CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes); 
-    DEBUG_LOG("sleeping until next communication " + String (time_to_sleep) + "ms");
-    LowPower.idle(uint32_t(time_to_sleep));
+    //delay(501); pas de dodo pour la démo
 }
 
 
