@@ -102,7 +102,7 @@ void loop() {
 
             DEBUG_LOG("Handshake réussi. Réception des paquets...");
             int last = lora.receiveAllPackets(receiveQueue);
-            lora.sendPacket(last, FIN, ""); // Répond par un FIN de confirmation;
+            lora.sendPacket(last, FIN, "FIN"); // Répond par un FIN de confirmation;
 
             // Met à jour le temps de la dernière tentative de réception
             lastAttempt = GetSecondsSinceMidnight();
@@ -123,6 +123,9 @@ void loop() {
                         modif = !(lastSDOffsetConfig == config.position());
                 }
             }
+            lora.stopLoRa();
+
+            logger.LogString(receiveQueue);
         } else {
             Serial.println("Handshake échoué, aucune donnée reçue.");
             lora.stopLoRa();
@@ -130,10 +133,6 @@ void loop() {
             // Met quand même à jour lastAttempt pour réessayer après l'intervalle de temps
             lastAttempt = GetSecondsSinceMidnight();
         }
-
-        lora.stopLoRa();
-
-        logger.LogString(receiveQueue);
 
         // Envoi via LoRaWAN si intervalle complet atteint
 

@@ -268,15 +268,18 @@ uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>
     while (!sendQueue.empty()) {
         memory_line packet = sendQueue.front();
         int send_retries = 0;
-        while(send_retries<10){
+        int bien_recu = 0;
+        while(send_retries<10 && !bien_recu){
             sendPacket(nb_packets_sent, DATA, packet.flush);
             int receive_retries = 0;
             while (receive_retries < 10) {
+                bien_recu = 0;
                 if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet.flush) {
                     sendQueue.pop();
                     nb_packets_sent++;
                     SDOffset = packet.memory_successor;
                     DEBUG_LOG("one packet successfully sent");
+                    bien_recu = 1;
                     break;
                 }
                 #ifdef DEBUG_LORA
@@ -296,13 +299,14 @@ uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>
                 DEBUG_LOG("Re-sending...");
                 receive_retries++;
             }
-        send_retries++;
-        }
-        if (send_retries == 4) { while (!sendQueue.empty()) sendQueue.pop(); break;
-            DEBUG_LOG("aborting send after " + String(send_retries) + " attempts");
+            send_retries++;
+            if (send_retries == 10) { while (!sendQueue.empty()) sendQueue.pop(); break;
+                DEBUG_LOG("aborting send after " + String(send_retries) + " attempts");
+            }
         }
     }
     dataFile.seek(SDOffset);
+    DEBUG_LOG("j'ai tout envoyé, j'ai envoyé:" + String(nb_packets_sent) + "packets");
     return nb_packets_sent;
 }
 
@@ -353,7 +357,7 @@ uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
 
 int LoraCommunication::receiveAllPackets(std::queue<String> &receiveQueue) {
     uint8_t packetNumber = 0; String payload; RequestType requestType; uint8_t prevPacket = -1;
-    unsigned long startTime = millis(); int ackTimeout = 60000;
+    unsigned long startTime = millis(); int ackTimeout = 3600000;
 
     while (millis() - startTime < ackTimeout) {
         if (receivePacket(packetNumber, requestType, payload)) {
@@ -373,13 +377,13 @@ int LoraCommunication::receiveAllPackets(std::queue<String> &receiveQueue) {
 }
 
 bool LoraCommunication::closeSession(int lastPacket) {
-    sendPacket(lastPacket, FIN, "");
+    sendPacket(lastPacket, FIN, "FIN");
     String payload; uint8_t packetNumber; RequestType requestType;
     int retries = 0;
     while (retries < 3) {
         if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket) return true;
         delay(100 * (retries + 1));
-        sendPacket(lastPacket, FIN, "");
+        sendPacket(lastPacket, FIN, "FIN");
         retries++;
     }
     return false;
@@ -417,7 +421,7 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
         if (requestType == FIN) {
             // Écriture atomique : on écrit d'abord sur un fichier temporaire
             int last = receiveAllPackets(receiveQueue);
-            sendPacket(last, FIN, "");
+            sendPacket(last, FIN, "FIN");
             const char* tmpPath = "tmp_conf.csv";
             File tmp = SD.open(tmpPath, FILE_WRITE | O_TRUNC);
             if (!tmp) {
