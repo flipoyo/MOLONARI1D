@@ -28,7 +28,7 @@ class Linear_system:
     def __init__(
         self,
         Ss_list,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         n_list,
         lambda_s_list,
         rhos_cs_list,
@@ -37,7 +37,7 @@ class Linear_system:
         H_init,
         T_init,
     ):
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.T_init = T_init
         self.n_list = n_list
         self.rhos_cs_list = rhos_cs_list
@@ -56,8 +56,11 @@ class Linear_system:
         return mu
 
     # @njit
-    def compute_K(self, moinslog10IntrinK_list):
-        return (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / self.mu_list
+    def compute_K(self, IntrinK_list):
+        # IntrinK_list actually holds the physical intrinsic permeability (m2)
+        # in the higher-level code (Layer.get_physical_params returns IntrinK as a physical value).
+        # Therefore compute hydraulic conductivity K from intrinsic permeability directly.
+        return (RHO_W * G * IntrinK_list) * 1.0 / self.mu_list
 
     def compute_n_cell(self):
         return len(self.H_init)
@@ -100,7 +103,7 @@ class Linear_system:
         self.n_cell = self.compute_n_cell()
         self.n_times = self.compute_n_times()
         self.mu_list = self.compute_Mu(self.T_init)
-        self.K_list = self.compute_K(self.moinslog10IntrinK_list)
+        self.K_list = self.compute_K(self.IntrinK_list)
         self.rho_mc_m_list = self.compute_rho_mc_m_list()
         self.lambda_m_list = self.compute_lambda_m_list()
         self.ke_list = self.compute_ke_list()
@@ -115,12 +118,12 @@ class H_stratified(Linear_system):
     def __init__(
         self,
         Ss_list,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         n_list,
         lambda_s_list,
         rhos_cs_list,
         all_dt,
-        q_list,
+        q_s_list,
         dz,
         H_init,
         H_riv,
@@ -136,7 +139,7 @@ class H_stratified(Linear_system):
     ):
         super().__init__(
             Ss_list,
-            moinslog10IntrinK_list,
+            IntrinK_list,
             n_list,
             lambda_s_list,
             rhos_cs_list,
@@ -151,7 +154,7 @@ class H_stratified(Linear_system):
         self.z_solve = z_solve
         self.T_init = T_init
         self.inter_cara = inter_cara
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.Ss_list = Ss_list
         self.all_dt = all_dt
         self.isdtconstant = isdtconstant
@@ -160,11 +163,12 @@ class H_stratified(Linear_system):
         self.H_riv = H_riv
         self.H_aq = H_aq
         self.alpha = alpha
-        self.heat_source = q_list
+        self.q_s_list = q_s_list
         self.calc_param_adim()
 
     def compute_gamma_list(self):
-        return MU_W * (L_0**2) * (self.Ss_list) / (RHO_W * (10.0**-self.moinslog10IntrinK_list) * G * P_0)
+        # Use the physical intrinsic permeability (not -log10) when computing gamma
+        return MU_W * (L_0**2) * (self.Ss_list) / (RHO_W * (self.IntrinK_list) * G * P_0)
     
     def compute_H_adim_res(self):
         H_adim_res = zeros((self.n_cell, self.n_times), float32)
@@ -390,7 +394,11 @@ class H_stratified(Linear_system):
         c[-1] = (8 / (3 * self.dz_adim**2)) * (
             (1 - self.alpha) * H_aq_adim[j] + (self.alpha) * H_aq_adim[j + 1]
         )
-        #c -= self.heat_source
+        #Un q_s positif correspond à une source d'eau  
+        # Use physical intrinsic permeability in denominator
+        c += self.q_s_list * MU_W * L_0 ** 2 / (
+            (self.IntrinK_list) * DH_0 * G * RHO_W
+        )
         return c
 
 
@@ -400,12 +408,12 @@ class T_stratified(Linear_system):
         self,
         nablaH,
         Ss_list,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         n_list,
         lambda_s_list,
         rhos_cs_list,
         all_dt,
-        q_list,
+        q_s_list,
         dz,
         H_init,
         H_riv,
@@ -418,7 +426,7 @@ class T_stratified(Linear_system):
     ):
         super().__init__(
             Ss_list,
-            moinslog10IntrinK_list,
+            IntrinK_list,
             n_list,
             lambda_s_list,
             rhos_cs_list,
@@ -428,7 +436,7 @@ class T_stratified(Linear_system):
             T_init,
         )
         self.Ss_list = Ss_list
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.n_list = n_list
         self.lambda_s_list = lambda_s_list
         self.rhos_cs_list = rhos_cs_list
@@ -440,14 +448,17 @@ class T_stratified(Linear_system):
         self.T_aq = T_aq
         self.alpha = alpha
         self.N_update_Mu = N_update_Mu
-        self.heat_source = q_list
+        self.q_s_list = q_s_list
         self.calc_param_adim()
 
     def compute_kappa_list(self):
-        return (RHO_W**2) * C_W * (10.0**-self.moinslog10IntrinK_list) * G * DH_0 / (MU_W * LAMBDA_W)
-    
+        return (RHO_W**2) * C_W * (self.IntrinK_list) * G * DH_0 / (MU_W * self.lambda_m_list)
+
+    def compute_phi_list(self):
+        return RHO_W * C_W * self.q_s_list * L_0 **2 / (MU_W * self.lambda_m_list)
+
     def compute_beta_list(self):
-        beta_value = RHO_W * C_W * (L_0**2) / (P_0 * LAMBDA_W)
+        beta_value = RHO_W * C_W * (L_0**2) / (P_0 * self.lambda_m_list)
         return np.full(self.n_cell, beta_value, dtype=float32)
     
     def compute_T_adim_res(self):
@@ -463,6 +474,7 @@ class T_stratified(Linear_system):
         """Calcul des paramètres adimensionnés"""
         self.kappa = self.compute_kappa_list()
         self.beta = self.compute_beta_list()
+        self.phi = self.compute_phi_list()
         self.dz_adim = self.dz / L_0
         self.T_adim_res = self.compute_T_adim_res()
         self.nablaH_adim = L_0 * self.nablaH / DH_0
@@ -522,7 +534,7 @@ class T_stratified(Linear_system):
 
     def _compute_diagonal(self, j, dt_adim): #OK
         diagonal = zeros(self.n_cell, float32)
-        diagonal[:] = self.beta / dt_adim - 2 * (1 - self.alpha) / self.dz_adim**2
+        diagonal[:] = self.beta / dt_adim - 2 * (1 - self.alpha) / self.dz_adim**2 + self.phi * (1 - self.alpha)
         diagonal[0] = self.beta[0] / dt_adim - 4 * (1 - self.alpha) / self.dz_adim**2
         diagonal[-1] = self.beta[-1] / dt_adim - 4 * (1 - self.alpha) / self.dz_adim**2
         return diagonal
@@ -558,7 +570,7 @@ class T_stratified(Linear_system):
             + 2 * (1 - self.alpha) * self.kappa[-1] * self.nablaH_adim[-1, j] / (3 * self.dz_adim)
         ) * T_aq_adim[j]
 
-        # c += self.heat_source[:, j]
+        c += self.phi * self.T_init[0] / DT_0
         return c
 
     def _compute_A_diagonals(self, j, dt_adim): #OK
@@ -576,6 +588,7 @@ class T_stratified(Linear_system):
         diagonal[:] = (
             self.beta / dt_adim
             + 2 * (self.alpha) / self.dz_adim**2
+            - self.phi * self.alpha
         )
         diagonal[0] = (
             self.beta[0] / dt_adim
@@ -623,7 +636,7 @@ class T_stratified(Linear_system):
 #         list_zLow,
 #         z_solve,
 #         inter_cara,
-#         moinslog10IntrinK_list,
+#         IntrinK_list,
 #         Ss_list,
 #         all_dt,
 #         isdtconstant,
@@ -636,7 +649,7 @@ class T_stratified(Linear_system):
 #     ):
 #         super().__init__(
 #             Ss_list,
-#             moinslog10IntrinK_list,
+#             IntrinK_list,
 #             n_list,
 #             lambda_s_list,
 #             rhos_cs_list,
@@ -654,7 +667,7 @@ class T_stratified(Linear_system):
 #         self.list_zLow = list_zLow
 #         self.z_solve = z_solve
 #         self.inter_cara = inter_cara
-#         self.moinslog10IntrinK_list = moinslog10IntrinK_list
+#         self.IntrinK_list = IntrinK_list
 #         self.Ss_list = Ss_list
 #         self.all_dt = all_dt
 #         self.isdtconstant = isdtconstant
@@ -836,15 +849,15 @@ class T_stratified(Linear_system):
 #             upper_diagonal_A[pos_idx + 1] = -K2 * (1 - self.alpha) / self.dz**2
 
 #     def compute_c(self, j):
-        c = zeros(self.n_cell, float32)
-        c[0] = (8 * self.K_list[0] / (3 * self.dz**2)) * (
-            (1 - self.alpha) * self.H_riv[j + 1] + (self.alpha) * self.H_riv[j]
-        )
-        c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
-            (1 - self.alpha) * self.H_aq[j + 1] + (self.alpha) * self.H_aq[j]
-        )
-        # c += self.heat_source[:, j]
-        return c
+#       c = zeros(self.n_cell, float32)
+#        c[0] = (8 * self.K_list[0] / (3 * self.dz**2)) * (
+#           (1 - self.alpha) * self.H_riv[j + 1] + (self.alpha) * self.H_riv[j]
+#        )
+#        c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
+#            (1 - self.alpha) * self.H_aq[j + 1] + (self.alpha) * self.H_aq[j]
+#        )
+#        # c += self.heat_source[:, j]
+#        return c
 
 
 if __name__ == "__main__":
