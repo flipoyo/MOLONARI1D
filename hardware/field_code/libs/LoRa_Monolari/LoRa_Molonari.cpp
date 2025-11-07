@@ -99,6 +99,11 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
     unsigned long startTime = millis();
     int ackTimeout = 1000;//was set to 2s
 
+    int addressLength = 16; // taille de l'adressse des deux objets
+    char sender[addressLength + 1];
+    char recipient[addressLength + 1];
+
+
     while (millis() - startTime < ackTimeout) {
         delay(10);//VERY TEMPORARY
         int packetSize = LoRa.parsePacket();
@@ -107,10 +112,26 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 
             uint8_t receivedChecksum = LoRa.read();
             DEBUG_LOG("Received checksum: " + String(receivedChecksum));
-            DEBUG_LOG("Sent checksum" + String(calculateChecksum(String(LoRa.read()), String(LoRa.read()), LoRa.read(), static_cast<RequestType>(LoRa.read()), "")));
-            String recipient = String(LoRa.read());
-            String dest = String(LoRa.read());
-            DEBUG_LOG("Receiving packet to " + dest + " from " + recipient);
+
+                        // Lire l’adresse source
+            for (int i = 0; i < addressLength; i++) {
+                sender[i] = (char)LoRa.read();
+            }
+            sender[addressLength] = '\0';
+
+            String sender = String(sender);
+
+
+            // Lire l’adresse destination
+            for (int i = 0; i < addressLength; i++) {
+            recipient[i] = (char)LoRa.read();
+            }
+            recipient[addressLength] = '\0';
+            String recipient = String(recipient);
+
+
+            DEBUG_LOG("Receiving packet to " + recipient + " from " + sender);
+
             packetNumber = LoRa.read();
     
             requestType = static_cast<RequestType>(LoRa.read());
@@ -118,9 +139,9 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             payload = "";
             while (LoRa.available()) payload += (char)LoRa.read();
 
-            if (!isValidDestination(recipient, dest, requestType)) return false;
+            if (!isValidDestination(recipient, sender, requestType)) return false;
 
-            uint8_t calculatedChecksum = calculateChecksum(recipient, dest, packetNumber, requestType, payload);
+            uint8_t calculatedChecksum = calculateChecksum(recipient, sender, packetNumber, requestType, payload);
             if (calculatedChecksum != receivedChecksum) return false;
 
             DEBUG_LOG("Packet received: " + payload);
