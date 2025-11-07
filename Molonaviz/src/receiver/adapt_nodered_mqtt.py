@@ -309,10 +309,10 @@ def processing_worker(mqtt_worker:MQTTWorker, db_conn, device_euis_normalized):
             # insert into DB
             try:
                 if mqtt_worker.real_database_insertion:
-                    insert_payload(db_conn, REALDB_CONFIG, fields) # utiliser le fichier annexe real DB
+                    rowid = insert_payload(db_conn, fields) # utiliser le fichier annexe real DB
                 else:
                     rowid = insert_record(db_conn, fields)
-                logger.info("Inserted id=%d device=%s ts=%s", rowid, device_eui,
+                logger.info("Inserted device=%s ts=%s (%d)", device_eui, rowid,
                             time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
             except Exception as e:
                 logger.exception("Error DB insertion: %s", e)

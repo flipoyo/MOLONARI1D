@@ -12,12 +12,7 @@
     "message_queue_max": 1000
   },
   "database": {
-    "filename": "./TestDatabase/raw_measurements.db",
-    "table": "RawMeasurements",
-    "realdb_config": {
-        "sampling_point_name" : "main-sampling",
-        "study_name" : "main-study",
-        "labo_id" : 1
-    }
+    "filename": "./TestDatabase/Molonari/Molonari.sqlite",
+    "table": "RawMeasurements"
   }
 }

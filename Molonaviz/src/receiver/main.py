@@ -20,4 +20,4 @@ if __name__ == "__main__":
         db_conn.close()
         sys.exit(0)
 
-    anm.main_mqtt()
+    anm.main_mqtt(real_database_insertion=True)
