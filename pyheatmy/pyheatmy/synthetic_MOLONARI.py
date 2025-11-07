@@ -116,7 +116,7 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
             self._time_array = np.array(times_list)
 
     def _generate_dH_series(self,verbose=True):
-        ts = create_periodic_signal(self._dates,self._param_dH,"Hydraulic head differential",verbose=verbose)
+        ts = create_multi_periodic_signal(self._dates,self._param_dH,"Hydraulic head differential",verbose=verbose)
         self._dH = ts
 
 

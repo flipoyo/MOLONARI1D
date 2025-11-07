@@ -585,7 +585,7 @@ def create_multi_periodic_signal(
         an iterable of such definitions.
     """
     if len(dates) < 2:
-        raise ValueError("At least two dates are required to build a periodic signal.")
+        raise ValueError("You need to specify an offset and at least one signal component.")
 
     # Build time step list to ensure the sampling is regular.
     t_step_list = [dates[i + 1] - dates[i] for i in range(len(dates) - 1)]
@@ -593,47 +593,66 @@ def create_multi_periodic_signal(
         len(set(t_step_list)) <= 1
     ), "The time step between two consecutive dates should be constant."
 
-    # Normalise params so that we always handle a list of triplets.
+    # Require params to be a sequence of lists/tuples in the new format.
+    # New required formats:
+    #   [[offset], [amp, period, phase], ...]
+    #   [[amp, period, phase], ...]  (no global offset)
     if not isinstance(params, (list, tuple)):
-        raise TypeError("params must be a list of [amplitude, period, offset].")
+        raise TypeError("params must be a list of lists. See function docstring for expected format.")
     if not params:
         raise ValueError("params must contain at least one periodic definition.")
 
-    if not isinstance(params[0], (list, tuple)):
-        if verbose:
-            print(
-                "Single periodic signal detected, using create_periodic_signal function."
-            )
-        return create_periodic_signal(
-            dates, params, signal_name=signal_name, verbose=verbose
-        )
+    # First element can be a single-element list -> global offset
+    if isinstance(params[0], (list, tuple)) and len(params[0]) == 1:
+        global_offset = params[0][0]
+        components = list(params[1:])
+        if len(components) == 0:
+            # Only an offset provided
+            if verbose:
+                print("Only global offset provided. Returning constant signal.")
+            return full(len(dates), global_offset, dtype=float32)
+    else:
+        # No global offset supplied; treat all entries as component triplets
+        global_offset = 0.0
+        components = list(params)
+
+    # Validate that every component is a triplet [amplitude, period, phase]
+    for idx, comp in enumerate(components):
+        if not isinstance(comp, (list, tuple)) or len(comp) != 3:
+            raise ValueError(f"Component at index {idx} must be a triplet [amplitude, period, phase].")
 
     dt = t_step_list[0].total_seconds()
     t_range = arange(len(dates)) * dt
     signal = zeros(len(dates), dtype=float32)
 
     if verbose:
-        print("Multiple periodic signals detected, summing them up.")
+        print("Multiple periodic signals detected, summing components with global offset.")
 
-    for idx, param in enumerate(params):
-        if len(param) != 3:
+    for idx, param in enumerate(components):
+        if not isinstance(param, (list, tuple)) or len(param) != 3:
             raise ValueError(
-                f"Parameter set at index {idx} should have 3 values [amplitude, period, offset]."
+                f"Component at index {idx} should be a triplet [amplitude, period, phase]."
             )
 
-        amplitude, period, offset = param
+        amplitude, period, phase = param
+        # If period is CODE_scalar treat as a constant component. We use amplitude + phase as the value
+        # for backward-like behaviour where a constant component previously used the 'offset' slot.
         if period == CODE_scalar:
-            component = full(len(dates), offset)
+            component = full(len(dates), amplitude + phase, dtype=float32)
         else:
-            component = amplitude * sin(2 * pi * t_range / period) + offset
+            component = amplitude * sin(2 * pi * t_range / period + phase)
         signal += component
+
+    # Add global offset
+    if global_offset != 0:
+        signal = signal + global_offset
 
     if verbose:
         plt.figure(figsize=(10, 5))
         plt.plot(dates, signal, label="Signal")
         plt.xlabel("Dates")
         plt.ylabel("Signal")
-        plt.title("Signal as a Function of Dates")
+        plt.title(f"{signal_name} as a Function of Dates")
         plt.legend()
         plt.xticks(rotation=45)
         plt.tight_layout()
@@ -716,3 +735,4 @@ def convert_list_to_timestamp(ts, tbt):
     else:
         cts = [(pd.Timestamp(tbt._dates[i]), value) for i, value in enumerate(ts)]
     return cts
+
