@@ -204,9 +204,9 @@ bool LoraCommunication::handshake(uint8_t &shift) {
                 DEBUG_LOG("MASTER: Received SYN-ACK, sending ACK");
                 digitalWrite(LED_BUILTIN, LOW);
                 delay(50);
-                for (int i = 0; i<40; i++){
+                for (int i = 0; i<10; i++){
                     digitalWrite(LED_BUILTIN, HIGH);
-                    sendPacket(packetNumber, ACK, "ACK");
+                    sendPacket(packetNumber, ACK, "SYN-ACK-ACK");
                     digitalWrite(LED_BUILTIN, LOW);
                     delay(100);
                 }
@@ -248,7 +248,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
             delay(500);// * (retries + 1));
             sendPacket(shift, SYN, "SYN-ACK");
             DEBUG_LOG("SLAVE: SYN-ACK sent");
-            if (receivePacket(packetNumber, requestType, payload) && requestType == ACK && payload == "ACK") {
+            if (receivePacket(packetNumber, requestType, payload) && requestType == ACK && payload == "SYN-ACK-ACK") {
                 DEBUG_LOG("SYN ACK WORKED - handshake done");
                 return true;
             }
@@ -313,9 +313,9 @@ uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
     String payload; RequestType requestType; uint8_t nb_packets_sent_received;
     while (!sendQueue.empty()) {
         String packet_flush = sendQueue.front();
-        sendPacket(nb_packets_sent, DATA, packet_flush);
         int send_retries = 0;
         while(send_retries<4){
+            sendPacket(nb_packets_sent, DATA, packet_flush);
             int receive_retries = 0;
             while (receive_retries < 6) {
                 if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet_flush) {
@@ -364,7 +364,7 @@ int LoraCommunication::receiveAllPackets(std::queue<String> &receiveQueue) {
                     if (prevPacket == packetNumber) { sendPacket(packetNumber, ACK, payload); break; }
                     prevPacket = packetNumber;
                     receiveQueue.push(payload);
-                    sendPacket(packetNumber, ACK, payload);
+                    sendPacket(packetNumber, ACK, "ACK");
             }
         }
         DEBUG_LOG("packet number :" + String(packetNumber));
