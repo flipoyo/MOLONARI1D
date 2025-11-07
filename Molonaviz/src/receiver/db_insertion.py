@@ -40,11 +40,11 @@ def createRealDatabase():
     return True
 
 
-def add_object(table_name, df):
+def add_object(con_db, table_name, df):
     """
     Builds and execute a SQL query from a DataFrame.
     """
-    query = QSqlQuery()
+    query = QSqlQuery(con_db)
     columns = df.columns.tolist()
     placeholders = ', '.join(['?'] * len(columns))
     query_string = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
@@ -80,7 +80,7 @@ def fillRealDatabase():
             continue
         table_name = filename[:-4]
         df = pd.read_csv(os.path.join(objects_dir, filename))
-        add_object(table_name, df)
+        add_object(con_db, table_name, df)
     
     return con_db
 

@@ -12,8 +12,8 @@
     "message_queue_max": 1000
   },
   "database": {
-    "filename": "./TestDatabase/Local.sqlite",
-    "real_database_insertion": false,
+    "filename": "./TestDatabase/Molonari.sqlite",
+    "real_database_insertion": true,
     "ERD_structure": "./src/receiver/settings/ERD_structure.sql"
   }
 }
