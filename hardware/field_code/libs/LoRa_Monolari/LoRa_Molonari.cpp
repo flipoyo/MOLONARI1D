@@ -140,10 +140,16 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             payload = "";
             while (LoRa.available()) payload += (char)LoRa.read();
 
-            if (!isValidDestination(recipient, sender, requestType)) return false;
+            if (!isValidDestination(recipient, sender, requestType)) {
+                DEBUG_LOG("destination caca");
+                return false;
+            }
 
             uint8_t calculatedChecksum = calculateChecksum(recipient, sender, packetNumber, requestType, payload);
-            if (calculatedChecksum != receivedChecksum) return false;
+            if (calculatedChecksum != receivedChecksum) {
+                DEBUG_LOG("checksum caca");
+                return false;
+            }
 
             DEBUG_LOG("Packet received: " + payload);
             return true;
