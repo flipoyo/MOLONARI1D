@@ -200,8 +200,12 @@ bool LoraCommunication::handshake(uint8_t &shift) {
                 DEBUG_LOG("MASTER: Received SYN-ACK, sending ACK");
                 digitalWrite(LED_BUILTIN, LOW);
                 delay(50);
-                sendPacket(packetNumber, ACK, "ACK");
-                digitalWrite(LED_BUILTIN, HIGH);
+                for (int i = 0; i<4; i++){
+                    digitalWrite(LED_BUILTIN, HIGH);
+                    sendPacket(packetNumber, ACK, "ACK");
+                    digitalWrite(LED_BUILTIN, LOW);
+                    delay(50);
+                }
                 return true;
             } else {
                 delay(500);// * (retries + 1));
