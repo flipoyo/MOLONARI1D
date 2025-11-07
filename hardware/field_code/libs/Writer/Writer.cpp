@@ -7,6 +7,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <string>
+#include <queue>
 
 #include "Writer.hpp"
 #include "Time.hpp"
@@ -50,7 +51,7 @@ void Writer::WriteInNewLine(Measure& data){
     //this->file.println(String(data.id)+ COMA + data.date + COMA + data.time + COMA + String(data.chanel1) + COMA + String(data.chanel2) + COMA + String(data.chanel3) + COMA + String(data.chanel4));
     String to_be_printed =data.ToString();
     SD_LOG("to be written set.");
-    this->file.println(to_be_printed); // CHANGE TOSTRING TO USE STD::STRING
+    this->file.println(to_be_printed); 
     SD_LOG_NO_LN(" Done");
 
     SD_LOG("Flushing ..."); // Ensure data is saved immediately
@@ -116,6 +117,42 @@ void Writer::LogData(int ncapteur, const std::vector<double>& toute_mesure) {
 // Dispose: Closes the connection to the CSV file, releasing the file resource
 void Writer::Dispose() {
     this->file.close();
+}
+
+void Writer::LogString(std::queue<String> receiveQueue) {
+    bool is_connected = SD.begin(this->CSPin) && this->file;
+
+    if (!is_connected) {
+        SD_LOG_NO_LN("SD connection lost.");
+        SD_LOG_NO_LN("Trying to reconnect ...");
+        
+        // Try to reconnect if lost
+        is_connected = this->Reconnect();
+        if (!is_connected) {
+            SD_LOG("Connection could not be established."); // Log failure if reconnect fails
+            return; // Exit if reconnection fails
+        }
+    }
+
+    if (is_connected) {
+        SD_LOG_NO_LN("SD connection established WHEN LOG DATA.");
+        String payload;
+
+        while (!receiveQueue.empty()) {
+            payload = receiveQueue.front();
+
+            SD_LOG("to be written set.");
+            this->file.println(payload); 
+            SD_LOG_NO_LN(" Done");
+
+            SD_LOG("Flushing ..."); // Ensure data is saved immediately
+            this->file.flush();
+            SD_LOG_NO_LN(" Done");
+
+            receiveQueue.pop();
+        }
+    }
+
 }
 
 #endif

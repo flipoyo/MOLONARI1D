@@ -41,7 +41,7 @@ LoraCommunication lora(868E6, devEui, appEui, RoleType::MASTER);
 bool modif = false;
 int CSPin = 5; // Pin CS par défaut
 
-const char* configFilePath = "conf_rel.csv";
+const char* configFilePath = "conf.csv";
 
 Waiter waiter; //pour ne pas l'indenter dans le loop
 unsigned long lastSDOffset = 0;
@@ -84,7 +84,7 @@ void setup() {
 void loop() {
     long currentTime = GetSecondsSinceMidnight();
     
-    if (currentTime - lastAttempt >= 2) { //res.int_config.lora_intervalle_secondes
+    if (currentTime - lastAttempt >= 2) {
         DEBUG_LOG("Réveil du relais pour vérification communication LoRa...");
         DEBUG_LOG("Fenêtre de communication LoRa atteinte, tentative de réception des paquets...");
         std::queue<String> receiveQueue;
@@ -100,6 +100,8 @@ void loop() {
 
             // Met à jour le temps de la dernière tentative de réception
             lastAttempt = GetSecondsSinceMidnight();
+            
+            
 
             //envoie du csv
             if (modif==true) { // normalement modif est toujours false pour l'instant : la focntion de modif n'est pa sbien implémentée
@@ -116,32 +118,6 @@ void loop() {
 
                         modif = !(lastSDOffset == config.position());
                 }
-
-                lora.stopLoRa();
-
-                // Transfert vers la queue globale
-                while (!receiveQueue.empty()) {
-                    sendingQueue.push(receiveQueue.front());
-                    receiveQueue.pop();
-                }
-
-                // Envoi via LoRaWAN si intervalle complet atteint
-            
-
-                if (loraWAN.begin(res.rel_config.appEui, res.rel_config.devEui)) {
-                    Serial.print("Envoi de ");
-                    Serial.print(sendingQueue.size());
-                        
-
-                    if (loraWAN.sendQueue(sendingQueue)) {
-                        Serial.println("Tous les paquets ont été envoyés !");
-                    } else {
-                        Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
-                    }
-                } else {
-                    Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
-                }
-            lastLoraSend = currentTime;
             }
         } else {
             Serial.println("Handshake échoué, aucune donnée reçue.");
@@ -150,17 +126,41 @@ void loop() {
             // Met quand même à jour lastAttempt pour réessayer après l'intervalle de temps
             lastAttempt = GetSecondsSinceMidnight();
         }
-    }
+
+        lora.stopLoRa();
+
+        // Transfert vers la queue globale
+        while (!receiveQueue.empty()) {
+            sendingQueue.push(receiveQueue.front());
+            receiveQueue.pop();
+        }
+
+        // Envoi via LoRaWAN si intervalle complet atteint
+
+        if (loraWAN.begin(res.rel_config.appEui, res.rel_config.devEui)) {
+            Serial.print("Envoi de ");
+            Serial.print(sendingQueue.size());    
+
+            if (loraWAN.sendQueue(sendingQueue)) {
+                Serial.println("Tous les paquets ont été envoyés !");
+            } else {
+                Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
+            }
+        } else {
+            Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
+        }
+        lastLoraSend = currentTime;
     
-    DEBUG_LOG("about to loop on modem.available()");
-    // reception csv et modification
-    while (modem.available()) {
-        loraWAN.receiveConfig(configFilePath, modif);
-        modif = true;
-    }
+        DEBUG_LOG("about to loop on modem.available()");
+        // reception csv et modification
+        while (modem.available()) {
+            loraWAN.receiveConfig(configFilePath, modif);
+            modif = true;
+        }
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
-    //delay(501); pas de dodo pour la démo
+    //delay(500) pas de dodo pour la démo
+    }
 }
 
 
