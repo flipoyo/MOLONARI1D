@@ -19,10 +19,15 @@ from pyheatmy.params import Param, Prior, PARAM_LIST, calc_K
 from pyheatmy.state import State
 from pyheatmy.checker import checker
 from pyheatmy.config import *
-from pyheatmy.linear_system import *
 
 from pyheatmy.utils import *
 from pyheatmy.layers import Layer, getListParameters
+
+#DEBUG ADIM 
+from pyheatmy.linear_system_ADIM import *
+import os
+import pandas as pd
+#
 
 # Column is a monolithic class and pyheatmy is executable from there. Calculation, retrieval and plots are methods from the column class
 class Column:  # colonne de sédiments verticale entre le lit de la rivière et l'aquifère
@@ -330,7 +335,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                     f"Solving the flow with intrinsec permeability {k}, and permeability {K}"
                 )
             self._flows = -K * nablaH  # calcul du débit spécifique
-
             if verbose:
                 print("Done.")
 
