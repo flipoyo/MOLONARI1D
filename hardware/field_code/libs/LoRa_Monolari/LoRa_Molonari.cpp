@@ -313,9 +313,9 @@ uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
     String payload; RequestType requestType; uint8_t nb_packets_sent_received;
     while (!sendQueue.empty()) {
         String packet_flush = sendQueue.front();
-        sendPacket(nb_packets_sent, DATA, packet_flush);
         int send_retries = 0;
         while(send_retries<4){
+            sendPacket(nb_packets_sent, DATA, packet_flush);
             int receive_retries = 0;
             while (receive_retries < 6) {
                 if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet_flush) {
@@ -364,7 +364,7 @@ int LoraCommunication::receiveAllPackets(std::queue<String> &receiveQueue) {
                     if (prevPacket == packetNumber) { sendPacket(packetNumber, ACK, payload); break; }
                     prevPacket = packetNumber;
                     receiveQueue.push(payload);
-                    sendPacket(packetNumber, ACK, payload);
+                    sendPacket(packetNumber, ACK, "ACK");
             }
         }
         DEBUG_LOG("packet number :" + String(packetNumber));
