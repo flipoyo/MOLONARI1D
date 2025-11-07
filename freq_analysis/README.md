@@ -11,9 +11,10 @@ This has been developped by the group "fréquentiel" in 2025.
 
 You should already know that the physics behind Molonari is governed by the heat diffusion-advection equation :
 
-$$\frac{\partial \theta}{\partial t} = \kappa_e \frac{\partial^2 \theta}{\partial z^2} + \underbrace{\frac{\rho_w c_w}{\rho_m c_m} K \frac{\partial H}{\partial z}}_{-v_t} \frac{\partial \theta}{\partial z}$$
-
-Stallman showed that for an harmonic forcing of amplitude $\theta_\text{amp}$, offset $\theta_\mu$ and period $P$, an anlalytic answer is known :
+$$
+\frac{\partial \theta}{\partial t} = \kappa_e \frac{\partial^2 \theta}{\partial z^2} + \underbrace{\frac{\rho_w c_w}{\rho_m c_m} K \frac{\partial H}{\partial z}}_{-v_t} \frac{\partial \theta}{\partial z}
+$$
+Stallman showed that for an harmonic forcing of amplitude $\theta_\text{amp}$, offset $\theta_\mu$ , a **charge gradient constant in time**, and period $P$, an anlalytic answer is known :
 
 $$
 \theta(z,t) = \theta_\mu + \theta_{\text{amp}} e^{-az} \cos\!\left(\frac{2\pi}{P}t - bz\right)
@@ -99,7 +100,7 @@ fa.set_phys_prop(lambda_s=LAMBDA_S,
                  verbose=True)
 ```
 
-With `compute_now` we directly return the theoretical values of `\kappa_e` and `v_t`.
+With `compute_now` we directly return the theoretical values of `kappa_e` and `v_t`. This is a good thing to do first, when you work with synthetic data where you known the exact values of your physical parameters.
 
 #### Plotting the signals.
 
@@ -117,7 +118,7 @@ The second thing you can do is get the FFT of all the temperature signals on the
 fa.fft_sensors()
 ```
 
-This will plot the amplitude spectrum of each of the given signals.
+This will plot the amplitude spectrum of each of the given signals. If the decay is significant enough, you would notice than the major peaks have decreasing amplitude as you go deep into the river.
 
 #### Automatic detection of the dominant peaks.
 
@@ -128,6 +129,25 @@ This is how you should call it :
 ```python
 Pd, f0, A0, meta = fa.find_dominant_periods(store=True, compute_phases=True)
 ```
+
+> [!WARNING]
+>
+> You should always use the graph that the function returns as a validation. Indeed, if the data is of poor quality (low temporal resolution), then the width of the peaks might be too large for the default parameters in the automatic detection. In this case there are some parameters you can play with to have a more precise detection. 
+
+| Parameter | Type | Default | Description |
+|----------|------|---------|-------------|
+| `dates_or_signals` | array-like (datetime64 / float) **or** list of arrays | `None` | First argument of the dual calling convention. If datetime/time array: must pair with `signals_or_river = [river, s1, ...]`. If array of signals: then `signals_or_river` must be the river signal only. |
+| `signals_or_river` | list of arrays **or** array | `None` | Second argument of the dual calling convention. If the first argument is datetimes, this must be `[river, s1, ...]`. If the first argument is signals, this must be the river signal only. |
+| `draw` | `bool` | `True` | Plot FFT amplitude spectrum and detected peaks. Disable for batch analysis. |
+| `use_hann` | `bool` | `True` | Apply Hann tapering window before FFT to reduce spectral leakage. |
+| `prom_rel` | `float` | `0.05` | Minimum relative prominence for peak detection: a peak is kept only if `amp ≥ prom_rel * max(amp)`. |
+| `Q_min` | `float` | `10.0` | Minimum spectral quality factor \( Q = f₀ / Δf \) to ensure peaks are narrow and coherent. |
+| `Q_max` | `float` | `np.inf` | Maximum allowed Q (optional safety to avoid pathological ultra-sharp peaks). |
+| `amplitude_threshold` | `float` | `0.0` | Discard peaks whose absolute FFT amplitude is below this threshold. |
+| `max_width_rel` | `float` | `0.20` | Maximum allowed relative peak width \( Δf / f₀ \). Lower → stricter filtering of broad peaks. |
+| `min_cycles` | `float` | `3` | Require the data record to contain at least this number of cycles of the candidate period. |
+| `store` | `bool` | `True` | Store detected dominant periods and amplitudes internally for subsequent steps (estimate_a, estimate_b, inversion). |
+| `compute_phases` | `bool` | `True` | Compute and store phase at the surface (z = 0) for each detected peak (needed for phase decay coefficient \(b\)). |
 
 #### Estimating $a$ and $b$ parameters.
 
@@ -179,9 +199,50 @@ Similarly, you can also recover the $a$ and $b$ values corresponding to the freq
 a_expected, b_expected = fa.phys_to_a_b()
 ```
 
+### Checking for dimensional model.
+
+In this part, we want to adapt a finding from Munz. He claims that when the specific flux $q_s$ is now of non-zero value, then the fitting on the log-amplitude is not valid anymore. This is of course true because you break the linearity of the system by transforming a ODE with time-independent coefficients into an ODE with time-dependent coefficients (LTI into LTV). In this case, it's particularly not advised to use Fourier methods. But we'll try to at least test what it would give.
+
+Once you did all the previous steps, you can call the **critere 2D** function. This is how you do it :
+
+```python
+modele = fa.critere_2D(show_reg=True, intercept=False)
+print("Best model:", modele["modele"])
+
+modele_intercept = fa.critere_2D(intercept=True, show_reg=True)
+print("Best model with intercept:", modele_intercept["modele"])
+```
+
+You see that two possibilities are available :
+
+- `intercept=False`  alors toutes les régressions sont contraintes par un passage obligatoire par l'origine.
+- `intercept=True` alors les régressions ne sont pas contraintes par un passage obligatoire par l'origine.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ---
 
 ## `frequency2D` : Detecting 1D vs 2D Behavior in Depth-Dependent Spectral Attenuation
+
+> [!CAUTION]
+>
+> Please note that this module has been discontinued and is let in the repository for possible future research.
 
 This module determines whether the depth-attenuation of the harmonic temperature signal \(A(z)\) is consistent with:
 
