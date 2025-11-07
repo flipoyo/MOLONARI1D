@@ -9,20 +9,6 @@ import numpy as np
 from pyheatmy.solver import solver, tri_product
 from pyheatmy.config import *
 
-# ATTENTION : Revoir la définition de ALPHA (schéma semi-implicite)
-
-# ATTENTION : Pour l'instant, on définit les paramètres physiques d'adimensionnement de manière manuelle. Il faudra ensuite que le 
-# système puisse les déterminer automatiquement. Par exemple, pour DH_0/DT_0, on pourrait prendre la valeur moyenne ou initiale
-# entre la rivière et l'acquifère sur la durée de l'étude. On les place ici mais il faut les placer dans config.py 
-
-# Paramètres physiques d'adimensionnement :
-DH_0 = 1 # Différence de charge spécifique, (en cm) ???
-DT_0 = 10 # Différence de température caractéristique, UNITE °C ???
-L_0 = 0.2 # Hauteur caractéristique de la colonne d'eau (en m)
-P_0 = 1000 # Période caractéristique de variation du signal, (en s)
-
-
-
 # Classe définissant et initiant les paramètres physiques des systèmes linéaires de la classe H_stratified et T_stratified
 class Linear_system:
     def __init__(
@@ -168,22 +154,26 @@ class H_stratified(Linear_system):
 
     def compute_gamma_list(self):
         # Use the physical intrinsic permeability (not -log10) when computing gamma
-        return MU_W * (L_0**2) * (self.Ss_list) / (RHO_W * (self.IntrinK_list) * G * P_0)
+        return MU_W * (self.L_0**2) * (self.Ss_list) / (RHO_W * (self.IntrinK_list) * G * self.P_0)
     
     def compute_H_adim_res(self):
         H_adim_res = zeros((self.n_cell, self.n_times), float32)
-        H_adim_res[:, 0] = (self.H_init[:] - self.H_init[0]) / DH_0
+        H_adim_res[:, 0] = (self.H_init[:] - self.H_init[-1]) / self.DH_0
         return H_adim_res
     
     def compute_H_res_from_H_adim_res(self):
-        self.H_res = self.H_adim_res * DH_0 + self.H_init[0]
+        self.H_res = self.H_adim_res * self.DH_0 + self.H_init[-1]
         return self.H_res
 
     def calc_param_adim(self):
         """Calcul des paramètres adimensionnés"""
-        self.gamma = self.compute_gamma_list()
-        self.dz_adim = self.dz / L_0
+        self.DH_0 = self.H_init[0] - self.H_init[-1]
+        self.P_0 = self.all_dt.sum()
+        self.L_0 = self.dz * (self.n_cell - 1)
         self.H_adim_res = self.compute_H_adim_res()
+        self.gamma = self.compute_gamma_list()
+        self.dz_adim = self.dz / self.L_0
+
 
     def compute_H_stratified(self): # OK
         if self.isdtconstant.all():
@@ -194,7 +184,7 @@ class H_stratified(Linear_system):
 
     def compute_H_constant_dt(self):    # OK
         dt = self.all_dt[0]
-        dt_adim = dt / P_0
+        dt_adim = dt / self.P_0
 
         lower_diagonal_B, diagonal_B, upper_diagonal_B = self.compute_B_diagonals(dt_adim)
         lower_diagonal_A, diagonal_A, upper_diagonal_A = self.compute_A_diagonals(dt_adim)
@@ -241,13 +231,13 @@ class H_stratified(Linear_system):
     def nablaH_adim(self):  # OK
         nablaH_adim = np.zeros((self.n_cell, self.n_times), np.float32)
 
-        H_adim_riv = (self.H_riv - self.H_init[0]) / DH_0
+        H_adim_riv = (self.H_riv - self.H_init[-1]) / self.DH_0
         nablaH_adim[0, :] = 2 * (self.H_adim_res[1, :] - H_adim_riv) / (3 * self.dz_adim)
 
         for i in range(1, self.n_cell - 1):
             nablaH_adim[i, :] = (self.H_adim_res[i + 1, :] - self.H_adim_res[i - 1, :]) / (2 * self.dz_adim)
 
-        H_adim_aq = (self.H_aq - self.H_init[0]) / DH_0
+        H_adim_aq = (self.H_aq - self.H_init[-1]) / self.DH_0
         nablaH_adim[self.n_cell - 1, :] = (
             2 * (H_adim_aq - self.H_adim_res[self.n_cell - 2, :]) / (3 * self.dz_adim)
         )
@@ -255,7 +245,7 @@ class H_stratified(Linear_system):
 
     def compute_H_variable_dt(self):    # OK
         for j, dt in enumerate(self.all_dt):
-            dt_adim = dt / P_0
+            dt_adim = dt / self.P_0
             lower_diagonal_B, diagonal_B, upper_diagonal_B = self.compute_B_diagonals(
                 dt_adim
             )
@@ -334,18 +324,18 @@ class H_stratified(Linear_system):
     ):
         K1 = self.array_K[tup_idx]
         K2 = self.array_K[tup_idx + 1]
-        dt_adim = self.all_dt[0] / P_0
+        dt_adim = self.all_dt[0] / self.P_0
 
         if self.inter_cara[tup_idx][1] == 0:
             pos_idx = int(self.inter_cara[tup_idx][0])
             diagonal_B[pos_idx] = (
-                ((self.Ss_list[pos_idx] * L_0**2 / P_0 / (K1+K2)*0.5) / dt_adim) 
+                ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (K1+K2)*0.5) / dt_adim) 
                 - (2 * (1 - self.alpha) / self.dz_adim**2)
             )
             # lower_diagonal_B[pos_idx - 1] = (1 - self.alpha) / self.dz_adim**2     → pas de changement 
             # upper_diagonal_B[pos_idx] = (1 - self.alpha) / self.dz_adim**2     → pas de changement
             diagonal_A[pos_idx] = (
-                ((self.Ss_list[pos_idx] * L_0**2 / P_0 / (K1+K2)*0.5) / dt_adim) 
+                ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (K1+K2)*0.5) / dt_adim) 
                 + (2*(self.alpha) / self.dz_adim**2)
             )
             # lower_diagonal_A[pos_idx - 1] = -(self.alpha) / self.dz_adim**2     → pas de changement
@@ -357,26 +347,26 @@ class H_stratified(Linear_system):
             )
             Keq = 1 / (x / K1 + (1 - x) / K2)
             diagonal_B[pos_idx] = (
-               ((self.Ss_list[pos_idx] * L_0**2 / P_0 / (K1+Keq)*0.5) / dt_adim) 
+               ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (K1+Keq)*0.5) / dt_adim) 
                 - (2 * (1 - self.alpha) / self.dz_adim**2)
             )
             # lower_diagonal_B[pos_idx - 1] = (1 - self.alpha) / self.dz_adim**2     → pas de changement 
             # upper_diagonal_B[pos_idx] = (1 - self.alpha) / self.dz_adim**2     → pas de changement
             diagonal_A[pos_idx] = (
-               ((self.Ss_list[pos_idx] * L_0**2 / P_0 / (K1+Keq)*0.5) / dt_adim) 
+               ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (K1+Keq)*0.5) / dt_adim) 
                 + (2*(self.alpha) / self.dz_adim**2)
             )
             # lower_diagonal_A[pos_idx - 1] = -(self.alpha) / self.dz_adim**2     → pas de changement
             # upper_diagonal_A[pos_idx] = -(self.alpha) / self.dz_adim**2     → pas de changement
 
             diagonal_B[pos_idx + 1] = (
-                ((self.Ss_list[pos_idx] * L_0**2 / P_0 / (Keq+K2)*0.5) / dt_adim) 
+                ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (Keq+K2)*0.5) / dt_adim) 
                 - (2 * (1 - self.alpha) / self.dz_adim**2)
             )
             # lower_diagonal_B[pos_idx] = (1 - self.alpha) / self.dz_adim**2     → pas de changement 
             # upper_diagonal_B[pos_idx + 1] = (1 - self.alpha) / self.dz_adim**2     → pas de changement
             diagonal_A[pos_idx + 1] = (
-                ((self.Ss_list[pos_idx] * L_0**2 / P_0 / (Keq+K2)*0.5) / dt_adim) 
+                ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (Keq+K2)*0.5) / dt_adim) 
                 + (2*(self.alpha) / self.dz_adim**2)
             )
             # lower_diagonal_A[pos_idx] = -(self.alpha) / self.dz_adim**2     → pas de changement
@@ -385,8 +375,8 @@ class H_stratified(Linear_system):
     def compute_c(self, j):  # QUID heat_source ??
         c = zeros(self.n_cell, float32)
         # Adimensionnement des charges hydrauliques aux limites
-        H_riv_adim = (self.H_riv - self.H_init[0]) / DH_0
-        H_aq_adim = (self.H_aq - self.H_init[0]) / DH_0
+        H_riv_adim = (self.H_riv - self.H_init[-1]) / self.DH_0
+        H_aq_adim = (self.H_aq - self.H_init[-1]) / self.DH_0
         
         c[0] = (8 / (3 * self.dz_adim**2)) * (
             (1 - self.alpha) * H_riv_adim[j] + (self.alpha) * H_riv_adim[j + 1]
@@ -396,8 +386,8 @@ class H_stratified(Linear_system):
         )
         #Un q_s positif correspond à une source d'eau  
         # Use physical intrinsic permeability in denominator
-        c += self.q_s_list * MU_W * L_0 ** 2 / (
-            (self.IntrinK_list) * DH_0 * G * RHO_W
+        c += self.q_s_list * MU_W * self.L_0 ** 2 / (
+            (self.IntrinK_list) * self.DH_0 * G * RHO_W
         )
         return c
 
@@ -452,32 +442,36 @@ class T_stratified(Linear_system):
         self.calc_param_adim()
 
     def compute_kappa_list(self):
-        return (RHO_W**2) * C_W * (self.IntrinK_list) * G * DH_0 / (MU_W * self.lambda_m_list)
+        return (RHO_W**2) * C_W * (self.IntrinK_list) * G * self.DH_0 / (MU_W * self.lambda_m_list)
 
     def compute_phi_list(self):
-        return RHO_W * C_W * self.q_s_list * L_0 **2 / (MU_W * self.lambda_m_list)
+        return RHO_W * C_W * self.q_s_list * self.L_0 **2 / (MU_W * self.lambda_m_list)
 
     def compute_beta_list(self):
-        beta_value = RHO_W * C_W * (L_0**2) / (P_0 * self.lambda_m_list)
+        beta_value = RHO_W * C_W * (self.L_0**2) / (self.P_0 * self.lambda_m_list)
         return np.full(self.n_cell, beta_value, dtype=float32)
     
     def compute_T_adim_res(self):
         T_adim_res = zeros((self.n_cell, self.n_times), float32)
-        T_adim_res[:, 0] = (self.T_init[:] - self.T_init[0]) / DT_0
+        T_adim_res[:, 0] = (self.T_init[:] - self.T_init[0]) / self.DT_0
         return T_adim_res
 
     def compute_T_res_from_T_adim_res(self):
-        self.T_res = self.T_adim_res * DT_0 + self.T_init[0]
+        self.T_res = self.T_adim_res * self.DT_0 + self.T_init[0]
         return self.T_res
     
     def calc_param_adim(self):
         """Calcul des paramètres adimensionnés"""
+        self.DH_0 = self.H_init[0] - self.H_init[-1]
+        self.DT_0 = self.T_init[0] - self.T_init[-1]
+        self.P_0 = self.all_dt.sum()
+        self.L_0 = self.dz * (self.n_cell - 1)
         self.kappa = self.compute_kappa_list()
         self.beta = self.compute_beta_list()
         self.phi = self.compute_phi_list()
-        self.dz_adim = self.dz / L_0
+        self.dz_adim = self.dz / self.L_0
         self.T_adim_res = self.compute_T_adim_res()
-        self.nablaH_adim = L_0 * self.nablaH / DH_0
+        self.nablaH_adim = self.L_0 * self.nablaH / self.DH_0
 
     def compute_T_stratified(self):
         self.T_res = zeros((self.n_cell, self.n_times), float32)
@@ -485,10 +479,10 @@ class T_stratified(Linear_system):
         for j, dt in enumerate(self.all_dt):
             # Update of Mu(T) after N_update_Mu iterations:
             if j % self.N_update_Mu == 1:
-                self.mu_list = self.compute_Mu(self.T_adim_res[:, j - 1]*DT_0 + self.T_init[0])
+                self.mu_list = self.compute_Mu(self.T_adim_res[:, j - 1]*self.DT_0 + self.T_init[0])
 
             # Compute T at time times[j+1]
-            dt_adim = dt / P_0
+            dt_adim = dt / self.P_0
             # Defining the 3 diagonals of B
             lower_diagonal = self._compute_lower_diagonal(j)
             diagonal = self._compute_diagonal(j, dt_adim)
@@ -552,8 +546,8 @@ class T_stratified(Linear_system):
     def _compute_c(self, j): #OK
         c = np.zeros(self.n_cell, np.float32)
         # Adimensionnement des températures aux limites
-        T_riv_adim = (self.T_riv - self.T_init[0]) / DT_0
-        T_aq_adim = (self.T_aq - self.T_init[0]) / DT_0
+        T_riv_adim = (self.T_riv - self.T_init[0]) / self.DT_0
+        T_aq_adim = (self.T_aq - self.T_init[0]) / self.DT_0
         
         c[0] = (
             8 * (self.alpha) / (3 * self.dz_adim**2)
@@ -570,7 +564,7 @@ class T_stratified(Linear_system):
             + 2 * (1 - self.alpha) * self.kappa[-1] * self.nablaH_adim[-1, j] / (3 * self.dz_adim)
         ) * T_aq_adim[j]
 
-        c += self.phi * self.T_init[0] / DT_0
+        c += self.phi * self.T_init[0] / self.DT_0
         return c
 
     def _compute_A_diagonals(self, j, dt_adim): #OK

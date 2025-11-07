@@ -27,7 +27,7 @@ On notera que l'axe z est dirigé vers le bas, d'où la définition de ${\Delta 
 On pose les changements de variables suivants :
 
 $$
-\tilde{z}= \frac{z}{L_0} \quad \text{;} \quad \tilde{t}= \frac{t}{P} \quad \text{;} \quad \tilde{H} = \frac{H - H_{riv}}{H_{nap}-H_{riv}} =  \frac{H - H_{riv}}{\Delta H} \quad \text{;} \quad \tilde{\theta} = \frac{\theta - T_{riv}}{T_{nap}-T_{riv}} =  \frac{\theta - T_{riv}}{\Delta T}
+\tilde{z}= \frac{z}{L_0} \quad \text{;} \quad \tilde{t}= \frac{t}{P} \quad \text{;} \quad \tilde{H} = \frac{H - H_{nap}}{H_{riv}-H_{nap}} =  \frac{H - H_{nap}}{\Delta H} \quad \text{;} \quad \tilde{\theta} = \frac{\theta - T_{nap}}{T_{riv}-T_{nap}} =  \frac{\theta - T_{nap}}{\Delta T}
 $$
 
 Ici $L_0$ est la prfondeur de la colonne de sol étudiée, $P$ est la période caractéristique de variations de la température.
@@ -153,10 +153,10 @@ Les matrices $A$ et $B$ sont **identiques à celles de la dérivation précéden
   \text{diag}(A)_k = \frac{\beta_k}{\Delta\tilde{t}} + \frac{2\alpha}{(\Delta\tilde{z})^2}
   $$
   $$
-  \text{sub}(A)_k = -\frac{\alpha}{(\Delta\tilde{z})^2} + \frac{\alpha \kappa_k G_k^{j}}{2\Delta\tilde{z}}
+  \text{sub}(A)_k = -\frac{\alpha}{(\Delta\tilde{z})^2} + \frac{\alpha \kappa_k G_k^{j+1}}{2\Delta\tilde{z}}
   $$
   $$
-  \text{sup}(A)_k = -\frac{\alpha}{(\Delta\tilde{z})^2} - \frac{\alpha \kappa_k G_k^{j}}{2\Delta\tilde{z}}
+  \text{sup}(A)_k = -\frac{\alpha}{(\Delta\tilde{z})^2} - \frac{\alpha \kappa_k G_k^{j+1}}{2\Delta\tilde{z}}
   $$
 - **Matrice B (explicite) :**
   $$
