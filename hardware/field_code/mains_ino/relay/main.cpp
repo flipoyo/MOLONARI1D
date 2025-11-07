@@ -95,7 +95,7 @@ void loop() {
         if (lora.handshake(deviceId)) {
 
             DEBUG_LOG("Handshake réussi. Réception des paquets...");
-            int last = lora.receivePackets(receiveQueue);
+            int last = lora.receiveAllPackets(receiveQueue);
             lora.sendPacket(last, FIN, ""); // Répond par un FIN de confirmation;
 
             // Met à jour le temps de la dernière tentative de réception
