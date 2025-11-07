@@ -133,8 +133,6 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             recipient[addressLength] = '\0';
             //DEBUG_LOG("Recipient read:"+String(recipient));
 
-            //DEBUG_LOG("recipient read: " + String(recipient));
-
             //DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
 
             packetNumber = LoRa.read();
@@ -244,7 +242,12 @@ bool LoraCommunication::handshake(uint8_t &shift) {
             delay(500);// * (retries + 1));
             sendPacket(shift, SYN, "SYN-ACK");
             DEBUG_LOG("SLAVE: SYN-ACK sent");
-            if (receivePacket(packetNumber, requestType, payload) && requestType == ACK && payload == "ACK") return true;
+            if (receivePacket(packetNumber, requestType, payload) && requestType == ACK && payload == "ACK") {
+                DEBUG_LOG("SYN ACK WORKED - handshake done");
+                return true;
+            }
+            else DEBUG_LOG(" PAS RECU ACK BORDEL");
+
             retries++;
         }
         return false;
