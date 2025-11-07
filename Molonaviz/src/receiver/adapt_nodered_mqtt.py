@@ -48,7 +48,6 @@ MQTT_CLIENT_KEY = config["mqtt"]["client_key"]
 
 # SQLite DB configuration
 DB_FILENAME = config["database"]["filename"]
-SQLITE_TABLE = config["database"]["local_table"]
 REAL_DB_INSERTION = config["database"]["real_database_insertion"]
 
 DEVICE_EUIS = config["mqtt"]["device_euis"] # list of DeviceEUIs to filter (empty = all devices)
@@ -95,7 +94,7 @@ def init_db(db_path=DB_FILENAME):
 
     query = QSqlQuery(db)
     query.exec(f'''
-    CREATE TABLE IF NOT EXISTS {SQLITE_TABLE} (
+    CREATE TABLE IF NOT EXISTS RawMeasurements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         device_eui TEXT,
         timestamp TEXT,
@@ -113,7 +112,7 @@ def init_db(db_path=DB_FILENAME):
     if query.lastError().isValid():
         logger.error("Failed to create table: %s", query.lastError().text())
     else:
-        logger.info("Table '%s' initialized in DB '%s'", SQLITE_TABLE, db_path)
+        logger.info("Table '%s' initialized in DB '%s'", "RawMeasurements", db_path)
     return db
 
 
@@ -121,7 +120,7 @@ def insert_record(db, rec):
     '''Insert a record into the database using PyQt5.'''
     query = QSqlQuery(db)
     query.prepare(f'''
-        INSERT INTO {SQLITE_TABLE} (
+        INSERT INTO RawMeasurements (
             device_eui, timestamp, relay_id, gateway_id, fcnt, a0, a1, a2, a3, a4, a5
         ) VALUES (:device_eui, :timestamp, :relay_id, :gateway_id, :fcnt, :a0, :a1, :a2, :a3, :a4, :a5)
     ''')
@@ -152,7 +151,7 @@ def insert_record(db, rec):
 
 
 def export_csv(conn, out_path):
-    df = pd.read_sql_query(f"SELECT * FROM {SQLITE_TABLE}", conn)
+    df = pd.read_sql_query(f"SELECT * FROM RawMeasurements", conn)
     df.to_csv(out_path, index=False)
     logger.info("Export CSV done: %s (rows: %d)", out_path, len(df))
 
