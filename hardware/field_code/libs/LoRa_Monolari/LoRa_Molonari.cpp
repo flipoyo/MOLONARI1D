@@ -116,10 +116,10 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
         delay(10);//VERY TEMPORARY
         int packetSize = LoRa.parsePacket();
         if (packetSize) {
-            DEBUG_LOG("packet size :" + String(packetSize));
+            DEBUG_LOG_NO_LN("RECEIVING A PACKET. packet size :" + String(packetSize));
 
             uint8_t receivedChecksum = LoRa.read();
-            DEBUG_LOG("Received checksum: " + String(receivedChecksum));
+            DEBUG_LOG("; received checksum: " + String(receivedChecksum));
 
             // Lire l’adresse source
             for (int i = 0; i < addressLength; i++) {
@@ -153,17 +153,17 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 
 
             if (!isValidDestination(String(sender), String(recipient), requestType)) {
-                DEBUG_LOG("destination caca");
+                DEBUG_LOG("\ndestination caca");
                 return false;
             }
 
             uint8_t calculatedChecksum = calculateChecksum(String(recipient), String(sender), packetNumber, requestType, payload);
             if (calculatedChecksum != receivedChecksum) {
-                DEBUG_LOG("checksum caca");
+                DEBUG_LOG("\nchecksum caca");
                 return false;
             }
 
-            DEBUG_LOG("Packet received: " + payload);
+            DEBUG_LOG("\nPACKET RECEIVED. request type: " + String(requestType) + ", payload: " + payload);
             return true;
         }
     }
@@ -269,9 +269,9 @@ uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>
         memory_line packet = sendQueue.front();
         sendPacket(nb_packets_sent, DATA, packet.flush);
         int send_retries = 0;
-        while(send_retries<100000){
+        while(send_retries<100){
             int receive_retries = 0;
-            while (receive_retries < 100) {
+            while (receive_retries < 25) {
                 if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet.flush) {
                     sendQueue.pop();
                     nb_packets_sent++;
@@ -279,7 +279,7 @@ uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>
                     DEBUG_LOG("one packet successfully sent");
                     break;
                 }
-                #ifdef DEBUG_MAIN
+                #ifdef DEBUG_LORA
                 else{
                     DEBUG_LOG("pas d'acknowledgement adequat reçu à " + String(receive_retries) + "e écoute parce que : ");
                     if(!receivePacket(nb_packets_sent_received, requestType, payload)){
