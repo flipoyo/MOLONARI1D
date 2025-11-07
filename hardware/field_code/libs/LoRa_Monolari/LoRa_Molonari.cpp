@@ -59,7 +59,7 @@ void LoraCommunication::setdesttodefault() {
 
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
     if (!active) { DEBUG_LOG("LoRa inactive"); return; }
-
+    
     delay(100);
 
     if (!LoRa.beginPacket()) {
@@ -129,10 +129,11 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
                 recipient[i] = (char)LoRa.read();
             }
             recipient[addressLength] = '\0';
+            DEBUG_LOG("Recipient read:"+String(recipient));
 
             DEBUG_LOG("recipient read: " + String(recipient));
 
-            DEBUG_LOG("Receiving packet to (me) " + String(recipient) + " from (the other) " + String(sender));
+            DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
 
             packetNumber = LoRa.read();
     
@@ -140,11 +141,21 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 
             payload = "";
             while (LoRa.available()) payload += (char)LoRa.read();
+            
+            DEBUG_LOG("recipient :" + String(recipient));
+            DEBUG_LOG("sender :" + String(sender) + "\n");
 
-            if (!isValidDestination(recipient, sender, requestType)) return false;
+
+            if (!isValidDestination(String(recipient), sender, requestType)) {
+                DEBUG_LOG("destination caca");
+                return false;
+            }
 
             uint8_t calculatedChecksum = calculateChecksum(recipient, sender, packetNumber, requestType, payload);
-            if (calculatedChecksum != receivedChecksum) return false;
+            if (calculatedChecksum != receivedChecksum) {
+                DEBUG_LOG("checksum caca");
+                return false;
+            }
 
             DEBUG_LOG("Packet received: " + payload);
             return true;
