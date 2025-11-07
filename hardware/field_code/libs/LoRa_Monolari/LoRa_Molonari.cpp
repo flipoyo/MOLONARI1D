@@ -121,7 +121,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
                 sender[i] = (char)LoRa.read();
             }
             sender[addressLength] = '\0'; 
-            DEBUG_LOG("sender read: " + String(sender));
+            //DEBUG_LOG("sender read: " + String(sender));
 
 
 
@@ -131,11 +131,11 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
                 recipient[i] = (char)LoRa.read();
             }
             recipient[addressLength] = '\0';
-            DEBUG_LOG("Recipient read:"+String(recipient));
+            //DEBUG_LOG("Recipient read:"+String(recipient));
 
-            DEBUG_LOG("recipient read: " + String(recipient));
+            //DEBUG_LOG("recipient read: " + String(recipient));
 
-            DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
+            //DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
 
             packetNumber = LoRa.read();
     
@@ -144,8 +144,8 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             payload = "";
             while (LoRa.available()) payload += (char)LoRa.read();
             
-            DEBUG_LOG("recipient :" + String(recipient));
-            DEBUG_LOG("sender :" + String(sender) + "\n");
+            //DEBUG_LOG("recipient :" + String(recipient));
+            //DEBUG_LOG("sender :" + String(sender) + "\n");
 
 
             if (!isValidDestination(String(sender), String(recipient), requestType)) {
@@ -168,9 +168,9 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 }
 
 bool LoraCommunication::isValidDestination(const String &recipient, const String &dest, RequestType requestType) {
-    DEBUG_LOG("recipient :        " + recipient + "\n" + "Address sent.       " + Address_sent);
+    //DEBUG_LOG("recipient :        " + recipient + "\n" + "Address sent.       " + Address_sent);
     if (recipient != Address_sent) return false;
-    DEBUG_LOG("dest : " + dest + "\n" + "address waited" + Address_waited);
+    //DEBUG_LOG("dest : " + dest + "\n" + "address waited" + Address_waited);
     if (Address_waited == dest || (requestType == SYN && Address_waited == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
         Address_waited = dest;
         return true;
@@ -204,10 +204,10 @@ bool LoraCommunication::handshake(uint8_t &shift) {
                 digitalWrite(LED_BUILTIN, HIGH);
                 return true;
             } else {
-                delay(50);// * (retries + 1));
+                delay(500);// * (retries + 1));
                 DEBUG_LOG("MASTER: Retrying SYN");
                 digitalWrite(LED_BUILTIN, LOW);
-                delay(50);
+                delay(500);
                 sendPacket(0, SYN, "SYN");
                 digitalWrite(LED_BUILTIN, HIGH);
                 retries++;
@@ -237,10 +237,10 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         
         int retries = 0;
         while (retries < 60) {
-            if (receivePacket(packetNumber, requestType, payload) && requestType == ACK && payload == "ACK") return true;
-            delay(50);// * (retries + 1));
+            delay(500);// * (retries + 1));
             sendPacket(shift, SYN, "SYN-ACK");
             DEBUG_LOG("SLAVE: SYN-ACK sent");
+            if (receivePacket(packetNumber, requestType, payload) && requestType == ACK && payload == "ACK") return true;
             retries++;
         }
         return false;
