@@ -5,12 +5,10 @@
 #include <Arduino.h> 
 #include "LoRa_Molonari.hpp"
 
-#define DEBUG_MAIN
-#define DEBUG_MEASURE
-#define DEBUG_WRITER
-#define DEBUG_READER
 
-#ifdef DEBUG_MAIN
+#define DEBUG_LORA
+
+#ifdef DEBUG_LORA
 #define DEBUG_LOG(msg) Serial.println(msg)
 #define DEBUG_LOG_NO_LN(msg) Serial.print(msg)
 #else
@@ -71,34 +69,56 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 
     uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
     LoRa.write(checksum);
+    DEBUG_LOG("SENDING A PACKET");
+    DEBUG_LOG_NO_LN("with checksum :" + String(checksum));
+    //char dest_char = char(destination.c_str());
+    //long int dest_number = strtol(&dest_char, NULL, 16);
+    LoRa.write(uint8_t(0));//dest_number));//bon écoutez j'ai fait ça avec l'inspiration du moment, vérifier que ça marche vraiment (et les gens de l'année prochaine commencez pas à raler qu'on a pas vérifié notre code vous savez pas à quel point le repos était cassé avant notre session, on vous a fait un cadeau et là de toutes façons j'ai pas le temps. Le projet Molonari a fait un pas de géant en 2025. J'espère qu'il fera de même en 2026, je crois en vous, fillot.es et AST. Il y aura des moments de doute, de désespoir même mais peut-être aussi des moments de joie et de fierté. Je veux simplement vous dire que, quel que soit le retard que vous aurez l'impression d'avoir)
+//piche
+//piiicchhhheee
+//PIIICCCHHHHHHEEEEEEEEEEEEEEE
+//PPPPPPPPPPPPIIIIIIIIICCCCCCCCCCCHHHHHHHHHHHHHHHEEEEEEEEEEEEEEEEEEE
+//PPPPPPPPPPPPPPPPPPPPPPPPPPPPPIIIIIIIIIIIIIIIIIIIIIIIIIIIIIICCCCCCCCCCCCCCCCCCCCCCCHHHHHHHHHHHHHHHHHHHHHHHHHHEEEEEEEEEEEEEEEE
+//piche
+//piche
+//piche
+//piche
+//piche
+//piche
+//piche
+//piche
+    //char localAddress_char = char(localAddress.c_str());
+    //long int localAddress_number = strtol(&localAddress_char, NULL, 16);
+    LoRa.write(uint8_t(0));//localAddress_number));//inspiration du moment, vérifier que ça marche vraiment
 
     LoRa.write(uint8_t(destination.toInt()));
     LoRa.write(uint8_t(localAddress.toInt()));
     LoRa.write(packetNumber);
-    DEBUG_LOG("j'envoie le numéro du paquet :" + String(packetNumber));
+    DEBUG_LOG_NO_LN("; paquet_number :" + String(packetNumber));
 
     LoRa.write(requestType);
-    DEBUG_LOG("j'envoie le requestType :" + String(requestType));
+    DEBUG_LOG("; requestType :" + String(requestType));
 
     LoRa.print(payload);
     LoRa.endPacket();
 
-    DEBUG_LOG("Packet sent: "); DEBUG_LOG(payload);
+    DEBUG_LOG_NO_LN("PACKET SENT : "); DEBUG_LOG(payload);
 
 }
 
 bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload) {
     if (!active) return false;
-    DEBUG_LOG("lancement receive packet");
+    DEBUG_LOG("lancement receive packet : looking for a packet...");
 
-    delay(100);
+    delay(100);//VERY IMPORTANT
     unsigned long startTime = millis();
-    int ackTimeout = 2000;
+    int ackTimeout = 1000;//was set to 2s
 
     while (millis() - startTime < ackTimeout) {
+        delay(10);//VERY TEMPORARY
         int packetSize = LoRa.parsePacket();
-        DEBUG_LOG("packet size :" + String(packetSize));
         if (packetSize) {
+            DEBUG_LOG("packet size :" + String(packetSize));
             String recipient = String(LoRa.read());
             uint8_t receivedChecksum = LoRa.read();
             String dest = String(LoRa.read());
@@ -149,13 +169,19 @@ bool LoraCommunication::handshake(uint8_t &shift) {
         while (retries < 6) {
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN-ACK") {
                 shift = packetNumber;
+                DEBUG_LOG("MASTER: Received SYN-ACK, sending ACK");
+                digitalWrite(LED_BUILTIN, LOW);
+                delay(50);
                 sendPacket(packetNumber, ACK, "ACK");
-                DEBUG_LOG("MASTER: Received SYN-ACK, ACK sent");
+                digitalWrite(LED_BUILTIN, HIGH);
                 return true;
             } else {
-                delay(100 * (retries + 1));
-                sendPacket(0, SYN, "SYN");
+                delay(50);// * (retries + 1));
                 DEBUG_LOG("MASTER: Retrying SYN");
+                digitalWrite(LED_BUILTIN, LOW);
+                delay(50);
+                sendPacket(0, SYN, "SYN");
+                digitalWrite(LED_BUILTIN, HIGH);
                 retries++;
             }
         }
@@ -164,28 +190,29 @@ bool LoraCommunication::handshake(uint8_t &shift) {
     else { // SLAVE
         String payload; uint8_t packetNumber; RequestType requestType;
         int n = 0;
-        while (n < 50) {
+        int n_max = 25;
+        while (n < n_max) {
             n++;
-            DEBUG_LOG("en attente de reception de SYN" + String(n));
+            DEBUG_LOG("en attente de reception de SYN " + String(n));
             if (receivePacket(packetNumber, requestType, payload) && requestType == SYN && payload == "SYN") {
                 DEBUG_LOG("SLAVE: SYN received");
                 shift = packetNumber;
-                sendPacket(shift, SYN, "SYN-ACK");
-                DEBUG_LOG("SLAVE: SYN-ACK sent");
+                //sendPacket(shift, SYN, "SYN-ACK"); done in the next loop
                 break;
             }
         }
-
-        if (n == 50) {
+        
+        if (n == n_max) {
             DEBUG_LOG("SLAVE: No SYN received");
             return false;
         }
-
+        
         int retries = 0;
-        while (retries < 600) {
+        while (retries < 60) {
             if (receivePacket(packetNumber, requestType, payload) && requestType == ACK && payload == "ACK") return true;
-            delay(100 * (retries + 1));
+            delay(50);// * (retries + 1));
             sendPacket(shift, SYN, "SYN-ACK");
+            DEBUG_LOG("SLAVE: SYN-ACK sent");
             retries++;
         }
         return false;
