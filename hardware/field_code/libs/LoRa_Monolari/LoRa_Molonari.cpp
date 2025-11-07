@@ -350,7 +350,7 @@ uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
     return nb_packets_sent;
 }
 
-int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {// is it really used somewhear ?
+int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {
     uint8_t packetNumber = 0; String payload; RequestType requestType; uint8_t prevPacket = -1;
     unsigned long startTime = millis(); int ackTimeout = 60000;
 
@@ -366,6 +366,7 @@ int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {// is i
                     sendPacket(packetNumber, ACK, "ACK");
             }
         }
+        DEBUG_LOG("packet number :" + String(packetNumber));
     }
     return packetNumber;
 }
