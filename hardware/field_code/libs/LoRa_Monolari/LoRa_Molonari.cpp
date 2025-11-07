@@ -20,7 +20,7 @@ LoraCommunication::LoraCommunication(long frequency, String Address_sent, String
     : freq(frequency), Address_sent(Address_sent), Address_waited(Address_waited), active(false), deviceRole(role)
 {
 }
-// Adress_sent c'est l'adresse que j'envoie quand j'envoie
+// Adress_sent c'est l'adresse que j'envoie, c'est ma propre adresse 
 // Waited_adress c'est l'adresse de qui il s'attend recevoir
 
 void LoraCommunication::LoraUpdateAttributes(long frequency, String Address_sent, String Address_waited, RoleType role){
@@ -148,7 +148,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             DEBUG_LOG("sender :" + String(sender) + "\n");
 
 
-            if (!isValidDestination(String(recipient), sender, requestType)) {
+            if (!isValidDestination(String(sender), String(recipient), requestType)) {
                 DEBUG_LOG("destination caca");
                 return false;
             }
@@ -167,10 +167,15 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
     return false;
 }
 
-bool LoraCommunication::isValidDestination(const String &recipient, const String &dest, RequestType requestType) {
+bool LoraCommunication::isValidDestination(const String &recipient, const String &sender, RequestType requestType) {
+    DEBUG_LOG("recipient : " + recipient);
+    DEBUG_LOG("mon adresse :"+Address_sent);
     if (recipient != Address_sent) return false;
-    if (Address_waited == dest || (requestType == SYN && Address_waited == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
-        Address_waited = dest;
+
+    DEBUG_LOG("sender : " + sender);
+    DEBUG_LOG("l'adresse de qui je veux recevoir :"+Address_waited);
+    if (Address_waited == sender || (requestType == SYN && Address_waited == String(0xff) && myNet.find(sender.toInt()) != myNet.end())) {
+        Address_waited = sender;
         return true;
     }
     return false;
