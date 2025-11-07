@@ -133,7 +133,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             recipient[addressLength] = '\0';
             //DEBUG_LOG("Recipient read:"+String(recipient));
 
-            //DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
+            DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
 
             packetNumber = LoRa.read();
     
@@ -151,7 +151,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
                 return false;
             }
 
-            uint8_t calculatedChecksum = calculateChecksum(recipient, sender, packetNumber, requestType, payload);
+            uint8_t calculatedChecksum = calculateChecksum(String(recipient), String(sender), packetNumber, requestType, payload);
             if (calculatedChecksum != receivedChecksum) {
                 DEBUG_LOG("checksum caca");
                 return false;
@@ -166,9 +166,9 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 }
 
 bool LoraCommunication::isValidDestination(const String &recipient, const String &dest, RequestType requestType) {
-    //DEBUG_LOG("recipient :        " + recipient + "\n" + "Address sent.       " + Address_sent);
+    DEBUG_LOG("recipient :        " + recipient + "\n" + "Address sent.       " + Address_sent);
     if (recipient != Address_sent) return false;
-    //DEBUG_LOG("dest : " + dest + "\n" + "address waited" + Address_waited);
+    DEBUG_LOG("dest : " + dest + "\n" + "address waited" + Address_waited);
     if (Address_waited == dest || (requestType == SYN && Address_waited == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
         Address_waited = dest;
         return true;
