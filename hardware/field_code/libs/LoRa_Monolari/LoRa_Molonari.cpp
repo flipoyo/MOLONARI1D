@@ -167,15 +167,12 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
     return false;
 }
 
-bool LoraCommunication::isValidDestination(const String &recipient, const String &sender, RequestType requestType) {
-    DEBUG_LOG("recipient : " + recipient);
-    DEBUG_LOG("mon adresse :"+Address_sent);
+bool LoraCommunication::isValidDestination(const String &recipient, const String &dest, RequestType requestType) {
+    DEBUG_LOG("recipient :        " + recipient + "\n" + "Address sent.       " + Address_sent);
     if (recipient != Address_sent) return false;
-
-    DEBUG_LOG("sender : " + sender);
-    DEBUG_LOG("l'adresse de qui je veux recevoir :"+Address_waited);
-    if (Address_waited == sender || (requestType == SYN && Address_waited == String(0xff) && myNet.find(sender.toInt()) != myNet.end())) {
-        Address_waited = sender;
+    DEBUG_LOG("dest : " + dest + "\n" + "address waited" + Address_waited);
+    if (Address_waited == dest || (requestType == SYN && Address_waited == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
+        Address_waited = dest;
         return true;
     }
     return false;
