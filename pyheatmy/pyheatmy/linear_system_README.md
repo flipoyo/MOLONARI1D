@@ -44,17 +44,17 @@ En 1D en incluant le terme source, on a donc :
 ## Discretisation de l'equation a l'interieur du domaine
 
 Pour resoudre numeriquement ces equations, nous utilisons un **$\theta$-schema** pondere par un parametre $\alpha$.
-* $\alpha = 0$ : Schema totalement **implicite** (inconditionnellement stable).
+* $\alpha = 0$ : Schema totalement **explicite** (conditionnellement stable).
 * $\alpha = 0.5$ : Schema de Crank-Nicolson classique.
-* $\alpha = 1$ : Schema totalement **explicite** (conditionnellement stable).
+* $\alpha = 1$ : Schema totalement **implicite** (inconditionnellement stable).
 
 Les variables sont notees $U^{n}_{i}$, où `n` est l'indice temporel et `i` l'indice spatial sur l'axe vertical `z`.
 
 Les equations discretisees (dans l'interieur du domaine) sont :
 
-$$S_s \frac{H_{i}^{n+1} - H_{i}^{n}}{\Delta t} = \alpha \left[ K \frac{H_{i+1}^n - 2H_{i}^n + H_{i-1}^n}{(\Delta z)^2} \right] + (1-\alpha) \left[ K \frac{H_{i+1}^{n+1} - 2H_{i}^{n+1} + H_{i-1}^{n+1}}{(\Delta z)^2} \right] + q_s$$
+$$S_s \frac{H_{i}^{n+1} - H_{i}^{n}}{\Delta t} = (1-\alpha) \left[ K \frac{H_{i+1}^n - 2H_{i}^n + H_{i-1}^n}{(\Delta z)^2} \right] + \alpha \left[ K \frac{H_{i+1}^{n+1} - 2H_{i}^{n+1} + H_{i-1}^{n+1}}{(\Delta z)^2} \right] + q_s$$
 
-$$\frac{T_{i}^{n+1} - T_{i}^{n}}{\Delta t} = \alpha \left\{ \kappa_e \frac{T_{i+1}^n - 2T_{i}^n + T_{i-1}^n}{(\Delta z)^2} - \alpha_e \left(\frac{H_{i+1}^n - H_{i-1}^n}{2\Delta z}\right)\left(\frac{T_{i+1}^n - T_{i-1}^n}{2\Delta z}\right) \right\} + (1-\alpha) \left\{ \kappa_e \frac{T_{i+1}^{n+1} - 2T_{i}^{n+1} + T_{i-1}^{n+1}}{(\Delta z)^2} - \alpha_e \left(\frac{H_{i+1}^{n+1} - H_{i-1}^{n+1}}{2\Delta z}\right)\left(\frac{T_{i+1}^{n+1} - T_{i-1}^{n+1}}{2\Delta z}\right) \right\} + {\frac{\rho_w c_w}{\rho_m c_m} q_s \left((1-\alpha)T^{n+1}_i + \alpha T^{n}_i\right)}$$
+$$\frac{T_{i}^{n+1} - T_{i}^{n}}{\Delta t} = (1-\alpha) \left\{ \kappa_e \frac{T_{i+1}^n - 2T_{i}^n + T_{i-1}^n}{(\Delta z)^2} - \alpha_e \left(\frac{H_{i+1}^n - H_{i-1}^n}{2\Delta z}\right)\left(\frac{T_{i+1}^n - T_{i-1}^n}{2\Delta z}\right) \right\} + \alpha \left\{ \kappa_e \frac{T_{i+1}^{n+1} - 2T_{i}^{n+1} + T_{i-1}^{n+1}}{(\Delta z)^2} - \alpha_e \left(\frac{H_{i+1}^{n+1} - H_{i-1}^{n+1}}{2\Delta z}\right)\left(\frac{T_{i+1}^{n+1} - T_{i-1}^{n+1}}{2\Delta z}\right) \right\} + {\frac{\rho_w c_w}{\rho_m c_m} q_s \left(\alpha T^{n+1}_i + (1-\alpha) T^{n}_i\right)}$$
 
 <br>
 
@@ -75,7 +75,7 @@ Ensuite, pour eliminer le terme en $H'_0$, on combine les deux equations. En cal
 $$H''_0 \approx \frac{1}{\Delta z^2} \left( \frac{8}{3} H_{riv} - 4 H_0 + \frac{4}{3} H_1 \right)$$
 
 On a donc 
-$$S_s \frac{H_{0}^{n+1} - H_{0}^{n}}{\Delta t} = \alpha \left[  \frac{K}{\Delta z^2} \left( \frac{8}{3} H_{riv}^n - 4 H_0^n + \frac{4}{3} H_1^n \right) \right] + (1-\alpha) \left[  \frac{K}{\Delta z^2} \left( \frac{8}{3} H_{riv}^{n+1} - 4 H_0^{n+1} + \frac{4}{3} H_1^{n+1} \right) \right] + q_s$$
+$$S_s \frac{H_{0}^{n+1} - H_{0}^{n}}{\Delta t} = (1-\alpha) \left[  \frac{K}{\Delta z^2} \left( \frac{8}{3} H_{riv}^n - 4 H_0^n + \frac{4}{3} H_1^n \right) \right] + \alpha \left[  \frac{K}{\Delta z^2} \left( \frac{8}{3} H_{riv}^{n+1} - 4 H_0^{n+1} + \frac{4}{3} H_1^{n+1} \right) \right] + q_s$$
 
 C'est la formule utilisee dans le code pour evaluer la derivee seconde sur la frontiere. Pour la frontiere en $n+\frac{1}{2}$ on procede de la même maniere.
 
@@ -108,34 +108,34 @@ Pour la charge, on a $A_H(\alpha) H^{n+1} = B_H(\alpha)H^{n} + C_H^{n,n+1}$, ave
 
 $\mathbf{A_H(\alpha)} = 
 \begin{pmatrix}
-\frac{S_s}{\Delta t} + (1-\alpha)\frac{4K}{(\Delta z)^2} & -(1-\alpha)\frac{4K}{3(\Delta z)^2} & 0 & \cdots & 0 \\
--(1-\alpha)\frac{K}{(\Delta z)^2} & \frac{S_s}{\Delta t} + (1-\alpha)\frac{2K}{(\Delta z)^2} & -(1-\alpha)\frac{K}{(\Delta z)^2} & \ddots & \vdots \\
+\frac{S_s}{\Delta t} + \alpha \frac{4K}{(\Delta z)^2} & -\alpha \frac{4K}{3(\Delta z)^2} & 0 & \cdots & 0 \\
+-\alpha \frac{K}{(\Delta z)^2} & \frac{S_s}{\Delta t} + \alpha \frac{2K}{(\Delta z)^2} & -\alpha \frac{K}{(\Delta z)^2} & \ddots & \vdots \\
 0 & \ddots & \ddots & \ddots & 0 \\
-\vdots & \ddots & -(1-\alpha)\frac{K}{(\Delta z)^2} & \frac{S_s}{\Delta t} + (1-\alpha)\frac{2K}{(\Delta z)^2} & -(1-\alpha)\frac{K}{(\Delta z)^2} \\
-0 & \cdots & 0 & -(1-\alpha)\frac{4K}{3(\Delta z)^2} & \frac{S_s}{\Delta t} + (1-\alpha)\frac{4K}{(\Delta z)^2}
+\vdots & \ddots & -\alpha \frac{K}{(\Delta z)^2} & \frac{S_s}{\Delta t} + \alpha \frac{2K}{(\Delta z)^2} & -\alpha \frac{K}{(\Delta z)^2} \\
+0 & \cdots & 0 & -\alpha \frac{4K}{3(\Delta z)^2} & \frac{S_s}{\Delta t} + \alpha \frac{4K}{(\Delta z)^2}
 \end{pmatrix}$
 
 <br>
 
 $\mathbf{B_H(\alpha)} = 
 \begin{pmatrix}
-\frac{S_s}{\Delta t} -\alpha \frac{4K}{(\Delta z)^2} & \alpha \frac{4K}{3(\Delta z)^2} & 0 & \cdots & 0 \\
-\alpha \frac{K}{(\Delta z)^2} & \frac{S_s}{\Delta t} -\alpha \frac{2K}{(\Delta z)^2} & \alpha \frac{K}{(\Delta z)^2} & \ddots & \vdots \\
+\frac{S_s}{\Delta t} -(1-\alpha) \frac{4K}{(\Delta z)^2} & (1-\alpha) \frac{4K}{3(\Delta z)^2} & 0 & \cdots & 0 \\
+(1-\alpha) \frac{K}{(\Delta z)^2} & \frac{S_s}{\Delta t} -\alpha \frac{2K}{(\Delta z)^2} & \alpha \frac{K}{(\Delta z)^2} & \ddots & \vdots \\
 0 & \ddots & \ddots & \ddots & 0 \\
-\vdots & \ddots & \alpha \frac{K}{(\Delta z)^2} & \frac{S_s}{\Delta t} -\alpha \frac{2K}{(\Delta z)^2} & \alpha \frac{K}{(\Delta z)^2} \\
-0 & \cdots & 0 & \alpha \frac{4K}{3(\Delta z)^2} & \frac{S_s}{\Delta t} - \alpha \frac{4K}{(\Delta z)^2}
+\vdots & \ddots & (1-\alpha) \frac{K}{(\Delta z)^2} & \frac{S_s}{\Delta t} -(1-\alpha) \frac{2K}{(\Delta z)^2} & (1-\alpha) \frac{K}{(\Delta z)^2} \\
+0 & \cdots & 0 & (1-\alpha) \frac{4K}{3(\Delta z)^2} & \frac{S_s}{\Delta t} - (1-\alpha) \frac{4K}{(\Delta z)^2}
 \end{pmatrix}$
 
  <br>
 
 $\mathbf{C^{j,j+1}} =
 \begin{pmatrix}
-\frac{8 K}{3 (\Delta z)^2} \left[ (1-\alpha)H_{riv}^{j+1} + \alpha H_{riv}^{j} \right] + q_{s} \\
+\frac{8 K}{3 (\Delta z)^2} \left[ \alpha H_{riv}^{j+1} + (1-\alpha) H_{riv}^{j} \right] + q_{s} \\
 q_{s} \\
 \vdots \\
 q_{s} \\
 \vdots \\
-\frac{8 K}{3 (\Delta z)^2} \left[ (1-\alpha)H_{aq}^{j+1} + \alpha H_{aq}^{j} \right] + q_{s}
+\frac{8 K}{3 (\Delta z)^2} \left[ \alpha H_{aq}^{j+1} + (1-\alpha) H_{aq}^{j} \right] + q_{s}
 \end{pmatrix}$
 
 <br>
