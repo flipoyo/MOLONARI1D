@@ -14,6 +14,7 @@ You should already know that the physics behind Molonari is governed by the heat
 $$
 \frac{\partial \theta}{\partial t} = \kappa_e \frac{\partial^2 \theta}{\partial z^2} + \underbrace{\frac{\rho_w c_w}{\rho_m c_m} K \frac{\partial H}{\partial z}}_{-v_t} \frac{\partial \theta}{\partial z}
 $$
+
 Stallman showed that for an harmonic forcing of amplitude $\theta_\text{amp}$, offset $\theta_\mu$ , a **charge gradient constant in time**, and period $P$, an anlalytic answer is known :
 
 $$
