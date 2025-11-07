@@ -40,6 +40,21 @@ def createRealDatabase():
     return True
 
 
+def add_object(table_name, df):
+    """
+    Builds and execute a SQL query from a DataFrame.
+    """
+    query = QSqlQuery()
+    columns = df.columns.tolist()
+    placeholders = ', '.join(['?'] * len(columns))
+    query_string = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
+    query.prepare(query_string)
+    for _, row in df.iterrows():
+        for col in columns:
+            query.addBindValue(row[col])
+        query.exec()
+
+
 def fillRealDatabase():
     """
     The directory `objects` contains CSV files with data to insert into the database.
@@ -59,14 +74,13 @@ def fillRealDatabase():
     con_db.setDatabaseName(config['database']['filename'])
     con_db.open()
 
-    for filename in os.listdir(\
-        os.path.join(os.path.dirname(__file__), './objects')):
+    objects_dir = os.path.join(os.path.dirname(__file__), './objects')
+    for filename in os.listdir(objects_dir):
         if not filename.endswith(".csv"):
             continue
         table_name = filename[:-4]
-        df = pd.read_csv(os.path.join("./objects", filename))
-        
-        df.to_sql(table_name, con_db.connectionName(), if_exists='append', index=False)
+        df = pd.read_csv(os.path.join(objects_dir, filename))
+        add_object(table_name, df)
     
     return con_db
 
@@ -78,19 +92,23 @@ def get_sampling_point_id(con_db, payload):
     Returns the sampling point ID or None if not found
     """
     query = QSqlQuery(con_db)
-    query.prepare(f""" SELECT sp.id FROM SamplingPoint sp
-                  JOIN Shaft s ON sp.Shaft = s.id
-                  JOIN Datalogger dl ON s.DataloggerID = dl.id AND dl.devEui = :devEui
-                  JOIN Relay r ON dl.relay_id = r.id AND r.relayEui = :relayEui
-                  JOIN Gateway g ON r.gateway_id = g.id AND g.gatewayEui = :gatewayEui
+    query.prepare("""
+        SELECT sp.id FROM SamplingPoint sp
+        JOIN Shaft s ON sp.Shaft = s.ID
+        JOIN Datalogger dl ON s.DataloggerID = dl.ID
+        JOIN Relay r ON dl.Relay = r.ID
+        JOIN Gateway g ON r.Gateway = g.ID
+        WHERE dl.devEui = :devEui
+          AND r.relayEui = :relayEui
+          AND g.gatewayEui = :gatewayEui
     """)
-
+    
     query.bindValue(":devEui", payload["device_eui"])
     query.bindValue(":relayEui", payload.get("relay_id"))
     query.bindValue(":gatewayEui", payload.get("gateway_id"))
 
     if not query.exec():
-        print(query.lastError())
+        print(query.lastError().text())
         return None
     if not query.next():
         return None
@@ -107,7 +125,7 @@ def insert_payload(con_db, payload):
     
     if sp_id is None:
         print(f"SamplingPoint corresponding to device {payload['device_eui']},\
-               relay {payload['relay_id']}, gateway {payload['gateway_id']} not found.")
+              relay {payload['relay_id']}, gateway {payload['gateway_id']} not found.")
         return
 
     # Switch to right date format
@@ -157,4 +175,3 @@ def insert_payload(con_db, payload):
         return
 
     return query.lastInsertId()
-    

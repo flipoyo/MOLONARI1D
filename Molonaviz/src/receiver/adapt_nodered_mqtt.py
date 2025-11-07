@@ -84,6 +84,7 @@ def init_db(db_path=DB_FILENAME):
             if not createRealDatabase():
                 logger.error("Failed to create real database.")
                 return None
+            print("Real database created.")
             return fillRealDatabase()
         else:
             logger.error("Failed to open database: %s", db.lastError().text())
@@ -171,8 +172,6 @@ def extract_fields_from_payload(payload: dict):
     - `fCnt`'''
 
     # Received elements in the datapayload (decoded by decoder.py)
-    print(payload)
-    print("data : ", payload.get("data", ""))
     Sensor = decoder.decode_proto_data(payload.get("data", ""))
     device_eui = normalize_eui(Sensor.UI)
     timestamp = Sensor.time
@@ -261,7 +260,6 @@ class MQTTWorker:
             logger.exception("Error on_message: %s", e)
 
         print(f"[MQTT] Received message on topic '{msg.topic}'")
-        print(f"[MQTT] Payload: {payload_text}")
 
     def connect_and_loop_start(self):
         logger.info("Connecting to MQTT broker %s:%d", self.broker, self.port)
@@ -320,11 +318,11 @@ def processing_worker(mqtt_worker:MQTTWorker, db_conn, device_euis_normalized):
             # insert into DB
             try:
                 if mqtt_worker.real_database_insertion:
-                    rowid = insert_payload(db_conn, fields) # utiliser le fichier annexe real DB
+                    rowid = insert_payload(db_conn, fields)
                 else:
                     rowid = insert_record(db_conn, fields)
-                logger.info("Inserted device=%s ts=%s (%d)", device_eui, rowid,
-                            time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+                logger.info("Inserted device=%s, at ts=%s (rowid = %s)", device_eui, \
+                            time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), rowid)
             except Exception as e:
                 logger.exception("Error DB insertion: %s", e)
 
@@ -332,7 +330,6 @@ def processing_worker(mqtt_worker:MQTTWorker, db_conn, device_euis_normalized):
             logger.exception("Error worker: %s", e)
         finally:
             mqtt_worker.msg_queue.task_done()
-
 
 
 # ---- Main ----
