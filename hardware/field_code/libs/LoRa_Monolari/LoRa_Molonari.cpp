@@ -347,6 +347,7 @@ uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
             DEBUG_LOG("aborting send after " + String(send_retries) + " attempts");
         }
     }
+    sendPacket(nb_packets_sent, DATA, "");
     return nb_packets_sent;
 }
 
@@ -360,7 +361,7 @@ int LoraCommunication::receiveAllPackets(std::queue<String> &receiveQueue) {
                 case FIN: return packetNumber;
                 default:
                     if (receiveQueue.size() >= MAX_QUEUE_SIZE) return packetNumber;
-                    if (prevPacket == packetNumber) { sendPacket(packetNumber, ACK, "ACK"); break; }
+                    if (prevPacket == packetNumber) { sendPacket(packetNumber, ACK, payload); break; }
                     prevPacket = packetNumber;
                     receiveQueue.push(payload);
                     sendPacket(packetNumber, ACK, "ACK");
