@@ -133,7 +133,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             recipient[addressLength] = '\0';
             //DEBUG_LOG("Recipient read:"+String(recipient));
 
-            DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
+            //DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
 
             packetNumber = LoRa.read();
     
