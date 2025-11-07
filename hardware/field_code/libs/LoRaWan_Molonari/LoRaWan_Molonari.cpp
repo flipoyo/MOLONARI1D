@@ -2,6 +2,7 @@
 // This file defines the LoraWANCommunication class for handling LoRaWAN communication.
 
 #include "LoRaWan_Molonari.hpp"
+#include <Reader.hpp>
 
 #ifdef LORA_DEBUG
 #define LORA_LOG(msg) Serial.print(msg);
@@ -57,6 +58,50 @@ bool LoraWANCommunication::sendQueue(std::queue<String>& sendingQueue) {
     }
     return true;
 }
+
+
+
+bool LoraWANCommunication::sendAllPacketsAndManageMemoryWAN(std::queue<memory_line>& sendQueue, unsigned long& SDOffset, File& dataFile) {
+    // handles packet sending and acknowledgement verificaiton, SDOffset updating, and ensures dataFile.position() is at the right place (terminal SDOffset).
+
+    uint8_t nb_packets_sent = 0;
+    String payload; uint8_t nb_packets_sent_received;
+
+    while (!sendQueue.empty()) {
+
+        memory_line packet = sendQueue.front();
+        int send_retries = 0;
+        int err = 0;
+        while(send_retries < 10 && err <= 0){
+            modem.beginPacket();
+            modem.print(payload);
+
+            int err = modem.endPacket(true);
+            if (err <= 0) {
+                Serial.println("Erreur d’envoi, nouvelle tentative...");
+                delay(10000);
+            }
+            send_retries++;
+        }
+    
+        if (err > 0) {
+            Serial.println("Donnée envoyée : " + payload);
+            sendQueue.pop();
+            SDOffset = packet.memory_successor;
+
+        } else {
+            Serial.println("Échec après plusieurs tentatives, abandon du paquet.");
+            dataFile.seek(SDOffset);
+            return false;
+        }
+        delay(5000);
+
+    }
+    dataFile.seek(SDOffset);
+    return true;
+}
+
+
 
 bool LoraWANCommunication::receiveConfig(const char* configFilePath, bool modif) {
     String rcv = modem.readString();
