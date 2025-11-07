@@ -61,7 +61,7 @@ void LoraCommunication::setdesttodefault() {
 
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
     if (!active) { DEBUG_LOG("LoRa inactive"); return; }
-
+    
     delay(100);
 
     if (!LoRa.beginPacket()) {
@@ -75,19 +75,7 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     //char dest_char = char(destination.c_str());
     //long int dest_number = strtol(&dest_char, NULL, 16);
     LoRa.write(uint8_t(0));//dest_number));//bon écoutez j'ai fait ça avec l'inspiration du moment, vérifier que ça marche vraiment (et les gens de l'année prochaine commencez pas à raler qu'on a pas vérifié notre code vous savez pas à quel point le repos était cassé avant notre session, on vous a fait un cadeau et là de toutes façons j'ai pas le temps. Le projet Molonari a fait un pas de géant en 2025. J'espère qu'il fera de même en 2026, je crois en vous, fillot.es et AST. Il y aura des moments de doute, de désespoir même mais peut-être aussi des moments de joie et de fierté. Je veux simplement vous dire que, quel que soit le retard que vous aurez l'impression d'avoir)
-//piche
-//piiicchhhheee
-//PIIICCCHHHHHHEEEEEEEEEEEEEEE
-//PPPPPPPPPPPPIIIIIIIIICCCCCCCCCCCHHHHHHHHHHHHHHHEEEEEEEEEEEEEEEEEEE
-//PPPPPPPPPPPPPPPPPPPPPPPPPPPPPIIIIIIIIIIIIIIIIIIIIIIIIIIIIIICCCCCCCCCCCCCCCCCCCCCCCHHHHHHHHHHHHHHHHHHHHHHHHHHEEEEEEEEEEEEEEEE
-//piche
-//piche
-//piche
-//piche
-//piche
-//piche
-//piche
-//piche
+
     //char localAddress_char = char(localAddress.c_str());
     //long int localAddress_number = strtol(&localAddress_char, NULL, 16);
     LoRa.write(uint8_t(0));//localAddress_number));//inspiration du moment, vérifier que ça marche vraiment
