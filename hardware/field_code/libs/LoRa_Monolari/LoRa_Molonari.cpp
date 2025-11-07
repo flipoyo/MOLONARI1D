@@ -139,9 +139,12 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             payload = "";
             while (LoRa.available()) payload += (char)LoRa.read();
             
-            DEBUG_LOG("recipient :" + recipient);
-            DEBUG_LOG("sender :" + sender);
-            if (!isValidDestination(recipient, sender, requestType)) {
+            DEBUG_LOG("recipient :" + String(recipient));
+            DEBUG_LOG("sender :" + String(sender) + "\n");
+
+            DEBUG_LOG("local adress" + localAddress);
+
+            if (!isValidDestination(String(recipient), sender, requestType)) {
                 DEBUG_LOG("destination caca");
                 return false;
             }
