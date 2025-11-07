@@ -16,15 +16,15 @@
 #define DEBUG_LOG_NO_LN(msg)
 #endif
 
-LoraCommunication::LoraCommunication(long frequency, String localAdd, String desti, RoleType role)
-    : freq(frequency), localAddress(localAdd), destination(desti), active(false), deviceRole(role)
+LoraCommunication::LoraCommunication(long frequency, String Address_sent, String Address_waited, RoleType role)
+    : freq(frequency), Address_sent(Address_sent), Address_waited(Address_waited), active(false), deviceRole(role)
 {
 }
 
-void LoraCommunication::LoraUpdateAttributes(long frequency, String localAdd, String desti, RoleType role){
+void LoraCommunication::LoraUpdateAttributes(long frequency, String Address_sent, String Address_waited, RoleType role){
     this -> freq = frequency;
-    this -> localAddress = localAdd;
-    this -> destination = desti;
+    this -> Address_sent = Address_sent;
+    this -> Address_waited = Address_waited;
     this -> deviceRole = role;
 }
 
@@ -54,7 +54,7 @@ void LoraCommunication::stopLoRa() {
 }
 
 void LoraCommunication::setdesttodefault() {
-    destination = String(0xff);
+    Address_waited = String(0xff);
 }
 
 void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload) {
@@ -69,18 +69,18 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 
 
     uint8_t buffer_destination[17];  // 16 caractères + 1 pour '\0'
-    destination.toCharArray((char*)buffer_destination, sizeof(buffer_destination));
+    Address_waited.toCharArray((char*)buffer_destination, sizeof(buffer_destination));
 
 
-    uint8_t buffer_localAddress[17];  // 16 caractères + 1 pour '\0'
-    localAddress.toCharArray((char*)buffer_localAddress, sizeof(buffer_localAddress));
+    uint8_t buffer_sender[17];  // 16 caractères + 1 pour '\0'
+    Address_sent.toCharArray((char*)buffer_sender, sizeof(buffer_sender));
 
-    DEBUG_LOG("Sending packet to " + destination + " from " + localAddress + " with payload: " + payload);
+    DEBUG_LOG("Sending packet to " + Address_waited + " from " + Address_sent + " with payload: " + payload);
 
-    uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
+    uint8_t checksum = calculateChecksum(Address_waited, Address_sent, packetNumber, requestType, payload);
     LoRa.write(checksum);
-    LoRa.write(buffer_localAddress, localAddress.length());
-    LoRa.write(buffer_destination, destination.length());
+    LoRa.write(buffer_sender, Address_sent.length());
+    LoRa.write(buffer_destination, Address_waited.length());
     LoRa.write(packetNumber); //envoir d'un seul octet, pas besoin de la taille
 
     LoRa.write(requestType);
@@ -113,24 +113,26 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             uint8_t receivedChecksum = LoRa.read();
             DEBUG_LOG("Received checksum: " + String(receivedChecksum));
 
-                        // Lire l’adresse source
+            // Lire l’adresse source
             for (int i = 0; i < addressLength; i++) {
+                while (!LoRa.available()); // attend l’octet suivant
                 sender[i] = (char)LoRa.read();
             }
-            sender[addressLength] = '\0';
+            sender[addressLength] = '\0'; 
+            DEBUG_LOG("sender read: " + String(sender));
 
-            String sender = String(sender);
 
 
             // Lire l’adresse destination
             for (int i = 0; i < addressLength; i++) {
-            recipient[i] = (char)LoRa.read();
+                while (!LoRa.available()); // attend l’octet suivant
+                recipient[i] = (char)LoRa.read();
             }
             recipient[addressLength] = '\0';
-            String recipient = String(recipient);
 
+            DEBUG_LOG("recipient read: " + String(recipient));
 
-            DEBUG_LOG("Receiving packet to " + recipient + " from " + sender);
+            DEBUG_LOG("Receiving packet to (me) " + String(recipient) + " from (the other) " + String(sender));
 
             packetNumber = LoRa.read();
     
@@ -153,9 +155,9 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 }
 
 bool LoraCommunication::isValidDestination(const String &recipient, const String &dest, RequestType requestType) {
-    if (recipient != localAddress) return false;
-    if (destination == dest || (requestType == SYN && destination == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
-        destination = dest;
+    if (recipient != Address_sent) return false;
+    if (Address_waited == dest || (requestType == SYN && Address_waited == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
+        Address_waited = dest;
         return true;
     }
     return false;
