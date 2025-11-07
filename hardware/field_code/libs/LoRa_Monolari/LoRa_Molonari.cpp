@@ -78,6 +78,7 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     DEBUG_LOG("Sending packet to " + destination + " from " + localAddress + " with payload: " + payload);
 
     uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
+    DEBUG_LOG("checksum =" + String(checksum));
     LoRa.write(checksum);
     LoRa.write(buffer_localAddress, localAddress.length());
     LoRa.write(buffer_destination, destination.length());
