@@ -77,9 +77,10 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     uint8_t buffer_sender[17];  // 16 caractères + 1 pour '\0'
     Address_sent.toCharArray((char*)buffer_sender, sizeof(buffer_sender));
 
-    DEBUG_LOG("Sending packet to " + Address_waited + " from " + Address_sent + " with payload: " + payload);
-
+    DEBUG_LOG("Sending packet to " + Address_waited + " from " + Address_sent + " with :");
+    
     uint8_t checksum = calculateChecksum(Address_waited, Address_sent, packetNumber, requestType, payload);
+    DEBUG_LOG("checksum "+ String(checksum) + "; Packet Number: " + String(packetNumber) + "; Request Type: " + String(static_cast<uint8_t>(requestType)) + "; Payload: " + String(payload));
     LoRa.write(checksum);
     LoRa.write(buffer_sender, Address_sent.length());
     LoRa.write(buffer_destination, Address_waited.length());
@@ -89,6 +90,7 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 
     LoRa.print(payload);
     LoRa.endPacket();
+    DEBUG_LOG("packet sent");
 
 
 }
@@ -198,11 +200,11 @@ bool LoraCommunication::handshake(uint8_t &shift) {
                 DEBUG_LOG("MASTER: Received SYN-ACK, sending ACK");
                 digitalWrite(LED_BUILTIN, LOW);
                 delay(50);
-                for (int i = 0; i<4; i++){
+                for (int i = 0; i<40; i++){
                     digitalWrite(LED_BUILTIN, HIGH);
                     sendPacket(packetNumber, ACK, "ACK");
                     digitalWrite(LED_BUILTIN, LOW);
-                    delay(50);
+                    delay(100);
                 }
                 return true;
             } else {
