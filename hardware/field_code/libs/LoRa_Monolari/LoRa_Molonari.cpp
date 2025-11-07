@@ -67,42 +67,29 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
         return;
     }
 
+
+    uint8_t buffer_destination[17];  // 16 caractères + 1 pour '\0'
+    destination.toCharArray((char*)buffer_destination, sizeof(buffer_destination));
+
+
+    uint8_t buffer_localAddress[17];  // 16 caractères + 1 pour '\0'
+    localAddress.toCharArray((char*)buffer_localAddress, sizeof(buffer_localAddress));
+
+    DEBUG_LOG("Sending packet to " + destination + " from " + localAddress + " with payload: " + payload);
+
     uint8_t checksum = calculateChecksum(destination, localAddress, packetNumber, requestType, payload);
     LoRa.write(checksum);
-    DEBUG_LOG("SENDING A PACKET");
-    DEBUG_LOG_NO_LN("with checksum :" + String(checksum));
-    //char dest_char = char(destination.c_str());
-    //long int dest_number = strtol(&dest_char, NULL, 16);
-    LoRa.write(uint8_t(0));//dest_number));//bon écoutez j'ai fait ça avec l'inspiration du moment, vérifier que ça marche vraiment (et les gens de l'année prochaine commencez pas à raler qu'on a pas vérifié notre code vous savez pas à quel point le repos était cassé avant notre session, on vous a fait un cadeau et là de toutes façons j'ai pas le temps. Le projet Molonari a fait un pas de géant en 2025. J'espère qu'il fera de même en 2026, je crois en vous, fillot.es et AST. Il y aura des moments de doute, de désespoir même mais peut-être aussi des moments de joie et de fierté. Je veux simplement vous dire que, quel que soit le retard que vous aurez l'impression d'avoir)
-//piche
-//piiicchhhheee
-//PIIICCCHHHHHHEEEEEEEEEEEEEEE
-//PPPPPPPPPPPPIIIIIIIIICCCCCCCCCCCHHHHHHHHHHHHHHHEEEEEEEEEEEEEEEEEEE
-//PPPPPPPPPPPPPPPPPPPPPPPPPPPPPIIIIIIIIIIIIIIIIIIIIIIIIIIIIIICCCCCCCCCCCCCCCCCCCCCCCHHHHHHHHHHHHHHHHHHHHHHHHHHEEEEEEEEEEEEEEEE
-//piche
-//piche
-//piche
-//piche
-//piche
-//piche
-//piche
-//piche
-    //char localAddress_char = char(localAddress.c_str());
-    //long int localAddress_number = strtol(&localAddress_char, NULL, 16);
-    LoRa.write(uint8_t(0));//localAddress_number));//inspiration du moment, vérifier que ça marche vraiment
 
-    LoRa.write(uint8_t(destination.toInt()));
-    LoRa.write(uint8_t(localAddress.toInt()));
-    LoRa.write(packetNumber);
-    DEBUG_LOG_NO_LN("; paquet_number :" + String(packetNumber));
+    //revoir l'ordre d'écriture
+    LoRa.write(buffer_localAddress, localAddress.length());
+    LoRa.write(buffer_destination, destination.length());
+    LoRa.write(packetNumber); //envoir d'un seul octet, pas besoin de la taille
 
     LoRa.write(requestType);
-    DEBUG_LOG("; requestType :" + String(requestType));
 
     LoRa.print(payload);
     LoRa.endPacket();
 
-    DEBUG_LOG_NO_LN("PACKET SENT : "); DEBUG_LOG(payload);
 
 }
 
@@ -119,8 +106,8 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
         int packetSize = LoRa.parsePacket();
         if (packetSize) {
             DEBUG_LOG("packet size :" + String(packetSize));
-            String recipient = String(LoRa.read());
             uint8_t receivedChecksum = LoRa.read();
+            String recipient = String(LoRa.read());
             String dest = String(LoRa.read());
             packetNumber = LoRa.read();
             requestType = static_cast<RequestType>(LoRa.read());
