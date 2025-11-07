@@ -41,7 +41,7 @@ public:
     bool handshake(uint8_t &shift);
     uint8_t sendAllPacketsAndManageMemory(std::queue<memory_line>& sendQueue, unsigned long& initial_adress, File& dataFile);
     uint8_t sendAllPackets(std::queue<String> &sendQueue);
-    int receivePackets(std::queue<String> &receiveQueue);
+    int receiveAllPackets(std::queue<String> &receiveQueue);
     bool closeSession(int lastPacket);
 
     bool receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms = 15000);

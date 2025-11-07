@@ -350,7 +350,7 @@ uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
     return nb_packets_sent;
 }
 
-int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {
+int LoraCommunication::receiveAllPackets(std::queue<String> &receiveQueue) {
     uint8_t packetNumber = 0; String payload; RequestType requestType; uint8_t prevPacket = -1;
     unsigned long startTime = millis(); int ackTimeout = 60000;
 
@@ -415,7 +415,7 @@ bool LoraCommunication::receiveConfigUpdate(const char* filepath, uint16_t* outM
 
         if (requestType == FIN) {
             // Écriture atomique : on écrit d'abord sur un fichier temporaire
-            int last = receivePackets(receiveQueue);
+            int last = receiveAllPackets(receiveQueue);
             sendPacket(last, FIN, "");
             const char* tmpPath = "tmp_conf.csv";
             File tmp = SD.open(tmpPath, FILE_WRITE | O_TRUNC);
