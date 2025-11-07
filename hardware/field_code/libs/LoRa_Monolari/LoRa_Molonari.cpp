@@ -82,7 +82,7 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     LoRa.write(checksum);
     LoRa.write(buffer_localAddress, localAddress.length());
     LoRa.write(buffer_destination, destination.length());
-    LoRa.write(packetNumber); //envoir d'un seul octet, pas besoin de la taille
+    LoRa.write(packetNumber); //envoie d'un seul octet, pas besoin de la taille
 
     LoRa.write(requestType);
 
@@ -114,13 +114,12 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             uint8_t receivedChecksum = LoRa.read();
             DEBUG_LOG("Received checksum: " + String(receivedChecksum));
 
-                        // Lire l’adresse source
+            // Lire l’adresse source
             for (int i = 0; i < addressLength; i++) {
                 sender[i] = (char)LoRa.read();
             }
             sender[addressLength] = '\0';
-
-            String sender = String(sender);
+            DEBUG_LOG("Sender read:"+ String(sender));
 
 
             // Lire l’adresse destination
@@ -128,10 +127,10 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             recipient[i] = (char)LoRa.read();
             }
             recipient[addressLength] = '\0';
-            String recipient = String(recipient);
+            DEBUG_LOG("Recipient read:"+String(recipient));
 
 
-            DEBUG_LOG("Receiving packet to " + recipient + " from " + sender);
+            DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
 
             packetNumber = LoRa.read();
     
