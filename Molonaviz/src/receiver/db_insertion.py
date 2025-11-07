@@ -173,5 +173,41 @@ def insert_payload(con_db, payload):
     if not query.exec():
         print(query.lastError())
         return
+    
+    insert_calibrated_temperature(con_db,payload,sp_id)
 
-    return query.lastInsertId()
+def insert_calibrated_temperature(con_db: QSqlDatabase, payload: dict, sp_id: int):
+    """
+   Convert the voltage into temperature using calibration parameters from the SPointCoordinator and insert the calibrated temperatures into the RawMeasuresTemp table.
+    """
+    study_name = get_study_name(con_db, sp_id)
+    SPointCoordinator = SPointCoordinator(con_db, study_name, sp_id)
+
+    # get calibration parameters from SPointCoordinator
+    beta, V_ref = SPointCoordinator.thermometer_calibration_infos()
+    if beta is None or V_ref is None:
+        return 
+        
+    # 2. Calibrate temperatures
+    temp_values = {
+        "Temp1": SPointCoordinator.calibrate_temperature(payload["a2"], beta, V_ref),
+        "Temp2": SPointCoordinator.calibrate_temperature(payload["a3"], beta, V_ref),
+        "Temp3": SPointCoordinator.calibrate_temperature(payload["a4"], beta, V_ref),
+        "Temp4": SPointCoordinator.calibrate_temperature(payload["a5"], beta, V_ref),
+    }
+
+    # 3. Insert inside RawMeasuresTemp
+    query = QSqlQuery(con_db)
+    query.prepare(f"""INSERT INTO RawMeasuresTemp (
+                        Date, Temp1, Temp2, Temp3, Temp4, SamplingPoint)
+        VALUES (:Date, :Temp1, :Temp2, :Temp3, :Temp4, :SamplingPoint)
+    """)
+    query.bindValue(":Date", payload["timestamp"])
+    query.bindValue(":Temp1", temp_values["Temp1"])
+    query.bindValue(":Temp2", temp_values["Temp2"])
+    query.bindValue(":Temp3", temp_values["Temp3"])
+    query.bindValue(":Temp4", temp_values["Temp4"])
+    query.bindValue(":SamplingPoint", sp_id)
+    
+    if not query.exec():
+        print(f"Error inserting into RawMeasuresTemp: {query.lastError().text()}")
