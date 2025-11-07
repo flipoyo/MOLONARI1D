@@ -7,7 +7,7 @@ from PyQt5.QtSql import QSqlQuery, QSqlDatabase
 with open(os.path.join(os.path.dirname(__file__), './settings/config.json')) as config_file:
     config = json.load(config_file)
 
-def createDatabase():
+def createRealDatabase():
     """
     Given a directory and the name of the database, create a folder with the name databaseName and the correct structure. Also create the empty database with correct table structure based on the sqlInitFile.
     Return True if the directory was successfully created, False otherwise
@@ -40,6 +40,37 @@ def createDatabase():
     return True
 
 
+def fillRealDatabase():
+    """
+    The directory `objects` contains CSV files with data to insert into the database.
+    Each file has the name of the table to fill, and represents the table content to insert.
+    Required files for proper functioning: 
+        - Labo.csv
+        - Study.csv
+        - Gateway.csv
+        - Relay.csv
+        - Datalogger.csv
+        - Thermometer.csv
+        - PressureSensor.csv
+        - Shaft.csv
+        - SamplingPoint.csv
+    """
+    con_db = QSqlDatabase.addDatabase("QSQLITE")
+    con_db.setDatabaseName(config['database']['filename'])
+    con_db.open()
+
+    for filename in os.listdir(\
+        os.path.join(os.path.dirname(__file__), './objects')):
+        if not filename.endswith(".csv"):
+            continue
+        table_name = filename[:-4]
+        df = pd.read_csv(os.path.join("./objects", filename))
+        
+        df.to_sql(table_name, con_db.connectionName(), if_exists='append', index=False)
+    
+    return con_db
+
+
 def get_sampling_point_id(con_db, payload):
     """
     Select the sampling point based on the payload information.
@@ -65,6 +96,7 @@ def get_sampling_point_id(con_db, payload):
         return None
     sp_id = query.value(0)
     return sp_id
+
 
 def insert_payload(con_db, payload):
     """

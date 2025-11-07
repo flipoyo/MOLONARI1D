@@ -26,7 +26,7 @@ import pandas as pd
 import paho.mqtt.client as mqtt
 
 from . import decoder
-from .db_insertion import insert_payload
+from .db_insertion import insert_payload, createRealDatabase, fillRealDatabase
 from src.receiver.logger_timestamps import logger_timestamps
 
 # Load configuration from JSON file
@@ -78,9 +78,19 @@ def init_db(db_path=DB_FILENAME):
     '''Initializes the SQLite DB and creates the table if necessary using PyQt5.'''
     db = QSqlDatabase.addDatabase("QSQLITE")
     db.setDatabaseName(db_path)
+
     if not db.open():
-        logger.error("Failed to open database: %s", db.lastError().text())
-        return None
+        if REAL_DB_INSERTION:
+            if not createRealDatabase():
+                logger.error("Failed to create real database.")
+                return None
+            return fillRealDatabase()
+        else:
+            logger.error("Failed to open database: %s", db.lastError().text())
+            return None
+    elif REAL_DB_INSERTION:
+        # Database exists, just return the connection
+        return db
 
     query = QSqlQuery(db)
     query.exec(f'''
@@ -327,7 +337,7 @@ def processing_worker(mqtt_worker:MQTTWorker, db_conn, device_euis_normalized):
 
 # ---- Main ----
 
-def main_mqtt(real_database_insertion=False):
+def main_mqtt():
     # normalize list of deviceEUIs
     device_euis_normalized = set(normalize_eui(x) for x in DEVICE_EUIS) if DEVICE_EUIS else set()
 
