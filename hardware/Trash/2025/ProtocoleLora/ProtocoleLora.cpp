@@ -72,7 +72,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 
     delay(80);
     unsigned long startTime = millis();
-    int ackTimeout = 2000;
+    int ackTimeout = 500;
 
     while (millis() - startTime < ackTimeout) {
         int packetSize = LoRa.parsePacket();
@@ -86,10 +86,10 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             payload = "";
             while (LoRa.available()) payload += (char)LoRa.read();
 
-            if (!isValidDestination(recipient, dest, requestType)) return false;
+            //if (!isValidDestination(recipient, dest, requestType)) return false;
 
             uint8_t calculatedChecksum = calculateChecksum(recipient, dest, packetNumber, requestType, payload);
-            if (calculatedChecksum != receivedChecksum) return false;
+            //if (calculatedChecksum != receivedChecksum) return false;
 
             LORA_LOG_LN("Packet received: " + payload);
             return true;
@@ -116,6 +116,8 @@ uint8_t LoraCommunication::calculateChecksum(int recipient, int dest, uint8_t pa
 bool LoraCommunication::isLoRaActive() { return active; }
 
 bool LoraCommunication::handshake(uint8_t &shift) {
+    Serial.println( "called a function from trash" );
+    throw std::invalid_argument( "function fetched from trash" );
     if (deviceRole == MASTER) {
         sendPacket(0, SYN, "");
         LORA_LOG_LN("MASTER: SYN sent");
@@ -129,7 +131,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
                 sendPacket(packetNumber, ACK, "");
                 return true;
             } else {
-                delay(100 * (retries + 1));
+                delay(50);//delay(100 * (retries + 1));
                 sendPacket(0, SYN, "");
                 retries++;
             }
