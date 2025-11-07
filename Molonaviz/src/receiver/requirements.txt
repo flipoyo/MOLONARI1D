@@ -1,0 +1,4 @@
+pandas
+PyQt5
+paho-mqtt
+protobuf
