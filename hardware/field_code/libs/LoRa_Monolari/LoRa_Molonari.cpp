@@ -90,6 +90,7 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
 
     LoRa.print(payload);
     LoRa.endPacket();
+    DEBUG_LOG("packet sent");
 
 
 }
@@ -152,7 +153,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
                 return false;
             }
 
-            uint8_t calculatedChecksum = calculateChecksum(recipient, sender, packetNumber, requestType, payload);
+            uint8_t calculatedChecksum = calculateChecksum(String(recipient), String(sender), packetNumber, requestType, payload);
             if (calculatedChecksum != receivedChecksum) {
                 DEBUG_LOG("checksum caca");
                 return false;
@@ -199,11 +200,11 @@ bool LoraCommunication::handshake(uint8_t &shift) {
                 DEBUG_LOG("MASTER: Received SYN-ACK, sending ACK");
                 digitalWrite(LED_BUILTIN, LOW);
                 delay(50);
-                for (int i = 0; i<4; i++){
+                for (int i = 0; i<40; i++){
                     digitalWrite(LED_BUILTIN, HIGH);
                     sendPacket(packetNumber, ACK, "ACK");
                     digitalWrite(LED_BUILTIN, LOW);
-                    delay(50);
+                    delay(100);
                 }
                 return true;
             } else {
