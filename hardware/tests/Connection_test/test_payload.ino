@@ -7,148 +7,113 @@
 
 LoRaModem modem;
 
+#include "arduino_secrets.h" 
+// Please enter your sensitive data in the Secret tab or arduino_secrets.h 
+String appEui = SECRET_APP_EUI; // AppEUI (JoinEUI)
+String appKey = SECRET_APP_KEY; // AppKey (16 hex bytes)
+
 String appEui = "a8610a3433408f04";   // AppEUI (JoinEUI)
-String appKey = "00112233445566778899AABBCCDDEEFF";  // AppKey (16 octets hex)
+String appKey = "00112233445566778899aabbccddeeff";  // AppKey (16 hex bytes)
 
 void setup() {
   Serial.begin(9600);
   while (!Serial);
 
-  encode();
-
-  Serial.println("Initialisation du modem LoRa...");
-  if (!modem.begin(EU868)) {  // Pour l’Europe : EU868
-    Serial.println("Échec d'initialisation du modem LoRa !");
+  Serial.println("Initializing LoRa modem...");
+  if (!modem.begin(EU868)) {  // For Europe: EU868
+    Serial.println("LoRa modem initialization failed!");
     while (true);
   }
 
-  Serial.print("Version modem : ");
+  Serial.print("Modem version: ");
   Serial.println(modem.version());
-  Serial.print("DevEUI : ");
+  Serial.print("DevEUI: ");
   Serial.println(modem.deviceEUI());
 
-  Serial.println("Tentative de join OTAA...");
+  Serial.println("Attempting OTAA join...");
   int connected = modem.joinOTAA(appEui, appKey);
 
   if (!connected) {
-    Serial.println("Échec du join LoRaWAN, réessai...");
+    Serial.println("LoRaWAN join failed, retrying...");
     while (!modem.joinOTAA(appEui, appKey)) {
       Serial.print(".");
       delay(10000);
     }
   }
 
-  Serial.println("\nConnecté au réseau LoRaWAN !");
+  Serial.println("\nConnected to LoRaWAN network!");
 }
 
-void printBuffer(uint8_t* buf, size_t len) {
-  for (size_t i = 0; i < len; i++) {
-    Serial.print(buf[i], HEX);
+bool encode(uint8_t *outBuffer, size_t outSize, size_t &messageLength) {
+    SensorData msg = SensorData_init_zero;
+
+    strncpy(msg.UI, "ferhfuieriu", sizeof(msg.UI));
+    msg.time = 1024251555;
+    msg.measurements_count = 6;
+    msg.measurements[0] = 0.9;
+    msg.measurements[1] = 1.78;
+    msg.measurements[2] = 2.78;
+    msg.measurements[3] = 3.90;
+    msg.measurements[4] = 43.89;
+    msg.measurements[5] = 4.8;
+
+    pb_ostream_t stream = pb_ostream_from_buffer(outBuffer, outSize);
+    if (!pb_encode(&stream, SensorData_fields, &msg)) {
+        Serial.println("Protobuf encoding error!");
+        return false;
+    }
+
+    messageLength = stream.bytes_written;
+    Serial.print("Binary payload (length ");
+    Serial.print(messageLength);
+    Serial.println(" bytes) ready to send!");
+    return true;
+}
+
+void loop() {
+  //String data = "20251017,1621,2723,23,21,18,14";
+  uint8_t buffer[64];
+  size_t messageLength = 0;
+
+  if (!encode(buffer, sizeof(buffer), messageLength)) {
+      Serial.println("Error, payload not sent");
+      delay(10000);
+      return;
+  }
+
+  // --- Send binary payload to the modem ---
+  modem.beginPacket();
+  modem.write(buffer, messageLength);  // Direct binary send
+  int err = modem.endPacket(true);     // true = confirmed uplink
+
+  if (err > 0) {
+    Serial.println("Message sent correctly!");
+  } else {
+    Serial.println("Error sending message :(");
+    Serial.println("(you may send a limited number of messages per minute, depending on signal strength");
+    Serial.println("this can vary from one message every few seconds to one per minute)");
+  }
+
+  /* Code to try receiving data from the server.
+     Currently causes the board to hang when something is received
+     (it stays in the decoding loop and never exits).
+  delay(1000);
+  if (!modem.available()) {
+    Serial.println("No downlink message received at this time.");
+    return;
+  }
+  char rcv[64];
+  int i = 0;
+  while (modem.available()) {
+    rcv[i++] = (char)modem.read();
+  }
+  Serial.print("Received: ");
+  for (unsigned int j = 0; j < i; j++) {
+    Serial.print(rcv[j] >> 4, HEX);
+    Serial.print(rcv[j] & 0xF, HEX);
     Serial.print(" ");
   }
   Serial.println();
-}
-
-String toBase64(const uint8_t *data, size_t len) {
-  const char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  String result;
-  size_t i = 0;
-
-  while (i < len) {
-    uint32_t octet_a = i < len ? data[i++] : 0;
-    uint32_t octet_b = i < len ? data[i++] : 0;
-    uint32_t octet_c = i < len ? data[i++] : 0;
-
-    uint32_t triple = (octet_a << 16) | (octet_b << 8) | octet_c;
-
-    result += base64_table[(triple >> 18) & 0x3F];
-    result += base64_table[(triple >> 12) & 0x3F];
-    result += (i - 1 < len) ? base64_table[(triple >> 6) & 0x3F] : '=';
-    result += (i < len) ? base64_table[triple & 0x3F] : '=';
-  }
-
-  return result;
-}
-
-
-void encode() {
-  SensorData msg = SensorData_init_zero;
-
-  strncpy(msg.UI, "ferhfuieriu", sizeof(msg.UI));
-  msg.time = 1024251555;
-  msg.measurements_count = 5;
-  msg.measurements[0] = 0.9;
-  msg.measurements[1] = 1.78;
-  msg.measurements[2] = 2.78;
-  msg.measurements[3] = 3.90;
-  msg.measurements[4] = 43.89;
-
-  uint8_t buffer[64];
-  pb_ostream_t stream = pb_ostream_from_buffer(buffer,sizeof(buffer));
-  if (!pb_encode(&stream,SensorData_fields,&msg)){
-    Serial.println("Erreur");
-    return;
-  }
-
-  size_t message_length = stream.bytes_written;
-
-    // === Encodage Base64 via la stack LoRa ===
-  String encoded = toBase64(buffer, message_length);
-  Serial.print("Encoded (base64): ");
-  Serial.println(encoded);
-
-  Serial.print("Base64 (via modem): ");
-  Serial.println(encoded);
-
-  Serial.write(buffer, message_length); // pour debug local
-
-}
-
-
-void loop() {
-  encode();
-
-  String data = "20251017,1621,2723,23,21,18,14\n20251017,1626,2743,13,41,38,16";
-
-  // --- Envoi du payload vers le modem ---
-  modem.beginPacket();
-  modem.write(data);   // <-- ici
-  int err = modem.endPacket(true);       // true = envoi confirmé
-
-  if(err > 0){
-    Serial.println("Uplink envoyé, lecture RX1/RX2...");
-    unsigned long start = millis();
-    while(millis() - start < 2000){ // fenêtre RX1
-        int packetSize = modem.parsePacket();
-        if(packetSize){
-            uint8_t downlink[64];
-            int len = modem.readBytes(downlink, sizeof(downlink));
-            Serial.print("📩 Downlink reçu (UnconfirmedDataDown) : ");
-            for(int i=0; i<len; i++){
-                Serial.print(downlink[i], HEX);
-                Serial.print(" ");
-            }
-            Serial.println();
-            break;
-        }
-    }
-}
-
-
- /* if(err > 0){
-    Serial.println("✅ Payload envoyé !");
-
-    if (modem.available()) {
-      String rcv = modem.readString();
-      Serial.print("📩 Message reçu du réseau : ");
-      Serial.println(rcv);
-    } else {
-    Serial.println("Aucun message reçu en downlink.");
-    } 
-  } else {
-    Serial.print("⚠️ Erreur envoi : ");
-    Serial.println(err);
-  } */
-
-  delay(100000); // 100 s
+*/
+  delay(1 * 60000); // wait 1 minute before next message
 }
