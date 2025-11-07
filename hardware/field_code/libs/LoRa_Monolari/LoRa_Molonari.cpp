@@ -77,9 +77,10 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     uint8_t buffer_sender[17];  // 16 caractères + 1 pour '\0'
     Address_sent.toCharArray((char*)buffer_sender, sizeof(buffer_sender));
 
-    DEBUG_LOG("Sending packet to " + Address_waited + " from " + Address_sent + " with payload: " + payload);
-
+    DEBUG_LOG("Sending packet to " + Address_waited + " from " + Address_sent + " with :");
+    
     uint8_t checksum = calculateChecksum(Address_waited, Address_sent, packetNumber, requestType, payload);
+    DEBUG_LOG("checksum "+ String(checksum) + "; Packet Number: " + String(packetNumber) + "; Request Type: " + String(static_cast<uint8_t>(requestType)) + "; Payload: " + String(payload));
     LoRa.write(checksum);
     LoRa.write(buffer_sender, Address_sent.length());
     LoRa.write(buffer_destination, Address_waited.length());
