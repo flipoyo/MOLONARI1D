@@ -17,7 +17,7 @@ def createRealDatabase():
 
     if os.path.isdir(databaseDirectory):
         return False
-    os.mkdir(databaseDirectory)
+    os.makedirs(databaseDirectory, exist_ok=True)
     os.mkdir(os.path.join(databaseDirectory, "Notices"))
     os.mkdir(os.path.join(databaseDirectory, "Schemes"))
     os.mkdir(os.path.join(databaseDirectory, "Scripts"))
