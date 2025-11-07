@@ -9,6 +9,7 @@
 #include "Waiter.hpp"
 #include "Reader.hpp"
 #include "Time.hpp"
+#include "Writer.hpp"
 
 
 #define DEBUG_MAIN
@@ -29,6 +30,7 @@ LoRaModem modem;
 
 LoraWANCommunication loraWAN;
 std::queue<String> sendingQueue;
+Writer logger;
 
 GeneralConfig res;
 
@@ -44,7 +46,9 @@ int CSPin = 5; // Pin CS par défaut
 const char* configFilePath = "conf.csv";
 
 Waiter waiter; //pour ne pas l'indenter dans le loop
+unsigned long lastSDOffsetConfig = 0;
 unsigned long lastSDOffset = 0;
+const char filename[] = "RECORDS.CSV";
 
 
 // ----- Setup -----
@@ -72,7 +76,9 @@ void setup() {
         Serial.println("Erreur SD - arrêt système.");
         while (true) {}
     }
+
     InitialiseRTC();
+    logger.EstablishConnection(CSPin);
 
     Serial.println("Initialisation terminée !");
     pinMode(LED_BUILTIN, INPUT_PULLDOWN);
@@ -100,23 +106,21 @@ void loop() {
 
             // Met à jour le temps de la dernière tentative de réception
             lastAttempt = GetSecondsSinceMidnight();
-            
-            
 
             //envoie du csv
             if (modif==true) { // normalement modif est toujours false pour l'instant : la focntion de modif n'est pa sbien implémentée
                 File config = SD.open(configFilePath, FILE_READ);
-                config.seek(lastSDOffset);
+                config.seek(lastSDOffsetConfig);
                 std::queue<memory_line> lines_config;
 
                 while (config.available()) {
                     memory_line new_line = memory_line(config.readStringUntil('\n'), config.position());
                     lines_config.push(new_line);
                     
-                        uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffset, config);
+                        uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffsetConfig, config);
                         lora.closeSession(lastPacket);
 
-                        modif = !(lastSDOffset == config.position());
+                        modif = !(lastSDOffsetConfig == config.position());
                 }
             }
         } else {
@@ -129,23 +133,43 @@ void loop() {
 
         lora.stopLoRa();
 
-        // Transfert vers la queue globale
-        while (!receiveQueue.empty()) {
-            sendingQueue.push(receiveQueue.front());
-            receiveQueue.pop();
-        }
+        logger.LogString(receiveQueue);
 
         // Envoi via LoRaWAN si intervalle complet atteint
 
+        File dataFile = SD.open(filename, FILE_READ);
+        DEBUG_LOG("File has been opened");
+
+        if (!dataFile) {
+            DEBUG_LOG("Impossible d'ouvrir le fichier de données pour LoRa");
+            return;
+        }
+
         if (loraWAN.begin(res.rel_config.appEui, res.rel_config.devEui)) {
             Serial.print("Envoi de ");
-            Serial.print(sendingQueue.size());    
 
-            if (loraWAN.sendQueue(sendingQueue)) {
-                Serial.println("Tous les paquets ont été envoyés !");
-            } else {
-                Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
-            }
+            while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
+                //at this point, lastSDOffset must point to the first memory address of the first line to be sent
+                std::queue<memory_line> linesToSend;
+                while (dataFile.available()) {
+                    memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                    linesToSend.push(new_line);
+
+                // Si la ligne est vide aka plus rien à envoyer
+                    if (linesToSend.front().flush.length() == 0) {
+                        break;
+                    }
+                }
+                int end_document_address = dataFile.position();
+                if (loraWAN.sendAllPacketsAndManageMemoryWAN(linesToSend, lastSDOffset, dataFile)) {
+                    Serial.println("Tous les paquets ont été envoyés !");
+                } else {
+                    Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
+                }
+            }    
+
+            dataFile.close();
+
         } else {
             Serial.println("Connexion LoRaWAN impossible, report de l’envoi.");
         }

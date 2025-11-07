@@ -46,6 +46,7 @@ int CSPin = 5; // Pin CS par défaut
 const char* configFilePath = "conf.csv";
 
 Waiter waiter; //pour ne pas l'indenter dans le loop
+unsigned long lastSDOffsetConfig = 0;
 unsigned long lastSDOffset = 0;
 const char filename[] = "RECORDS.CSV";
 
@@ -109,17 +110,17 @@ void loop() {
             //envoie du csv
             if (modif==true) { // normalement modif est toujours false pour l'instant : la focntion de modif n'est pa sbien implémentée
                 File config = SD.open(configFilePath, FILE_READ);
-                config.seek(lastSDOffset);
+                config.seek(lastSDOffsetConfig);
                 std::queue<memory_line> lines_config;
 
                 while (config.available()) {
                     memory_line new_line = memory_line(config.readStringUntil('\n'), config.position());
                     lines_config.push(new_line);
                     
-                        uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffset, config);
+                        uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffsetConfig, config);
                         lora.closeSession(lastPacket);
 
-                        modif = !(lastSDOffset == config.position());
+                        modif = !(lastSDOffsetConfig == config.position());
                 }
             }
         } else {
@@ -135,7 +136,6 @@ void loop() {
         logger.LogString(receiveQueue);
 
         // Envoi via LoRaWAN si intervalle complet atteint
-        // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH
 
         File dataFile = SD.open(filename, FILE_READ);
         DEBUG_LOG("File has been opened");
@@ -161,12 +161,12 @@ void loop() {
                     }
                 }
                 int end_document_address = dataFile.position();
-                if (loraWAN.sendQueue(sendingQueue)) {
+                if (loraWAN.sendAllPacketsAndManageMemoryWAN(linesToSend, lastSDOffset, dataFile)) {
                     Serial.println("Tous les paquets ont été envoyés !");
                 } else {
                     Serial.println("Certains paquets n’ont pas pu être envoyés, ils seront réessayés.");
                 }
-            }    // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
+            }    
 
             dataFile.close();
 
