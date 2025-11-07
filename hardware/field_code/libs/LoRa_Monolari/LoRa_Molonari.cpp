@@ -138,8 +138,10 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 
             payload = "";
             while (LoRa.available()) payload += (char)LoRa.read();
+            DEBUG_LOG("recipient est :"+ String (recipient));
+            DEBUG_LOG("sender est :"+String(sender));
 
-            if (!isValidDestination(recipient, sender, requestType)) {
+            if (!isValidDestination(sender, recipient, requestType)) {
                 DEBUG_LOG("destination caca");
                 return false;
             }
@@ -158,10 +160,10 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
     return false;
 }
 
-bool LoraCommunication::isValidDestination(const String &recipient, const String &dest, RequestType requestType) {
-    if (recipient != localAddress) return false;
-    if (destination == dest || (requestType == SYN && destination == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
-        destination = dest;
+bool LoraCommunication::isValidDestination(const String &sender, const String &recipient, RequestType requestType) {
+    if (sender != localAddress) return false;
+    if (destination == recipient || (requestType == SYN && destination == String(0xff) && myNet.find(recipient.toInt()) != myNet.end())) {
+        destination = recipient;
         return true;
     }
     return false;
