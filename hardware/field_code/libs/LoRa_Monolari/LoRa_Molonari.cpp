@@ -119,7 +119,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             DEBUG_LOG_NO_LN("RECEIVING A PACKET. packet size :" + String(packetSize));
 
             uint8_t receivedChecksum = LoRa.read();
-            DEBUG_LOG("; received checksum: " + String(receivedChecksum));
+            DEBUG_LOG_NO_LN("; received checksum: " + String(receivedChecksum));
 
             // Lire l’adresse source
             for (int i = 0; i < addressLength; i++) {
@@ -139,7 +139,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             recipient[addressLength] = '\0';
             //DEBUG_LOG("Recipient read:"+String(recipient));
 
-            DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
+            DEBUG_LOG_NO_LN("\nReceiving packet to " + String(recipient) + " from " + String(sender));
 
             packetNumber = LoRa.read();
     
@@ -172,9 +172,9 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 }
 
 bool LoraCommunication::isValidDestination(const String &recipient, const String &dest, RequestType requestType) {
-    DEBUG_LOG("recipient :        " + recipient + "\n" + "Address sent.       " + Address_sent);
+    DEBUG_LOG_NO_LN(" recipient :        " + recipient + "Address sent.       " + Address_sent);
     if (recipient != Address_sent) return false;
-    DEBUG_LOG("dest : " + dest + "\n" + "address waited" + Address_waited);
+    DEBUG_LOG("dest : " + dest + "address waited" + Address_waited);
     if (Address_waited == dest || (requestType == SYN && Address_waited == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
         Address_waited = dest;
         return true;
