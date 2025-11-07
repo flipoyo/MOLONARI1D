@@ -4,7 +4,8 @@ MOLONARI stands for "**mo**nitoring **lo**cal des échanges **na**ppe-**ri**viè
 
 This repository provides detailed descriptions and scripts on how to build, prepare and deploy a 1D MOLONARI device, from hardware deployment to scientific analysis. A MOLONARI1D device provides **temperature and pressure sensors** in the river bed, at depths ranging from 0 to ~40cm. In the long run, these measures give us informations on water and heat exchanges between the river and the aquifer, and on the aquifer's properties (porosity, permeability, etc.)
 
-![MOLONARI1D](Figures/schemaMOLONARI.png)
+![MOLONARI1D_v1.0](Figures/schemaMOLONARI.png)
+__MOLONARI 1D v1.0 is composed of two devices, measuring depth distributed temperatures and the associated hydraulic head difference over the riverbed. MOLONARI 1D v2.0 integrates all the sensor in one device only __
 
 **Key attention points** - The MOLONARI1D device is designed with the following key concepts in mind :
 - low-tech production
