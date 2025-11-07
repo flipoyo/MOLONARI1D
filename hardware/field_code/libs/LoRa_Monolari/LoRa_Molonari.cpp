@@ -139,7 +139,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             recipient[addressLength] = '\0';
             //DEBUG_LOG("Recipient read:"+String(recipient));
 
-            //DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
+            DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
 
             packetNumber = LoRa.read();
     
@@ -172,9 +172,9 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 }
 
 bool LoraCommunication::isValidDestination(const String &recipient, const String &dest, RequestType requestType) {
-    //DEBUG_LOG("recipient :        " + recipient + "\n" + "Address sent.       " + Address_sent);
+    DEBUG_LOG("recipient :        " + recipient + "\n" + "Address sent.       " + Address_sent);
     if (recipient != Address_sent) return false;
-    //DEBUG_LOG("dest : " + dest + "\n" + "address waited" + Address_waited);
+    DEBUG_LOG("dest : " + dest + "\n" + "address waited" + Address_waited);
     if (Address_waited == dest || (requestType == SYN && Address_waited == String(0xff) && myNet.find(dest.toInt()) != myNet.end())) {
         Address_waited = dest;
         return true;
@@ -350,7 +350,7 @@ uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
     return nb_packets_sent;
 }
 
-int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {// is it really used somewhear ?
+int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {
     uint8_t packetNumber = 0; String payload; RequestType requestType; uint8_t prevPacket = -1;
     unsigned long startTime = millis(); int ackTimeout = 60000;
 
@@ -366,6 +366,7 @@ int LoraCommunication::receivePackets(std::queue<String> &receiveQueue) {// is i
                     sendPacket(packetNumber, ACK, "ACK");
             }
         }
+        DEBUG_LOG("packet number :" + String(packetNumber));
     }
     return packetNumber;
 }
