@@ -190,6 +190,7 @@ void loop() {
                 std::queue<memory_line> linesToSend;
                 while (dataFile.available()) {
                     memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                    new_line.flush = new_line.flush + "\n"; 
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer
