@@ -157,14 +157,25 @@ bool LoraWANCommunication::sendAllPacketsAndManageMemoryWAN(std::queue<memory_li
     // handles packet sending and acknowledgement verificaiton, SDOffset updating, and ensures dataFile.position() is at the right place (terminal SDOffset).
 
     while (!sendQueue.empty()) {
-
+        uint8_t buffer[64];
+        size_t messageLength = 0;
+        
         memory_line packet = sendQueue.front();
         Serial.print("Sending packet with data: " + packet.flush + "\n");
+
+        if (!encode(buffer, sizeof(buffer), messageLength, packet.flush)) {
+            Serial.println("Error, payload pas encodé at all (du tout)");
+            delay(10000);
+            return;
+        }
+
         int send_retries = 0;
         int err = 0;
         while(send_retries < 2 && err <= 0){ //remettre send_retries à 10 après test
             modem.beginPacket();
-            modem.print(packet.flush);
+
+
+            modem.write(buffer, messageLength);
 
             err = modem.endPacket(true);
             if (err <= 0) {
@@ -193,7 +204,7 @@ bool LoraWANCommunication::sendAllPacketsAndManageMemoryWAN(std::queue<memory_li
 }
 
 
-
+/* caché car c'est nul
 bool LoraWANCommunication::receiveConfig(const char* configFilePath, bool modif) {
     String rcv = modem.readString();
     Serial.print("↓ Message reçu en downlink : ");
@@ -225,4 +236,4 @@ bool LoraWANCommunication::receiveConfig(const char* configFilePath, bool modif)
     return true;
 
 }
-
+*/
