@@ -39,6 +39,7 @@ long lastAttempt = 0;// mémorise la dernière tentative de réception (en milli
 
 String appEui;
 String devEui;
+String appKey;
 LoraCommunication lora(868E6, devEui, appEui, RoleType::MASTER);
 bool modif = false;
 int CSPin = 5; // Pin CS par défaut
@@ -65,7 +66,7 @@ void setup() {
 
     // Lecture configuration CSV
     Reader reader;
-    res=reader.lireConfigCSV("conf.csv", CSPin);
+    res = reader.lireConfigCSV("conf.csv", CSPin);
     Serial.println("Configuration chargée.");
 
     // Initialisation LoRa communication
@@ -144,7 +145,7 @@ void loop() {
             return;
         }
 
-        if (loraWAN.begin(res.rel_config.appEui, res.rel_config.devEui)) {
+        if (loraWAN.begin(res.rel_config.appEui, res.rel_config.appKey)) {
             Serial.print("Envoi de ");
 
             while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
