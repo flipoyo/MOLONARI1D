@@ -157,7 +157,7 @@ void loop() {
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer
-                    if (linesToSend.front().flush.length() == 0) {
+                    if (new_line.flush.length() == 0) {
                         break;
                     }
                 }
