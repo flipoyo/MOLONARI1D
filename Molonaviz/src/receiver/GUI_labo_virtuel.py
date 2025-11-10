@@ -10,12 +10,14 @@ import json
 # Get the information from the configuration file
 
 RECEIVER_PATH = './src/receiver/'
-with open(RECEIVER_PATH + 'settings/config.json', 'r') as config_file:
+SETTINGS_PATH = RECEIVER_PATH + 'settings/'
+LAB_FOLDER = './src/molonaviz/backend/virtual-lab/'
+
+with open(SETTINGS_PATH + 'config.json', 'r') as config_file:
     config = json.load(config_file)
 
-OBJECT_FOLDER = RECEIVER_PATH + 'objects/'
 SQLINITFILE = config['database']['ERD_structure']
-DB_PATH = RECEIVER_PATH + 'tmp.sqlite'
+DB_PATH = LAB_FOLDER + 'tmp.sqlite'
 
 
 def get_db():
@@ -130,7 +132,7 @@ def tout_supprimer():
         query = QSqlQuery(db)
         query.exec(f"DELETE FROM {table}")
     for table in tables:
-        csv_file = f"{OBJECT_FOLDER}{table}.csv"
+        csv_file = f"{LAB_FOLDER}{table}.csv"
         if os.path.exists(csv_file):
             os.remove(csv_file)
     messagebox.showinfo("Suppression", "Toutes les données ont été supprimées.")
@@ -155,7 +157,7 @@ def initialize_local_database():
         "Labo", "Study", "Gateway", "Relay", "Datalogger", "Thermometer", "PressureSensor", "Shaft", "SamplingPoint"
     ]
     for table_name in import_order:
-        csv_file = os.path.join(OBJECT_FOLDER, f"{table_name}.csv")
+        csv_file = os.path.join(LAB_FOLDER, f"{table_name}.csv")
         if not os.path.exists(csv_file):
             continue
         df = pd.read_csv(csv_file)
