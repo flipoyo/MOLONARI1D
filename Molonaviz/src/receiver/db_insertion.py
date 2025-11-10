@@ -2,6 +2,8 @@ import pandas as pd
 import os
 import json
 from PyQt5.QtSql import QSqlQuery, QSqlDatabase
+from ..molonaviz.backend.SPointCoordinator import SPointCoordinator
+
 
 # Load configuration from JSON file
 with open(os.path.join(os.path.dirname(__file__), './settings/config.json')) as config_file:
