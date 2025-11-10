@@ -37,6 +37,7 @@ def createRealDatabase():
     for q in sqlQueries:
         query.exec(q)
     con.close()
+    QSqlDatabase.removeDatabase(con.databaseName())
     return True
 
 
