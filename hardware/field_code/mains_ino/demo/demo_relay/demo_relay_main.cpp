@@ -146,6 +146,7 @@ void loop() {
         }
 
         if (loraWAN.begin(res.rel_config.appEui, res.rel_config.appKey)) {
+            Serial.print("appKey : " + String(appKey));
             Serial.print("Envoi de ");
 
             while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
