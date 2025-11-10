@@ -42,6 +42,7 @@ bool LoraWANCommunication::sendQueue(std::queue<String>& sendingQueue) {
             modem.print(payload);
             err = modem.endPacket(true);
             if (err <= 0) {
+                Serial.println("payload : " + payload);
                 Serial.println("Erreur d’envoi, nouvelle tentative...");
                 delay(10000);
             }
@@ -70,16 +71,18 @@ bool LoraWANCommunication::sendAllPacketsAndManageMemoryWAN(std::queue<memory_li
     while (!sendQueue.empty()) {
 
         memory_line packet = sendQueue.front();
+        Serial.println("packet dans sendAllPacketsAndManageMemoryWAN : " + packet.flush);
         int send_retries = 0;
         int err = 0;
-        while(send_retries < 10 && err <= 0){
+        while(send_retries < 2 && err <= 0){ //remettre send_retries à 10 après test
             modem.beginPacket();
             modem.print(payload);
 
             int err = modem.endPacket(true);
             if (err <= 0) {
+                Serial.println("payload : " + payload);
                 Serial.println("Erreur d’envoi, nouvelle tentative...");
-                delay(10000);
+                delay(1000);//remettre à 10 000 après les tetst
             }
             send_retries++;
         }
