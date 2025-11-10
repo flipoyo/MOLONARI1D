@@ -152,7 +152,7 @@ def insert_record(db, rec):
 
 def export_csv(conn, out_path):
     query = QSqlQuery(conn)
-    if not query.exec(f"SELECT * FROM {SQLITE_TABLE}"):
+    if not query.exec(f"SELECT * FROM RawMeasurements"):
         logger.error("Failed to execute SELECT for export: %s", query.lastError().text())
         return False
     
