@@ -1,2 +1,2 @@
-ID,Name,ManuName,ManuRef,Error,Labo
-1,TestThermo,MaisNon,EtSi,0,1
+ID,Name,ManuName,ManuRef,Error,Beta,V,Labo
+1,TestThermo,MaisNon,EtSi,0,4000,1,1

@@ -823,15 +823,17 @@ class SPointCoordinator:
         return query
     
     def thermometer_calibration_infos(self):
-        """
-        execute and return the calibration infos of the thermometer associated to the current sampling point: beta and V_ref
-        """
         select_cal_infos = self.build_thermo_calibration_info()
-        if (not select_cal_infos.exec()) : print(select_cal_infos.lastError())
-        select_cal_infos.next()
-        # La colonne 0 est beta, la colonne 1 est V
-        return select_cal_infos.value(0), select_cal_infos.value(1)
-
+        if not select_cal_infos.exec():
+            print(select_cal_infos.lastError())
+            return None, None
+        
+        if select_cal_infos.next():
+            # La colonne 0 est beta, la colonne 1 est V
+            return select_cal_infos.value(0), select_cal_infos.value(1)
+        else:
+            return None, None # Aucune donnée trouvée
+        
     @staticmethod
     def calibrate_temperature(raw_volt: float, beta: float, V_ref: float, T0_K: float = 298.15) -> float:
         """
