@@ -139,7 +139,7 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
             recipient[addressLength] = '\0';
             //DEBUG_LOG("Recipient read:"+String(recipient));
 
-            DEBUG_LOG_NO_LN("\nReceiving packet to " + String(recipient) + " from " + String(sender));
+            DEBUG_LOG("Receiving packet to " + String(recipient) + " from " + String(sender));
 
             packetNumber = LoRa.read();
     
@@ -153,17 +153,17 @@ bool LoraCommunication::receivePacket(uint8_t &packetNumber, RequestType &reques
 
 
             if (!isValidDestination(String(sender), String(recipient), requestType)) {
-                DEBUG_LOG("\ndestination caca");
+                DEBUG_LOG("destination problématique");
                 return false;
             }
 
             uint8_t calculatedChecksum = calculateChecksum(String(recipient), String(sender), packetNumber, requestType, payload);
             if (calculatedChecksum != receivedChecksum) {
-                DEBUG_LOG("\nchecksum caca");
+                DEBUG_LOG("checksum problématique");
                 return false;
             }
 
-            DEBUG_LOG("\nPACKET RECEIVED. request type: " + String(requestType) + ", payload: " + payload);
+            DEBUG_LOG("PACKET RECEIVED. request type: " + String(requestType) + ", payload: " + payload);
             return true;
         }
     }
@@ -272,7 +272,7 @@ uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>
         while(send_retries<10 && !bien_recu){
             sendPacket(nb_packets_sent, DATA, packet.flush);
             int receive_retries = 0;
-            while (receive_retries < 10 && !bien_recu) {
+            while (receive_retries < 6 && !bien_recu) {
                 if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet.flush) {
                     sendQueue.pop();
                     DEBUG_LOG_NO_LN("Packet sent was acknowledged. cursor before increment: " + String(SDOffset));
@@ -328,7 +328,7 @@ uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
                     DEBUG_LOG("one packet successfully sent");
                     break;
                 }
-                #ifdef DEBUG_MAIN
+                #ifdef DEBUG_LORA
                 else{
                     DEBUG_LOG("pas d'acknowledgement adequat reçu à " + String(receive_retries) + "e écoute parce que : ");
                     if(!receivePacket(nb_packets_sent_received, requestType, payload)){
