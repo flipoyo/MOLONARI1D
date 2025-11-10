@@ -153,7 +153,7 @@ void loop() {
                 std::queue<memory_line> linesToSend;
                 while (dataFile.available()) {
                     memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
-                    Serial.println("new line" + new_line.flush);
+                    Serial.println(String("new line: ") + new_line.flush);
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer

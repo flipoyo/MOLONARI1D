@@ -56,6 +56,7 @@ uint16_t newLoraInterval = 0;
 
 const long sec_in_day = 86400;
 bool rattrapage = false;
+bool a_line_remains_to_log = false;
 
 // ----- Setup -----
 void setup() {
@@ -146,13 +147,19 @@ void loop() {
         }
         lastMeasure = current_Time;
         DEBUG_LOG("Voltage recording finished");
+        a_line_remains_to_log = true;
+    }else{
+        DEBUG_LOG("Not time to measure yet : current_Time - lastMeasure = " + String(current_Time - lastMeasure) + " ; intervalle_de_mesure_secondes - 1 = " + String(intervalle_de_mesure_secondes - 1));
     }
 
     
     // --- Stocker sur SD ---
-    DEBUG_LOG("launch LogData");
-    logger.LogData(ncapt, toute_mesure);
-    DEBUG_LOG("LogData instruction done");
+    if(a_line_remains_to_log){
+        DEBUG_LOG("launch LogData");
+        logger.LogData(ncapt, toute_mesure);
+        DEBUG_LOG("LogData instruction done");
+        a_line_remains_to_log = false;
+    }
     // --- Envoyer LoRa si intervalle atteint ---
     
     bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
@@ -174,7 +181,7 @@ void loop() {
 
         uint8_t id = 0;
         if (lora.handshake(id)) {
-            Serial.println("handshake réussi");
+            Serial.println("HANDSHAKE DONE\n");
             DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
             DEBUG_LOG(String(dataFile.available()));
 
@@ -190,12 +197,13 @@ void loop() {
                         break;
                     }
                 }
-                int end_document_address = dataFile.position();
-                DEBUG_LOG("SDOffset before sending: " + String(lastSDOffset));
+                uint32_t end_document_address = dataFile.position();
+                DEBUG_LOG("end_document_address : " + String(end_document_address) + "; memory_successor of the last element of sendqueue : " + String(linesToSend.back().memory_successor));
+                DEBUG_LOG("SDOffset before sending: " + String(lastSDOffset) + "\n                     SEND ALL PACKETS AND MANAGE MEMORY");
                 uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(linesToSend, lastSDOffset, dataFile);
-                DEBUG_LOG("SDOffset after sending: " + String(lastSDOffset));
-                rattrapage = (lastSDOffset == end_document_address);
-                DEBUG_LOG("rattrappage status : " + String(rattrapage));
+                DEBUG_LOG("SDOffset after sending: " + String(lastSDOffset) + "; end document address : " + String(end_document_address));
+                rattrapage = !(lastSDOffset == end_document_address);
+                DEBUG_LOG("rattrappage status : " + String(rattrapage) + "\n\n");
                 lora.closeSession(lastPacket);
             }    // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
 
@@ -244,4 +252,5 @@ void loop() {
             DEBUG_LOG("Dates have been updated");
         }
     }
+    delay(500);
 }

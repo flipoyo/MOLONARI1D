@@ -76,7 +76,7 @@ bool LoraWANCommunication::sendAllPacketsAndManageMemoryWAN(std::queue<memory_li
             modem.beginPacket();
             modem.print(packet.flush);
 
-            int err = modem.endPacket(true);
+            err = modem.endPacket(true);
             if (err <= 0) {
                 Serial.println("échec d'envoi de : " + packet.flush);
                 Serial.println("Erreur d’envoi, nouvelle tentative...");
