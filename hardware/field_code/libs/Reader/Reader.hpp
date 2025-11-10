@@ -59,9 +59,9 @@ public:
 };
 
 struct memory_line{
-    memory_line(String flush, int offset);
+    memory_line(String flush, uint32_t offset);
     String flush;
-    int memory_successor;//adresse mémoire de la SD successeuse de la dernière adresse occupée par la ligne
+    uint32_t memory_successor;//adresse mémoire de la SD successeuse de la dernière adresse occupée par la ligne
 };
 
 #endif // READER_HPP
