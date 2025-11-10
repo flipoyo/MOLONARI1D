@@ -23,6 +23,7 @@
 LoraWANCommunication::LoraWANCommunication() {}
 
 bool LoraWANCommunication::begin(const String& appEui, const String& appKey) {
+    Serial.println("appKey : " + appKey);
     if (!modem.begin(EU868)) {
         Serial.println("Échec initialisation module LoRaWAN");
         return false;
@@ -132,6 +133,7 @@ bool LoraWANCommunication::sendQueue(std::queue<String>& sendingQueue) {
             modem.print(payload);
             err = modem.endPacket(true);
             if (err <= 0) {
+                Serial.println("payload : " + payload);
                 Serial.println("Erreur d’envoi, nouvelle tentative...");
                 delay(10000);
             }
@@ -154,28 +156,27 @@ bool LoraWANCommunication::sendQueue(std::queue<String>& sendingQueue) {
 bool LoraWANCommunication::sendAllPacketsAndManageMemoryWAN(std::queue<memory_line>& sendQueue, unsigned long& SDOffset, File& dataFile) {
     // handles packet sending and acknowledgement verificaiton, SDOffset updating, and ensures dataFile.position() is at the right place (terminal SDOffset).
 
-    uint8_t nb_packets_sent = 0;
-    String payload; uint8_t nb_packets_sent_received;
-
     while (!sendQueue.empty()) {
 
         memory_line packet = sendQueue.front();
+        Serial.print("Sending packet with data: " + packet.flush + "\n");
         int send_retries = 0;
         int err = 0;
-        while(send_retries < 10 && err <= 0){
+        while(send_retries < 2 && err <= 0){ //remettre send_retries à 10 après test
             modem.beginPacket();
-            modem.print(payload);
+            modem.print(packet.flush);
 
-            int err = modem.endPacket(true);
+            err = modem.endPacket(true);
             if (err <= 0) {
+                Serial.println("échec d'envoi de : " + packet.flush);
                 Serial.println("Erreur d’envoi, nouvelle tentative...");
-                delay(10000);
+                delay(1000);//remettre à 10 000 après les tetst
             }
             send_retries++;
         }
     
         if (err > 0) {
-            Serial.println("Donnée envoyée : " + payload);
+            Serial.println("Donnée envoyée : " + packet.flush);
             sendQueue.pop();
             SDOffset = packet.memory_successor;
 

@@ -22,6 +22,6 @@ devEui,a8610a34334d710d
 
 #Configuration relay 
 appEui,a8610a35391d6f08
-appKey,72C5FBBF2AB954D3316A1EE13AA3F141
+appKey,00112233445566778899aabbccddeeff
 CSPin,5
 lora_freq,868000000

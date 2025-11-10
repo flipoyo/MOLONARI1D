@@ -117,7 +117,6 @@ void loop() {
                 while (config.available()) {
                     memory_line new_line = memory_line(config.readStringUntil('\n'), config.position());
                     lines_config.push(new_line);
-                    
                         uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffsetConfig, config);
                         lora.closeSession(lastPacket);
 
@@ -125,6 +124,7 @@ void loop() {
                 }
             }
             lora.stopLoRa();
+            
 
             logger.LogString(receiveQueue);
         } else {
@@ -146,18 +146,18 @@ void loop() {
         }
 
         if (loraWAN.begin(res.rel_config.appEui, res.rel_config.appKey)) {
-            Serial.print("appKey : " + String(appKey));
-            Serial.print("Envoi de ");
+            Serial.println("appKey : " + String(res.rel_config.appKey));
 
             while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
                 std::queue<memory_line> linesToSend;
                 while (dataFile.available()) {
                     memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                    Serial.println(String("new line: ") + new_line.flush);
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer
-                    if (linesToSend.front().flush.length() == 0) {
+                    if (new_line.flush.length() == 0) {
                         break;
                     }
                 }
