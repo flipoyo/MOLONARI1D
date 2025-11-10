@@ -140,9 +140,8 @@ void Writer::LogString(std::queue<String> receiveQueue) {
 
         while (!receiveQueue.empty()) {
             payload = receiveQueue.front();
-
             SD_LOG("to be written set.");
-            this->file.println(payload); 
+            this->file.print(payload);
             SD_LOG_NO_LN(" Done");
 
             SD_LOG("Flushing ..."); // Ensure data is saved immediately
