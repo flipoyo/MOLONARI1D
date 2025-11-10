@@ -268,23 +268,23 @@ uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>
     while (!sendQueue.empty()) {
         memory_line packet = sendQueue.front();
         int send_retries = 0;
-        int bien_recu = 0;
+        bool bien_recu = false;
         while(send_retries<10 && !bien_recu){
             sendPacket(nb_packets_sent, DATA, packet.flush);
             int receive_retries = 0;
-            while (receive_retries < 10) {
-                bien_recu = 0;
+            while (receive_retries < 10 && !bien_recu) {
                 if (receivePacket(nb_packets_sent_received, requestType, payload) && requestType == ACK && payload == packet.flush) {
                     sendQueue.pop();
+                    DEBUG_LOG_NO_LN("Packet sent was acknowledged. cursor before increment: " + String(SDOffset));
                     nb_packets_sent++;
                     SDOffset = packet.memory_successor;
-                    DEBUG_LOG("one packet successfully sent");
-                    bien_recu = 1;
+                    DEBUG_LOG("; SDOffset is now : " + String(SDOffset) + "; and sendqueue is " + String(sendQueue.size()) + " long");
+                    bien_recu = true;
                     break;
                 }
                 #ifdef DEBUG_LORA
                 else{
-                    DEBUG_LOG("pas d'acknowledgement adequat reçu à " + String(receive_retries) + "e écoute parce que : ");
+                    DEBUG_LOG_NO_LN("Pas d'acknowledgement adequat reçu à la " + String(receive_retries) + "e écoute parce que : ");
                     if(!receivePacket(nb_packets_sent_received, requestType, payload)){
                         DEBUG_LOG("recivePacket est faux");
                     }
