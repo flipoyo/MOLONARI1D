@@ -12,8 +12,7 @@
     "message_queue_max": 1000
   },
   "database": {
-    "filename": "./TestDatabase/Molonari/Molonari.sqlite",
-    "local_table": "RawMeasurements",
+    "filename": "./TestDatabase/Molonari.sqlite",
     "real_database_insertion": true,
     "ERD_structure": "./src/receiver/settings/ERD_structure.sql"
   }

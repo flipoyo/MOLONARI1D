@@ -1,2 +1,2 @@
 SensorData.UI         max_size: 16
-SensorData.measurements  max_count: 5
+SensorData.measurements  max_count: 10

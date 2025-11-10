@@ -17,7 +17,7 @@ def createRealDatabase():
 
     if os.path.isdir(databaseDirectory):
         return False
-    os.mkdir(databaseDirectory)
+    os.makedirs(databaseDirectory, exist_ok=True)
     os.mkdir(os.path.join(databaseDirectory, "Notices"))
     os.mkdir(os.path.join(databaseDirectory, "Schemes"))
     os.mkdir(os.path.join(databaseDirectory, "Scripts"))
@@ -40,6 +40,21 @@ def createRealDatabase():
     return True
 
 
+def add_object(con_db, table_name, df):
+    """
+    Builds and execute a SQL query from a DataFrame.
+    """
+    query = QSqlQuery(con_db)
+    columns = df.columns.tolist()
+    placeholders = ', '.join(['?'] * len(columns))
+    query_string = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
+    query.prepare(query_string)
+    for _, row in df.iterrows():
+        for col in columns:
+            query.addBindValue(row[col])
+        query.exec()
+
+
 def fillRealDatabase():
     """
     The directory `objects` contains CSV files with data to insert into the database.
@@ -59,14 +74,13 @@ def fillRealDatabase():
     con_db.setDatabaseName(config['database']['filename'])
     con_db.open()
 
-    for filename in os.listdir(\
-        os.path.join(os.path.dirname(__file__), './objects')):
+    objects_dir = os.path.join(os.path.dirname(__file__), './objects')
+    for filename in os.listdir(objects_dir):
         if not filename.endswith(".csv"):
             continue
         table_name = filename[:-4]
-        df = pd.read_csv(os.path.join("./objects", filename))
-        
-        df.to_sql(table_name, con_db.connectionName(), if_exists='append', index=False)
+        df = pd.read_csv(os.path.join(objects_dir, filename))
+        add_object(con_db, table_name, df)
     
     return con_db
 
@@ -78,19 +92,23 @@ def get_sampling_point_id(con_db, payload):
     Returns the sampling point ID or None if not found
     """
     query = QSqlQuery(con_db)
-    query.prepare(f""" SELECT sp.id FROM SamplingPoint sp
-                  JOIN Shaft s ON sp.Shaft = s.id
-                  JOIN Datalogger dl ON s.DataloggerID = dl.id AND dl.devEui = :devEui
-                  JOIN Relay r ON dl.relay_id = r.id AND r.relayEui = :relayEui
-                  JOIN Gateway g ON r.gateway_id = g.id AND g.gatewayEui = :gatewayEui
+    query.prepare("""
+        SELECT sp.id FROM SamplingPoint sp
+        JOIN Shaft s ON sp.Shaft = s.ID
+        JOIN Datalogger dl ON s.DataloggerID = dl.ID
+        JOIN Relay r ON dl.Relay = r.ID
+        JOIN Gateway g ON r.Gateway = g.ID
+        WHERE dl.devEui = :devEui
+          AND r.relayEui = :relayEui
+          AND g.gatewayEui = :gatewayEui
     """)
-
+    
     query.bindValue(":devEui", payload["device_eui"])
     query.bindValue(":relayEui", payload.get("relay_id"))
     query.bindValue(":gatewayEui", payload.get("gateway_id"))
 
     if not query.exec():
-        print(query.lastError())
+        print(query.lastError().text())
         return None
     if not query.next():
         return None
@@ -107,7 +125,7 @@ def insert_payload(con_db, payload):
     
     if sp_id is None:
         print(f"SamplingPoint corresponding to device {payload['device_eui']},\
-               relay {payload['relay_id']}, gateway {payload['gateway_id']} not found.")
+              relay {payload['relay_id']}, gateway {payload['gateway_id']} not found.")
         return
 
     # Switch to right date format
@@ -155,6 +173,41 @@ def insert_payload(con_db, payload):
     if not query.exec():
         print(query.lastError())
         return
-
-    return query.lastInsertId()
     
+    insert_calibrated_temperature(con_db,payload,sp_id)
+
+def insert_calibrated_temperature(con_db: QSqlDatabase, payload: dict, sp_id: int):
+    """
+   Convert the voltage into temperature using calibration parameters from the SPointCoordinator and insert the calibrated temperatures into the RawMeasuresTemp table.
+    """
+    study_name = get_study_name(con_db, sp_id)
+    SPointCoordinator = SPointCoordinator(con_db, study_name, sp_id)
+
+    # get calibration parameters from SPointCoordinator
+    beta, V_ref = SPointCoordinator.thermometer_calibration_infos()
+    if beta is None or V_ref is None:
+        return 
+        
+    # 2. Calibrate temperatures
+    temp_values = {
+        "Temp1": SPointCoordinator.calibrate_temperature(payload["a2"], beta, V_ref),
+        "Temp2": SPointCoordinator.calibrate_temperature(payload["a3"], beta, V_ref),
+        "Temp3": SPointCoordinator.calibrate_temperature(payload["a4"], beta, V_ref),
+        "Temp4": SPointCoordinator.calibrate_temperature(payload["a5"], beta, V_ref),
+    }
+
+    # 3. Insert inside RawMeasuresTemp
+    query = QSqlQuery(con_db)
+    query.prepare(f"""INSERT INTO RawMeasuresTemp (
+                        Date, Temp1, Temp2, Temp3, Temp4, SamplingPoint)
+        VALUES (:Date, :Temp1, :Temp2, :Temp3, :Temp4, :SamplingPoint)
+    """)
+    query.bindValue(":Date", payload["timestamp"])
+    query.bindValue(":Temp1", temp_values["Temp1"])
+    query.bindValue(":Temp2", temp_values["Temp2"])
+    query.bindValue(":Temp3", temp_values["Temp3"])
+    query.bindValue(":Temp4", temp_values["Temp4"])
+    query.bindValue(":SamplingPoint", sp_id)
+    
+    if not query.exec():
+        print(f"Error inserting into RawMeasuresTemp: {query.lastError().text()}")

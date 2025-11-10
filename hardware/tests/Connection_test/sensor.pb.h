@@ -14,7 +14,7 @@ typedef struct _SensorData {
     char UI[16];
     int32_t time;
     pb_size_t measurements_count;
-    float measurements[5];
+    float measurements[10];
 } SensorData;
 
 
@@ -23,8 +23,8 @@ extern "C" {
 #endif
 
 /* Initializer values for message structs */
-#define SensorData_init_default                  {"", 0, 0, {0, 0, 0, 0, 0}}
-#define SensorData_init_zero                     {"", 0, 0, {0, 0, 0, 0, 0}}
+#define SensorData_init_default                  {"", 0, 0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
+#define SensorData_init_zero                     {"", 0, 0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define SensorData_UI_tag                        1
@@ -46,7 +46,7 @@ extern const pb_msgdesc_t SensorData_msg;
 
 /* Maximum encoded size of messages (where known) */
 #define SENSOR_PB_H_MAX_SIZE                     SensorData_size
-#define SensorData_size                          53
+#define SensorData_size                          78
 
 #ifdef __cplusplus
 } /* extern "C" */

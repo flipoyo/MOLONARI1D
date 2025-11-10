@@ -1,0 +1,2 @@
+ID,Name,gatewayEUI,TLS_Cert,TLS_Key,CA_Cert,Labo
+1,TestGateway,34fa40fffe21c566,NULL,NULL,NULL,1
