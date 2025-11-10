@@ -159,4 +159,4 @@ void Reader::Dispose()
     this->file.close();
 }
 
-memory_line::memory_line(String flush_arg, int offset):flush(flush_arg), memory_successor(offset){}
+memory_line::memory_line(String flush_arg, uint32_t offset):flush(flush_arg), memory_successor(offset){}

@@ -193,7 +193,7 @@ void loop() {
                 int end_document_address = dataFile.position();
                 uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(linesToSend, lastSDOffset, dataFile);
                 rattrapage = (lastSDOffset == end_document_address);
-
+                DEBUG_LOG("rattrappage status : " + String(rattrapage));
                 lora.closeSession(lastPacket);
             }    // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
 
