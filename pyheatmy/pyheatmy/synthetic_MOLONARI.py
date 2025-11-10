@@ -30,6 +30,7 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
         sigma_meas_P: float = None,  # (m) écart type de l'incertitude sur les valeurs de pression capteur
         sigma_meas_T: float = None,  # (°C) écart type de l'incertitude sur les valeurs de température capteur
         verbose: bool = True,
+        array_T_aq: np.ndarray = None,
     ):
                 
         self._classType = ClassType.TIME_SERIES
@@ -43,6 +44,7 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
             print("param_T_riv_signal is a one level list, generating single periodic signal")
             self._multiperiodic = False
 
+        self._force_T_aq = array_T_aq
         self._param_dates = param_time_dates
         self._param_dH = param_dH_signal
         self._param_T_riv = param_T_riv_signal
@@ -63,6 +65,13 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
         self._real_z = np.array([0] + depth_sensors) + offset
 
         self._generate_all_series()
+
+        if self._force_T_aq is not None:
+            if self.verbose:
+                print("Forcing aquifer temperature with provided array")
+            self._T_aq = self._force_T_aq
+            self._generate_Shaft_Temp_series(verbose=self.verbose)
+            self._generate_perturb_Shaft_Temp_series()
 
 
         # self._dates = np.array([None])
