@@ -2,12 +2,14 @@ from . import adapt_nodered_mqtt as anm
 import argparse
 import json
 import sys
+import logging
 
 def load_config(config_path):
     with open(config_path, 'r') as config_file:
         return json.load(config_file)
 
 if __name__ == "__main__":
+
     config = load_config('./src/receiver/settings/config.json')
 
     parser = argparse.ArgumentParser()
@@ -19,5 +21,13 @@ if __name__ == "__main__":
         anm.export_csv(db_conn, args.export)
         db_conn.close()
         sys.exit(0)
+        
+    # Logging to better control infos and alerts displayed
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)]
+    )
+    logger = logging.getLogger("chirpstack")
 
-    anm.main_mqtt()
+    anm.main_mqtt(config, logger)
