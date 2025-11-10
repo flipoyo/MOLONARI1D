@@ -27,7 +27,7 @@ import paho.mqtt.client as mqtt
 
 from . import decoder
 from .db_insertion import insert_payload, createRealDatabase, fillRealDatabase
-from src.receiver.logger_timestamps import logger_timestamps
+from .logger_timestamps import logger_timestamps
 
 # Load configuration from JSON file
 with open(os.path.join(os.path.dirname(__file__), './settings/config.json')) as config_file:
@@ -151,9 +151,26 @@ def insert_record(db, rec):
 
 
 def export_csv(conn, out_path):
-    df = pd.read_sql_query(f"SELECT * FROM {SQLITE_TABLE}", conn)
-    df.to_csv(out_path, index=False)
-    logger.info("Export CSV done: %s (rows: %d)", out_path, len(df))
+    query = QSqlQuery(conn)
+    if not query.exec(f"SELECT * FROM {SQLITE_TABLE}"):
+        logger.error("Failed to execute SELECT for export: %s", query.lastError().text())
+        return False
+    
+    rec = query.record()
+    cols = [rec.fieldName(i) for i in range(rec.count())]
+    rows = []
+
+    while query.next():
+        rows.append([query.value(i) for i in range(rec.count())])
+
+    try:
+        df = pd.DataFrame(rows, columns=cols)
+        df.to_csv(out_path, index=False, encoding='utf-8')
+        logger.info("Export CSV done: %s (rows: %d, cols: %d)", out_path, len(rows), len(cols))
+        return True
+    except Exception as e:
+        logger.exception("Failed to write CSV: %s", e)
+        return False
 
 
 

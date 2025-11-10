@@ -15,7 +15,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.export:
-        db_conn = anm.init_db(config['db_filename'])
+        db_conn = anm.init_db(config['database']['filename'])
         anm.export_csv(db_conn, args.export)
         db_conn.close()
         sys.exit(0)

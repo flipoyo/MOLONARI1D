@@ -1,7 +1,7 @@
 # Molonari Receiver
 
 ## Overview
-The Molonari Receiver project is designed to handle data from IoT devices using MQTT protocol. It processes incoming messages, decodes them, and stores the relevant information in a local SQLite database. The project also provides functionality for exporting data to CSV format for analysis.
+The Molonari Receiver is designed to handle data from IoT devices using MQTT protocol. It processes incoming messages, decodes them, and stores the relevant information in a local SQLite database. The project also provides functionality for exporting data to CSV format for analysis, and ultimately store it in the Molonaviz database.
 
 **To be noted**: to this stage, the local system is not implemented inside of the Molonaviz interface. Its mission is to provide a first setup to inscribe datapayloads in a DB, in order to be displayed then computed.
 
@@ -10,14 +10,21 @@ The Molonari Receiver project is designed to handle data from IoT devices using 
 Molonaviz
 ├── src
 │   ├── receiver
+│   │   ├── settings
+│   │   │   ├── CA.crt             # Certification Authority certificate
+│   │   │   ├── TLS.crt            # TLS configuration certificate
+│   │   │   ├── TLS.key            # TLS configuration key
+│   │   │   ├── config.json        # Configuration of constants in JSON format
+│   │   │   ├── ERD_structure.sql  # 
+│   │   ├── __init__.py
 │   │   ├── main.py                # Entry point of the application
-│   │   ├── config.json            # Configuration constants in JSON format
 │   │   ├── adapt_nodered_mqtt.py  # Handles MQTT connection and message processing
 │   │   ├── decoder.py             # Decodes base64-encoded Protobuf messages
 │   │   ├── db_insertion.py        # Manages data insertion into the database
 │   │   ├── logger_timestamps.py   # Logs timestamps from devices, relays and gateways
 │   │   ├── timestamps.log         # Log record for devices, relays and gateways timestamps
 │   │   ├── sensor_pb2.py          # Generated Protobuf message structure
+│   │   └── device_config.py       # 
 │   ├── README.md                  # Project documentation
 │   └── requirements.txt           # Project dependencies
 └── tests
@@ -25,29 +32,23 @@ Molonaviz
 ```
 
 ## Setup Instructions
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd molonari-receiver
-   ```
-
-2. **Install dependencies**:
+1. **Install dependencies**:
    Ensure you have Python 3.x installed. Then, install the required packages using pip:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Configuration**:
+2. **Configuration**:
    Modify the `src/receiver/config.json` file to set your desired configuration constants.
 
-4. **Running the Application**:
-   To start the application, run:
+3. **Running the Application**:
+   To start the application, put your bash in the /Molonaviz folder and run:
    ```bash
-   python src/receiver/main.py
+   python -m src.receiver.main
    ```
    To export the database to a CSV file, use:
    ```bash
-   python src/receiver/main.py --export output.csv
+   python -m src.receiver.main --export output.csv
    ```
 
 ## Usage
