@@ -1,0 +1,2 @@
+Tu clones le github (https://github.com/nanopb/nanopb) la, tu pip install nanopb puis normalement avec $  python .\nanopb\generator\nanopb_generator.py sensor.proto ça devrait marcher
+Attention a se placer dans le chemin ou y a sensor.proto et bien specifier le path vers le ficher python
