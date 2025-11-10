@@ -191,7 +191,9 @@ void loop() {
                     }
                 }
                 int end_document_address = dataFile.position();
+                DEBUG_LOG("SDOffset before sending: " + String(lastSDOffset));
                 uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(linesToSend, lastSDOffset, dataFile);
+                DEBUG_LOG("SDOffset after sending: " + String(lastSDOffset));
                 rattrapage = (lastSDOffset == end_document_address);
                 DEBUG_LOG("rattrappage status : " + String(rattrapage));
                 lora.closeSession(lastPacket);

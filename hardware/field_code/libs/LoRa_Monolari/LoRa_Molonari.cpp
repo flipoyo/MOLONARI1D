@@ -80,21 +80,21 @@ void LoraCommunication::sendPacket(uint8_t packetNumber, RequestType requestType
     DEBUG_LOG("Sending packet to " + Address_waited + " from " + Address_sent + " with :");
     
     uint8_t checksum = calculateChecksum(Address_waited, Address_sent, packetNumber, requestType, payload);
-    DEBUG_LOG("checksum "+ String(checksum) + "; Packet Number: " + String(packetNumber) + "; Request Type: " + String(static_cast<uint8_t>(requestType)) + "; Payload: " + String(payload));
+    //DEBUG_LOG("checksum "+ String(checksum) + "; Packet Number: " + String(packetNumber) + "; Request Type: " + String(static_cast<uint8_t>(requestType)) + "; Payload: " + String(payload));
     LoRa.write(checksum);
-    DEBUG_LOG("written checksum");
+    //DEBUG_LOG("written checksum");
     LoRa.write(buffer_sender, Address_sent.length());
-    DEBUG_LOG("written buffer_sender, Adress.length");
+    //DEBUG_LOG("written buffer_sender, Adress.length");
     LoRa.write(buffer_destination, Address_waited.length());
-    DEBUG_LOG("written buffer_destination, Adress.length");
+    //DEBUG_LOG("written buffer_destination, Adress.length");
     LoRa.write(packetNumber); //envoir d'un seul octet, pas besoin de la taille
-    DEBUG_LOG("written packet number");
+    //DEBUG_LOG("written packet number");
     LoRa.write(requestType);
-    DEBUG_LOG("written request type");
+    //DEBUG_LOG("written request type");
     LoRa.print(payload);
-    DEBUG_LOG("printed payload");
+    //DEBUG_LOG("printed payload");
     LoRa.endPacket();
-    DEBUG_LOG("packet sent");
+    DEBUG_LOG("PACKET SENT. payload : " + String(payload) + "; packet number: " + String(packetNumber) + "; request type: " + String(static_cast<uint8_t>(requestType)) + "; checksum: "+ String(checksum));
 
 
 }
@@ -252,7 +252,7 @@ bool LoraCommunication::handshake(uint8_t &shift) {
                 DEBUG_LOG("SYN ACK WORKED - handshake done");
                 return true;
             }
-            else DEBUG_LOG(" PAS RECU ACK BORDEL");
+            else DEBUG_LOG(" PAS RECU ACK");
 
             retries++;
         }
