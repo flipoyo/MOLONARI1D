@@ -156,7 +156,7 @@ void loop() {
     // --- Stocker sur SD ---
     if(a_line_remains_to_log){
         DEBUG_LOG("launch LogData");
-        logger.LogData(ncapt, toute_mesure);
+        logger.LogData(ncapt, toute_mesure, devEui);
         DEBUG_LOG("LogData instruction done");
         a_line_remains_to_log = false;
     }
@@ -247,7 +247,7 @@ void loop() {
         }*/
        
         // Prevent time variables (current_time) to diverge (time domain is 24 hours, to preserve coherence with GetSecondsSinceMidnight)
-        DEBUG_LOG('fin de la boucle on recommence');
+        DEBUG_LOG("fin de la boucle on recommence");
         if(current_Time >= sec_in_day){
             lastLoRaSend -= current_Time;
             lastMeasure -= current_Time;

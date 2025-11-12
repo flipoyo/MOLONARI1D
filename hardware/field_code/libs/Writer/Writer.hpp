@@ -25,7 +25,7 @@ class Writer
         void EstablishConnection(const int CSpin);
 
         // NF 29/4/2025 modification to pass 
-        void LogData(int ncapteur, const std::vector<double>& toute_mesure);
+        void LogData(int ncapteur, const std::vector<double>& toute_mesure, String uidString);
         void LogString(std::queue<String> receiveQueue);
 
         // Safely close the connection with the SD card
