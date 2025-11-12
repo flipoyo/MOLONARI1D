@@ -14,8 +14,8 @@ Molonaviz
 │   │   │   ├── CA.crt             # Certification Authority certificate
 │   │   │   ├── TLS.crt            # TLS configuration certificate
 │   │   │   ├── TLS.key            # TLS configuration key
-│   │   │   ├── config.json        # Configuration of constants in JSON format
-│   │   │   ├── ERD_structure.sql  # 
+│   │   │   ├── config.json        # Configuration of the MQTT broker and database
+│   │   │   ├── ERD_structure.sql  # File to create the database
 │   │   ├── __init__.py
 │   │   ├── main.py                # Entry point of the application
 │   │   ├── adapt_nodered_mqtt.py  # Handles MQTT connection and message processing
@@ -32,16 +32,17 @@ Molonaviz
 ```
 
 ## Setup Instructions
-1. **Install dependencies**:
-   Ensure you have Python 3.x installed. Then, install the required packages using pip:
+1. **Install dependencies**:  
+   Ensure you have Python 3.x installed. Then, install the required packages using pip.
+   Put your bash in the /Molonaviz (not molonaviz) folder and run:
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
 
-2. **Configuration**:
-   Modify the `src/receiver/config.json` file to set your desired configuration constants.
+2. **Configuration**:  
+   Modify the `src/receiver/settings/config.json` file to set your desired configuration constants.
 
-3. **Running the Application**:
+3. **Running the Application**:  
    To start the application, put your bash in the /Molonaviz folder and run:
    ```bash
    python -m src.receiver.main
@@ -54,8 +55,4 @@ Molonaviz
 ## Usage
 The application connects to an MQTT broker, listens for messages, decodes them, and stores the relevant data in a SQLite database. It also logs timestamps for various events (device upload, relay and gateway processings), which can be useful for debugging and analysis.
 
-## Testing
-Unit tests are provided in the `src/tests/test_config.py` file. You can run the tests using:
-```bash
-pytest src/tests
-```
+If the database doesn't exist when the script is launched, it is automatically created by the script. If `real_database_insertion` is set to `true` in the config file, then it will be created based on the `.sql` file provided, else a fixed basic database described in `db_insertion.py` will be used.
