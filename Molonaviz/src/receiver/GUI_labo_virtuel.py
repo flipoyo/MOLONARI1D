@@ -217,7 +217,7 @@ tk.Button(root, text="Ajouter Datalogger", width=25,
           command=lambda: ouvrir_formulaire(get_db(), "Nouveau Datalogger", "Datalogger", fields_datalogger, fk_datalogger),
           bg="#0078D7", fg="white").pack(pady=5)
 # Thermometer
-fields_thermo = ["Name", "ManuName", "ManuRef", "Error", "Labo"]
+fields_thermo = fields_thermo = ["Name", "ManuName", "ManuRef", "Error", "Beta", "V", "Labo"]
 fk_thermo = {"Labo": {"table": "Labo", "id_col": "ID", "name_col": "Name"}}
 tk.Button(root, text="Ajouter Thermometer", width=25,
           command=lambda: ouvrir_formulaire(get_db(), "Nouveau Thermometer", "Thermometer", fields_thermo, fk_thermo),
