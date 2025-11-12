@@ -305,7 +305,6 @@ uint8_t LoraCommunication::sendAllPacketsAndManageMemory(std::queue<memory_line>
             }
         }
     }
-    dataFile.seek(SDOffset);
     DEBUG_LOG("j'ai tout envoyé, j'ai envoyé:" + String(nb_packets_sent) + "packets");
     return nb_packets_sent;
 }

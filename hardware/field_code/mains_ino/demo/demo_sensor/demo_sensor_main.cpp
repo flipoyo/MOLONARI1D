@@ -188,6 +188,7 @@ void loop() {
             while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 1000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
                 std::queue<memory_line> linesToSend;
+                dataFile.seek(lastSDOffset);
                 while (dataFile.available()) {
                     memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
                     new_line.flush = new_line.flush + "\n"; 
