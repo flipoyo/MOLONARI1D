@@ -356,7 +356,7 @@ uint8_t LoraCommunication::sendAllPackets(std::queue<String>& sendQueue){
 
 int LoraCommunication::receiveAllPackets(std::queue<String> &receiveQueue) {
     uint8_t packetNumber = 0; String payload; RequestType requestType; uint8_t prevPacket = -1;
-    unsigned long startTime = millis(); int ackTimeout = 3600000;
+    unsigned long startTime = millis(); int ackTimeout = 60000;
 
     while (millis() - startTime < ackTimeout) {
         if (receivePacket(packetNumber, requestType, payload)) {
@@ -379,7 +379,7 @@ bool LoraCommunication::closeSession(int lastPacket) {
     sendPacket(lastPacket, FIN, "FIN");
     String payload; uint8_t packetNumber; RequestType requestType;
     int retries = 0;
-    while (retries < 3) {
+    while (retries < 15) {
         if (receivePacket(packetNumber, requestType, payload) && requestType == FIN && packetNumber == lastPacket) return true;
         delay(100 * (retries + 1));
         sendPacket(lastPacket, FIN, "FIN");

@@ -103,13 +103,14 @@ void loop() {
 
             DEBUG_LOG("Handshake réussi. Réception des paquets...");
             int last = lora.receiveAllPackets(receiveQueue);
+            DEBUG_LOG("Packets received when close session : " + String(last));
             lora.sendPacket(last, FIN, "FIN"); // Répond par un FIN de confirmation;
 
             // Met à jour le temps de la dernière tentative de réception
             lastAttempt = GetSecondsSinceMidnight();
 
             //envoie du csv
-            if (modif==true) { // normalement modif est toujours false pour l'instant : la focntion de modif n'est pa sbien implémentée
+            /*if (modif==true) { // normalement modif est toujours false pour l'instant : la focntion de modif n'est pa sbien implémentée
                 File config = SD.open(configFilePath, FILE_READ);
                 config.seek(lastSDOffsetConfig);
                 std::queue<memory_line> lines_config;
@@ -122,7 +123,7 @@ void loop() {
 
                         modif = !(lastSDOffsetConfig == config.position());
                 }
-            }
+            }*/
             lora.stopLoRa();
             
 
@@ -154,8 +155,8 @@ void loop() {
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
                 DEBUG_LOG("entrée dans le while d'envoi LoRaWAN");
                 std::queue<memory_line> linesToSend;
+                dataFile.seek(lastSDOffset);
                 while (dataFile.available()) {
-                    dataFile.seek(lastSDOffset);
                     DEBUG_LOG("lecture d'une nouvelle ligne dans le fichier");
                     String flush = dataFile.readStringUntil('\n');
                     DEBUG_LOG("data file until espace : " + flush);

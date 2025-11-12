@@ -187,8 +187,13 @@ void loop() {
             Serial.println("HANDSHAKE DONE\n");
             DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
             DEBUG_LOG(String(dataFile.available()));
-
-            while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 1000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
+            bool time_to_mesure_soon = CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) < 1000;
+            if(time_to_mesure_soon){
+                DEBUG_LOG("Aborting LoRa send, measurement scheduled soon. Switching to rattrapage mode");
+                lora.closeSession(0);
+                rattrapage = true;
+            }
+            while ( (!time_to_mesure_soon) && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
                 std::queue<memory_line> linesToSend;
                 dataFile.seek(lastSDOffset);
