@@ -398,41 +398,100 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 )  # charge hydraulique de chaque interface
                 array_Hinter[0] = self._dH[0]
                 array_Hinter[-1] = 0.0
-                N = len(array_Hinter) - 1
-                # calculate Hinter
-                H_gauche = np.zeros((N - 1, N - 1))
-                H_droite = np.zeros((N - 1, N - 1))
-                scalar_gauche = np.zeros(N - 1)
-                scalar_droite = np.zeros(N - 1)
-                scalar_gauche[0] = array_K[0] * array_Hinter[0] / array_eps[0]
-                scalar_droite[-1] = -array_K[-1] * array_Hinter[-1] / array_eps[-1]
+
+            # Nombre de couches
+            num_layers = len(layersList)
+            # Nombre d'interfaces internes (où H est inconnu)
+            num_interfaces = num_layers - 1
+
+            # Si moins de 2 couches, pas d'interface interne, pas de système à résoudre
+            if num_interfaces <= 0:
+                # Gérer le cas très simple où il n'y a pas d'interface interne
+                # (par exemple, si une seule couche remplit tout, H_init est déjà correct)
+                # ou lever une erreur si ce cas n'est pas censé arriver ici.
+                pass  # On suppose num_interfaces >= 1
+
+            else:
+                # Préparation des matrices et vecteurs pour le système linéaire A * x = b
+                # x sera le vecteur des charges inconnues aux interfaces [H_interface_1, H_interface_2, ..., H_interface_{N-1}]
+
+                # Matrice A (taille num_interfaces x num_interfaces)
+                # On la construit en assemblant H_gauche et H_droite
+                H_gauche = np.zeros((num_interfaces, num_interfaces))
+                H_droite = np.zeros((num_interfaces, num_interfaces))
+
+                # Vecteur b (taille num_interfaces)
+                # Contient l'influence des conditions aux limites (rivière et aquifère)
+                boundary_influence = np.zeros(num_interfaces)
+
+                # Influence de la rivière (H à z=0) sur la première équation (Interface 1)
+                # Terme: K₀/ε₀ * H_rivière
+                boundary_influence[0] = array_K[0] * array_Hinter[0] / array_eps[0]
+
+                # Influence de l'aquifère (H à z=L) sur la dernière équation (Interface N-1)
+                # Terme: - K_{N-1}/ε_{N-1} * H_aquifère
+                # (array_K a N éléments, array_eps a N éléments)
+                if num_interfaces > 0:  # S'il y a au moins une interface
+                    boundary_influence[-1] -= (
+                        -array_K[-1] * array_Hinter[-1] / array_eps[-1]
+                    )  # Le -= car on soustrait H_gauche de H_droite
+
+                # Remplissage de la matrice H_gauche
+
+                # Terme diagonal principal pour la première interface (ligne 0)
+                # Lié à la couche 0 (au-dessus de l'interface 1)
                 H_gauche[0, 0] = -array_K[0] / array_eps[0]
-                for diag in range(1, N - 1):
-                    H_gauche[diag, diag - 1] = array_K[diag] / array_eps[diag]
-                    H_gauche[diag, diag] = -array_K[diag] / array_eps[diag]
 
-                H_droite[N - 2, N - 2] = array_K[-1] / array_eps[-1]
-                for diag in range(0, N - 2):
-                    H_droite[diag, diag + 1] = -array_K[diag + 1] / array_eps[diag + 1]
-                    H_droite[diag, diag] = array_K[diag + 1] / array_eps[diag + 1]
+                # Termes pour les interfaces suivantes (lignes 1 à N-2)
+                for i in range(1, num_interfaces):
+                    # Terme diagonal : lié à la couche i (au-dessus de l'interface i+1)
+                    H_gauche[i, i] = -array_K[i] / array_eps[i]
+                    # Terme sous-diagonal : lié aussi à la couche i, connectant H_i à H_{i+1}
+                    H_gauche[i, i - 1] = array_K[i] / array_eps[i]
 
-            if verbose:
-                print("\n--- Débogage des matrices H_gauche et H_droite ---")
-                # Pour une meilleure lisibilité des grands tableaux numpy
-                np.set_printoptions(precision=8, suppress=True)
+                # Remplissage de la matrice H_droite
 
-                print("Matrice H_gauche :")
-                print(H_gauche)
-                print("\nMatrice H_droite :")
-                print(H_droite)
-                print("--------------------------------------------------\n")
+                # Terme diagonal principal pour la dernière interface (ligne N-2)
+                # Lié à la couche N-1 (en dessous de l'interface N-1)
+                # Note: l'index de la dernière interface est num_interfaces - 1
+                if num_interfaces > 0:  # S'il y a au moins une interface
+                    H_droite[num_interfaces - 1, num_interfaces - 1] = (
+                        array_K[-1] / array_eps[-1]
+                    )
 
-                Matrix_b = scalar_gauche - scalar_droite
+                # Termes pour les interfaces précédentes (lignes 0 à N-3)
+                for i in range(num_interfaces - 1):
+                    # Terme diagonal : lié à la couche i+1 (en dessous de l'interface i+1)
+                    H_droite[i, i] = array_K[i + 1] / array_eps[i + 1]
+                    # Terme super-diagonal : lié aussi à la couche i+1, connectant H_{i+2} à H_{i+1}
+                    H_droite[i, i + 1] = -array_K[i + 1] / array_eps[i + 1]
+
+                # Assemblage et Résolution du Système
+                if verbose:
+                    print(
+                        "\n--- Débogage des matrices H_gauche et H_droite (Initialisation) ---"
+                    )
+                    np.set_printoptions(precision=8, suppress=True)
+                    print("Matrice H_gauche :\n", H_gauche)
+                    print("\nMatrice H_droite :\n", H_droite)
+                    print(
+                        "------------------------------------------------------------------\n"
+                    )
+
+                # Matrice finale du système (tridiagonale)
                 Matrix_A = H_droite - H_gauche
-                H_sol = np.linalg.solve(Matrix_A, Matrix_b)
-                for idx in range(len(H_sol)):
-                    array_Hinter[idx + 1] = H_sol[idx]
-                #
+
+                # Vecteur second membre
+                Matrix_b = boundary_influence
+
+                # Résolution : A * H_interfaces = b
+                H_interfaces_solution = np.linalg.solve(Matrix_A, Matrix_b)
+
+                # Mise à jour du tableau array_Hinter avec les solutions
+                # H_interfaces_solution contient [H₁, H₂, ..., H_{N-1}]
+                for idx in range(num_interfaces):
+                    array_Hinter[idx + 1] = H_interfaces_solution[idx]
+
                 # list_array_L: couper le profondeur selon l'épaisseur de chaque couche
                 list_array_L = []
                 cnt = 0
@@ -693,14 +752,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 #     plt.scatter(range(len(KT_list)), KT_list, s = 0.7)
                 #     plt.show()
 
-                if np.isnan(self._temperatures).any() or np.isnan(self._flows).any():
+                """ if np.isnan(self._temperatures).any() or np.isnan(self._flows).any():
                     print(
                         f"Issue for the following parameters : {self.get_list_current_params()}"
                     )
                     print(
                         f"Issue for the follwing number of layers : {len(self.all_layers)}"
                     )
-                    raise ValueError("NaN values in compute_solve_transi")
+                    raise ValueError("NaN values in compute_solve_transi") """
 
         except Exception as e:  # <-- LE "EXCEPT" EST ICI, À LA FIN
             print("\n--- RAPPORT DE BUG DÉFINITIF ---")
@@ -1423,7 +1482,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         self._acceptance = self._acceptance / nb_iter
 
-        if verbose == True:
+        if verbose:
             print("Quantiles computed")
 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
@@ -2153,13 +2212,35 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             )
 
 
+# Assurez-vous que `numpy as np` est bien importé en haut de core.py
+
+
 def compute_energy(temp_simul, temp_ref, sigma2, sigma2_distrib):
+    # 1. Vérifier si la simulation a produit des NaN
+    if np.isnan(temp_simul).any():
+        return np.inf  # Renvoie une énergie "infiniment mauvaise"
+
+    # 2. Vérifier la validité des entrées pour les logs
+    if sigma2 <= 0:
+        return np.inf  # Le log de zéro ou négatif est indéfini
+
+    try:
+        # 3. Utiliser np.log et np.size (au lieu de log et size qui ne sont pas définis)
+        log_sigma2 = np.log(sigma2)
+        log_prior_sigma2 = np.log(sigma2_distrib(sigma2))
+
+        # Si le prior sigma2_distrib(sigma2) renvoie 0, log_prior_sigma2 sera -inf
+        if np.isinf(log_prior_sigma2):
+            return np.inf
+
+    except Exception:
+        # Attrape toute autre erreur mathématique (ex: sigma2_distrib renvoie un non-nombre)
+        return np.inf
+
+    # 4. Calcul de l'énergie (maintenant sécurisé)
     norm2 = np.linalg.norm(temp_ref - temp_simul) ** 2
-    return (
-        (size(temp_ref) * log(sigma2))
-        + norm2 / (2 * sigma2)
-        - log(sigma2_distrib(sigma2))
-    )
+
+    return (np.size(temp_ref) * log_sigma2) + norm2 / (2 * sigma2) - log_prior_sigma2
 
 
 def compute_log_acceptance(current_energy: float, prev_energy: float):

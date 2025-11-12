@@ -468,9 +468,7 @@ class T_stratified(Linear_system):
         ) * self.T_riv[j + 1] + (
             8 * self.ke_list[0] * self.alpha / (3 * self.dz**2)
             - 2 * self.alpha * self.ae_list[0] * self.nablaH[0, j] / (3 * self.dz)
-        ) * self.T_riv[
-            j
-        ]
+        ) * self.T_riv[j]
         c[-1] = (
             8 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
             + 2
@@ -485,15 +483,12 @@ class T_stratified(Linear_system):
             * self.ae_list[self.n_cell - 1]
             * self.nablaH[self.n_cell - 1, j]
             / (3 * self.dz)
-        ) * self.T_aq[
-            j
-        ]
+        ) * self.T_aq[j]
 
         # c += self.heat_source[:, j]
         return c
 
     def _compute_A_diagonals(self, j, dt):
-
         lower_diagonal = (
             -(self.ke_list[1:] * (1 - self.alpha) / self.dz**2)
             + ((1 - self.alpha) * self.ae_list[1:] / (2 * self.dz)) * self.nablaH[1:, j]
@@ -627,6 +622,65 @@ class HTK_stratified(Linear_system):
             )
 
         for j in range(self.n_times - 1):
+            # Calcul des diagonales B (implicite) et A (explicite)
+            lower_diagonal_B, diagonal_B, upper_diagonal_B = self.compute_B_diagonals(
+                dt
+            )
+            lower_diagonal_A, diagonal_A, upper_diagonal_A = self.compute_A_diagonals(
+                dt
+            )
+
+            # Correction aux interfaces (si nécessaire)
+            for tup_idx in range(len(self.inter_cara)):
+                self.correct_numerical_schema(...)  # Appel existant
+
+            # Calculer les 5 indices régulièrement espacés
+            indices_temps_a_afficher = np.linspace(
+                0, self.n_times - 2, 5, dtype=int
+            )  # n_times-2 car j va de 0 à n_times-2
+
+            # Vérifier si l'indice actuel j est l'un de ceux qu'on veut afficher
+            if j in indices_temps_a_afficher:
+                print(
+                    f"\n--- Matrices Intermédiaires (Diagonales) au pas de temps j={j} ---"
+                )
+                # (Le reste du code d'impression ne change pas)
+                np.set_printoptions(precision=6, suppress=True, linewidth=120)
+
+                print("\nDiagonales de B (partie implicite, temps t):")
+                # ... (print des diagonales B) ...
+
+                print("\nDiagonales de A (partie explicite, temps t+dt):")
+                # ... (print des diagonales A) ...
+
+                c = self.compute_c(j)
+                print(f"\nVecteur c (conditions aux limites et sources):")
+                print(f"  c      : {c}")
+
+                print(
+                    "-----------------------------------------------------------------\n"
+                )
+
+                np.set_printoptions(precision=6, suppress=True, linewidth=120)
+
+                print("\nDiagonales de B (partie implicite, temps t):")
+                print(f"  Lower B: {lower_diagonal_B}")
+                print(f"  Diag B : {diagonal_B}")
+                print(f"  Upper B: {upper_diagonal_B}")
+
+                print("\nDiagonales de A (partie explicite, temps t+dt):")
+                print(f"  Lower A: {lower_diagonal_A}")
+                print(f"  Diag A : {diagonal_A}")
+                print(f"  Upper A: {upper_diagonal_A}")
+
+                c = self.compute_c(j)  # Calculer c pour l'afficher
+                print(f"\nVecteur c (conditions aux limites et sources):")
+                print(f"  c      : {c}")
+
+                print(
+                    "-----------------------------------------------------------------\n"
+                )
+
             c = self.compute_c(j)
             B_fois_H_plus_c = (
                 tri_product(

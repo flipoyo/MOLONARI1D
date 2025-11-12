@@ -3,7 +3,7 @@ from enum import Enum
 import numpy as np
 
 # temporal values
-NSECINMIN = 60
+NSECINMIN = 200
 NSECINHOUR = 3600
 NSECINDAY = 86400
 NHOURINDAY = 24
@@ -131,9 +131,15 @@ DEFAULT_MU = 1e-3
 # VALEURS
 NB_CELLS = 60
 GELMANRCRITERIA = 1.2
-PARAM_LIST = ("moinslog10IntrinK", "n", "lambda_s", "rhos_cs", "q") #a priori sigma2 a un statut particulier
+PARAM_LIST = (
+    "moinslog10IntrinK",
+    "n",
+    "lambda_s",
+    "rhos_cs",
+    "q",
+)  # a priori sigma2 a un statut particulier
 NBCHAINS = 10
 # MCMC parametrization
 NITMCMC = 200
 NBBURNING = 25
-NSAMPLEMIN = 200 #200 is the minimal number of sample for a proper calculation of the quantiles, pb of initialisation
+NSAMPLEMIN = 200  # 200 is the minimal number of sample for a proper calculation of the quantiles, pb of initialisation
