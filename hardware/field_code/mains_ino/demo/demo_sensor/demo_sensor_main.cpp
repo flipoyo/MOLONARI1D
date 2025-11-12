@@ -194,7 +194,7 @@ void loop() {
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer
-                    if (new_line.flush.length() == 0) {
+                    if (linesToSend.front().flush.length() == 0) {
                         break;
                     }
                 }
@@ -214,7 +214,7 @@ void loop() {
             // --- Réception éventuelle de mise à jour config ---
             DEBUG_LOG("Vérification de mise à jour descendante...");
 
-
+/*
             uint16_t recvMeasure = 0, recvLora = 0;
             if (lora.receiveConfigUpdate(configFilePath, &recvMeasure, &recvLora, 15000)) {
                 DEBUG_LOG("Mise à jour config reçue du master.");
@@ -223,6 +223,7 @@ void loop() {
             } else {
                 DEBUG_LOG("Pas de mise à jour reçue.");
             }
+*/
 
             lora.stopLoRa();
         } else {
