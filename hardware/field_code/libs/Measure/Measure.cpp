@@ -34,9 +34,10 @@ double Sensor::get_voltage() {
   return voltage;
 }
 
-Measure::Measure(int ncapt_arg, const std::vector<double>& toute_mesure):
+Measure::Measure(int ncapt_arg, const std::vector<double>& toute_mesure, String uidString_arg):
   ncapt(ncapt_arg),
   channel(),
+  uidString(uidString_arg),
   time(GetCurrentHour()),
   date(GetCurrentDate())
   {
@@ -59,7 +60,7 @@ String Measure::oneLine() {
   DEBUG_LOG(String(ncapt) + " capteurs détectés");
   DEBUG_LOG("Heure actuelle : " + time);
   // Construction de la ligne
-  String str = uidString;
+  String str = this->uidString;
   str += " ; " + String(id) + " ; " + date + " ; " + hour + "  ; ";
 
   // Ajouter les valeurs des capteurs
