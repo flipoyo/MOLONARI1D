@@ -192,7 +192,7 @@ void loop() {
                 lora.closeSession(0);
                 DEBUG_LOG("fatal : interrupt sending because time to measure is coming");
                 lora.closeSession(0);
-                rattrapage = true
+                rattrapage = true;
             }
             
             while (!time_to_measure_soon) { //racourcir de 60000 à 10000 pour les besoins de la démo
