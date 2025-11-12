@@ -55,7 +55,7 @@ uint16_t newMeasureInterval = 0;
 uint16_t newLoraInterval = 0;
 
 const long sec_in_day = 86400;
-bool rattrapage = false;
+bool rattrapage = true;//temporary, to accelerate the beginning process
 bool a_line_remains_to_log = false;
 
 // ----- Setup -----
@@ -163,7 +163,7 @@ void loop() {
     // --- Envoyer LoRa si intervalle atteint ---
     
     bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
-
+    DEBUG_LOG("Is it time to LoRa ? " + String(IsTimeToLoRa));
     //IsTimeToLoRa = true; //a supprimer, pour les besoins du debugs
     if (IsTimeToLoRa || rattrapage) {
 
@@ -185,12 +185,12 @@ void loop() {
             DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
             DEBUG_LOG(String(dataFile.available()));
 
-            while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
+            while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 1000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
                 std::queue<memory_line> linesToSend;
                 while (dataFile.available()) {
                     memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
-                    new_line.flush = new_line.flush + "\n"; 
+                    new_line.flush = new_line.flush + "\n";
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer
