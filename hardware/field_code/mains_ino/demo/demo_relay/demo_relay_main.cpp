@@ -150,10 +150,13 @@ void loop() {
 
             while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
+                DEBUG_LOG("entrée dans le while d'envoi LoRaWAN");
                 std::queue<memory_line> linesToSend;
                 while (dataFile.available()) {
+                    DEBUG_LOG("lecture d'une nouvelle ligne dans le fichier");
+                    DEBUG_LOG("data file until espace : " + dataFile.readStringUntil('\n'));
                     memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
-                    Serial.println(String("new line: ") + new_line.flush);
+                    DEBUG_LOG(String("new line: ") + new_line.flush);
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer
