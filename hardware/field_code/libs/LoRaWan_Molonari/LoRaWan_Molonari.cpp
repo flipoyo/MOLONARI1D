@@ -166,7 +166,7 @@ bool LoraWANCommunication::sendAllPacketsAndManageMemoryWAN(std::queue<memory_li
         if (!encode(buffer, sizeof(buffer), messageLength, packet.flush)) {
             Serial.println("Error, payload pas encodé at all (du tout)");
             delay(10000);
-            return;
+            return false;
         }
 
         int send_retries = 0;
@@ -204,7 +204,6 @@ bool LoraWANCommunication::sendAllPacketsAndManageMemoryWAN(std::queue<memory_li
 }
 
 
-/* caché car c'est nul
 bool LoraWANCommunication::receiveConfig(const char* configFilePath, bool modif) {
     String rcv = modem.readString();
     Serial.print("↓ Message reçu en downlink : ");
@@ -236,4 +235,3 @@ bool LoraWANCommunication::receiveConfig(const char* configFilePath, bool modif)
     return true;
 
 }
-*/
