@@ -1,6 +1,6 @@
 # Configuration générale
-intervalle_de_mesure_secondes,90
-lora_intervalle_secondes,360
+intervalle_de_mesure_secondes,30
+lora_intervalle_secondes,40
 # Les deux délais ci-dessus ne doivent pas être inférieurs respectivement à 900s et 3600s
 
 max_pload_octet, 20

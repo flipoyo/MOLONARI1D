@@ -55,7 +55,7 @@ uint16_t newMeasureInterval = 0;
 uint16_t newLoraInterval = 0;
 
 const long sec_in_day = 86400;
-bool rattrapage = false;
+bool rattrapage = true;//temporary, to accelerate the beginning process
 bool a_line_remains_to_log = false;
 
 // ----- Setup -----
@@ -163,7 +163,7 @@ void loop() {
     // --- Envoyer LoRa si intervalle atteint ---
     
     bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
-
+    DEBUG_LOG("Is it time to LoRa ? " + String(IsTimeToLoRa));
     //IsTimeToLoRa = true; //a supprimer, pour les besoins du debugs
     if (IsTimeToLoRa || rattrapage) {
 
@@ -191,7 +191,7 @@ void loop() {
                 dataFile.seek(lastSDOffset);
                 while (dataFile.available()) {
                     memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
-                    new_line.flush = new_line.flush + "\n"; 
+                    new_line.flush = new_line.flush + "\n";
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer

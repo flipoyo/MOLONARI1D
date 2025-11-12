@@ -147,8 +147,10 @@ void loop() {
 
         if (loraWAN.begin(res.rel_config.appEui, res.rel_config.appKey)) {
             Serial.println("appKey : " + String(res.rel_config.appKey));
+            Serial.println("temps avant communication : " + String(CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes)));
 
-            while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
+
+            while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 1000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
                 DEBUG_LOG("entrée dans le while d'envoi LoRaWAN");
                 std::queue<memory_line> linesToSend;
