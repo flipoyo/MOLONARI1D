@@ -200,7 +200,6 @@ bool LoraWANCommunication::sendAllPacketsAndManageMemoryWAN(std::queue<memory_li
         delay(5000);
 
     }
-    dataFile.seek(SDOffset);
     return true;
 }
 

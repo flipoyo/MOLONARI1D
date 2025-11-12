@@ -155,6 +155,7 @@ void loop() {
                 DEBUG_LOG("entrée dans le while d'envoi LoRaWAN");
                 std::queue<memory_line> linesToSend;
                 while (dataFile.available()) {
+                    dataFile.seek(lastSDOffset);
                     DEBUG_LOG("lecture d'une nouvelle ligne dans le fichier");
                     DEBUG_LOG("data file until espace : " + dataFile.readStringUntil('\n'));
                     memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
