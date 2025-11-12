@@ -15,80 +15,147 @@ class Layer:
         self,
         name: str,
         zLow: float,  # profondeur en m du bas de la couche (>0)
-        moinslog10IntrinK: float = MOINSLOG10INTRINK_DEFAULT,
+        IntrinK: float = INTRINK_DEFAULT,
         n: float = N_DEFAULT,
         lambda_s: float = LAMBDA_S_DEFAULT,
         rhos_cs: float = RHOS_CS_DEFAULT,
-        q: float = Q_DEFAULT,
-        Prior_moinslog10IntrinK: Prior = None, # Prior sur moinslog10IntrinK, c'est un tuple ex: (range=(9, 15), sigma= 0.1)
+        q_s: float = Q_S_DEFAULT,
+        Prior_IntrinK: Prior = None, # Prior sur IntrinK, c'est un tuple ex: (range=(9, 15), sigma= 0.1)
         Prior_n: Prior = None,
         Prior_lambda_s: Prior = None,
         Prior_rhos_cs: Prior = None,
-        Prior_q: Prior = None,
+        Prior_q_s: Prior = None,
     ):
         # Voir si tout ça ne peut pas être simplifié avec un @dataclass
 
         self.name = name
         self.zLow = zLow
-        self.params = Param(moinslog10IntrinK, n, lambda_s, rhos_cs, q)
-        self.Prior_moinslog10IntrinK = Prior_moinslog10IntrinK
+       
+        # On stocke les priors
+        self.Prior_IntrinK = Prior_IntrinK
         self.Prior_n = Prior_n
         self.Prior_lambda_s = Prior_lambda_s
         self.Prior_rhos_cs = Prior_rhos_cs
-        self.Prior_q = Prior_q
-        self.Prior_list = [Prior_moinslog10IntrinK, Prior_n, Prior_lambda_s, Prior_rhos_cs, Prior_q]
+        self.Prior_q_s = Prior_q_s
+        self.Prior_list = [Prior_IntrinK, Prior_n, Prior_lambda_s, Prior_rhos_cs, Prior_q_s]
 
+        # On crée un tuple de paramètres physiques initiaux
+        physical_params = Param(IntrinK, n, lambda_s, rhos_cs, q_s)
+        
+        # On crée l'attribut mcmc_params en traduisant les valeurs physiques initiales
+        # vers l'espace de travail de la MCMC..
+        mcmc_vals = [
+            # Si un prior existe, on l'utilise pour traduire la valeur.
+            prior.physical_to_mcmc(val) if prior is not None else val
+            # Sinon (si prior est None), on considère que la valeur MCMC est la même que la valeur physique.
+            for prior, val in zip(self.Prior_list, physical_params)
+        ]
+        self.mcmc_params = Param(*mcmc_vals)
 
     def sample(self):
-        return Param(*(prior.sample() for prior in self.Prior_list))
+        """Met à jour mcmc_params avec des valeurs initiales tirées des priors."""
+        sampled_vals = [prior.sample() for prior in self.Prior_list]
+        self.mcmc_params = Param(*sampled_vals)
     
     def perturb(self, param):
-        return Param(*(prior.perturb(val) for prior, val in zip(self.Prior_list, param)))
-
+        """Met à jour mcmc_params en appliquant une perturbation à chaque valeur."""
+        perturbed_vals = [
+            prior.perturb(val)
+            for prior, val in zip(self.Prior_list, self.mcmc_params)
+        ]
+        self.mcmc_params = Param(*perturbed_vals)
+        
     def __repr__(self) -> str:
-        return self.name + f" : ends at {self.zLow} m. " + self.params.__repr__()
+        return self.name + f" : ends at {self.zLow} m. " + self.mcmc_params.__repr__()
     
-    def set_priors_from_dict(self, priors_dict):    
-        # a method that expect an input similar to 
-        # priors = {
-        #   "Prior_moinslog10IntrinK": ((10, 15), .01), 
-        #   "Prior_n": ((.01, .25), .01),  
-        #   "Prior_lambda_s": ((1, 10), .1), 
-        #   "Prior_rhos_cs": ((1e6,1e7), 1e5)
-        #}
-
-        self.Prior_moinslog10IntrinK = Prior(*priors_dict['Prior_moinslog10IntrinK'])
+    def set_priors_from_dict(self, priors_dict):
+        """Assigne les priors depuis un dictionnaire."""
+        self.Prior_IntrinK = Prior(*priors_dict['Prior_IntrinK'])
         self.Prior_n = Prior(*priors_dict['Prior_n'])
         self.Prior_lambda_s = Prior(*priors_dict['Prior_lambda_s'])
         self.Prior_rhos_cs = Prior(*priors_dict['Prior_rhos_cs'])
-        self.Prior_q = Prior(*priors_dict['Prior_q'])
-        self.Prior_list = [self.Prior_moinslog10IntrinK, self.Prior_n, self.Prior_lambda_s, self.Prior_rhos_cs, self.Prior_q]
+        self.Prior_q_s = Prior(*priors_dict['Prior_q_s'])
+        self.Prior_list = [self.Prior_IntrinK, self.Prior_n, self.Prior_lambda_s, self.Prior_rhos_cs, self.Prior_q_s]
+        
+        # Il faut aussi mettre à jour les mcmc_params lorsque les priors sont assignés !
+        physical_params = self.get_physical_params()
+        mcmc_vals = [
+            prior.physical_to_mcmc(val) if prior is not None else val
+            for prior, val in zip(self.Prior_list, physical_params)
+        ]
+        self.mcmc_params = Param(*mcmc_vals)
     
     @classmethod
     def from_dict(cls, monolayer_dict):
         return cls(**monolayer_dict)
 
-    
+    def get_physical_params(self, mcmc_params=None):
+        """
+        Retourne les paramètres en valeurs PHYSIQUES.
+        Cette version est maintenant tolérante à l'absence de Priors.
+        """
+        if mcmc_params is None:
+            mcmc_params = self.mcmc_params
+
+        # CORRECTION : On rend la traduction inverse conditionnelle.
+        physical_vals = [
+            # Si un prior existe, on l'utilise pour traduire la valeur.
+            prior.mcmc_to_physical(val) if prior is not None else val
+            # Sinon (si prior est None), on considère que la valeur est déjà physique.
+            for prior, val in zip(self.Prior_list, mcmc_params)
+        ]
+        return Param(*physical_vals)
+
+
 def getListParameters(layersList, nbCells: int):
+    """
+    Renvoie les profils des paramètres physiques dans la colonne discrétisée, avec les valeurs Physiques
+    """
     dz = layersList[-1].zLow / nbCells
     cell_centers = np.linspace(dz / 2, layersList[-1].zLow - dz / 2, nbCells)
     listParameters = np.zeros((nbCells, 5))
     zLow_prev = 0
     for layer in layersList:
+        # On demande à la couche ses paramètres en format PHYSIQUE.
+        physical_params = layer.get_physical_params()
+        
         mask = (cell_centers > zLow_prev) & (cell_centers <= layer.zLow)
-        listParameters[mask, :] = [
-            layer.params.moinslog10IntrinK,
-            layer.params.n,
-            layer.params.lambda_s,
-            layer.params.rhos_cs,
-            layer.params.q,
-        ]
+        # On assigne directement le tuple de valeurs physiques.
+        # La première colonne sera IntrinK, la dernière sera q_s.
+        listParameters[mask, :] = physical_params
+        
         zLow_prev = layer.zLow
+        
     return (
-        listParameters[:, 0],
-        listParameters[:, 1],
-        listParameters[:, 2],
-        listParameters[:, 3],
-        listParameters[:, 4],
+        listParameters[:, 0], # IntrinK
+        listParameters[:, 1], # n
+        listParameters[:, 2], # lambda_s
+        listParameters[:, 3], # rhos_cs
+        listParameters[:, 4], # q_s
     )
 
+# Add-on function to create the list of layers.
+def layersListCreator(layers_spec):
+    """
+    Construct and return a list of Layer instances.
+
+    Accepts:
+    - layers_spec: iterable of tuples or dicts describing each layer.
+      If an element is a dict, Layer.from_dict is used.
+      If an element is a sequence, it is passed to Layer(*sequence).
+
+    Expected tuple order (compatible with existing calls):
+      (name, zLow, IntrinK, n, lambda_s, rhos_cs[, q_s])
+
+    Returns:
+      list of Layer
+    """
+    layers = []
+    for spec in layers_spec:
+        if isinstance(spec, dict):
+            layer = Layer.from_dict(spec)
+        else:
+            # allow lists/tuples with the exact arguments for Layer.__init__
+            layer = Layer(*spec)
+        layers.append(layer)
+    return layers
