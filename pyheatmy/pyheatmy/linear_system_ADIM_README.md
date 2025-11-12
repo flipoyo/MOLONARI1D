@@ -1,28 +1,89 @@
-# Note sur adimensionnement des équations
+# Adimensionnement de la résolution des équations
 
-# Problème général
+Réalisé à l'automne par MOLONARI 2025
+
+## Problème général
 
 On cherche à solutionner le couple d'équations suivantes:
 
 $$
 \left\{\begin{array}{lll}
 S_s \partial_t H & = & \partial_z (K \partial_z H) + q_s \\
-\rho_m c_m \partial_t T & = & \rho_w c_w q \partial_z T + \lambda_m \partial_z^2 T + q_s
+\rho_m c_m \partial_t \theta & = & \rho_w c_w q \partial_z \theta + \lambda_m \partial_z^2 \theta + \rho_w c_w q_s \theta
 \end{array} \right.
 $$
 
 avec :
 
-- $q = K \partial_z H$ (Flux de Darcy)
+- $q = K \partial_z H$ (Flux de Darcy en $m.s^{-1}$)
 - $K = \frac{k\rho_w g}{\mu_w} = \frac{k g}{\nu_w}$ (Conductivité hydraulique)
-- $q_s = \text{flux latéral d'eau } (s^{-1})$
+- $q_s =$ Flux latéral d'eau, terme source $(s^{-1})$
 
-L'adimensionnement de ces l'équation est utile pour simplifier la résolution si certains termes sont dominants. Ce n'est pas le cas ici : les termes peuvent tous être importants, cela dépend du régime.
-En outre, en adimensionnant correctement l'équation, tout les paramètres adimensionnés sont de l'ordre de l'unité. Cela limite donc les erreurs de calcul. Cela augmente aussi l'efficacité de calcul.
+## Bénéfices de l'adimensionnement du système d'équations
 
-On notera que l'axe z est dirigé vers le bas, d'où la définition de ${\Delta T}$ et ${\Delta H}$ par la suite.
+### - Simplification de la résolution
 
-## Adimensionnement et premières déductions
+#### Réduction du nombre de paramètres
+
+- **Système dimensionné** : 10 paramètres (`S_s, k, q_s, q, ρ_m, c_m, ρ_w, c_w, μ_w, λ_m`)
+- **Système adimensionné** : 5 paramètres indépendants (`κ, β, γ, ζ, φ`)
+
+Cette réduction permet :
+
+- Une implémentation simplifiée dans le code
+- Des éventuelles études de sensibilité plus aisées
+- Une analyse paramétrique plus efficace
+
+### - Amélioration de l'interprétation physique
+
+#### Paramètres sans dimension principaux :
+
+#### **κ = Nombre de Péclet**
+
+- Compare le transport convectif et conductif de la chaleur
+- `κ ≪ 1` : régime conductif dominant
+
+#### **β = Constante de temps thermique**
+
+- Rapport entre temps caractéristique de conduction et période de forçage
+- `β ≪ 1` : réponse rapide aux variations thermiques
+
+#### **γ = Constante de temps hydraulique**
+
+- Rapport entre temps caractéristique hydraulique et période de forçage
+- `γ ≪ 1` : réponse rapide aux variations de charge
+
+#### Termes de couplage et sources :
+
+#### **ζ = Source hydraulique adimensionnelle**
+
+- Compare l'intensité du flux latéral à l'écoulement vertical
+- `ζ ≪ 1` : flux latéral négligeable
+
+#### **φ = Source thermique adimensionnelle**
+
+- Compare l'apport de chaleur du flux latéral à la diffusion thermique
+- `φ ≪ 1` : température contrôlée par conduction
+
+### - Avantages numériques
+
+#### Homogénéisation des échelles
+
+Les variables adimensionnées (`H̃, T̃, z̃, t̃`) sont toutes de l'ordre de l'unité, contrairement aux variables dimensionnées qui présentaient de grandes disparités d'ordres de grandeur.
+
+#### Amélioration du conditionnement
+
+- Matrices, gradients, Jacobiennes et Hessiennes mieux équilibrés
+- Réduction des erreurs d'arrondi
+- Évite les sur/sous-flux flottants pour des paramètres extrêmes
+
+#### Performance des solveurs
+
+- Réduction du nombre d'itérations nécessaires
+- Convergence accélérée des algorithmes (mesurer à ∼15% pour la MCMC)
+- Simplification de l'utilisation des tolérances numériques
+
+## L'adimensionnement du code
 
 On pose les changements de variables suivants :
 
@@ -32,12 +93,12 @@ $$
 
 Ici $L_0$ est la prfondeur de la colonne de sol étudiée, $P$ est la période caractéristique de variations de la température.
 
-On exprime les équations avec les nouvelles variables pour obtenir les équations adimensionnées. La perméabilité $K$, l'emmagasinement spécifiques $S_{s}$ et les flux latéraux $q_s$ et $q_s$ sont pris constants à l'intérieur d'une couche, domaine de validité de ces équation :
+On exprime les équations avec les nouvelles variables pour obtenir les équations adimensionnées. La perméabilité $K$, l'emmagasinement spécifiques $S_{s}$ et le flux latéral $q_s$ sont pris constants à l'intérieur d'une couche, domaine de validité de ces équation :
 
 $$
 \left\{\begin{array}{rll}
 \dfrac{S_s \Delta H }{P} \, \, \partial_{\tilde{t}} \tilde{H} & = & \dfrac{K \Delta H}{L_0^2}  \, \, \partial_{\tilde{z}}^2 \tilde{H} \, \, + q_s \\
-\dfrac{\rho_m c_m \Delta T}{P}  \, \, \partial_{\tilde{t}} \tilde{\theta}  & = & \dfrac{\rho_w c_w K \Delta H \Delta T}{L_0^2}  \, \, \partial_{\tilde{z}} \tilde{H}  \, \, \partial_{\tilde{z}} \tilde{\theta} + \dfrac{\lambda_m \Delta T}{L_0^2}  \, \, \partial_{\tilde{z}}^2  \tilde{\theta} + \rho_w c_w q_s \Delta T
+\dfrac{\rho_m c_m \Delta T}{P}  \, \, \partial_{\tilde{t}} \tilde{\theta}  & = & \dfrac{\rho_w c_w K \Delta H \Delta T}{L_0^2}  \, \, \partial_{\tilde{z}} \tilde{H}  \, \, \partial_{\tilde{z}} \tilde{\theta} + \dfrac{\lambda_m \Delta T}{L_0^2}  \, \, \partial_{\tilde{z}}^2  \tilde{\theta} + \rho_w c_w q_s \Delta T \cdot \tilde{\theta}
 \end{array} \right.
 $$
 
@@ -47,7 +108,7 @@ $$
 \left\{\begin{array}{rll}
 \overbrace{\dfrac{S_s L_0^2}{P K }}^{\large{\gamma}}  \, \, \partial_{\tilde{t}} \tilde{H} & = & \partial_{\tilde{z}}^2 \tilde{H} \, \,
 + \overbrace{\dfrac{L_0^2 q_s}{K \Delta H}}^{\large{\zeta}} \\[15pt]
-\underbrace{\dfrac{\rho_m c_m L_0^2}{P \lambda_m}}_{\large{\beta}}  \, \, \partial_{\tilde{t}} \tilde{\theta}  & = & \underbrace{\dfrac{\rho_w c_w K \Delta H}{\lambda_m}}_{\large{\kappa = \text{Pe}}}  \, \, \partial_{\tilde{z}} \tilde{H} \, \, \partial_{\tilde{z}} \tilde{\theta} + \partial_{\tilde{z}}^2  \tilde{\theta} + \underbrace{\dfrac{\rho_w c_w q_s L_0^2}{\lambda_m}}_{\large{\phi}}
+\underbrace{\dfrac{\rho_m c_m L_0^2}{P \lambda_m}}_{\large{\beta}}  \, \, \partial_{\tilde{t}} \tilde{\theta}  & = & \underbrace{\dfrac{\rho_w c_w K \Delta H}{\lambda_m}}_{\large{\kappa = \text{Pe}}}  \, \, \partial_{\tilde{z}} \tilde{H} \, \, \partial_{\tilde{z}} \tilde{\theta} + \partial_{\tilde{z}}^2  \tilde{\theta} + \underbrace{\dfrac{\rho_w c_w q_s L_0^2}{\lambda_m}}_{\large{\phi}} \tilde{\theta}
 \end{array} \right.
 $$
 
@@ -56,7 +117,7 @@ On considère donc le système adimensionné suivant:
 $$
 \left\{\begin{array}{rll}
 \gamma \times \partial_{\tilde{t}} \tilde{H}      & = & \, \zeta & + & \partial_{\tilde{z}}^2 \tilde{H} \\
-\beta  \times \, \, \partial_{\tilde{t}} \tilde{\theta} & = & \kappa \times \partial_{\tilde{z}} \tilde{H} \times \partial_{\tilde{z}} \tilde{\theta} & + & \partial_{\tilde{z}}^2 \tilde{\theta} + \phi
+\beta  \times \, \, \partial_{\tilde{t}} \tilde{\theta} & = & \kappa \times \partial_{\tilde{z}} \tilde{H} \times \partial_{\tilde{z}} \tilde{\theta} & + & \partial_{\tilde{z}}^2 \tilde{\theta} + \phi \times \tilde{\theta}
 \end{array} \right.
 $$
 
@@ -68,9 +129,9 @@ $$
 
 _(Note : La formule de $\kappa$ (Péclet) est correcte en substituant $K = \frac{k\rho_w g}{\mu_w}$ dans $\frac{\rho_w c_w K \Delta H}{\lambda_m}$)_
 
-IMPORTANT: Cette analyse montre que les profils de température et de charge dépendant uniquement de ces cinq paramètres $\kappa$ (ou Pe), $\beta$, $\gamma$, $\zeta$ et $\phi$. Il est donc possible (sauf cas particulier) de déterminer ces cinq paramètres si on nous donne un profil.
+Les profils de température et de charge dépendant uniquement de ces cinq paramètres $\kappa$ (ou Pe), $\beta$, $\gamma$, $\zeta$ et $\phi$.
 
-Le problème initial contient lui plus de paramètres: $n$, $k$, $S_s$, $\lambda_m$, $\rho$, $c$, $q_l$ et $q_s$. Il est impossible de remonter à tout ces paramètres. Le fait que le profil ne dépende que du quintuplet ($\kappa$, $\beta$, $\gamma$, $\zeta$, $\phi$) nous montre qu'il est impossible de remonter à tous les paramètres physiques. En effet plusieurs jeux de paramètres physiques sont équivalents car ils donnent le même quintuplet.
+Le problème initial contient lui plus de paramètres: $n$, $k$, $S_s$, $\lambda_m$, $\rho$, $c$, $q_l$ et $q_s$. Il est impossible de remonter à tout ces paramètres physiques. En effet plusieurs jeux de paramètres physiques sont équivalents car ils donnent le même quintuplet.
 
 ## 1. Discrétisation de l'équation de la charge hydraulique ($\tilde{H}$)
 
@@ -118,7 +179,7 @@ $$
 
 #### Vecteur C (source et conditions aux limites)
 
-Le vecteur $\vec{c}$ contient le terme de flux latéral $\zeta_k$ et les termes des conditions aux limites.
+Le vecteur $\vec{c}$ contient le terme de flux latéral $\zeta_k$ et les termes des conditions aux limites (se référer au README du code dimensionnel pour plus de détail à leur sujet).
 
 $$
 c_k = \zeta_k + (\text{Termes des C.L.})
@@ -171,7 +232,7 @@ Les matrices $A$ et $B$ sont **identiques à celles de la dérivation précéden
 
 #### Vecteur C (source et conditions aux limites)
 
-Le vecteur $\vec{c}$ contient le nouveau terme de source $\phi_k$ et les termes des conditions aux limites.
+Le vecteur $\vec{c}$ contient le nouveau terme de source $\phi_k$ et les termes des conditions aux limites (se référer au README du code dimensionnel pour plus de détail à leur sujet).
 
 $$
 c_k = \phi_k + (\text{Termes des C.L.})
