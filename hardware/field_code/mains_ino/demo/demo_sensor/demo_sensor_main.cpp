@@ -117,27 +117,28 @@ void setup() {
     if (!SD.begin(CSPin)) { while(true) {} }
     logger.EstablishConnection(CSPin);
     InitialiseRTC();
-    pinMode(LED_BUILTIN, INPUT_PULLDOWN);
+    digitalWrite(LED_BUILTIN, LOW);
     DEBUG_LOG ("Setup finished");
+    delay(1000);
 }
 
 // ----- Loop -----
 void loop() {
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-
+    
     String date = GetCurrentDate();
     String hour = GetCurrentHour();
     DEBUG_LOG(String(ncapt) + " capteurs détectés.");
-
+    
     
     
     // --- Prendre mesures ---
     long current_Time=GetSecondsSinceMidnight();
+
     bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 1));
 
     if (IsTimeToMeasure) {
         DEBUG_LOG("starting measurement process");
+        digitalWrite(LED_BUILTIN, HIGH);
         for (int it = 0; it<ncapt; it++) {
             double v = sens[it]->get_voltage();
             DEBUG_LOG("voltage preleved");
@@ -148,6 +149,7 @@ void loop() {
         lastMeasure = current_Time;
         DEBUG_LOG("Voltage recording finished");
         a_line_remains_to_log = true;
+        digitalWrite(LED_BUILTIN, LOW);
     }else{
         DEBUG_LOG("Not time to measure yet : current_Time - lastMeasure = " + String(current_Time - lastMeasure) + " ; intervalle_de_mesure_secondes - 1 = " + String(intervalle_de_mesure_secondes - 1));
     }
@@ -166,6 +168,7 @@ void loop() {
     DEBUG_LOG("Is it time to LoRa ? " + String(IsTimeToLoRa));
     //IsTimeToLoRa = true; //a supprimer, pour les besoins du debugs
     if (IsTimeToLoRa || rattrapage) {
+        digitalWrite(LED_BUILTIN, HIGH);
 
         File dataFile = SD.open(filename, FILE_READ);
         DEBUG_LOG("File has been opened");
@@ -232,7 +235,6 @@ void loop() {
         }
 
     // --- Sommeil jusqu'à prochaine mesure ---
-        pinMode(LED_BUILTIN, INPUT_PULLDOWN);
         Waiter waiter;
         //DEBUG_LOG("waiter instancié");
 
@@ -254,6 +256,7 @@ void loop() {
             current_Time = 0;
             DEBUG_LOG("Dates have been updated");
         }
+        digitalWrite(LED_BUILTIN, LOW);
     }
     delay(500);
 }
