@@ -181,10 +181,11 @@ void loop() {
     
         DEBUG_LOG("about to loop on modem.available()");
         // reception csv et modification
-        while (modem.available()) {
+/*        while (modem.available()) {
             loraWAN.receiveConfig(configFilePath, modif);
             modif = true;
         }
+*/
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
     //delay(500) pas de dodo pour la démo
