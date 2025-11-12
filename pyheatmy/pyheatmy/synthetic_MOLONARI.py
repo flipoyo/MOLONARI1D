@@ -30,6 +30,7 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
         sigma_meas_P: float = None,  # (m) écart type de l'incertitude sur les valeurs de pression capteur
         sigma_meas_T: float = None,  # (°C) écart type de l'incertitude sur les valeurs de température capteur
         verbose: bool = True,
+        array_T_bottom: np.ndarray = None, # permet d'imposer une série temporelle de température pour le dernier capteur... (à T_4)
     ):
                 
         self._classType = ClassType.TIME_SERIES
@@ -43,6 +44,7 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
             print("param_T_riv_signal is a one level list, generating single periodic signal")
             self._multiperiodic = False
 
+        self._force_T_bottom = array_T_bottom
         self._param_dates = param_time_dates
         self._param_dH = param_dH_signal
         self._param_T_riv = param_T_riv_signal
@@ -62,7 +64,19 @@ class synthetic_MOLONARI:  # on simule un tableau de mesures
         self._depth_sensors = np.array(depth_sensors)
         self._real_z = np.array([0] + depth_sensors) + offset
 
-        self._generate_all_series()
+        if self._force_T_bottom is None:
+            print("No forced bottom temperature, generating all series")
+            self._generate_all_series()
+
+        if self._force_T_bottom is not None:
+            if self.verbose:
+                print("USER PROVIDED BOTTOM TEMPERATURE SERIES !")
+                print("Forcing bottom temperature with provided array")
+            self._generate_all_series()
+            # La on remplace la série temporelle de température du fond par la série imposée par l'utilisateur
+            self._T_aq = self._force_T_bottom
+            self._generate_Shaft_Temp_series(verbose=self.verbose)
+            self._generate_perturb_Shaft_Temp_series()
 
 
         # self._dates = np.array([None])
