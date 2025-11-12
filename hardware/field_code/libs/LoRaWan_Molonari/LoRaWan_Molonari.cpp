@@ -30,6 +30,7 @@ bool LoraWANCommunication::begin(const String& appEui, const String& appKey) {
     }
 
     int connected = modem.joinOTAA(appEui, appKey);
+    Serial.println("Le statut de la connexion est celui-ci :  " + String(connected));
     if (!connected) {
         Serial.println("Échec de la connexion LoRaWAN");
         return false;
