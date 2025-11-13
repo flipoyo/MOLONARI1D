@@ -1004,7 +1004,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             )
 
         n_sous_ech_iter = max(1, int(np.floor(nb_chain * nb_iter / NSAMPLEMIN)))
-        sizesubsampling = max(int(np.floor(nb_iter / n_sous_ech_iter)), 1)
+        sizesubsampling = max(int(np.ceil(nb_iter / n_sous_ech_iter)), 1)
 
         if verbose:
             print(
@@ -1153,7 +1153,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             if verbose:
                 print("--- Begin Burn in phase ---")
 
-            for i in trange(nitmaxburning, desc="Burn in phase"):
+            for i in range(nitmaxburning):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
 
@@ -1256,7 +1256,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 f"Initialisation post burn-in - Utilisation de la mémoire (en Mo) : {process.memory_info().rss / 1e6}"
             )
 
-            for i in trange(nb_iter, desc="DREAM MCMC Computation", file=sys.stdout):
+            for i in range(nb_iter):
                 # Initialisation pour les nouveaux paramètres
                 std_X = np.std(X, axis=0)  # calcul des écarts types des paramètres
 
@@ -1377,7 +1377,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             if isinstance(quantile, Number):
                 quantile = [quantile]
 
-            for i in trange(nitmaxburning, desc="Init Mcmc ", file=sys.stdout):
+            for i in range(nitmaxburning):
                 # on tire un jeu de paramètres aléatoires selon les priors
                 self.sample_params_from_priors()
                 init_sigma2_temp = sigma2_temp_prior.sample()
@@ -1412,7 +1412,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
             nb_accepted = 0
 
-            for i in trange(nb_iter, desc="Mcmc Computation", file=sys.stdout):
+            for i in range(nb_iter):
                 # on stocke les paramètres avant la proposition de pas
                 X = self.get_list_current_params()
 
@@ -2210,9 +2210,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 layer.Prior_rhos_cs.perturb(layer.params.rhos_cs),
                 layer.Prior_q.perturb(layer.params.q),
             )
-
-
-# Assurez-vous que `numpy as np` est bien importé en haut de core.py
 
 
 def compute_energy(temp_simul, temp_ref, sigma2, sigma2_distrib):
