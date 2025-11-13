@@ -3,9 +3,9 @@
 ## In the riverbed
 ### Metal Box with weight, seal and cover
 
-![Metal box with weight](boite_sans_couvercle_vue_de_dessus.jpg) 
+![Metal box with weight](boite_sans_couvercle_vue_de_dessus.png) 
 
-![Seal and cover](couvercle_boite_avec_joint_et_vis.jpg) 
+![Seal and cover](couvercle_boite_avec_joint_et_vis.png) 
 
 ### Electronic circuit with battery and waterproof antenna
 
