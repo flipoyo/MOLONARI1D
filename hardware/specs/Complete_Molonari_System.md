@@ -3,15 +3,13 @@
 ## In the riverbed
 ### Metal Box with weight, seal and cover
 
-![Metal box with weight](Shaft_body.png) 
+![Metal box with weight](boite_sans_couvercle_vue_de_dessus.png) 
 
-![Seal and cover](Shaft_body.png) 
+![Seal and cover](couvercle_boite_avec_joint_et_vis.png) 
 
 ### Electronic circuit with battery and waterproof antenna
 
-![Seal and cover](Shaft_body.png) 
-
-![Electronic circuit](Shaft_body.png)
+![Electronic circuit](circuit_capteurs_avec_antenne_et_batterie.png)
 
 ### Plastic hosepipe
 
@@ -19,11 +17,11 @@
 
 ### 5 Temperature Sensors
 
-![Temperature sensor](Shaft_body.png)
+![Temperature sensor](capteur_temperature_avec_cables.png)
 
 ### Pressure Sensor 
 
-![Pressure sensor](Shaft_body.png)
+![Pressure sensor](capteur_de_pression_avec_piles.png)
 
 ### All together
 
@@ -35,7 +33,7 @@
 
 ### Electronic circuit with battery and antenna
 
-![Electronic circuit](Shaft_body.png)
+![Electronic circuit](circuit_relai_antenne.png)
 
 ![Relai picture](Shaft_body.png)
 
