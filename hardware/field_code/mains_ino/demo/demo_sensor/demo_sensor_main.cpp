@@ -188,12 +188,12 @@ void loop() {
             DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
             DEBUG_LOG(String(dataFile.available()));
             bool time_to_measure_soon = (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) <= 1000); //60000ms = 1min
-            if(time_to_measure_soon){
+            /*if(time_to_measure_soon){
                 lora.closeSession(0);
                 DEBUG_LOG("fatal : interrupt sending because time to measure is coming");
                 lora.closeSession(0);
                 rattrapage = true;
-            }
+            }*/
             
             while (!time_to_measure_soon) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
