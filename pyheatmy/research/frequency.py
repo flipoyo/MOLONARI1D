@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import os as os
 import csv as csv 
 from scipy.signal import butter, filtfilt, hilbert, find_peaks,peak_widths, get_window
+from sklearn.metrics import r2_score
+from scipy.stats import chi2
 
 """
 Module for frequency domain analysis of temperature data.
@@ -12,12 +14,175 @@ The inputs will be the signals of the sensors, the depths of the sensors and the
 The aim is to retrieve values of diffusivity kappa_e and Stallman speed v_t.
 """
 
-class frequentiel_analysis:
+class frequency_analysis:
     def __init__(self, verbose=True):
+        self._dates = None
+        self._signals = None          # [river, s1, s2, ...] 
+        self._depths = None           # [z_riv(=0), z1, z2, ...]
+        self._periods_days = None
+        self._amps_surface = None     # amplitudes FFT for z=0 for dominant periods
+        self._phases = None           # phases FFT for z=0 (optional)
+        self._theta_mu = 0.0          # mean offset
+        self._kappa_e = None
+        self._v_t = None
+
         if verbose:
-            print("Frequentiel analysis module initialized.")
+            print("Frequency analysis module initialized.")
             print("This module will analyze a multi-periodic signal to estimate attenuation and phase decay coefficients.")
             print("Using phase decay and amplitude attenuation with depth, we'll retrieve kappa_e and v_t for each dominant period.")
+            print("-------------------------------------")
+            print("Please use set_inputs(...) to provide the necessary data before analysis.")
+
+    def set_inputs(self, *,
+                dates=None,
+                signals=None,
+                depths=None,
+                periods_days=None,
+                amps_surface=None,
+                phases=None,
+                theta_mu=None,
+                kappa_e=None,
+                v_t=None):
+        
+        if dates is not None:        self._dates = dates
+        if signals is not None:      self._signals = signals
+        if depths is not None:       self._depths = np.asarray(depths, float)
+        if periods_days is not None: self._periods_days = np.asarray(periods_days, float)
+        if amps_surface is not None: self._amps_surface = np.asarray(amps_surface, float)
+        if phases is not None:       self._phases = np.asarray(phases, float)
+        if theta_mu is not None:     self._theta_mu = float(theta_mu)
+        if kappa_e is not None:      self._kappa_e = float(kappa_e)
+        if v_t is not None:          self._v_t = float(v_t)
+        return self 
+
+
+    def effective_params(
+        self,
+        lambda_s,          # [W/m/K] conductivity of solid
+        rho_c_s,           # [J/m³/K] volumetric heat capacity of solid
+        k,                 # [m²] intrinsic permeability
+        n,                 # [-] porosity
+        gradH,             # [-] hydraulic head gradient (positive downward)
+        # --- constants for water at 20°C
+        lambda_w=0.6,      # [W/m/K]
+        rho_w=1000.0,      # [kg/m³]
+        c_w=4182.0,        # [J/kg/K]
+        mu_w=1.002e-3,     # [Pa·s]
+        g=9.81             # [m/s²]
+        ):
+        """
+        Compute effective thermal diffusivity (kappa_e) and thermal advective velocity (v_t)
+        from solid properties, porosity, intrinsic permeability and head gradient.
+
+        Parameters
+        ----------
+        lambda_s : float
+            Thermal conductivity of solid [W/m/K]
+        rho_c_s : float
+            Volumetric heat capacity of solid [J/m³/K]
+        k : float
+            Intrinsic permeability [m²]
+        n : float
+            Porosity [-]
+        gradH : float
+            Hydraulic head gradient (∂H/∂z) [-] (positive downward)
+
+        Returns
+        -------
+        kappa_e : float
+            Effective thermal diffusivity [m²/s]
+        v_t : float
+            Effective thermal advective velocity [m/s]
+        """
+
+        rho_c_w = rho_w * c_w  # [J/m³/K]
+        rho_c_m = n * rho_c_w + (1 - n) * rho_c_s  # [J/m³/K]
+        lambda_m = (n * np.sqrt(lambda_w) + (1 - n) * np.sqrt(lambda_s)) ** 2  # [W/m/K]
+
+        kappa_e = lambda_m / rho_c_m  # [m²/s]
+
+        # Convert intrinsic permeability to hydraulic conductivity
+        K = k * rho_w * g / mu_w  # [m/s]
+
+        v_t = - (rho_c_w / rho_c_m) * K * gradH  # [m/s]
+
+        return kappa_e, v_t
+
+
+    def set_phys_prop(self,
+                  lambda_s,    # [W/m/K] solid conductivity
+                  rho_c_s,     # [J/m³/K] solid volumetric heat capacity
+                  k,           # [m²] intrinsic permeability
+                  n,           # [-] porosity
+                  gradH,       # [-] hydraulic gradient (positive downward)
+                  #--------
+                  lambda_w=0.6,
+                  rho_w=1000.0,
+                  c_w=4182.0,
+                  mu_w=1.002e-3,
+                  g=9.81,
+                  compute_now=True,
+                  verbose=True):
+        """
+        Store physical properties of the porous medium and, if compute_now=True,
+        compute and store (kappa_e, v_t) using effective_params().
+
+        Parameters
+        ----------
+        lambda_s : float
+            Solid thermal conductivity [W/m/K].
+        rho_c_s : float
+            Solid volumetric heat capacity [J/m³/K].
+        k : float
+            Intrinsic permeability [m²].
+        n : float
+            Porosity [-].
+        gradH : float
+            Hydraulic gradient ∂H/∂z (positive downward).
+        compute_now : bool, default True
+            If True, compute and store kappa_e and v_t immediately.
+        """
+
+        # Store physical properties
+        self._lambda_s = float(lambda_s)
+        self._rho_c_s = float(rho_c_s)
+        self._k_intrin = float(k)
+        self._porosity = float(n)
+        self._gradH = float(gradH)
+
+        # Compute effective parameters if requested
+        if compute_now:
+            kappa_e, v_t = self.effective_params(
+                lambda_s=lambda_s,
+                rho_c_s=rho_c_s,
+                k=k,
+                n=n,
+                gradH=gradH,
+                lambda_w=lambda_w,
+                rho_w=rho_w,
+                c_w=c_w,
+                mu_w=mu_w,
+                g=g
+            )
+            self._kappa_e = float(kappa_e)
+            self._v_t = float(v_t)
+            if verbose:
+                print(f"[set_phys_prop] Effective parameters computed:")
+                print(f"  kappa_e = {kappa_e:.3e} m²/s")
+                print(f"  v_t = {v_t:.3e} m/s")
+        else:
+            if verbose:
+                print("[set_phys_prop] Physical properties stored but not yet converted into (kappa_e, v_t).")
+
+        return self
+
+
+    def _need(self, name, value, where):
+        if value is None:
+            raise ValueError(f"'{name}' is required but not set. "
+                             f"Either pass it to {where}(...) or set it once with set_inputs({name}=...).")
+        return value
+
 
     def _to_seconds(self, dates):
         d = np.asarray(dates)
@@ -39,184 +204,123 @@ class frequentiel_analysis:
 
         # fallback: assume numeric array (seconds)
         return d.astype(float)
-    
-    # def find_dominant_periods(self, dates, signals, draw=True):
-    #     """Find dominant periods in river signal using FFT.
-	# 	This is an automatic processing. It takes the FFT spectrum and returns highest 
-	# 	peak with threshold.
-    #     Returns (periods_days, amplitudes, frequencies)
-    #     """
-    #     # Support two calling styles for backward compatibility:
-    #     # 1) find_dominant_periods(dates, signals, draw=True)
-    #     #    where signals = [river, sensor1, sensor2, ...]
-    #     # 2) legacy: find_dominant_periods(signals, river, draw=True)
-    #     #    where the user passed (signals_list, river_array)
-    #     # Require explicit dates array (physical times) as first argument.
-    #     dates_arr = np.asarray(dates)
-    #     is_dates = False
-    #     try:
-    #         if np.issubdtype(dates_arr.dtype, np.datetime64):
-    #             is_dates = True
-    #         elif dates_arr.dtype == object and len(dates_arr) > 0:
-    #             import datetime as _dt
-    #             is_dates = isinstance(dates_arr[0], _dt.datetime)
-    #     except Exception:
-    #         is_dates = False
 
-    #     if not is_dates:
-    #         # Try to use stored dates from a prior fft_sensors(dates, ...) call
-    #         if hasattr(self, '_last_dates') and self._last_dates is not None:
-    #             dates = self._last_dates
-    #             t = self._to_seconds(dates)
-    #             # interpret legacy calling style: first arg 'dates' was actually signals list
-    #             signals_list = dates_arr
-    #             signals = signals_list
-    #             river = signals[0]
-    #         else:
-    #             raise ValueError(
-    #                 "find_dominant_periods requires a 'dates' array as the first argument (numpy.datetime64 or list of datetime).\n"
-    #                 "If you used the legacy call find_dominant_periods(signals, river), call fft_sensors(dates, signals, ...) first so dates are stored, or call find_dominant_periods(dates, signals) directly."
-    #             )
-    #     else:
-    #         t = self._to_seconds(dates)
-    #         river = signals[0]
 
-    #     # Perform rFFT of the river temperature signal.
-    #     river = np.asarray(river)
-    #     t = np.asarray(t)
-    #     if river.ndim != 1:
-    #         raise ValueError(f"river must be 1D array, got shape {river.shape}")
-    #     if t.size != river.size:
-    #         raise ValueError(f"time axis length ({t.size}) and river signal length ({river.size}) must match")
+    def plot_signals(self, dates=None, signals=None, depths=None):
+        """This function simply plots the input signals over time with the corresponding depths."""
 
-    #     n = river.size
-    #     dt = np.median(np.diff(t))
-    #     yf = np.fft.rfft(river - np.mean(river))
-    #     amp = np.abs(yf) / n
-    #     freqs = np.fft.rfftfreq(n, d=dt)
+        if dates is None:       dates = self._need('dates', self._dates, 'plot_signals')
+        if signals is None:     signals = self._need('signals', self._signals, 'plot_signals')
+        if depths is None:      depths = self._need('depths', self._depths, 'plot_signals')
 
-    # # Now use find_peaks to identify dominant frequencies. This is automatic and we have a threshold to choose.
-    #     mask = freqs > 0
-    #     amps_masked = amp[mask]
-    #     freqs_masked = freqs[mask]
-    #     # Use a prominence threshold (fraction of max amplitude) to avoid too many small peaks
-    #     prom_thresh = np.max(amps_masked) * 0.05  # tuneable (5% of max amplitude)
-    #     peaks, props = find_peaks(amps_masked, prominence=prom_thresh)
+        plt.figure(figsize=(9, 4))
 
-    #     # sort peaks by amplitude (descending) so dominant peaks appear first
-    #     if peaks.size:
-    #         order = np.argsort(amps_masked[peaks])[::-1]
-    #         peaks = peaks[order]
+        for i, signal in enumerate(signals):
+            plt.plot(dates, signal, label=f'Signal at depth {depths[i]:.2f} m')
 
-    #     dominant_freqs = freqs_masked[peaks]
-    #     dominant_periods_days = (1.0 / dominant_freqs) / 86400.0
-
-    #     print("Dominant periods analysis complete")
-    #     print("Found periods (days):", dominant_periods_days)
-
-	# 	# Plotting if draw is enabled.
-    #     if draw:
-    #         plt.figure(figsize=(8, 4))
-    #         plt.plot(1.0 / (freqs_masked * 86400.0), amps_masked, label='FFT Amplitude Spectrum')
-    #         plt.plot(dominant_periods_days, amps_masked[peaks], 'ro', label='Dominant Periods')
-    #         plt.xscale('log')
-    #         plt.xlabel('Period (days)')
-    #         plt.ylabel('Amplitude')
-    #         plt.title('FFT of River Temperature Signal')
-    #         plt.legend()
-    #         plt.grid()
-    #         plt.show()
-
-    #     return dominant_periods_days, dominant_freqs, amps_masked[peaks]
+        plt.xticks(rotation=90)
+        plt.xlabel('Date')
+        plt.ylabel('Temperature (K)')
+        plt.title('Temperature Signals Over Time')
+        plt.legend()
+        plt.show()
 
     def find_dominant_periods(
         self,
-        dates_or_signals,
+        dates_or_signals=None,
         signals_or_river=None,
         draw=True,
         use_hann=True,
         prom_rel=0.05,
         Q_min=10.0,
+        Q_max=np.inf,
+        amplitude_threshold=0.0,
         max_width_rel=0.20,
-        min_cycles=3
+        min_cycles=3,
+        store=True,            # <-- store internal state
+        compute_phases=True    # <-- compute/store phases at z=0
         ):
         """
-        Détecte les pics dominants du signal 'rivière', mesure la largeur (FWHM),
-        calcule Q=f0/FWHM et filtre les pics trop larges.
+        Detection of dominant periods in the 'river' signal..
 
-        Signatures acceptées:
-        1) find_dominant_periods(dates, signals, draw=...)
-            - dates: array datetime64 ou liste de datetime
-            - signals: [river, sensor1, ...] (toutes les séries alignées sur 'dates')
-        2) find_dominant_periods(signals, river, draw=...)  # legacy
-            - signals: liste/array des séries (dates déjà connues via un appel précédent)
-            - river: array 1D de la rivière
+        Behavior depending on input arguments:
+        - If dates_or_signals et signals_or_river are both None:
+            * use self._dates and self._signals as inputs
+        - Otherwise: remain compatible with your two existing signatures:
+            * (dates, signals)   or   (signals, river) (legacy)
+
+        If store=True, also store:
+            self._periods_days, self._amps_surface, self._last_fft_meta, (and self._phases if compute_phases)
         """
-        # --------- Détection de la signature ----------
-        dates = None
-        signals = None
-        river = None
 
-        # Helper pour tester si dates
-        def _is_datetime_array(a):
-            a = np.asarray(a)
-            if np.issubdtype(a.dtype, np.datetime64):
-                return True
-            if a.dtype == object and a.size > 0:
-                import datetime as _dt
-                return isinstance(a[0], _dt.datetime)
-            return False
-
-        if _is_datetime_array(dates_or_signals):
-            # Nouvelle signature (dates, signals)
-            dates = np.asarray(dates_or_signals)
-            signals = signals_or_river
-            if signals is None:
-                raise ValueError("Avec la signature (dates, signals), 'signals' ne peut pas être None.")
+        if dates_or_signals is None and signals_or_river is None:
+            if not hasattr(self, "_dates") or self._dates is None:
+                raise ValueError("No inputs provided and self._dates is not set. "
+                                "Either pass (dates, signals) or call set_inputs(dates=..., signals=...).")
+            if not hasattr(self, "_signals") or self._signals is None:
+                raise ValueError("No inputs provided and self._signals is not set. "
+                                "Either pass (dates, signals) or call set_inputs(signals=...).")
+            dates = np.asarray(self._dates)
+            signals = self._signals
             river = np.asarray(signals[0], dtype=float)
         else:
-            # Legacy signature (signals, river)
-            signals = dates_or_signals
-            river = np.asarray(signals_or_river, dtype=float)
-            if not hasattr(self, '_last_dates') or self._last_dates is None:
-                raise ValueError(
-                    "Signature legacy détectée, mais aucune 'dates' mémorisée. "
-                    "Appelle plutôt find_dominant_periods(dates, signals) ou initialise _last_dates."
-                )
-            dates = np.asarray(self._last_dates)
+            # Keep compatibility with both signatures:
+            def _is_datetime_array(a):
+                a = np.asarray(a)
+                if np.issubdtype(a.dtype, np.datetime64):
+                    return True
+                if a.dtype == object and a.size > 0:
+                    import datetime as _dt
+                    return isinstance(a[0], _dt.datetime)
+                return False
 
-        # --------- Vérifications dimensions / types ----------
+            if _is_datetime_array(dates_or_signals):
+                dates = np.asarray(dates_or_signals)
+                signals = signals_or_river
+                if signals is None:
+                    raise ValueError("With signature (dates, signals), 'signals' cannot be None.")
+                river = np.asarray(signals[0], dtype=float)
+            else:
+                signals = dates_or_signals
+                river = np.asarray(signals_or_river, dtype=float)
+                if not hasattr(self, '_last_dates') or self._last_dates is None:
+                    raise ValueError(
+                        "Legacy signature detected but no stored 'dates' found. "
+                        "Call find_dominant_periods(dates, signals) first or set self._dates."
+                    )
+                dates = np.asarray(self._last_dates)
+
+
+        # Below is really the algo...
+
+        # FFT and amplitude peaks detection
         t = self._to_seconds(dates)
         river = np.asarray(river, dtype=float)
         if river.ndim != 1:
-            raise ValueError(f"'river' doit être 1D, reçu shape={river.shape}")
+            raise ValueError(f"'river' must be 1D, got shape={river.shape}")
         if t.size != river.size:
-            raise ValueError(f"taille(t)={t.size} ≠ taille(river)={river.size}")
+            raise ValueError(f"size(t)={t.size} != size(river)={river.size}")
 
-        # Gestion NaN: on masque les points non valides
         m = np.isfinite(t) & np.isfinite(river)
         t = t[m]; river = river[m]
         if t.size < 8:
-            raise ValueError("Pas assez d'échantillons valides pour la FFT.")
+            raise ValueError("Not enough valid samples for FFT.")
 
         n = t.size
         dt = float(np.median(np.diff(t)))
         T  = n * dt
         f_res = 1.0 / T
 
-        # --------- Fenêtrage optionnel ----------
         x = river - np.nanmean(river)
         if use_hann:
             w = get_window('hann', n, fftbins=True)
             x = x * w
-            x = x / (np.sum(w)/n)  # correction d'énergie approx.
+            x = x / (np.sum(w)/n)
 
-        # --------- FFT ----------
         yf = np.fft.rfft(x)
         freqs = np.fft.rfftfreq(n, d=dt)
         amp = np.abs(yf) / n
 
-        # --------- Détection des pics ----------
         mask = freqs > 0
         freqs_m = freqs[mask]
         amp_m   = amp[mask]
@@ -227,7 +331,6 @@ class frequentiel_analysis:
             order = np.argsort(amp_m[peaks])[::-1]
             peaks = peaks[order]
 
-        # Largeur à mi-hauteur (FWHM)
         widths_bins, h_eval, left_ips, right_ips = peak_widths(amp_m, peaks, rel_height=0.5)
         df = (freqs_m[1] - freqs_m[0]) if freqs_m.size > 1 else f_res
         fwhm_hz = widths_bins * df
@@ -238,9 +341,8 @@ class frequentiel_analysis:
             Q = f0 / fwhm_hz
             width_rel = fwhm_hz / f0
 
-        # Critères de fiabilité
         enough_cycles = (T * f0) >= min_cycles
-        narrow_enough = (Q >= Q_min) & (width_rel <= max_width_rel)
+        narrow_enough = (Q >= Q_min) & (width_rel <= max_width_rel) & (Q <= Q_max) & (A0 >= amplitude_threshold)
         accepted = enough_cycles & narrow_enough
 
         period_days = 1.0 / (f0 * 86400.0)
@@ -256,31 +358,67 @@ class frequentiel_analysis:
             'prominence': props.get('prominences', np.full_like(A0, np.nan)),
         }
 
-        # --------- Plot ----------
         if draw:
             plt.figure(figsize=(9,4))
             P_all = 1.0 / (freqs_m * 86400.0)
+
+            if amplitude_threshold > 0:
+                plt.hlines(amplitude_threshold, P_all[0], P_all[-1], colors='tab:orange', linestyles='--', label='Amplitude threshold')
+
             plt.plot(P_all, amp_m, label='FFT amplitude')
             plt.plot(period_days, A0, 'o', mfc='none', mec='tab:red', label='Detected peaks')
-            plt.plot(period_days[accepted], A0[accepted], 'o', color='tab:green', label='Accepted peaks')
-            dP = fwhm_hz / (f0**2) / 86400.0  # ΔP ≈ (dP/df)*Δf
+            plt.plot(period_days[accepted], A0[accepted], 'o', color='tab:green', label='Accepted')
+            dP = fwhm_hz / (f0**2) / 86400.0
             for P, A, d in zip(period_days, A0, dP):
                 plt.hlines(A, P - d/2, P + d/2, colors='gray', alpha=0.6)
-            plt.xscale('log'); plt.xlabel('Période (jours)'); plt.ylabel('Amplitude')
-            ttl = f"FFT rivière — f_res={f_res:.3e} Hz (~{1/(f_res*86400):.1f} j)"
+            plt.xscale('log'); plt.xlabel('Period (days)'); plt.ylabel('Amplitude')
+            ttl = f"River FFT — f_res={f_res:.3e} Hz (~{1/(f_res*86400):.1f} days)"
             plt.title(ttl); plt.grid(True, which='both', ls=':'); plt.legend(); plt.tight_layout(); plt.show()
 
-        # Compat: retourner (périodes, fréquences, amplitudes)
-        if hasattr(self, '__dict__'):
+        # Saving in the object state
+        if store:
+            mask_keep = accepted
+            Pd_kept = np.asarray(period_days)[mask_keep]
+            A0_kept = np.asarray(A0)[mask_keep]
+            f0_kept = np.asarray(f0)[mask_keep]
+
+            # store for next pipeline
             self._last_fft_meta = result
             self._last_dates = dates
+            self._periods_days = Pd_kept
+            self._amps_surface = A0_kept
+
+            if compute_phases:
+                # phases at z=0  
+                phases = []
+                for f in f0_kept:
+                    idx = np.argmin(np.abs(freqs - f))
+                    phases.append(np.angle(yf[idx]))
+                self._phases = np.array(phases, float)
+
+            # Optionally store dates and signals if not already set
+            if not hasattr(self, '_dates') or self._dates is None:
+                self._dates = dates
+            if not hasattr(self, '_signals') or self._signals is None:
+                # If we were in legacy (signals, river), we may not have it here
+                try:
+                    self._signals = signals
+                except NameError:
+                    pass
+
+        # returns
         return period_days, f0, A0, result
 
     
-    def fft_sensors(self, dates, signals, depths):
+    def fft_sensors(self, dates=None, signals=None, depths=None):
         """Compute FFT of each sensor signal.
-        Returns list of (frequencies, amplitudes) for each signal.
+        Plots a global figure with the amplitude spectra of all sensors.
         """
+        
+        if dates is None:       dates = self._need('dates', self._dates, 'fft_sensors')
+        if signals is None:     signals = self._need('signals', self._signals, 'fft_sensors')
+        if depths is None:      depths = self._need('depths', self._depths, 'fft_sensors')
+
         t = self._to_seconds(dates)
         # store the provided dates so legacy calls can reuse them
         try:
@@ -304,7 +442,7 @@ class frequentiel_analysis:
             results.append((freqs, amp))
         
         # Plotting the FFT results for all sensors
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(9, 4))
         for i, (freqs, amp) in enumerate(results):
             plt.plot(1.0 / (freqs * 86400.0), amp, label=f'Sensor at depth {depths[i]} m')
 
@@ -316,24 +454,19 @@ class frequentiel_analysis:
         plt.grid()
         plt.show()
 
-    def plot_temperatures(self, dates, signals, depths):
-        """Plot the temperature profiles on the same figure."""
-        plt.figure(figsize=(10, 6))
 
-        for signal, depth in zip(signals, depths):
-            plt.plot(dates, signal, label="Sensor at depth "+str(depth)+" m")
-
-        plt.xlabel('Date')
-        plt.ylabel('Temperature (°C)')
-        plt.title('Temperature Profiles')
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-    def estimate_a(self, dates, signals, depths, dominant_periods_days, verbose=True, draw=True):
+    def estimate_a(self, dates=None, signals=None, depths=None, periods_days=None, verbose=True, draw=True, intercept=True):
         """For each signal, compute the amplitudes at peaks of dominant periods.
         Then for each period, estimate the exponential decay of the corresponding amplitude A(z, omega)/A(0, omega) = e^(-a*z)"""
+
+        if dates is None:                   dates = self._need('dates', self._dates, 'estimate_a')
+        if signals is None:                 signals = self._need('signals', self._signals, 'estimate_a')
+        if depths is None:                  depths = self._need('depths', self._depths, 'estimate_a')
+        if periods_days is None:   periods_days = self._need('periods_days', self._periods_days, 'estimate_a')
+
         amplitudes_at_peaks = []
+
+        print("This deals only with 1D attenuation (no lateral flow).")
 
         for i in range(len(signals)):
             signal = signals[i]
@@ -349,7 +482,7 @@ class frequentiel_analysis:
              
             # Find the amplitudes at the dominant frequencies i.e the A(z)
             amplitudes_at_peaks_for_this_signal = []
-            for Pd in dominant_periods_days:
+            for Pd in periods_days:
                 target_freq = 1.0 / (Pd * 86400.0)
                 idx = (np.abs(freqs - target_freq)).argmin()
                 amplitudes_at_peaks_for_this_signal.append(amp[idx])
@@ -400,16 +533,19 @@ class frequentiel_analysis:
 
         if verbose:
             print("Amplitudes at dominant periods for each signal computed.")
-            for i, Pd in enumerate(dominant_periods_days):
+            for i, Pd in enumerate(periods_days):
                 amps_for_period = amplitudes_at_peaks[:, i]
                 print(f"Period {Pd:.2f} days: Amplitudes = {amps_for_period}")
 
-        # Now estimate a for each period in dominant_periods_days
+        # Now estimate a for each period in periods_days
         a_values = []	# Values of "a" parameter which controls the decrease of the amplitude
         a_R2_values = []	# R^2 values of the linear regression of a.
+        # Save in the class the values of amplitudes at peaks for possible later use
+        self._AMPS_AT_PEAKS = amplitudes_at_peaks[:,:] # store for later use if needed
 
-
-        for i, Pd in enumerate(dominant_periods_days):
+        # We'll collect plotting data per period and, if requested, draw them in a single figure
+        plot_items = []
+        for i, Pd in enumerate(periods_days):
             # amplitudes for all signals at this period
             A_all = amplitudes_aligned[:, i]
             z = depths_all
@@ -420,6 +556,7 @@ class frequentiel_analysis:
                     print(f"Reference amplitude A0 invalid (={A_all[0]}). Skipping period {Pd}.")
                 a_values.append(np.nan)
                 a_R2_values.append(np.nan)
+                plot_items.append({'Pd': Pd, 'skipped': True, 'reason': 'invalid A0'})
                 continue
 
             with np.errstate(divide='ignore', invalid='ignore'):
@@ -438,49 +575,103 @@ class frequentiel_analysis:
             if m.sum() < 2:
                 a_values.append(np.nan)
                 a_R2_values.append(np.nan)
+                plot_items.append({'Pd': Pd, 'skipped': True, 'reason': 'not enough finite points'})
                 continue
-            # perform linear fit on finite data
+
+            # perform model-selection (1D linear vs 2D polynomial) on the log-amplitude
             z_m = z[m]
             y_m = log_ratio[m]
-            coeffs = np.polyfit(z_m, y_m, 1)
-            a_fit = -coeffs[0]
+
+            # perform linear fit on finite data (1D assumption accepted)
+            if intercept:
+                # fit slope and intercept (ordinary least squares)
+                coeffs = np.polyfit(z_m, y_m, 1)
+                slope = coeffs[0]
+                intercept_val = coeffs[1]
+            else:
+                # force fit through origin: slope = sum(z*y)/sum(z^2)
+                denom = np.sum(z_m * z_m)
+                if denom == 0:
+                    if verbose:
+                        print(f"Degenerate depths for period {Pd}: sum(z^2)==0, skipping")
+                    a_values.append(np.nan)
+                    a_R2_values.append(np.nan)
+                    plot_items.append({'Pd': Pd, 'skipped': True, 'reason': 'degenerate depths'})
+                    continue
+                slope = np.sum(z_m * y_m) / denom
+                intercept_val = 0.0
+                coeffs = np.array([slope, intercept_val])
+
+            a_fit = -slope
             # compute R^2
-            y_pred = np.polyval(coeffs, z_m)
+            y_pred = slope * z_m + intercept_val
             ss_res = np.sum((y_m - y_pred) ** 2)
             ss_tot = np.sum((y_m - np.mean(y_m)) ** 2)
             r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else np.nan
 
-            if draw:
-                plt.figure(figsize=(4, 4))
-                plt.title(f"Estimation of a for period {Pd:.2f} days")
-                plt.scatter(z, log_ratio, label='Data (log(A(z)/A(0)))')
-                z_fit = np.linspace(0, np.max(depths), 100)
-                log_ratio_fit = coeffs[0] * z_fit + coeffs[1]
-                plt.plot(z_fit, log_ratio_fit, 'r-', label=f'Fit: slope = {-a_fit:.4f}')
-                plt.xlabel('Depth (m)')
-                plt.ylabel('log(A(z)/A(0))')
-                plt.legend()
-                plt.grid()
-                plt.show()
+            # store plot data for later combined plotting
+            plot_items.append({'Pd': Pd, 'skipped': False, 'z': z.copy(), 'log_ratio': log_ratio.copy(), 'coeffs': np.array(coeffs).copy(), 'a_fit': a_fit, 'r2': r2, 'model': '1D'})
 
             # Store the fitted a value and the R^2 value
             a_values.append(a_fit)
             a_R2_values.append(r2)
+
+        # After the loop, create a single figure with subplots if requested
+        if draw:
+            n_plots = len(periods_days)
+            if n_plots == 0:
+                pass
+            else:
+                ncols = min(3, n_plots)
+                nrows = int(np.ceil(n_plots / ncols))
+                fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(4 * ncols, 4 * nrows))
+                axes = np.atleast_1d(axes).ravel()
+                for idx, item in enumerate(plot_items):
+                    ax = axes[idx]
+                    Pd = item.get('Pd')
+                    ax.set_title(f"Estimation of a for period {Pd:.2f} days")
+                    if item.get('skipped'):
+                        ax.text(0.5, 0.5, f"Skipped: {item.get('reason')}", ha='center', va='center')
+                        ax.set_xticks([]); ax.set_yticks([])
+                        continue
+                    z = item['z']
+                    log_ratio = item['log_ratio']
+                    coeffs = item['coeffs']
+                    a_fit = item['a_fit']
+                    ax.scatter(z, log_ratio, label='Data (log(A(z)/A(0)))')
+                    z_fit = np.linspace(0, np.max(depths), 100)
+                    log_ratio_fit = coeffs[0] * z_fit + coeffs[1]
+                    ax.plot(z_fit, log_ratio_fit, 'r-', label=f'Fit: slope = {-a_fit:.4f}')
+                    ax.set_xlabel('Depth (m)')
+                    ax.set_ylabel('log(A(z)/A(0))')
+                    ax.legend()
+                    ax.grid()
+                # hide any unused axes
+                for j in range(len(plot_items), axes.size):
+                    axes[j].axis('off')
+                plt.tight_layout()
+                plt.show()
         
         if verbose:
             print("Attenuation coefficients a estimated for each dominant period.")
-            for i, Pd in enumerate(dominant_periods_days):
+            for i, Pd in enumerate(periods_days):
                 print(f"Period {Pd:.2f} days: a = {a_values[i]:.4f} 1/m")
                 print(f"Period {Pd:.2f} days: R^2 = {a_R2_values[i]:.4f}")
 
-        return np.array(a_values), np.array(a_R2_values)
+        self._a_values, self._a_R2 = np.array(a_values), np.array(a_R2_values)
+        return self._a_values, self._a_R2
 
 
-    def estimate_b(self, dates, signals, depths, periods_days, bw_frac=0.15, order=4, amp_thresh=None, verbose=True, draw=True):
+    def estimate_b(self, dates=None, signals=None, depths=None, periods_days=None, bw_frac=0.15, order=4, amp_thresh=None, verbose=True, draw=True, intercept=True):
         """Estimate b (phase decay) using bandpass+Hilbert method.
         periods_days: array-like in days
         Returns array of b values (rad/m)
         """
+
+        if dates is None:           dates  = self._need('dates',  self._dates,  'estimate_b')
+        if signals is None:         signals = self._need('signals',self._signals,'estimate_b')
+        if depths is None:          depths = self._need('depths', self._depths, 'estimate_b')
+        if periods_days is None:   periods_days = self._need('periods_days', self._periods_days, 'estimate_b')
 
         river = signals[0]
         sensors = signals[1:]
@@ -515,7 +706,7 @@ class frequentiel_analysis:
             b, a = butter(order, [fl/ny, fh/ny], btype='band')
             return b, a
 
-        # On passe pas Hilbert pour avoir un signal analytique avec phase absolue.
+    # Apply Hilbert transform to obtain the analytic signal (absolute phase).
         def analytic(t_in, y_in, f0):
             tg, yg, fs = regularize(t_in, y_in)
             b, a = butter_band(f0, fs)
@@ -528,6 +719,8 @@ class frequentiel_analysis:
         b_values = []
         b_R2_values = []
 
+        # collect plot items to display all fits in a single figure if requested
+        plot_items_b = []
         for Pd in periods_days:
             P = Pd * 86400.0
             f0 = 1.0 / P
@@ -548,7 +741,7 @@ class frequentiel_analysis:
                 phases.append(ph_mean)
 
             ph = np.array(phases, float)
-            # Attention à bien unwrap car sinon la phase va se faire automatiquement bornée et on ne pourra pas faire de fit linéaire.
+            # Be careful to unwrap the phase; otherwise the phase will be wrapped and linear fitting will fail.
             ph_unw = np.unwrap(ph)
 
             for k in range(1, len(ph_unw)):
@@ -599,28 +792,69 @@ class frequentiel_analysis:
                 continue
 
             # Fitting lineaire de la phase en beta*z = - b*z
-            coeffs = np.polyfit(depths_all[m], ph_unw[m], 1)
-            beta = coeffs[0]
+            if intercept:
+                coeffs = np.polyfit(depths_all[m], ph_unw[m], 1)
+                beta = coeffs[0]
+                intercept_val = coeffs[1]
+            else:
+                denom = np.sum(depths_all[m] * depths_all[m])
+                if denom == 0:
+                    if verbose:
+                        print(f"Degenerate depths for period {Pd}: sum(depths^2)==0, skipping")
+                    b_values.append(np.nan)
+                    b_R2_values.append(np.nan)
+                    continue
+                beta = np.sum(depths_all[m] * ph_unw[m]) / denom
+                intercept_val = 0.0
+                coeffs = np.array([beta, intercept_val])
+
             b_val = -beta
             b_values.append(b_val)
             # Compute R^2
-            residuals = ph_unw[m] - (coeffs[0] * depths_all[m] + coeffs[1])
+            residuals = ph_unw[m] - (beta * depths_all[m] + intercept_val)
             ss_res = np.sum(residuals**2)
             ss_tot = np.sum((ph_unw[m] - np.mean(ph_unw[m]))**2)
             r2 = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
             b_R2_values.append(r2)
 
-            if draw:
-                plt.figure(figsize=(4, 4))
-                plt.title(f"Estimation of b for period {Pd:.2f} days")
-                plt.scatter(depths_all, ph_unw, label='Data (unwrapped phase)')
-                z_fit = np.linspace(0, np.max(depths), 100)
-                ph_fit = coeffs[0] * z_fit + coeffs[1]
-                plt.plot(z_fit, ph_fit, 'r-', label=f'Fit: slope = {-b_val:.4f}')
-                plt.xlabel('Depth (m)')
-                plt.ylabel('Unwrapped Phase (rad)')
-                plt.legend()
-                plt.grid()
+            # collect plotting info
+            plot_items_b.append({
+                'Pd': Pd,
+                'skipped': False,
+                'depths_all': depths_all.copy(),
+                'ph_unw': ph_unw.copy(),
+                'coeffs': coeffs.copy(),
+                'b_val': b_val,
+                'r2': r2
+            })
+
+        # After loop: draw combined subplots for b if requested
+        if draw:
+            n_plots_b = len(periods_days)
+            if n_plots_b > 0:
+                ncols_b = min(3, n_plots_b)
+                nrows_b = int(np.ceil(n_plots_b / ncols_b))
+                figb, axesb = plt.subplots(nrows=nrows_b, ncols=ncols_b, figsize=(4 * ncols_b, 4 * nrows_b))
+                axesb = np.atleast_1d(axesb).ravel()
+                for idx, item in enumerate(plot_items_b):
+                    ax = axesb[idx]
+                    Pd = item['Pd']
+                    ax.set_title(f"Estimation of b for period {Pd:.2f} days")
+                    depths_all = item['depths_all']
+                    ph_unw = item['ph_unw']
+                    coeffs = item['coeffs']
+                    b_val = item['b_val']
+                    ax.scatter(depths_all, ph_unw, label='Data (unwrapped phase)')
+                    z_fit = np.linspace(0, np.max(depths), 100)
+                    ph_fit = coeffs[0] * z_fit + coeffs[1]
+                    ax.plot(z_fit, ph_fit, 'r-', label=f'Fit: slope = {-b_val:.4f}')
+                    ax.set_xlabel('Depth (m)')
+                    ax.set_ylabel('Unwrapped Phase (rad)')
+                    ax.legend()
+                    ax.grid()
+                for j in range(len(plot_items_b), axesb.size):
+                    axesb[j].axis('off')
+                plt.tight_layout()
                 plt.show()
 
         if verbose:
@@ -629,12 +863,19 @@ class frequentiel_analysis:
                 print(f"Period {Pd:.2f} days: b = {b_values[i]:.4f} rad/m")
                 print(f"Period {Pd:.2f} days: R^2 = {b_R2_values[i]:.4f}")
 
-        return np.array(b_values), np.array(b_R2_values)
+        self._b_values, self._b_R2 = np.array(b_values), np.array(b_R2_values)
+        return self._b_values, self._b_R2
+    
 
-    def perform_inversion(self, a_values, b_values, periods_days, verbose=True):
+    def perform_inversion(self, a_values=None, b_values=None, periods_days=None, verbose=True):
         """Invert for kappa_e and v_t for given a, b, and periods (days).
         Returns (kappa_e, v_t)
         """
+
+        if a_values is None:      a_values = self._need('a_values', getattr(self, '_a_values', None), 'perform_inversion')
+        if b_values is None:      b_values = self._need('b_values', getattr(self, '_b_values', None), 'perform_inversion')
+        if periods_days is None:  periods_days = self._need('periods_days', self._periods_days, 'perform_inversion')
+
         a = np.asarray(a_values, float)
         b = np.asarray(b_values, float)
         P = np.asarray(periods_days, float) * 86400.0
@@ -646,131 +887,128 @@ class frequentiel_analysis:
             for i, Pd in enumerate(periods_days):
                 print(f"Period {Pd:.2f} days: kappa_e = {kappa_e[i]:.3e} m^2/s, v_t = {v_t[i]:.3e} m/s")
 
+        self._kappa_e_series, self._v_t_series = kappa_e, v_t
         return kappa_e, v_t
-    
-    def check_constantes(self, a_values, b_values):
-        rapport = (b_values**2 - a_values**2)/a_values
-        print("Verification des constantes")
-        print(rapport)
-        return None
-    
 
-    # def reconstruct_signal(self, signals, a_values, b_values, periods_days, depths, verbose=True):
-    #     """Attempting to reconstruct the signal given the river and the spectral components."""
-    #     """A FAIRE !"""
+    def phys_to_a_b(self, kappa_e=None, v_t=None, periods_days=None):
+        """Convert physical parameters kappa_e and v_t to attenuation (a) and phase-shift (b) coefficients.
+        periods_days: array-like in days
+        Returns (a_values, b_values)
+        """
 
+        if kappa_e is None:       kappa_e = self._need('kappa_e', getattr(self, '_kappa_e', None), 'phys_to_a_b')
+        if v_t is None:           v_t = self._need('v_t', getattr(self, '_v_t', None), 'phys_to_a_b')
+        if periods_days is None:  periods_days = self._need('periods_days', self._periods_days, 'phys_to_a_b')
 
-if __name__ == "__main__":
-    # Exemple.
-    # --- Paramètres de la simulation ---
+        omega = 2*np.pi/(periods_days * NSECINDAY)  # angular frequencies [rad/s]
+        alpha = (-v_t + np.sqrt(v_t**2 + 4j*omega*kappa_e)) / (2*kappa_e)
+        a_, b_ = np.real(alpha), np.imag(alpha)
+        return a_, b_
 
-    t_debut = (2011, 1, 1)
-    t_fin = (2011, 2, 28, 23, 59, 59)
-    dt = 15*NSECINMIN # pas de temps en (s)
+    def critere_2D(self, period_index: int = 0, deg_max: int = 2, show_reg: bool = False, intercept: bool = False):
+        """
+        Decide whether the attenuation behaviour is best described by a 1D exponential
+        (linear fit of ln(A/A0) vs z) or requires a 2D (polynomial) model.
 
-    zeroT = 0
-    zeroT += ZERO_CELSIUS 
+        Parameters
+        ----------
+        period_index : int
+            Index of the period (column) in self._AMPS_AT_PEAKS to use for the test.
+        deg_max : int
+            Maximum polynomial degree to test (will test degrees 1..deg_max).
+        show_reg : bool
+            If True, show regression plots for each tested degree.
+        intercept : bool
+            If True, force degree-1 (linear) regression through the origin (intercept = 0).
+            If False, allow a free intercept (ordinary least squares).
 
-    T_riv_amp = 1
-    T_riv_offset = 12  + zeroT
-    nday = 1
-    P_T_riv = nday*NHOURINDAY*4*dt #monthly   period
+        Returns
+        -------
+        dict
+            Dictionary with keys: 'modele' ('1D' or '2D'), 'r2_list', 'coeffs'.
+        """
+        # Basic availability checks
+        if not hasattr(self, '_AMPS_AT_PEAKS') or self._AMPS_AT_PEAKS is None:
+            raise ValueError("_AMPS_AT_PEAKS not set. Run estimate_a(...) before calling critere_2D().")
+        if not hasattr(self, '_depths') or self._depths is None:
+            raise ValueError("_depths not set. Provide depths via set_inputs(depths=...) before calling critere_2D().")
 
-    T_aq_amp = 0
-    T_aq_offset = 12 + zeroT
-    P_T_aq = -9999  
+        brut = np.asarray(self._AMPS_AT_PEAKS)
+        if brut.ndim != 2:
+            raise ValueError(f"_AMPS_AT_PEAKS must be 2D (n_signals x n_periods), got shape {brut.shape}")
 
-    dH_amp = 0
-    dH_offset = .5
-    P_dh = -9999 #14*24*4*dt
+        n_signals, n_periods = brut.shape
+        if period_index < 0 or period_index >= n_periods:
+            raise IndexError(f"period_index {period_index} out of range (0..{n_periods-1})")
 
-    depth_sensors = [.2, .4, .6, .8]
-    Zbottom = .8
+        # build log ratio ln(A(z)/A0) across signals for the requested period
+        A_col = brut[:, period_index].astype(float)
+        if A_col[0] == 0 or not np.isfinite(A_col[0]):
+            raise ValueError("Reference amplitude A0 is zero or invalid for chosen period_index")
+        traite = np.log(A_col / A_col[0])
 
-    """Bruit de mesure"""
-    sigma_meas_P = 0.001
-    sigma_meas_T = 0.1
+        # depths: use internal _depths (should include river at z=0 if needed)
+        z_values = np.asarray(self._depths, float)
 
-    print("dt={0:.1f}s".format(dt))
+        # Align lengths: trim to the shortest
+        min_len = min(z_values.size, traite.size)
+        z_values = z_values[:min_len]
+        traite = traite[:min_len]
 
-    # --- Génération des données synthétiques ---
+        # Remove non-finite entries
+        mask = np.isfinite(z_values) & np.isfinite(traite)
+        z_values = z_values[mask]
+        traite = traite[mask]
 
-    # Création du signal multipériodique de la rivière.
-    liste_params_river = [[T_riv_amp, P_T_riv, T_riv_offset], [T_riv_amp, P_T_riv*2, 0]]
+        if z_values.size < 2:
+            raise ValueError("Not enough valid depth/amplitude points for regression")
 
-    time_series_dict_user1 = {
-    "offset":.0,
-    "depth_sensors":depth_sensors,
-	"param_time_dates": [t_debut, t_fin, dt], 
-    "param_dH_signal": [dH_amp, P_dh, dH_offset], #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
-	"param_T_riv_signal":liste_params_river, #list of list for multiperiodic signal
-    "param_T_aq_signal": [T_aq_amp, P_T_aq, T_aq_offset],
-    "sigma_meas_P": sigma_meas_P,
-    "sigma_meas_T": sigma_meas_T, #float
-    }
-    # instanciation du simulateur de données
-    emu_observ_test_user1 = synthetic_MOLONARI.from_dict(time_series_dict_user1)
+        def regression_poly(reg, z_vals, deg, show_plot=False, return_coeffs=False, force_origin=False):
+            """Perform polynomial regression. If force_origin=True and deg==1, fit through origin."""
+            if deg == 1 and force_origin:
+                # closed-form slope through origin: slope = sum(z*y)/sum(z^2)
+                denom = np.sum(z_vals * z_vals)
+                if denom == 0:
+                    raise ValueError("Degenerate z values for origin-constrained fit")
+                slope = np.sum(z_vals * reg) / denom
+                coeffs = np.array([slope, 0.0])
+                p = np.poly1d(coeffs)
+            else:
+                coeffs = np.polyfit(z_vals, reg, deg)
+                p = np.poly1d(coeffs)
 
-    # l'utilisateur génère un dictionnaire avec les données importantes de la colonne
-    Couche = {
-        "name": "Couche en sable",
-        "zLow": Zbottom,
-        "moinslog10IntrinK":11,
-        "n": 0.1,
-        "lambda_s": 1,
-        "rhos_cs": 4e6,
-        "q": 1e-20,
-    }
+            y_pred = p(z_vals)
+            r2 = r2_score(reg, y_pred)
+            if show_plot:
 
-    # modèle une couche
-    Layer1 = Layer.from_dict(Couche)
+                z = np.linspace(np.min(z_vals), np.max(z_vals), 100)
 
-    print(f"Layer: {Layer1}")
+                plt.scatter(z_vals, reg, label='Données FFT mesurées')
+                plt.plot(z, p(z), 'r--', label=f'Ajustement poly {deg}: R²={r2:.3f}')
+                #plt.plot(z_vals, y_pred, 'r--', label=f'Ajustement poly {deg}: R²={r2:.3f}')
+                plt.xlabel('Profondeur z (m)')
+                plt.ylabel('Log amplitude ln(A(z)/A0)')
+                plt.title(f"Régression polynomiale de degré {deg}, R²={r2:.3f}")
+                plt.legend()
+                plt.show()
+            if return_coeffs:
+                return coeffs, r2
+            else:
+                return r2
 
-    nbcells = 100
-    # on utilise les mesures générées précédemment dans les init "dH_measures" et "T_measures"
-    col_dict = {
-        "river_bed": 1.0, 
-        "depth_sensors": depth_sensors, #En vrai y aura une 4e valeur ici mais ca prendra en charge pareil
-        "offset": .0,
-        "dH_measures": emu_observ_test_user1._molonariP_data,
-        "T_measures": emu_observ_test_user1._T_Shaft_measures,
-        "nb_cells" : nbcells,
-        "sigma_meas_P": 0.01, #float
-        "sigma_meas_T": 0.1, #float
-    }
-    col = Column.from_dict(col_dict,verbose=True)
-    col.set_layers(Layer1)
-    col.compute_solve_transi()
+        r2_list = []
+        coeffs_list = []
+        # test degrees 1 .. deg_max (inclusive)
+        for deg in range(1, deg_max + 1):
+            coeff, r2 = regression_poly(traite, z_values, deg, show_plot=show_reg, return_coeffs=True, force_origin=(intercept and deg == 1))
+            r2_list.append(r2)
+            coeffs_list.append(coeff)
 
-    emu_observ_test_user1._measures_column_one_layer(col)
+        # Decision rule: prefer 1D unless higher-degree R² significantly improves and leading coeff is meaningful
+        modele = '1D'
+        if len(r2_list) >= 2:
+            if r2_list[0] < 0.99 and r2_list[1] > r2_list[0] and abs(coeffs_list[1][0]) > 0.1:
+                modele = '2D'
 
-    # Now find the dominant periods in the river signal
-    fa = frequentiel_analysis()
-    dates = emu_observ_test_user1._dates
-    river = emu_observ_test_user1._T_riv
-    temps_all = col.get_temperature_at_sensors()
-    # temps_all shape: (n_sensors + 2, n_time) -> [0]=river, [1..n]=sensors, [-1]=aq
-    sensors = temps_all[1:-1]
-    signals = [river] + [sensors[i, :] for i in range(sensors.shape[0])]
+        return {'modele': modele, 'r2_list': np.array(r2_list), 'coeffs': coeffs_list}
 
-    # Take the 3 first values and add 0 
-    depth_sensors = col.depth_sensors[:3]
-    depth_sensors = [0] + depth_sensors
-
-    # Plotting check figures
-    fa.fft_sensors(dates, signals, depth_sensors)
-    fa.plot_temperatures(dates, signals, depth_sensors)
-
-    # Finding dominant periods
-    dominant_periods_days, dominant_freqs, dominant_amps = fa.find_dominant_periods(signals, river, draw=True)
-
-    # Estimate a and b for these dominant periods
-    depths = np.array(depth_sensors)
-    a_est, a_R2 = fa.estimate_a(dates, signals, depths, dominant_periods_days, verbose=True, draw=True)
-    b_est, b_R2 = fa.estimate_b(dates, signals, depths, dominant_periods_days, verbose=True, draw=True)
-
-    # Checking constants
-    fa.check_constantes(a_est, b_est)
-
-    kappa_e, v_t = fa.perform_inversion(a_est, b_est, dominant_periods_days, verbose=True)
