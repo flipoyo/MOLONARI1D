@@ -12,7 +12,6 @@
 #include "Time.hpp"
 #include "Waiter.hpp"
 #include "Reader.hpp"
-//#include "Memory_monitor.cpp"
 
 #define DEBUG_MAIN
 #define DEBUG_MEASURE
@@ -104,7 +103,6 @@ void setup() {
     sens = new Sensor*[ncapt];
     
     // Initialisation des capteurs
-
     for (int it = 0; it<ncapt; it++) {
         SensorConfig _c = liste_capteurs[it];
         sens[it] = new Sensor(_c.pin, 4, _c.type_capteur);
@@ -217,7 +215,6 @@ void loop() {
                 lora.closeSession(lastPacket);
             }    // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
             
-
             dataFile.close();
             lastLoRaSend = current_Time;
 
