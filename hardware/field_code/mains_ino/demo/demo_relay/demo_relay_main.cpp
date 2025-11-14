@@ -149,7 +149,7 @@ void loop() {
             Serial.print("appKey : " + String(appKey));
             Serial.print("Envoi de ");
 
-            while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
+            while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 10000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
                 std::queue<memory_line> linesToSend;
                 while (dataFile.available()) {
