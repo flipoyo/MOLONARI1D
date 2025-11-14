@@ -39,6 +39,7 @@ long lastAttempt = 0;// mémorise la dernière tentative de réception (en milli
 
 String appEui;
 String devEui;
+String appKey;
 LoraCommunication lora(868E6, devEui, appEui, RoleType::MASTER);
 bool modif = false;
 int CSPin = 5; // Pin CS par défaut
@@ -102,6 +103,7 @@ void loop() {
 
             DEBUG_LOG("Handshake réussi. Réception des paquets...");
             int last = lora.receiveAllPackets(receiveQueue);
+            DEBUG_LOG("Packets received when close session : " + String(last));
             lora.sendPacket(last, FIN, "FIN"); // Répond par un FIN de confirmation;
 
             // Met à jour le temps de la dernière tentative de réception
@@ -144,14 +146,22 @@ void loop() {
             return;
         }
 
-        if (loraWAN.begin(res.rel_config.appEui, res.rel_config.devEui)) {
-            Serial.print("Envoi de ");
+        if (loraWAN.begin(res.rel_config.appEui, res.rel_config.appKey)) {
+            Serial.println("appKey : " + String(res.rel_config.appKey));
+            Serial.println("temps avant communication : " + String(CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes)));
+
 
             while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
+                DEBUG_LOG("entrée dans le while d'envoi LoRaWAN");
                 std::queue<memory_line> linesToSend;
+                dataFile.seek(lastSDOffset);
                 while (dataFile.available()) {
-                    memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                    DEBUG_LOG("lecture d'une nouvelle ligne dans le fichier");
+                    String flush = dataFile.readStringUntil('\n');
+                    DEBUG_LOG("data file until espace : " + flush);
+                    memory_line new_line = memory_line(flush, dataFile.position());
+                    DEBUG_LOG(String("new line: ") + new_line.flush);
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer
