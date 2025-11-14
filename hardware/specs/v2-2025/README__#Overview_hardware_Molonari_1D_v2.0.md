@@ -13,6 +13,8 @@
 
 ### Plastic hosepipe
 
+![Hosepipe](Images/hose_pipe.jpg)
+
 ### Shaft 
 
 ![Shaft](Images/tige_complete.jpg)
