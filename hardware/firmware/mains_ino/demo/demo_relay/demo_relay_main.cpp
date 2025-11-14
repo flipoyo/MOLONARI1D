@@ -157,7 +157,6 @@ void loop() {
                 std::queue<memory_line> linesToSend;
                 dataFile.seek(lastSDOffset);
                 while (dataFile.available()) {
-                    dataFile.seek(lastSDOffset);
                     DEBUG_LOG("lecture d'une nouvelle ligne dans le fichier");
                     String flush = dataFile.readStringUntil('\n');
                     DEBUG_LOG("data file until espace : " + flush);
