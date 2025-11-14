@@ -566,6 +566,102 @@ def create_periodic_signal(dates : list[datetime]
         signal = full(len(dates), params[2])
     return signal    
 
+# Modification to handle multiple periodic signals
+def create_multi_periodic_signal(
+    dates: list[datetime],
+    params,
+    signal_name="TBD",
+    verbose=True,
+):
+    """
+    Build a signal from one or many sets of periodic parameters.
+
+    Parameters
+    ----------
+    dates : list[datetime]
+        Time axis used for evaluation. A constant spacing is required.
+    params : list or list[list]
+        Either a single periodic definition [amplitude, period, offset] or
+        an iterable of such definitions.
+    """
+    if len(dates) < 2:
+        raise ValueError("You need to specify an offset and at least one signal component.")
+
+    # Build time step list to ensure the sampling is regular.
+    t_step_list = [dates[i + 1] - dates[i] for i in range(len(dates) - 1)]
+    assert (
+        len(set(t_step_list)) <= 1
+    ), "The time step between two consecutive dates should be constant."
+
+    # Require params to be a sequence of lists/tuples in the new format.
+    # New required formats:
+    #   [[offset], [amp, period, phase], ...]
+    #   [[amp, period, phase], ...]  (no global offset)
+    if not isinstance(params, (list, tuple)):
+        raise TypeError("params must be a list of lists. See function docstring for expected format.")
+    if not params:
+        raise ValueError("params must contain at least one periodic definition.")
+
+    # First element can be a single-element list -> global offset
+    if isinstance(params[0], (list, tuple)) and len(params[0]) == 1:
+        global_offset = params[0][0]
+        components = list(params[1:])
+        if len(components) == 0:
+            # Only an offset provided
+            if verbose:
+                print("Only global offset provided. Returning constant signal.")
+            return full(len(dates), global_offset, dtype=float32)
+    else:
+        # No global offset supplied; treat all entries as component triplets
+        global_offset = 0.0
+        components = list(params)
+
+    # Validate that every component is a triplet [amplitude, period, phase]
+    for idx, comp in enumerate(components):
+        if not isinstance(comp, (list, tuple)) or len(comp) != 3:
+            raise ValueError(f"Component at index {idx} must be a triplet [amplitude, period, phase].")
+
+    dt = t_step_list[0].total_seconds()
+    t_range = arange(len(dates)) * dt
+    signal = zeros(len(dates), dtype=float32)
+
+    if verbose:
+        print("Multiple periodic signals detected, summing components with global offset.")
+
+    for idx, param in enumerate(components):
+        if not isinstance(param, (list, tuple)) or len(param) != 3:
+            raise ValueError(
+                f"Component at index {idx} should be a triplet [amplitude, period, phase]."
+            )
+
+        amplitude, period, phase = param
+        # If period is CODE_scalar treat as a constant component. We use amplitude + phase as the value
+        # for backward-like behaviour where a constant component previously used the 'offset' slot.
+        if period == CODE_scalar:
+            component = full(len(dates), amplitude + phase, dtype=float32)
+        else:
+            component = amplitude * sin(2 * pi * t_range / period + phase)
+        signal += component
+
+    # Add global offset
+    if global_offset != 0:
+        signal = signal + global_offset
+
+    if verbose:
+        plt.figure(figsize=(10, 5))
+        plt.plot(dates, signal, label="Signal")
+        plt.xlabel("Dates")
+        plt.ylabel("Signal")
+        plt.title(f"{signal_name} as a Function of Dates")
+        plt.legend()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
+    return signal
+
+from datetime import datetime, timedelta
+
 
 def create_dir(rac, verbose=True):
     # Directory path to print in
@@ -639,3 +735,4 @@ def convert_list_to_timestamp(ts, tbt):
     else:
         cts = [(pd.Timestamp(tbt._dates[i]), value) for i, value in enumerate(ts)]
     return cts
+

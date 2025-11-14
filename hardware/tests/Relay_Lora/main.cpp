@@ -8,7 +8,7 @@
    simulating scenarios with non-real data to quickly debug and refine the protocol
    without deploying the entire system. /
 
-#include BUILDPATH("../../field_code/libs/shared/protocols/LoRa/Lora.hpp")
+#include BUILDPATH("../../firmware/libs/shared/protocols/LoRa/Lora.hpp")
 */
 #include <queue>
 
