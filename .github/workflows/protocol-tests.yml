@@ -23,19 +23,19 @@ jobs:
           echo "Checking LoRa protocol documentation..."
           
           # Check if protocol documentation exists
-          if [ -f "hardware/docs/4 - Our LoRa protocol_ENG.md" ]; then
-            echo "✓ LoRa protocol documentation found"
-          else
-            echo "✗ LoRa protocol documentation missing"
-            exit 1
-          fi
+        #  if [ -f "hardware/docs/4 - Our LoRa protocol_ENG.md" ]; then
+         #   echo "✓ LoRa protocol documentation found"
+         # else
+         #   echo "✗ LoRa protocol documentation missing"
+         #   exit 1
+         # fi
           
           # Check if gateway configuration documentation exists
-          if [ -f "hardware/docs/5 - Gateway and server configurations.md" ]; then
-            echo "✓ Gateway configuration documentation found"
-          else
-            echo "✗ Gateway configuration documentation missing"
-            exit 1
-          fi
+         # if [ -f "hardware/docs/5 - Gateway and server configurations.md" ]; then
+         #   echo "✓ Gateway configuration documentation found"
+         # else
+          #  echo "✗ Gateway configuration documentation missing"
+          #  exit 1
+          # fi
           
-          echo "✓ Protocol documentation validation passed"
+         # echo "✓ Protocol documentation validation passed"

@@ -1,0 +1,27 @@
+# Configuration générale
+intervalle_de_mesure_secondes,30
+lora_intervalle_secondes,40
+# Les deux délais ci-dessus ne doivent pas être inférieurs respectivement à 900s et 3600s
+
+max_pload_octet, 20
+periode_lora_min_secondes, 1
+periode_mesure_min_secondes, 2
+max_secondes_par_jour, 850 
+
+#Configuration des capteurs
+# id,type,pin
+P1,pression,A0
+T1,temperature,A1
+T2,temperature,A6
+T3,temperature,A3
+T4,temperature,A4
+T5,temperature,A5
+
+#Configuration du sensor
+devEui,a8610a34334d710d
+
+#Configuration relay 
+appEui,a8610a35391d6f08
+appKey,00112233445566778899aabbccddeeff
+CSPin,5
+lora_freq,868000000

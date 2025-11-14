@@ -1,0 +1,59 @@
+ #ifndef LORA_HPP
+#define LORA_HPP
+
+#include <Arduino.h>
+#include <LoRa.h>
+#include <queue>
+#include <unordered_set>
+
+#include <Reader.hpp>
+
+enum RequestType : uint8_t {
+    SYN  = 0xcc,
+    ACK  = 0x33,
+    DATA = 0xc3,
+    FIN  = 0x3c
+};
+
+enum RoleType : uint8_t {
+    MASTER,
+    SLAVE
+};
+
+const int MAX_QUEUE_SIZE = 255; // Limite pour les queues
+
+class LoraCommunication {
+public:
+    LoraCommunication(long frequency, String Address_sent, String Address_waited, RoleType role);
+    void LoraUpdateAttributes(long frequency, String Address_sent, String Address_waited, RoleType role);
+    void startLoRa();
+    void stopLoRa();
+    void setdesttodefault();
+
+    // Communication
+    void sendPacket(uint8_t packetNumber, RequestType requestType, const String &payload);
+    bool receivePacket(uint8_t &packetNumber, RequestType &requestType, String &payload);
+    bool isValidDestination(const String &recipient, const String &dest, RequestType requestType);
+    uint8_t calculateChecksum(const String &recipient, const String &dest, uint8_t packetNumber, RequestType requestType, const String &payload);
+    bool isLoRaActive();
+
+    // Sessions
+    bool handshake(uint8_t &shift);
+    uint8_t sendAllPacketsAndManageMemory(std::queue<memory_line>& sendQueue, unsigned long& initial_adress, File& dataFile);
+    uint8_t sendAllPackets(std::queue<String> &sendQueue);
+    int receiveAllPackets(std::queue<String> &receiveQueue);
+    bool closeSession(int lastPacket);
+
+    bool receiveConfigUpdate(const char* filepath, uint16_t* outMeasureInterval, uint16_t* outLoraInterval, unsigned long timeout_ms = 15000);
+private:
+    long freq;
+    String Address_sent;
+    String Address_waited;
+    bool active;
+    RoleType deviceRole;
+    std::unordered_set<uint8_t> myNet = {0xaa, 0xbb, 0xcc};
+};
+
+#endif
+
+

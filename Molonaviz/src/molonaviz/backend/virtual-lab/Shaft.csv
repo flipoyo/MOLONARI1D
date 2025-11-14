@@ -1,0 +1,2 @@
+ID,Name,Datalogger,DataloggerID,Depth1,Depth2,Depth3,Depth4,ThermoModel,Labo
+1,TestShaft,Arduino,1,0.2,0.4,0.6,0.8,1,1

@@ -821,3 +821,56 @@ class SPointCoordinator:
             VALUES (:DateID, :TempBed, :Temp1, :Temp2, :Temp3, :Temp4, :Pressure, :PointKey)
         """)
         return query
+    
+    def thermometer_calibration_infos(self):
+        select_cal_infos = self.build_thermo_calibration_info()
+        if not select_cal_infos.exec():
+            print(select_cal_infos.lastError())
+            return None, None
+        
+        if select_cal_infos.next():
+            # La colonne 0 est beta, la colonne 1 est V
+            return select_cal_infos.value(0), select_cal_infos.value(1)
+        else:
+            return None, None # Aucune donnée trouvée
+        
+    @staticmethod
+    def calibrate_temperature(raw_volt: float, beta: float, V_ref: float, T0_K: float = 298.15) -> float:
+        """
+        Calibrate and return the temperature in Kelvin given the raw voltage measured by the thermometer.
+        The formula used is the following:
+        T = 1 / [ 1/T0_K -  (1 / beta) * ln(V_ref / raw_volt - 1) ]
+
+        :param raw_volt: voltage measured by the sensor.
+        :param beta: calibration parameter of the thermometer model.
+        :param V_ref: The reference voltage of the thermometer model.
+        :param T0_K: Temperature of reference in Kelvin. Default is 298.15K (25°C).
+        :return: Measured temperature in Kelvin.
+        """
+        import math 
+        log_input = (V_ref / raw_volt) - 1
+        
+        if log_input <= 0 or V_ref == 0:
+            return float('nan') 
+        
+        denominator = (1 / T0_K) - (1 / beta) * math.log(log_input)
+        
+        if denominator == 0:
+            return float('nan')
+        
+        return 1 / denominator
+
+    def build_thermo_calibration_info(self):
+        """
+        build and return a query giving the calibration information of the thermometer associated to the current sampling point.
+        """
+        query = QSqlQuery(self.con)
+        query.prepare(f"""
+            SELECT Thermometer.beta, Thermometer.V FROM Thermometer
+            JOIN Shaft
+            ON Thermometer.ID = Shaft.ThermoModel
+            JOIN SamplingPoint
+            ON Shaft.ID = SamplingPoint.Shaft
+            WHERE SamplingPoint.ID = {self.samplingPointID}
+        """)
+        return query

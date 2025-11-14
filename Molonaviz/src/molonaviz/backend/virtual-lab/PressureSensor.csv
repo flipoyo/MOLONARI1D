@@ -1,0 +1,2 @@
+ID,Name,Datalogger,DataloggerID,Calibration,Intercept,DuDH,DuDT,Error,ThermoModel,Labo
+1,TestPSensor,TestDatalogger,1,2025-01-01,0,0,0,0,1,1

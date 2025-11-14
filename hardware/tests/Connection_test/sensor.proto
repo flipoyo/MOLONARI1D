@@ -1,0 +1,7 @@
+syntax = "proto2";
+
+message SensorData {
+  required string UI = 1;
+  required int32 time = 2;
+  repeated float measurements = 3;
+}
