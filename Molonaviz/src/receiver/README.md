@@ -41,6 +41,9 @@ Molonaviz
 2. **Configuration**:  
    Modify the `src/receiver/settings/config.json` file to set your desired configuration constants.
 
+   **Important:**
+   To be able to get MQTT configuration constants (broker, topic...), please go to `hardware/specs/XXX` to get started with Chirpstack configuration (connecting to the server, adding a device, generating certificates and an application...)
+
 3. **Running the Application**:  
    To start the application, put your bash in the /Molonaviz folder and run:
    ```bash
