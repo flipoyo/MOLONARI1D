@@ -28,7 +28,7 @@ class Sensor {
 
 class Measure {
   public:
-    Measure(int ncapt, const std::vector<double>& toute_mesure);
+    Measure(int ncapt, const std::vector<double>& toute_mesure, String uidString);
     // Unique ID for each measurement
     unsigned int id;
 

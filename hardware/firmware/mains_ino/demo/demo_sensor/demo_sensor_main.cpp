@@ -55,7 +55,8 @@ uint16_t newMeasureInterval = 0;
 uint16_t newLoraInterval = 0;
 
 const long sec_in_day = 86400;
-bool rattrapage = false;
+bool rattrapage = true;//temporary, to accelerate the beginning process
+bool a_line_remains_to_log = false;
 
 // ----- Setup -----
 void setup() {
@@ -116,27 +117,28 @@ void setup() {
     if (!SD.begin(CSPin)) { while(true) {} }
     logger.EstablishConnection(CSPin);
     InitialiseRTC();
-    pinMode(LED_BUILTIN, INPUT_PULLDOWN);
+    digitalWrite(LED_BUILTIN, LOW);
     DEBUG_LOG ("Setup finished");
+    delay(1000);
 }
 
 // ----- Loop -----
 void loop() {
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-
+    
     String date = GetCurrentDate();
     String hour = GetCurrentHour();
     DEBUG_LOG(String(ncapt) + " capteurs détectés.");
-
+    
     
     
     // --- Prendre mesures ---
     long current_Time=GetSecondsSinceMidnight();
+
     bool IsTimeToMeasure = ((current_Time - lastMeasure) >= (intervalle_de_mesure_secondes - 1));
 
     if (IsTimeToMeasure) {
         DEBUG_LOG("starting measurement process");
+        digitalWrite(LED_BUILTIN, HIGH);
         for (int it = 0; it<ncapt; it++) {
             double v = sens[it]->get_voltage();
             DEBUG_LOG("voltage preleved");
@@ -146,19 +148,27 @@ void loop() {
         }
         lastMeasure = current_Time;
         DEBUG_LOG("Voltage recording finished");
+        a_line_remains_to_log = true;
+        digitalWrite(LED_BUILTIN, LOW);
+    }else{
+        DEBUG_LOG("Not time to measure yet : current_Time - lastMeasure = " + String(current_Time - lastMeasure) + " ; intervalle_de_mesure_secondes - 1 = " + String(intervalle_de_mesure_secondes - 1));
     }
 
     
     // --- Stocker sur SD ---
-    DEBUG_LOG("launch LogData");
-    logger.LogData(ncapt, toute_mesure);
-    DEBUG_LOG("LogData instruction done");
+    if(a_line_remains_to_log){
+        DEBUG_LOG("launch LogData");
+        logger.LogData(ncapt, toute_mesure, devEui);
+        DEBUG_LOG("LogData instruction done");
+        a_line_remains_to_log = false;
+    }
     // --- Envoyer LoRa si intervalle atteint ---
     
     bool IsTimeToLoRa = ((current_Time - lastLoRaSend) >= (lora_intervalle_secondes - 1));//set to 1 for demo instead
-
+    DEBUG_LOG("Is it time to LoRa ? " + String(IsTimeToLoRa));
     //IsTimeToLoRa = true; //a supprimer, pour les besoins du debugs
     if (IsTimeToLoRa || rattrapage) {
+        digitalWrite(LED_BUILTIN, HIGH);
 
         File dataFile = SD.open(filename, FILE_READ);
         DEBUG_LOG("File has been opened");
@@ -174,15 +184,24 @@ void loop() {
 
         uint8_t id = 0;
         if (lora.handshake(id)) {
-            Serial.println("handshake réussi");
+            Serial.println("HANDSHAKE DONE\n");
             DEBUG_LOG("CalculateSleepTimeUntilNextMeasurement : " + String(CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes)));
             DEBUG_LOG(String(dataFile.available()));
-
-            while (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) > 60000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
+            bool time_to_measure_soon = (CalculateSleepTimeUntilNextMeasurement(lastMeasure, intervalle_de_mesure_secondes) <= 1000); //60000ms = 1min
+            /*if(time_to_measure_soon){
+                lora.closeSession(0);
+                DEBUG_LOG("fatal : interrupt sending because time to measure is coming");
+                lora.closeSession(0);
+                rattrapage = true;
+            }*/
+            
+            while (!time_to_measure_soon) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
                 std::queue<memory_line> linesToSend;
+                dataFile.seek(lastSDOffset);
                 while (dataFile.available()) {
                     memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                    new_line.flush = new_line.flush + "\n";
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer
@@ -190,12 +209,16 @@ void loop() {
                         break;
                     }
                 }
-                int end_document_address = dataFile.position();
+                uint32_t end_document_address = dataFile.position();
+                DEBUG_LOG("end_document_address : " + String(end_document_address) + "; memory_successor of the last element of sendqueue : " + String(linesToSend.back().memory_successor));
+                DEBUG_LOG("SDOffset before sending: " + String(lastSDOffset) + "\n                     SEND ALL PACKETS AND MANAGE MEMORY");
                 uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(linesToSend, lastSDOffset, dataFile);
-                rattrapage = (lastSDOffset == end_document_address);
-                DEBUG_LOG("rattrappage status : " + String(rattrapage));
+                DEBUG_LOG("SDOffset after sending: " + String(lastSDOffset) + "; end document address : " + String(end_document_address));
+                rattrapage = !(lastSDOffset == end_document_address);
+                DEBUG_LOG("rattrappage status : " + String(rattrapage) + "\n\n");
                 lora.closeSession(lastPacket);
             }    // <-- fermeture du while : on a tout envoyé ou on va bientôt faire une mesure !
+            
 
             dataFile.close();
             lastLoRaSend = current_Time;
@@ -203,7 +226,7 @@ void loop() {
             // --- Réception éventuelle de mise à jour config ---
             DEBUG_LOG("Vérification de mise à jour descendante...");
 
-
+/*
             uint16_t recvMeasure = 0, recvLora = 0;
             if (lora.receiveConfigUpdate(configFilePath, &recvMeasure, &recvLora, 15000)) {
                 DEBUG_LOG("Mise à jour config reçue du master.");
@@ -212,6 +235,7 @@ void loop() {
             } else {
                 DEBUG_LOG("Pas de mise à jour reçue.");
             }
+*/
 
             lora.stopLoRa();
         } else {
@@ -219,7 +243,6 @@ void loop() {
         }
 
     // --- Sommeil jusqu'à prochaine mesure ---
-        pinMode(LED_BUILTIN, INPUT_PULLDOWN);
         Waiter waiter;
         //DEBUG_LOG("waiter instancié");
 
@@ -234,12 +257,14 @@ void loop() {
         }*/
        
         // Prevent time variables (current_time) to diverge (time domain is 24 hours, to preserve coherence with GetSecondsSinceMidnight)
-        DEBUG_LOG('fin de la boucle on recommence');
+        DEBUG_LOG("fin de la boucle on recommence");
         if(current_Time >= sec_in_day){
             lastLoRaSend -= current_Time;
             lastMeasure -= current_Time;
             current_Time = 0;
             DEBUG_LOG("Dates have been updated");
         }
+        digitalWrite(LED_BUILTIN, LOW);
     }
+    delay(500);
 }
