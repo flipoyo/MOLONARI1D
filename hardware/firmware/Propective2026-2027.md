@@ -16,13 +16,13 @@ We are able to send data from the relay to the gateway, from the gateway to the 
 2. Next steps
 
 There are several things planned for implementation that were designed this year:
-Implement support for multiple sensor boards connected to the same relay. The relay must be able to receive information from different boards, each with its own ID, and handle the data arrival times properly.
-There is a problem because the current gateway cannot send downlink data; it can only receive. It will need to be replaced by a Raspberry Pi. You will need to code its LoRaWAN data reception and internet forwarding. With that, you must also add the handling of downlink data at both the relay and the sensor: receiving the config file and replacing the one stored on the SD card. It may seem like a lot of work for a small outcome, and many issues can arise: corrupted files making measurements impossible on the relay or sensor, desynchronization if only one device updates the file, loss of subsequent data, etc.
-Optimize the libraries to make them clearer: small libraries containing only basic functions and not calling each other; larger grouped libraries that call the smaller ones to form the main building blocks, which are then used in the main files.
-As you will see in the paragraph below, the time management is not satisfactory at all. To avoid communication window shifts, you must:
-Add a function that computes all communication times of the day based on the requested communication interval.
-Modify the code so that communications occur at fixed times rather than after a time interval.
-RTC clocks can drift up to 2 seconds per day and up to 5 minutes per month. Therefore, implement a function that updates both boards’ clocks weekly using the internet time via the gateway, to limit drift and maintain communication.
+- Implement support for multiple sensor boards connected to the same relay. The relay must be able to receive information from different boards, each with its own ID, and handle the data arrival times properly.
+- Allowed the  modification of the file conf.csv by the customer from Toulouse : There is a problem because the current gateway cannot send downlink data; it can only receive. It will need to be replaced by a Raspberry Pi. You will need to code its LoRaWAN data reception and internet forwarding. With that, you must also add the handling of downlink data at both the relay and the sensor: receiving the config file and replacing the one stored on the SD card. It may seem like a lot of work for a small outcome, and many issues can arise: corrupted files making measurements impossible on the relay or sensor, desynchronization if only one device updates the file, loss of subsequent data, etc.
+- Optimize the libraries to make them clearer: small libraries containing only basic functions and not calling each other; larger grouped libraries that call the smaller ones to form the main building blocks, which are then used in the main files.
+- As you will see in the paragraph below, the time management is not satisfactory at all. To avoid communication window shifts, you must:
+    - Add a function that computes all communication times of the day based on the requested communication interval.
+    - Modify the code so that communications occur at fixed times rather than after a time interval.
+    RTC clocks can drift up to 2 seconds per day and up to 5 minutes per month. Therefore, implement a function that updates both boards’ clocks weekly using the internet time via the gateway, to limit drift and maintain communication.
 (NOTE: You do not need to modify this for measurements, since the boards don’t need to be synchronized for that—this already works very well.
 VERY IMPORTANT NOTE: Once the files are uploaded, do not press reset again, as it shifts the clocks.)
 
