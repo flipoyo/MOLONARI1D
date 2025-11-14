@@ -117,7 +117,6 @@ void loop() {
                 while (config.available()) {
                     memory_line new_line = memory_line(config.readStringUntil('\n'), config.position());
                     lines_config.push(new_line);
-                    
                         uint8_t lastPacket = lora.sendAllPacketsAndManageMemory(lines_config, lastSDOffsetConfig, config);
                         lora.closeSession(lastPacket);
 
@@ -125,6 +124,7 @@ void loop() {
                 }
             }
             lora.stopLoRa();
+            
 
             logger.LogString(receiveQueue);
         } else {
@@ -146,22 +146,29 @@ void loop() {
         }
 
         if (loraWAN.begin(res.rel_config.appEui, res.rel_config.appKey)) {
-            Serial.print("appKey : " + String(appKey));
-            Serial.print("Envoi de ");
+            Serial.println("appKey : " + String(res.rel_config.appKey));
+            Serial.println("temps avant communication : " + String(CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes)));
 
-            while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 10000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
+
+            while (CalculateSleepTimeUntilNextCommunication(lastAttempt, res.int_config.lora_intervalle_secondes) > 1000 && dataFile.available()) { //racourcir de 60000 à 10000 pour les besoins de la démo
                 //at this point, lastSDOffset must point to the first memory address of the first line to be sent
+                DEBUG_LOG("entrée dans le while d'envoi LoRaWAN");
                 std::queue<memory_line> linesToSend;
                 while (dataFile.available()) {
-                    memory_line new_line = memory_line(dataFile.readStringUntil('\n'), dataFile.position());
+                    dataFile.seek(lastSDOffset);
+                    DEBUG_LOG("lecture d'une nouvelle ligne dans le fichier");
+                    String flush = dataFile.readStringUntil('\n');
+                    DEBUG_LOG("data file until espace : " + flush);
+                    memory_line new_line = memory_line(flush, dataFile.position());
+                    DEBUG_LOG(String("new line: ") + new_line.flush);
                     linesToSend.push(new_line);
 
                 // Si la ligne est vide aka plus rien à envoyer
-                    if (linesToSend.front().flush.length() == 0) {
+                    if (new_line.flush.length() == 0) {
                         break;
                     }
                 }
-                int end_document_address = dataFile.position();
+                int end_document_address = dataFile.position(); // cette ligne ne sert à rien  
                 if (loraWAN.sendAllPacketsAndManageMemoryWAN(linesToSend, lastSDOffset, dataFile)) {
                     Serial.println("Tous les paquets ont été envoyés !");
                 } else {
@@ -178,10 +185,11 @@ void loop() {
     
         DEBUG_LOG("about to loop on modem.available()");
         // reception csv et modification
-        while (modem.available()) {
+/*        while (modem.available()) {
             loraWAN.receiveConfig(configFilePath, modif);
             modif = true;
         }
+*/
 
     DEBUG_LOG("Relais en veille jusqu’à la prochaine fenêtre de communication...");
     //delay(500) pas de dodo pour la démo

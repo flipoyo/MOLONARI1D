@@ -1,11 +1,12 @@
+Nanopb
+Arduino Low Power
+LoRaModem
 RTCZero
-RTCLib
-LoRa
-Queue
 LoRaWAN
 MKRWAN
-SD
-Arduino Low Power
 FlashStorage
-LoRaModem
+SD
+LoRa
+Queue
+RTCLib
 adafruit/Adafruit BusIO @ ^1.14.0

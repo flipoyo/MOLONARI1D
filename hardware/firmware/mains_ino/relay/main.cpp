@@ -159,7 +159,6 @@ void loop() {
                         break;
                     }
                 }
-                int end_document_address = dataFile.position();
                 if (loraWAN.sendAllPacketsAndManageMemoryWAN(linesToSend, lastSDOffset, dataFile)) {
                     Serial.println("Tous les paquets ont été envoyés !");
                 } else {

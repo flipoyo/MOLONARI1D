@@ -84,11 +84,11 @@ void Writer::EstablishConnection(const int CSpin) {
 }
 
 // LogData: Processes raw data, applies a timestamp, and writes it to the CSV file as a new entry
-void Writer::LogData(int ncapteur, const std::vector<double>& toute_mesure) {
+void Writer::LogData(int ncapteur, const std::vector<double>& toute_mesure, String uidString) {
     
     SD_LOG("about to create data");
     // Create a new Measure object
-    Measure data (ncapteur, toute_mesure);
+    Measure data (ncapteur, toute_mesure, uidString);
     SD_LOG("data initialised");
 
     data.id = this->next_id; // Set unique ID for the measurement
@@ -140,9 +140,8 @@ void Writer::LogString(std::queue<String> receiveQueue) {
 
         while (!receiveQueue.empty()) {
             payload = receiveQueue.front();
-
             SD_LOG("to be written set.");
-            this->file.println(payload); 
+            this->file.print(payload);
             SD_LOG_NO_LN(" Done");
 
             SD_LOG("Flushing ..."); // Ensure data is saved immediately
