@@ -8,4 +8,4 @@ build/
 .vscode
 .pio
 Trash
-hardware/.pio/libdeps/demo_sensor/integrity.dat
+hardware/.pio/libdeps/*
