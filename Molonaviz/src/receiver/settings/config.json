@@ -14,6 +14,6 @@
   "database": {
     "filename": "./TestDatabase/Molonari.sqlite",
     "real_database_insertion": true,
-    "ERD_structure": "./src/receiver/settings/ERD_structure.sql"
+    "ERD_structure": "./src/molonaviz/backend/ERD_structure.sql"
   }
 }

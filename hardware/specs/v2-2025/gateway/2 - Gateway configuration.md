@@ -1,19 +1,14 @@
-# Backup on the server
 
-After having understood the Lora communication and managed to receive the data in our relay, we must continue with the following communication stages: *communicate with the gateway and send the information to the server*.
-
-First, the configuration of the Gateway, the device we will use to connect our Relay (which is next to the river) with the Server (on the internet).
-
-Second, the configuration of the Server, necessary to receive and process the information without needing to go to the field.
 
 # Materials
 
 The materials we will need are:
 
-- A computer that allows ethernet connection (the classroom computer at Mines can be used)
+- A computer
 - Two ethernet cables (one to connect the Gateway to the PC and another to connect to the internet)
 - An antenna
 - A power supply that provides between 9 and 60V DC
+- An Ethernet to USB adapter if your computer does not have an Ethernet port
 
 # Gateway Configuration (Robustel R3000 - LG4LA)
 
@@ -51,7 +46,7 @@ Connection failure: if entering the IP in the browser does not find the page, re
 Next, we need to log in to the Gateway's online interface, for which the username and password will be:
 
 - Username: admin
-- Password: admin
+- Password: molonari1D (or admin if it reset)
 
 ![Interior view](Images/Robustel_login.png)
 
@@ -169,53 +164,37 @@ The connection was successful, no configuration changes are necessary, you can m
 
 Here we will configure the type of connection that will be established between the network and the Gateway.
 
-To do this, we must go to the "Packet Forwarders" section, and the first thing we need to do is disable both "Loriot" and "Semtech UDP Forwarder" which we will not use. To do this, we will enter the corresponding sub-sections, and where it says "Enable" we must verify that it is indicated "OFF".
+To do this, we must go to the "Packet Forwarders" section, and the first thing we need to do is disable "Semtech UDP Forwarder" which we will not use. To do this, we will enter the corresponding sub-section, and where it says "Enable" we must verify that it is indicated "OFF".
 
-![Interior view](Images/off_semtech.png)
-
-![Interior view](Images/loriot_off.png)
+![Interior view](Images/off_semtech_2.png)
 
 Once this is done, we will go to the "Basic Station" section which is of interest. And there the necessary configuration is as follows:
 
-![Interior view](Images/basic_station.png)
+![Interior view](Images/basic_station2.png)
 
 The information to complete is:
 
-- Server Address: eu1.cloud.thethings.network
-- Server Port: 8887
+- Server Address: terra-forma-obs.fr
+- Server Port: 10080
 
 And it must be "ON" as seen in the image: Enable, LoRaWan Public, and TLS Enable.
 
 Then, we must go to the "Cert Manager" tab, and there we must upload the "CA Cert" and the "Client Key".
 
-To obtain the "CA Cert" we must go to the following link:
+We must now upload the correct Certificates to be able to connect to our server. However, we first need to configure the gateway on Chirpstack, as it's from that platform that we'll get the certificates.
 
-https://letsencrypt.org/certificates/
+## Step 5 - Error visualization
 
-And download the file provided by the page by clicking on "pem", as indicated in the following image:
+To visualize if there are errors, or what type of errors we are having, we must use the "Debug" tab.
 
-![Interior view](Images/root_pem.png)
+To do this, we will go to the "System" section, "Debug" sub-section, and then click on the "Refresh" button to see the logs of the gateway.
 
-And to generate the "Client Key", we must follow the steps indicated in the following tutorial:
+![Interior view](Images/debug.png)
 
-https://www.thethingsindustries.com/docs/gateways/concepts/lora-basics-station/lns/
 
-With these two files downloaded/generated, we can upload them to our Gateway. To do this, we must click on "Browse" and then on "Import".
+## Step 6 - Extra configurations
 
-![Interior view](Images/Cert_manager.png)
-
-And finish by clicking on "Save & Apply", then on "Reboot".
-
-Finally, it is necessary to contact Riaz SYED to request that the selected port associated with the server's IP address be enabled. Therefore, we must send him an email with:
-
-- Server Address: eu1.cloud.thethings.network
-- Server Port: 8887
-
-And once Riaz SYED confirms that it has been enabled, we will consider this section finished.
-
-## Step 4 - Extra configurations
-
-Here we will detail some additional configurations that must be made for optimal operation.
+Here we will detail some additional configurations that must be made for optimal operation, or in case you encounter some problems.
 
 An additional configuration for the better operation of the Gateway is to modify the NTP. To do this, we must go to the "Services" section, "NTP" sub-section.
 
@@ -237,96 +216,3 @@ To enable this server.
 Another additional configuration, to avoid unnecessary error messages, is to disable the GPS that we will not use, for that we will go to the "Services" section, "GPS" sub-section, and disable all options:
 
 ![Interior view](Images/gps_off.png)
-
-## Step 5 - Error visualization
-
-To visualize that there are no errors, or what type of errors we are having, we must use the "Debug" tab.
-
-To do this, we will go to the "System" section, "Debug" sub-section, and then click on the "Refresh" button to see the existing errors.
-
-![Interior view](Images/debug.png)
-
-# Server - The Things Stack SANDBOX
-
-## Server Configuration
-
-### Create a TTN account
-
-First, what we need to do is create an account on The Things Stack Network, for this we will enter the following link:
-
-https://www.thethingsnetwork.org/
-
-And in the upper right corner, click on "Login".
-
-![Interior view](Images/TTN_login.png)
-
-Then, we choose the option "Login to The Things Network", and there we create an account.
-
-![Interior view](Images/ttn_login_sesion.png)
-
-Once the account is created, we must go to the upper right margin where the name we gave to the account appears, click, and choose the "Console" option. 
-
-![Interior view](Images/console2.png)
-
-There, within the "Existing Clusters" we choose: Europe1
-
-![Interior view](Images/europe1.png)
-
-Only here can we start configuring the devices, applications, and Gateway within the Server.
-
-### Create the aplication
-
-The first thing we will do is create an application, for this, on the left side we will see three options: Home, Applications, Gateways.
-
-![Interior view](Images/mainpage_TTN2.png)
-
-Clicking on "Applications" and then on the "Add application" button.
-
-![Interior view](Images/add_app.png)
-
-We will give the application a name, the one we like the most (for example: "Molonari-Project") and to finish click on "Create application".
-
-### Register the End Devices (the arduinos)
-
-Once the application is created, within it we must register the "End devices", which in our case will be the Arduino that plays the role of the Relay. For this, in the right column, we will find the "End Devices" section, click there, and then on "Register End Device".
-
-![Interior view](Images/end_devices.png)
-
-Once inside, we will choose the option "Enter end device specifics manually". And in the options they give us, we will put:
-
-- Frequency plan: Europe 863-870 MHz (SF9 for RX2 - recommended)
-- LoRaWAN version: LoRaWAN Specification 1.0.3
-
-Then, within the "Provisioning information" section:
-
-- JoinEUI: 00 00 00 00 00 00 00 00
-- DevEUI: the value obtained by using the "DevEUI" code (found in the "Test Codes" folder, inside "testArduinoLoRaWAN") on the Arduino that will be our Relay.
-- AppKey: we will generate it by clicking on "Generate"
-- End device ID: we will give it the name we want (for example: Molonari-relay)
-
-We will finish by pressing "Register end device".
-
-It is IMPORTANT to emphasize here that the values of JoinEUI, AppKey, and DevEUI will be used in the Relay code to establish a connection with the server, so they must be saved and noted, to later place them in the Relay code. If these parameters are not modified in the code, the connection with the server will not be established.
-
-### Register the Gateway
-
-Finally, we must register the Gateway, for this in the right column we will change the section, and choose the "Gateways" option.
-
-Once inside, click on the "Register gateway" button. 
-
-![Interior view](Images/gateway_ttn.png)
-
-There we must load:
-
-Gateway EUI: this value will be found in the Gateway's online interface, in the "Interface" section, "LoRa" sub-section, it is the value called "Default Gateway ID".
-
-![Interior view](Images/gateway_ID.png)
-
-Once this value is registered, we must confirm it, and then complete:
-
-- Gateway ID: we put the name we want (for example: Molonari-Gateway)
-- Frequency plan: Europe 863-870 MHz (SF9 for RX2 - recommended)
-- Require authenticated connection: we must check this option
-- Share gateway information: both options are checked by default, we leave it that way.
-
-With all this done, we will have our Gateway and Arduino registered, as well as our application created.

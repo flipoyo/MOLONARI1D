@@ -10,12 +10,14 @@ import json
 # Get the information from the configuration file
 
 RECEIVER_PATH = './src/receiver/'
-with open(RECEIVER_PATH + 'settings/config.json', 'r') as config_file:
+SETTINGS_PATH = RECEIVER_PATH + 'settings/'
+LAB_FOLDER = './src/molonaviz/backend/virtual-lab/'
+
+with open(SETTINGS_PATH + 'config.json', 'r') as config_file:
     config = json.load(config_file)
 
-OBJECT_FOLDER = RECEIVER_PATH + 'objects/'
 SQLINITFILE = config['database']['ERD_structure']
-DB_PATH = RECEIVER_PATH + 'tmp.sqlite'
+DB_PATH = LAB_FOLDER + 'tmp.sqlite'
 
 
 def get_db():
@@ -49,7 +51,7 @@ def insert_and_get_id(table, data):
     return query.lastInsertId()
 
 def save_to_csv(table, row):
-    csv_file = f"{OBJECT_FOLDER}{table}.csv"
+    csv_file = f"{LAB_FOLDER}{table}.csv"
     df = pd.DataFrame([row])
     if os.path.exists(csv_file):
         old = pd.read_csv(csv_file)
@@ -130,7 +132,7 @@ def tout_supprimer():
         query = QSqlQuery(db)
         query.exec(f"DELETE FROM {table}")
     for table in tables:
-        csv_file = f"{OBJECT_FOLDER}{table}.csv"
+        csv_file = f"{LAB_FOLDER}{table}.csv"
         if os.path.exists(csv_file):
             os.remove(csv_file)
     messagebox.showinfo("Suppression", "Toutes les données ont été supprimées.")
@@ -155,7 +157,7 @@ def initialize_local_database():
         "Labo", "Study", "Gateway", "Relay", "Datalogger", "Thermometer", "PressureSensor", "Shaft", "SamplingPoint"
     ]
     for table_name in import_order:
-        csv_file = os.path.join(OBJECT_FOLDER, f"{table_name}.csv")
+        csv_file = os.path.join(LAB_FOLDER, f"{table_name}.csv")
         if not os.path.exists(csv_file):
             continue
         df = pd.read_csv(csv_file)
@@ -215,7 +217,7 @@ tk.Button(root, text="Ajouter Datalogger", width=25,
           command=lambda: ouvrir_formulaire(get_db(), "Nouveau Datalogger", "Datalogger", fields_datalogger, fk_datalogger),
           bg="#0078D7", fg="white").pack(pady=5)
 # Thermometer
-fields_thermo = ["Name", "ManuName", "ManuRef", "Error", "Labo"]
+fields_thermo = fields_thermo = ["Name", "ManuName", "ManuRef", "Error", "Beta", "V", "Labo"]
 fk_thermo = {"Labo": {"table": "Labo", "id_col": "ID", "name_col": "Name"}}
 tk.Button(root, text="Ajouter Thermometer", width=25,
           command=lambda: ouvrir_formulaire(get_db(), "Nouveau Thermometer", "Thermometer", fields_thermo, fk_thermo),

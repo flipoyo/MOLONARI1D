@@ -16,6 +16,16 @@ def int_to_iso8601(value: int) -> str:
     dt = datetime(year, month, day, hour, minute, tzinfo=timezone.utc)
     return dt.isoformat()
 
+def conversion_volt(value):
+    """
+    Convert raw value to voltage
+    Current encoding requires sender to convert to 0-4095 range
+    """
+    if not value:
+        return float('nan')
+    return (value / 4095.0) * 3.3 # V_ref = 3.3V
+
+
 @dataclass
 class Sensor:
     UI: str
@@ -48,12 +58,12 @@ def decode_proto_data(data_b64: str) -> Sensor | None:
         return Sensor(
             UI = msg.UI,
             time = int_to_iso8601(msg.time),
-            a0=measurements[0],
-            a1=measurements[1],
-            a2=measurements[2],
-            a3=measurements[3],
-            a4=measurements[4],
-            a5=measurements[5]
+            a0=conversion_volt(measurements[0]),
+            a1=conversion_volt(measurements[1]),
+            a2=conversion_volt(measurements[2]),
+            a3=conversion_volt(measurements[3]),
+            a4=conversion_volt(measurements[4]),
+            a5=conversion_volt(measurements[5])
         )
     except Exception as e:
         print("Error in Protobuf decoding:", e)

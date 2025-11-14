@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "molonaviz"
 version = "1.0"
-description = "Graphical tool for the MOLONARI project."
+description = "Graphical tool for the MOLONARI project. And MQTT receiver"
 readme = "README.md"
 authors = [
   {name = "Guillaume Vigne"},
@@ -16,6 +16,8 @@ dependencies = [
     "scipy",
     "matplotlib",
     "setuptools",
+    "paho-mqtt",
+    "protobuf"
 ]
 
 [project.gui-scripts]
