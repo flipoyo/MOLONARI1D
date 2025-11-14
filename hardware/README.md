@@ -44,6 +44,8 @@ hardware/
 └── README.md
 ```
 
+For now, what works is the main_demo codes (one for the sensor and one for the relay). They can achieve almost everything we wanted to do for this year.
+
 ## Quick Start
 
 ### Prerequisites
