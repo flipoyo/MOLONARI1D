@@ -8,7 +8,7 @@ If you want to build a MOLONARI1D device, you can dive directly into the `docs/`
 
 ```
 hardware/
-├── field_code/ 
+├── firmware/ 
 │   ├── libs/                           # Librairies handmade for the project
 │   │    ├── LoRa_Molonari/
 │   │    ├── LoRaWan_Molonari/
@@ -44,21 +44,18 @@ hardware/
 └── README.md
 ```
 
+For now, what works is the main_demo codes (one for the sensor and one for the relay). They can achieve almost everything we wanted to do for this year.
+
 ## Quick Start
 
 ### Prerequisites
 
 - Platformio (to install on VScode)
-- **Arduino MKR WAN 1310** boards
-- Required libraries:
-  - Arduino Low Power
-  - SD
-  - LoRa
-  - RTCLib
-  - MKRWAN
-  - Queue
-  - RTCZero
-  - FlashStorage
+- Arduino MKR WAN 1310 boards
+- Pressure and temperature sensors
+- SD cards
+- Antenna
+- ...
 
 
 ### Installation
@@ -70,46 +67,27 @@ hardware/
    cd MOLONARI1D/hardware
    ```
 
-3. **Compile and upload** sensor code:
 
-4. **Compile and upload** relay code:
+3. Go into MOLONARI1D/hardware/mains_ino/sensor
+
+- Fill the conf.csv file as in the README
+- Upload on the arduino
+- Fill the SD card with the csv file
+
+4. Same with MOLONARI1D/hardware/mains_ino/relay but on the second arduino and SD
+
+5. Place all sensors and the antenna on the sensor card
+
+6. You're set up !
 
 
-
-### Testing
-
-Run hardware validation tests:
-```bash
-cd tests/testArduinoLoRaWAN
-arduino-cli compile --fqbn arduino:samd:mkrwan1310 testArduinoLoRaWAN.ino
-```
 
 ## Component Overview
 
-### 🔍 Sensor Nodes
-
-**Temperature Sensors** (`sensors/temperature/`) :
-- **Purpose**: Underwater temperature monitoring with 15-minute intervals
-- **Hardware**: Arduino MKR WAN 1310 + DS18B20 sensors + SD card
-- **Features**: 
-  - Low-power operation (8-12 months battery life)
-  - Local data storage with CSV format
-  - Daily LoRa transmission to relay
-  - Automatic retry mechanism (up to 6 attempts)
-
-
-### 🛜 Relay Stations
-
-**Main Relay** :
-- **Purpose**: Aggregate data from multiple sensor nodes
-- **Communication**: 
-  - Receives data via custom LoRa protocol
-  - Forwards to gateway via LoRaWAN
-- **Coverage**: Up to 10 sensors per relay, 1km range
 
 ### Libraries
 
-The `/field_code/libs/` directory contains common code used across all hardware components.
+The `/firmware/libs/` directory contains common code used across all hardware components.
 
 It has its onw documentation it the repertory.
 
@@ -167,6 +145,7 @@ It has its onw documentation it the repertory.
 - **DS18B20**: Temperature sensors
 - **Differential pressure sensors**: For flow measurement
 - **LoRa antennas**: 868MHz (EU) or 915MHz (US)
+- **SD card**
 
 ### Power Requirements
 
