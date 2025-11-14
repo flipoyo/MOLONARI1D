@@ -42,7 +42,17 @@ Molonaviz
    Modify the `src/receiver/settings/config.json` file to set your desired configuration constants.
 
    **Important:**
-   To be able to get MQTT configuration constants (broker, topic...), please go to `hardware/specs/XXX` to get started with Chirpstack configuration (connecting to the server, adding a device, generating certificates and an application...)
+   To be able to get MQTT configuration constants (broker, topic...), please go to `hardware/specs/XXX` to get started with Chirpstack configuration (connecting to the server, adding a device...)
+
+   To generate the certificates, go to the Chirpstack interface, select `Applications` then `Integrations` and click `get certificate` in the `MQTT` section. Please be informed that certificates have a validity duration, and are bound to expire after a certain amount of time (usually a year). Therefore they need to be regenerated once in a while.
+   You'll have three fields with different keys or certificates, that all use the same structure:
+
+   -----BEGIN CERTIFICATE----- (or -----BEGIN PRIVATE KEY-----)
+   the certificate information
+   -----END CERTIFICATE----- (or -----END PRIVATE KEY-----)
+   Once you generated the certificates in Chirpstack, you need to copy each one of the texts (including the --BEGIN ...-- and -END ...-) in three different files: `CA.crt` (CA certificate), `TLS.crt` (TLS certificate), `TLS.key` (TLS key).
+   
+   Now you're all set!
 
 3. **Running the Application**:  
    To start the application, put your bash in the /Molonaviz folder and run:
