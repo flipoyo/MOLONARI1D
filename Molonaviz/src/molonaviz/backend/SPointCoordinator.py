@@ -839,7 +839,7 @@ class SPointCoordinator:
         """
         Calibrate and return the temperature in Kelvin given the raw voltage measured by the thermometer.
         The formula used is the following:
-        T = (T0_K / raw_volt) / (1 + (T0_K / beta) * ln(V_ref / raw_volt - 1))
+        T = 1 / [ 1/T0_K -  (1 / beta) * ln(V_ref / raw_volt - 1) ]
 
         :param raw_volt: voltage measured by the sensor.
         :param beta: calibration parameter of the thermometer model.
@@ -848,14 +848,12 @@ class SPointCoordinator:
         :return: Measured temperature in Kelvin.
         """
         import math 
-        log_input = (raw_volt / V_ref) - 1
+        log_input = (V_ref / raw_volt) - 1
         
         if log_input <= 0 or V_ref == 0:
             return float('nan') 
         
-
-        denominator_term2 = (1 / beta) * math.log(log_input)
-        denominator = (1 / T0_K) + denominator_term2
+        denominator = (1 / T0_K) - (1 / beta) * math.log(log_input)
         
         if denominator == 0:
             return float('nan')

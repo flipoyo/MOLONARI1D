@@ -96,22 +96,7 @@ class DatabaseManager:
         if sp_id is None:
             print(f"SamplingPoint corresponding to device {payload['device_eui']}, relay {payload['relay_id']}, gateway {payload['gateway_id']} not found.")
             return
-        # Insert Pressure
-        query = QSqlQuery(self.con)
-        query.prepare("""INSERT INTO RawMeasuresPress (
-                            Date,
-                            TempBed,
-                            Voltage,
-                            SamplingPoint)
-            VALUES (:Date, :TempBed, :Voltage, :SamplingPoint)
-        """)
-        query.bindValue(":Date", payload["timestamp"])
-        query.bindValue(":Voltage", payload["a0"])
-        query.bindValue(":TempBed", payload["a1"])
-        query.bindValue(":SamplingPoint", sp_id)
-        if not query.exec():
-            print(query.lastError())
-            return
+        
         # Insert TemperatureVoltage
         query = QSqlQuery(self.con)
         query.prepare("""INSERT INTO RawMeasuresVolt (
@@ -132,6 +117,7 @@ class DatabaseManager:
         if not query.exec():
             print(query.lastError())
             return
+        # Insert calibrated temperatures and pressure (includes temperature bed to calibrate)
         self.insert_calibrated_temperature(payload, sp_id)
 
     def get_study_name(self, sp_id):
@@ -185,6 +171,23 @@ class DatabaseManager:
         query.bindValue(":SamplingPoint", sp_id)
         if not query.exec():
             print(f"Error inserting into RawMeasuresTemp: {query.lastError().text()}")
+
+        # Insert Pressure
+        query = QSqlQuery(self.con)
+        query.prepare("""INSERT INTO RawMeasuresPress (
+                            Date,
+                            TempBed,
+                            Voltage,
+                            SamplingPoint)
+            VALUES (:Date, :TempBed, :Voltage, :SamplingPoint)
+        """)
+        query.bindValue(":Date", payload["timestamp"])
+        query.bindValue(":Voltage", payload["a0"])
+        query.bindValue(":TempBed", coordinator.calibrate_temperature(payload["a1"], beta, V_ref))
+        query.bindValue(":SamplingPoint", sp_id)
+        if not query.exec():
+            print(query.lastError())
+            return
 
     def close(self):
         self.con.close()
