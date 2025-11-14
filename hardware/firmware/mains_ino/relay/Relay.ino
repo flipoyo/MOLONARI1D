@@ -1,4 +1,4 @@
-// was in field_code/mains_ino/relay
+// was in firmware/mains_ino/relay
 /*
 This firmware will be is meant for the LoRa relay in the Molonari system.
 
