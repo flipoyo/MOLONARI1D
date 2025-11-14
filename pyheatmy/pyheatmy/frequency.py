@@ -5,8 +5,42 @@ from datetime import datetime, timedelta
 import os as os
 import csv as csv 
 from scipy.signal import butter, filtfilt, hilbert, find_peaks,peak_widths, get_window
-from sklearn.metrics import r2_score
 from scipy.stats import chi2
+
+
+def r2_score(y_true, y_pred):
+    """
+    Calculate R² (coefficient of determination) score.
+    
+    R² = 1 - SS_res/SS_tot
+    where SS_res = Σ(y_true - y_pred)² and SS_tot = Σ(y_true - mean(y_true))²
+    
+    Parameters
+    ----------
+    y_true : array-like
+        Ground truth (correct) target values.
+    y_pred : array-like  
+        Estimated target values.
+        
+    Returns
+    -------
+    float
+        The R² score.
+    """
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    
+    if ss_tot == 0:
+        return 1.0 if ss_res == 0 else 0.0
+        
+    return 1.0 - (ss_res / ss_tot)
+
+
+
+
 
 """
 Module for frequency domain analysis of temperature data.
