@@ -8,7 +8,7 @@ If you want to build a MOLONARI1D device, you can dive directly into the `docs/`
 
 ```
 hardware/
-├── field_code/ 
+├── firmware/ 
 │   ├── libs/                           # Librairies handmade for the project
 │   │    ├── LoRa_Molonari/
 │   │    ├── LoRaWan_Molonari/
@@ -43,6 +43,8 @@ hardware/
 │   └── ...
 └── README.md
 ```
+
+For now, what works is the main_demo codes (one for the sensor and one for the relay). They can achieve almost everything we wanted to do for this year.
 
 ## Quick Start
 
@@ -85,7 +87,7 @@ hardware/
 
 ### Libraries
 
-The `/field_code/libs/` directory contains common code used across all hardware components.
+The `/firmware/libs/` directory contains common code used across all hardware components.
 
 It has its onw documentation it the repertory.
 

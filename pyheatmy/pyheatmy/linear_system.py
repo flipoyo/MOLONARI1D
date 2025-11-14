@@ -15,7 +15,7 @@ class Linear_system:
     def __init__(
         self,
         Ss_list,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         n_list,
         lambda_s_list,
         rhos_cs_list,
@@ -24,7 +24,7 @@ class Linear_system:
         H_init,
         T_init,
     ):
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.T_init = T_init
         self.n_list = n_list
         self.rhos_cs_list = rhos_cs_list
@@ -43,8 +43,8 @@ class Linear_system:
         return mu
 
     # @njit
-    def compute_K(self, moinslog10IntrinK_list):
-        return (RHO_W * G * 10.0**-moinslog10IntrinK_list) * 1.0 / self.mu_list
+    def compute_K(self, IntrinK_list):
+        return (RHO_W * G * IntrinK_list) * 1.0 / self.mu_list
 
     def compute_n_cell(self):
         return len(self.H_init)
@@ -87,7 +87,7 @@ class Linear_system:
         self.n_cell = self.compute_n_cell()
         self.n_times = self.compute_n_times()
         self.mu_list = self.compute_Mu(self.T_init)
-        self.K_list = self.compute_K(self.moinslog10IntrinK_list)
+        self.K_list = self.compute_K(self.IntrinK_list)
         self.rho_mc_m_list = self.compute_rho_mc_m_list()
         self.lambda_m_list = self.compute_lambda_m_list()
         self.ke_list = self.compute_ke_list()
@@ -102,12 +102,12 @@ class H_stratified(Linear_system):
     def __init__(
         self,
         Ss_list,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         n_list,
         lambda_s_list,
         rhos_cs_list,
         all_dt,
-        q_list,
+        q_s_list,
         dz,
         H_init,
         H_riv,
@@ -123,7 +123,7 @@ class H_stratified(Linear_system):
     ):
         super().__init__(
             Ss_list,
-            moinslog10IntrinK_list,
+            IntrinK_list,
             n_list,
             lambda_s_list,
             rhos_cs_list,
@@ -138,7 +138,7 @@ class H_stratified(Linear_system):
         self.z_solve = z_solve
         self.T_init = T_init
         self.inter_cara = inter_cara
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.Ss_list = Ss_list
         self.all_dt = all_dt
         self.isdtconstant = isdtconstant
@@ -147,7 +147,7 @@ class H_stratified(Linear_system):
         self.H_riv = H_riv
         self.H_aq = H_aq
         self.alpha = alpha
-        self.heat_source = q_list
+        self.q_s_list = q_s_list
 
     def compute_H_stratified(self):
         if self.isdtconstant.all():
@@ -230,45 +230,45 @@ class H_stratified(Linear_system):
             )
 
     def compute_B_diagonals(self, dt):
-        lower_diagonal_B = self.K_list[1:] * self.alpha / self.dz**2
+        lower_diagonal_B = self.K_list[1:] * (1 - self.alpha) / self.dz**2
         lower_diagonal_B[-1] = (
-            4 * self.K_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
+            4 * self.K_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
         )
 
-        diagonal_B = self.Ss_list * 1 / dt - 2 * self.K_list * self.alpha / self.dz**2
+        diagonal_B = self.Ss_list * 1 / dt - 2 * self.K_list * (1 - self.alpha) / self.dz**2
         diagonal_B[0] = (
-            self.Ss_list[0] * 1 / dt - 4 * self.K_list[0] * self.alpha / self.dz**2
+            self.Ss_list[0] * 1 / dt - 4 * self.K_list[0] * (1 - self.alpha) / self.dz**2
         )
         diagonal_B[-1] = (
             self.Ss_list[self.n_cell - 1] * 1 / dt
-            - 4 * self.K_list[self.n_cell - 1] * self.alpha / self.dz**2
+            - 4 * self.K_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
         )
 
-        upper_diagonal_B = self.K_list[:-1] * self.alpha / self.dz**2
-        upper_diagonal_B[0] = 4 * self.K_list[0] * self.alpha / (3 * self.dz**2)
+        upper_diagonal_B = self.K_list[:-1] * (1 - self.alpha) / self.dz**2
+        upper_diagonal_B[0] = 4 * self.K_list[0] * (1 - self.alpha) / (3 * self.dz**2)
 
         return lower_diagonal_B, diagonal_B, upper_diagonal_B
 
     def compute_A_diagonals(self, dt):
-        lower_diagonal_A = -self.K_list[1:] * (1 - self.alpha) / self.dz**2
+        lower_diagonal_A = -self.K_list[1:] * self.alpha / self.dz**2
         lower_diagonal_A[-1] = (
-            -4 * self.K_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
+            -4 * self.K_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
         )
 
         diagonal_A = (
-            self.Ss_list * 1 / dt + 2 * self.K_list * (1 - self.alpha) / self.dz**2
+            self.Ss_list * 1 / dt + 2 * self.K_list * self.alpha / self.dz**2
         )
         diagonal_A[0] = (
             self.Ss_list[0] * 1 / dt
-            + 4 * self.K_list[0] * (1 - self.alpha) / self.dz**2
+            + 4 * self.K_list[0] * self.alpha / self.dz**2
         )
         diagonal_A[-1] = (
             self.Ss_list[self.n_cell - 1] * 1 / dt
-            + 4 * self.K_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
+            + 4 * self.K_list[self.n_cell - 1] * self.alpha / self.dz**2
         )
 
-        upper_diagonal_A = -self.K_list[:-1] * (1 - self.alpha) / self.dz**2
-        upper_diagonal_A[0] = -4 * self.K_list[0] * (1 - self.alpha) / (3 * self.dz**2)
+        upper_diagonal_A = -self.K_list[:-1] * self.alpha / self.dz**2
+        upper_diagonal_A[0] = -4 * self.K_list[0] * self.alpha / (3 * self.dz**2)
 
         return lower_diagonal_A, diagonal_A, upper_diagonal_A
 
@@ -289,16 +289,16 @@ class H_stratified(Linear_system):
             pos_idx = int(self.inter_cara[tup_idx][0])
             diagonal_B[pos_idx] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                - (K1 + K2) * self.alpha / self.dz**2
+                - (K1 + K2) * (1 - self.alpha) / self.dz**2
             )
-            lower_diagonal_B[pos_idx - 1] = K1 * self.alpha / self.dz**2
-            upper_diagonal_B[pos_idx] = K2 * self.alpha / self.dz**2
+            lower_diagonal_B[pos_idx - 1] = K1 * (1 - self.alpha) / self.dz**2
+            upper_diagonal_B[pos_idx] = K2 * (1 - self.alpha) / self.dz**2
             diagonal_A[pos_idx] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                + (K1 + K2) * (1 - self.alpha) / self.dz**2
+                + (K1 + K2) * self.alpha / self.dz**2
             )
-            lower_diagonal_A[pos_idx - 1] = -K1 * (1 - self.alpha) / self.dz**2
-            upper_diagonal_A[pos_idx] = -K2 * (1 - self.alpha) / self.dz**2
+            lower_diagonal_A[pos_idx - 1] = -K1 * self.alpha / self.dz**2
+            upper_diagonal_A[pos_idx] = -K2 * self.alpha / self.dz**2
         else:
             pos_idx = int(self.inter_cara[tup_idx][0])
             x = (self.list_zLow[tup_idx] - self.z_solve[pos_idx]) / (
@@ -307,39 +307,40 @@ class H_stratified(Linear_system):
             Keq = 1 / (x / K1 + (1 - x) / K2)
             diagonal_B[pos_idx] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                - (K1 + Keq) * self.alpha / self.dz**2
+                - (K1 + Keq) * (1 - self.alpha) / self.dz**2
             )
-            lower_diagonal_B[pos_idx - 1] = K1 * self.alpha / self.dz**2
-            upper_diagonal_B[pos_idx] = Keq * self.alpha / self.dz**2
+            lower_diagonal_B[pos_idx - 1] = K1 * (1 - self.alpha) / self.dz**2
+            upper_diagonal_B[pos_idx] = Keq * (1 - self.alpha) / self.dz**2
             diagonal_A[pos_idx] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                + (K1 + Keq) * (1 - self.alpha) / self.dz**2
+                + (K1 + Keq) * self.alpha / self.dz**2
             )
-            lower_diagonal_A[pos_idx - 1] = -K1 * (1 - self.alpha) / self.dz**2
-            upper_diagonal_A[pos_idx] = -Keq * (1 - self.alpha) / self.dz**2
+            lower_diagonal_A[pos_idx - 1] = -K1 * self.alpha / self.dz**2
+            upper_diagonal_A[pos_idx] = -Keq * self.alpha / self.dz**2
 
             diagonal_B[pos_idx + 1] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                - (K2 + Keq) * self.alpha / self.dz**2
+                - (K2 + Keq) * (1 - self.alpha) / self.dz**2
             )
-            lower_diagonal_B[pos_idx] = Keq * self.alpha / self.dz**2
-            upper_diagonal_B[pos_idx + 1] = K2 * self.alpha / self.dz**2
+            lower_diagonal_B[pos_idx] = Keq * (1 - self.alpha) / self.dz**2
+            upper_diagonal_B[pos_idx + 1] = K2 * (1 - self.alpha) / self.dz**2
             diagonal_A[pos_idx + 1] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                + (K2 + Keq) * (1 - self.alpha) / self.dz**2
+                + (K2 + Keq) * self.alpha / self.dz**2
             )
-            lower_diagonal_A[pos_idx] = -Keq * (1 - self.alpha) / self.dz**2
-            upper_diagonal_A[pos_idx + 1] = -K2 * (1 - self.alpha) / self.dz**2
+            lower_diagonal_A[pos_idx] = -Keq * self.alpha / self.dz**2
+            upper_diagonal_A[pos_idx + 1] = -K2 * self.alpha / self.dz**2
 
     def compute_c(self, j):
         c = zeros(self.n_cell, float32)
         c[0] = (8 * self.K_list[0] / (3 * self.dz**2)) * (
-            (1 - self.alpha) * self.H_riv[j + 1] + self.alpha * self.H_riv[j]
+            self.alpha * self.H_riv[j + 1] + (1 - self.alpha) * self.H_riv[j]
         )
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
-            (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
+            self.alpha * self.H_aq[j + 1] + (1 - self.alpha) * self.H_aq[j]
         )
-        c -= self.heat_source
+        #Un q_s positif correspond à une source d'eau  
+        c += self.q_s_list
         return c
 
 
@@ -349,12 +350,12 @@ class T_stratified(Linear_system):
         self,
         nablaH,
         Ss_list,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         n_list,
         lambda_s_list,
         rhos_cs_list,
         all_dt,
-        q_list,
+        q_s_list,
         dz,
         H_init,
         H_riv,
@@ -367,7 +368,7 @@ class T_stratified(Linear_system):
     ):
         super().__init__(
             Ss_list,
-            moinslog10IntrinK_list,
+            IntrinK_list,
             n_list,
             lambda_s_list,
             rhos_cs_list,
@@ -377,7 +378,7 @@ class T_stratified(Linear_system):
             T_init,
         )
         self.Ss_list = Ss_list
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.n_list = n_list
         self.lambda_s_list = lambda_s_list
         self.rhos_cs_list = rhos_cs_list
@@ -389,11 +390,18 @@ class T_stratified(Linear_system):
         self.T_aq = T_aq
         self.alpha = alpha
         self.N_update_Mu = N_update_Mu
-        self.heat_source = q_list
+        self.q_s_list = q_s_list
 
     def compute_T_stratified(self):
         self.T_res = np.zeros((self.n_cell, self.n_times), np.float32)
+        #nouvelle ligne pour stocker le flux de chaleur associé à la source d'eau q_s
+        #il doit être calculé de manière semi-implicite pour la cohérence de la résolution
+        self.source_heat_flux = np.zeros((self.n_cell, self.n_times), np.float32)
+
         self.T_res[:, 0] = self.T_init
+        #calcul du flux au temps initial
+        self.source_heat_flux[:, 0] = self.q_s_list * RHO_W * C_W * (self.T_res[:, 0] - ZERO_CELSIUS)
+
         for j, dt in enumerate(self.all_dt):
             # Update of Mu(T) after N_update_Mu iterations:
             if j % self.N_update_Mu == 1:
@@ -428,107 +436,126 @@ class T_stratified(Linear_system):
                     lower_diagonal_A, diagonal_A, upper_diagonal_A
                 )
                 self.T_res[:, j + 1] = solve(A, B_fois_T_plus_c)
+            
+            #Calcul du flux de chaleur source de manière semi-implicite
+            T_semi_implicite = (1 - self.alpha) * self.T_res[:, j] + self.alpha * self.T_res[:, j + 1]
+            self.source_heat_flux[:, j + 1] = self.q_s_list * RHO_W * C_W * (T_semi_implicite - ZERO_CELSIUS)
 
         return self.T_res
 
+    #Les 3 prochaines fonctions permettent le calcul de la matrice B qui multiplie le vecteur des températures au temps précedent
+
     def _compute_lower_diagonal(self, j):
-        lower_diagonal = (self.ke_list[1:] * self.alpha / self.dz**2) - (
-            self.alpha * self.ae_list[1:] / (2 * self.dz)
+        lower_diagonal = (self.ke_list[1:] * (1 - self.alpha) / self.dz**2) - (
+            (1 - self.alpha) * self.ae_list[1:] / (2 * self.dz)
         ) * self.nablaH[1:, j]
         lower_diagonal[-1] = (
-            4 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
-            - (2 * self.alpha * self.ae_list[self.n_cell - 1] / (3 * self.dz))
+            4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
+            - (2 * (1 - self.alpha) * self.ae_list[self.n_cell - 1] / (3 * self.dz))
             * self.nablaH[self.n_cell - 1, j]
         )
         return lower_diagonal
 
     def _compute_diagonal(self, j, dt):
-        diagonal = 1 / dt - 2 * self.ke_list * self.alpha / self.dz**2
-        diagonal[0] = 1 / dt - 4 * self.ke_list[0] * self.alpha / self.dz**2
+        #Terme de source d'énergie dû à la source d'eau q_s
+        #On traite le terme source de façon semi implicite pour la cohérence de la résolution
+        #Dans cette matrice, on pondère la contribution explicite par alpha
+        heat_source = (self.q_s_list * RHO_W * C_W ) / self.rho_mc_m_list
+
+        diagonal = 1 / dt - 2 * self.ke_list * (1 - self.alpha) / self.dz**2 + (1 - self.alpha) * heat_source
+        diagonal[0] = 1 / dt - 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2 + (1 - self.alpha) * heat_source[0]
         diagonal[-1] = (
-            1 / dt - 4 * self.ke_list[self.n_cell - 1] * self.alpha / self.dz**2
+            1 / dt - 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
+            + (1 - self.alpha) * heat_source[-1]
         )
         return diagonal
 
     def _compute_upper_diagonal(self, j):
-        upper_diagonal = (self.ke_list[:-1] * self.alpha / self.dz**2) + (
-            self.alpha * self.ae_list[:-1] / (2 * self.dz)
+        upper_diagonal = (self.ke_list[:-1] * (1 - self.alpha) / self.dz**2) + (
+            (1 - self.alpha) * self.ae_list[:-1] / (2 * self.dz)
         ) * self.nablaH[:-1, j]
         upper_diagonal[0] = (
-            4 * self.ke_list[0] * self.alpha / (3 * self.dz**2)
-            + (2 * self.alpha * self.ae_list[0] / (3 * self.dz)) * self.nablaH[0, j]
+            4 * self.ke_list[0] * (1 - self.alpha) / (3 * self.dz**2)
+            + (2 * (1 - self.alpha) * self.ae_list[0] / (3 * self.dz)) * self.nablaH[0, j]
         )
         return upper_diagonal
+    
+    #La fonction suivante permet le calcul de vecteur c qui intègre les conditions au bord dans le syhstème matriciel
 
     def _compute_c(self, j):
         c = np.zeros(self.n_cell, np.float32)
         c[0] = (
-            8 * self.ke_list[0] * (1 - self.alpha) / (3 * self.dz**2)
-            - 2 * (1 - self.alpha) * self.ae_list[0] * self.nablaH[0, j] / (3 * self.dz)
-        ) * self.T_riv[j + 1] + (
             8 * self.ke_list[0] * self.alpha / (3 * self.dz**2)
             - 2 * self.alpha * self.ae_list[0] * self.nablaH[0, j] / (3 * self.dz)
+        ) * self.T_riv[j + 1] + (
+            8 * self.ke_list[0] * (1 - self.alpha) / (3 * self.dz**2)
+            - 2 * (1 - self.alpha) * self.ae_list[0] * self.nablaH[0, j] / (3 * self.dz)
         ) * self.T_riv[
             j
         ]
         c[-1] = (
-            8 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
-            + 2
-            * (1 - self.alpha)
-            * self.ae_list[self.n_cell - 1]
-            * self.nablaH[self.n_cell - 1, j]
-            / (3 * self.dz)
-        ) * self.T_aq[j + 1] + (
             8 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
             + 2
             * self.alpha
             * self.ae_list[self.n_cell - 1]
             * self.nablaH[self.n_cell - 1, j]
             / (3 * self.dz)
+        ) * self.T_aq[j + 1] + (
+            8 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
+            + 2
+            * (1 - self.alpha)
+            * self.ae_list[self.n_cell - 1]
+            * self.nablaH[self.n_cell - 1, j]
+            / (3 * self.dz)
         ) * self.T_aq[
             j
         ]
-
-        # c += self.heat_source[:, j]
         return c
+
+    #La fonction suivante permettent le calcul de la matrice A qui multiplie le vecteur des températures au temps suivant
 
     def _compute_A_diagonals(self, j, dt):
 
+         #Terme de source d'énergie dû à la source d'eau q_s
+        #On traite le terme source de façon semi implicite pour la cohérence de la résolution
+        #Dans cette matrice, on pondère la contribution explicite par (1-alpha)
+        heat_source = (self.q_s_list * RHO_W * C_W ) / self.rho_mc_m_list
+
         lower_diagonal = (
-            -(self.ke_list[1:] * (1 - self.alpha) / self.dz**2)
-            + ((1 - self.alpha) * self.ae_list[1:] / (2 * self.dz)) * self.nablaH[1:, j]
+            -(self.ke_list[1:] * self.alpha / self.dz**2)
+            + (self.alpha * self.ae_list[1:] / (2 * self.dz)) * self.nablaH[1:, j]
         )
 
         lower_diagonal[-1] = (
-            -4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
-            + (2 * (1 - self.alpha) * self.ae_list[self.n_cell - 1] / (3 * self.dz))
+            -4 * self.ke_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
+            + (2 * self.alpha * self.ae_list[self.n_cell - 1] / (3 * self.dz))
             * self.nablaH[self.n_cell - 1, j]
         )
 
         diagonal = (
             1 / dt
-            + 2 * self.ke_list * (1 - self.alpha) / self.dz**2
-            - self.heat_source / self.rho_mc_m_list
+            + 2 * self.ke_list * self.alpha / self.dz**2
+              - self.alpha * heat_source #NOTE : signe négatif car on est de l'autre côté de l'équation
         )
         diagonal[0] = (
             1 / dt
-            + 4 * self.ke_list[0] * (1 - self.alpha) / self.dz**2
-            - self.heat_source[0] / self.rho_mc_m_list[0]
+            + 4 * self.ke_list[0] * self.alpha / self.dz**2
+            - self.alpha * heat_source[0]
         )
         diagonal[-1] = (
             1 / dt
-            + 4 * self.ke_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
-            - self.heat_source[-1] / self.rho_mc_m_list[-1]
+            + 4 * self.ke_list[self.n_cell - 1] * self.alpha / self.dz**2
+            - self.alpha * heat_source[-1]
         )
 
         upper_diagonal = (
-            -(self.ke_list[:-1] * (1 - self.alpha) / self.dz**2)
-            - ((1 - self.alpha) * self.ae_list[:-1] / (2 * self.dz))
+            -(self.ke_list[:-1] * self.alpha / self.dz**2)
+            - (self.alpha * self.ae_list[:-1] / (2 * self.dz))
             * self.nablaH[:-1, j]
         )
         upper_diagonal[0] = (
-            -4 * self.ke_list[0] * (1 - self.alpha) / (3 * self.dz**2)
-            - (2 * (1 - self.alpha) * self.ae_list[0] / (3 * self.dz))
+            -4 * self.ke_list[0] * self.alpha / (3 * self.dz**2)
+            - (2 * self.alpha * self.ae_list[0] / (3 * self.dz))
             * self.nablaH[0, j]
         )
 
@@ -559,7 +586,7 @@ class HTK_stratified(Linear_system):
         list_zLow,
         z_solve,
         inter_cara,
-        moinslog10IntrinK_list,
+        IntrinK_list,
         Ss_list,
         all_dt,
         isdtconstant,
@@ -567,12 +594,12 @@ class HTK_stratified(Linear_system):
         H_init,
         H_riv,
         H_aq,
-        heatsource,
+        q_s_list,
         alpha=ALPHA,
     ):
         super().__init__(
             Ss_list,
-            moinslog10IntrinK_list,
+            IntrinK_list,
             n_list,
             lambda_s_list,
             rhos_cs_list,
@@ -590,7 +617,7 @@ class HTK_stratified(Linear_system):
         self.list_zLow = list_zLow
         self.z_solve = z_solve
         self.inter_cara = inter_cara
-        self.moinslog10IntrinK_list = moinslog10IntrinK_list
+        self.IntrinK_list = IntrinK_list
         self.Ss_list = Ss_list
         self.all_dt = all_dt
         self.isdtconstant = isdtconstant
@@ -599,7 +626,7 @@ class HTK_stratified(Linear_system):
         self.H_riv = H_riv
         self.H_aq = H_aq
         self.alpha = alpha
-        self.heat_source = heatsource
+        self.q_s_list = q_s_list
         self.compute_HTK_stratified()
 
     def compute_HTK_stratified(self):
@@ -670,45 +697,45 @@ class HTK_stratified(Linear_system):
             )
 
     def compute_B_diagonals(self, dt):
-        lower_diagonal_B = self.K_list[1:] * self.alpha / self.dz**2
+        lower_diagonal_B = self.K_list[1:] * (1 - self.alpha) / self.dz**2
         lower_diagonal_B[-1] = (
-            4 * self.K_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
+            4 * self.K_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
         )
 
-        diagonal_B = self.Ss_list * 1 / dt - 2 * self.K_list * self.alpha / self.dz**2
+        diagonal_B = self.Ss_list * 1 / dt - 2 * self.K_list * (1 - self.alpha) / self.dz**2
         diagonal_B[0] = (
-            self.Ss_list[0] * 1 / dt - 4 * self.K_list[0] * self.alpha / self.dz**2
+            self.Ss_list[0] * 1 / dt - 4 * self.K_list[0] * (1 - self.alpha) / self.dz**2
         )
         diagonal_B[-1] = (
             self.Ss_list[self.n_cell - 1] * 1 / dt
-            - 4 * self.K_list[self.n_cell - 1] * self.alpha / self.dz**2
+            - 4 * self.K_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
         )
 
-        upper_diagonal_B = self.K_list[:-1] * self.alpha / self.dz**2
-        upper_diagonal_B[0] = 4 * self.K_list[0] * self.alpha / (3 * self.dz**2)
+        upper_diagonal_B = self.K_list[:-1] * (1 - self.alpha) / self.dz**2
+        upper_diagonal_B[0] = 4 * self.K_list[0] * (1 - self.alpha) / (3 * self.dz**2)
 
         return lower_diagonal_B, diagonal_B, upper_diagonal_B
 
     def compute_A_diagonals(self, dt):
-        lower_diagonal_A = -self.K_list[1:] * (1 - self.alpha) / self.dz**2
+        lower_diagonal_A = -self.K_list[1:] * self.alpha / self.dz**2
         lower_diagonal_A[-1] = (
-            -4 * self.K_list[self.n_cell - 1] * (1 - self.alpha) / (3 * self.dz**2)
+            -4 * self.K_list[self.n_cell - 1] * self.alpha / (3 * self.dz**2)
         )
 
         diagonal_A = (
-            self.Ss_list * 1 / dt + 2 * self.K_list * (1 - self.alpha) / self.dz**2
+            self.Ss_list * 1 / dt + 2 * self.K_list * self.alpha / self.dz**2
         )
         diagonal_A[0] = (
             self.Ss_list[0] * 1 / dt
-            + 4 * self.K_list[0] * (1 - self.alpha) / self.dz**2
+            + 4 * self.K_list[0] * self.alpha / self.dz**2
         )
         diagonal_A[-1] = (
             self.Ss_list[self.n_cell - 1] * 1 / dt
-            + 4 * self.K_list[self.n_cell - 1] * (1 - self.alpha) / self.dz**2
+            + 4 * self.K_list[self.n_cell - 1] * self.alpha / self.dz**2
         )
 
-        upper_diagonal_A = -self.K_list[:-1] * (1 - self.alpha) / self.dz**2
-        upper_diagonal_A[0] = -4 * self.K_list[0] * (1 - self.alpha) / (3 * self.dz**2)
+        upper_diagonal_A = -self.K_list[:-1] * self.alpha / self.dz**2
+        upper_diagonal_A[0] = -4 * self.K_list[0] * self.alpha / (3 * self.dz**2)
 
         return lower_diagonal_A, diagonal_A, upper_diagonal_A
 
@@ -729,16 +756,16 @@ class HTK_stratified(Linear_system):
             pos_idx = int(self.inter_cara[tup_idx][0])
             diagonal_B[pos_idx] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                - (K1 + K2) * self.alpha / self.dz**2
+                - (K1 + K2) * (1 - self.alpha) / self.dz**2
             )
-            lower_diagonal_B[pos_idx - 1] = K1 * self.alpha / self.dz**2
-            upper_diagonal_B[pos_idx] = K2 * self.alpha / self.dz**2
+            lower_diagonal_B[pos_idx - 1] = K1 * (1 - self.alpha) / self.dz**2
+            upper_diagonal_B[pos_idx] = K2 * (1 - self.alpha) / self.dz**2
             diagonal_A[pos_idx] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                + (K1 + K2) * (1 - self.alpha) / self.dz**2
+                + (K1 + K2) * self.alpha / self.dz**2
             )
-            lower_diagonal_A[pos_idx - 1] = -K1 * (1 - self.alpha) / self.dz**2
-            upper_diagonal_A[pos_idx] = -K2 * (1 - self.alpha) / self.dz**2
+            lower_diagonal_A[pos_idx - 1] = -K1 * self.alpha / self.dz**2
+            upper_diagonal_A[pos_idx] = -K2 * self.alpha / self.dz**2
         else:
             pos_idx = int(self.inter_cara[tup_idx][0])
             x = (self.list_zLow[tup_idx] - self.z_solve[pos_idx]) / (
@@ -747,39 +774,39 @@ class HTK_stratified(Linear_system):
             Keq = 1 / (x / K1 + (1 - x) / K2)
             diagonal_B[pos_idx] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                - (K1 + Keq) * self.alpha / self.dz**2
+                - (K1 + Keq) * (1 - self.alpha) / self.dz**2
             )
-            lower_diagonal_B[pos_idx - 1] = K1 * self.alpha / self.dz**2
-            upper_diagonal_B[pos_idx] = Keq * self.alpha / self.dz**2
+            lower_diagonal_B[pos_idx - 1] = K1 * (1 - self.alpha) / self.dz**2
+            upper_diagonal_B[pos_idx] = Keq * (1 - self.alpha) / self.dz**2
             diagonal_A[pos_idx] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                + (K1 + Keq) * (1 - self.alpha) / self.dz**2
+                + (K1 + Keq) * self.alpha / self.dz**2
             )
-            lower_diagonal_A[pos_idx - 1] = -K1 * (1 - self.alpha) / self.dz**2
-            upper_diagonal_A[pos_idx] = -Keq * (1 - self.alpha) / self.dz**2
+            lower_diagonal_A[pos_idx - 1] = -K1 * self.alpha / self.dz**2
+            upper_diagonal_A[pos_idx] = -Keq * self.alpha / self.dz**2
 
             diagonal_B[pos_idx + 1] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                - (K2 + Keq) * self.alpha / self.dz**2
+                - (K2 + Keq) * (1 - self.alpha) / self.dz**2
             )
-            lower_diagonal_B[pos_idx] = Keq * self.alpha / self.dz**2
-            upper_diagonal_B[pos_idx + 1] = K2 * self.alpha / self.dz**2
+            lower_diagonal_B[pos_idx] = Keq * (1 - self.alpha) / self.dz**2
+            upper_diagonal_B[pos_idx + 1] = K2 * (1 - self.alpha) / self.dz**2
             diagonal_A[pos_idx + 1] = (
                 self.Ss_list[pos_idx] * 1 / self.all_dt[0]
-                + (K2 + Keq) * (1 - self.alpha) / self.dz**2
+                + (K2 + Keq) * self.alpha / self.dz**2
             )
-            lower_diagonal_A[pos_idx] = -Keq * (1 - self.alpha) / self.dz**2
-            upper_diagonal_A[pos_idx + 1] = -K2 * (1 - self.alpha) / self.dz**2
+            lower_diagonal_A[pos_idx] = -Keq * self.alpha / self.dz**2
+            upper_diagonal_A[pos_idx + 1] = -K2 * self.alpha / self.dz**2
 
     def compute_c(self, j):
         c = zeros(self.n_cell, float32)
         c[0] = (8 * self.K_list[0] / (3 * self.dz**2)) * (
-            (1 - self.alpha) * self.H_riv[j + 1] + self.alpha * self.H_riv[j]
+            self.alpha * self.H_riv[j + 1] + (1 - self.alpha) * self.H_riv[j]
         )
         c[-1] = (8 * self.K_list[self.n_cell - 1] / (3 * self.dz**2)) * (
-            (1 - self.alpha) * self.H_aq[j + 1] + self.alpha * self.H_aq[j]
+            self.alpha * self.H_aq[j + 1] + (1 - self.alpha) * self.H_aq[j]
         )
-        # c += self.heat_source[:, j]
+        # c += self.q_s_list[:, j]
         return c
 
 

@@ -8,9 +8,9 @@
    simulating scenarios with non-real data to quickly debug and refine the protocol
    without deploying the entire system. /
 
-#include BUILDPATH("../../field_code/libs/shared/protocols/LoRa/Lora.hpp")
+#include BUILDPATH("../../firmware/libs/shared/protocols/LoRa/Lora.hpp")
 */
-#include "../../../field_code/libs/shared/protocols/LoRa/Lora.hpp" //WARNING : doesn't match with this adress but with build directory path that must be specified in arduino CLI build line.
+#include "../../../firmware/libs/shared/protocols/LoRa/Lora.hpp" //WARNING : doesn't match with this adress but with build directory path that must be specified in arduino CLI build line.
 //BUILD DIR MUST BE COHERENTLY SPECIFIED (temporary)
 #include <queue>
 
