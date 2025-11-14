@@ -14,8 +14,8 @@ The website (html pages) is hosted by the VPS and built with WordPress. It shoul
 
 For now, we split the configuration process into three parts:
 - configuring the DNS (molonari.io) with Namecheap: *see below*
-- configuring the VPS with LWS: *see `server/README.md`*
-- configuring WordPress on the VPS: *see `website/README.md`*
+- configuring the VPS with LWS: *see `server/vps_config.md`*
+- configuring WordPress on the VPS: *see `website/wordpress_config.md`*
 
 ## Configuring the DNS
 
