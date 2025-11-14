@@ -1,18 +1,18 @@
 """
 ---------------------------------
-Implémentations numériques des systèmes linéaires
-utilisés pour résoudre les équations transitoires pseudo-2D (et 1D) de charge
-hydraulique (H) et de température (T) dans une colonne
-stratifiée.
+Numerical implementations of linear systems
+used to solve pseudo-2D (and 1D) transient equations for
+hydraulic head (H) and temperature (T) in a
+stratified column.
 
-But du fichier:
-- fournir une classe (Linear_system) qui calcule les
-    paramètres physiques dérivés (K, rho*c, lambda_m, ...),
-- construire et résoudre les systèmes tri-diagonaux pour H (classe
-    H_stratified) et pour T (classe T_stratified) en utilisant un
-    schéma semi-implicite développé dans le README associé,
-- mener les calculs en variables adimensionnées pour la stabilité
-    numérique et re-dimensionner les résultats pour la sortie.
+File purpose:
+- provide a class (`Linear_system`) that computes derived
+    physical parameters (K, rho*c, lambda_m, ...),
+- assemble and solve tridiagonal systems for H (class
+    `H_stratified`) and for T (class `T_stratified`) using a
+    semi-implicit scheme described in the project README,
+- perform computations in non-dimensional variables for
+    numerical stability and re-dimensionalize the results for output.
 ---------------------------------
 """
 
@@ -29,12 +29,12 @@ from pyheatmy.config import *
 
 # Classe définissant et initiant les paramètres physiques des systèmes linéaires de la classe H_stratified et T_stratified
 class Linear_system:
-    """Classe ne résolvant pas directement les équations mais centralisant
-    la logique de construction des grandeurs physiques dérivées requises
-    par les solveurs H_stratified et T_stratified.
+    """A class that does not directly solve the equations but centralizes
+    the logic for building derived physical quantities required by the
+    H_stratified and T_stratified solvers.
 
-    Les méthodes `compute_*` renvoient des tableaux NumPy (dtype float32)
-    prêts à être utilisés par les constructeurs de matrices tri-diagonales.
+    The `compute_*` methods return NumPy arrays (dtype float32) ready to be
+    consumed by tridiagonal matrix constructors.
     """
     def __init__(
         self,
@@ -103,13 +103,13 @@ class Linear_system:
         self.H_res = self.compute_H_res()
 
 
-# Classe qui définit le système linéaire pour l'équation de la diffusivité
+# Class that defines the linear system for the diffusivity equation
 class H_stratified(Linear_system):
-    """Solveur pour l'équation de la charge hydraulique (H) sur une colonne
-    Cette classe calcule les coefficients adimensionnels (gamma, zeta), 
-    puis construit un système tri-diagonal adimensionné pour la
-    diffusivité hydraulique dans une colonne stratifiée, applique
-    un schéma semi-implicite (alpha-scheme).
+    """Solver for the hydraulic head equation (H) in a stratified column.
+    This class computes the non-dimensional coefficients (gamma, zeta),
+    assembles a non-dimensional tridiagonal system for hydraulic
+    diffusivity in a stratified column, and applies a semi-implicit
+    (alpha) time-stepping scheme.
     """
     def __init__(
         self,
@@ -168,16 +168,16 @@ class H_stratified(Linear_system):
     
     def compute_H_adim_res(self):
         H_adim_res = zeros((self.n_cell, self.n_times), float32)
-        H_adim_res[:, 0] = (self.H_init[:] - self.H_init[-1]) / self.DH_0
+        H_adim_res[:, 0] = (self.H_init[:] - self.H_aq[0]) / self.DH_0
         return H_adim_res
     
     def compute_H_res_from_H_adim_res(self):
-        self.H_res = self.H_adim_res * self.DH_0 + self.H_init[-1]
+        self.H_res = self.H_adim_res * self.DH_0 + self.H_aq[0]
         return self.H_res
 
     def calc_param_adim(self):
-        """Calcul des paramètres adimensionnés"""
-        self.DH_0 = self.H_init[0] - self.H_init[-1]
+        """Compute non-dimensional parameters"""
+        self.DH_0 = self.H_riv[0] - self.H_aq[0]
         self.P_0 = self.all_dt.sum()
         self.L_0 = self.dz * (self.n_cell - 1)
         self.H_adim_res = self.compute_H_adim_res()
@@ -186,17 +186,20 @@ class H_stratified(Linear_system):
 
 
     def compute_H_stratified(self): 
-        """Résout la marche temporelle pour H.
-        Selon que le pas de temps est constant ou non, la méthode délègue
-        au compute_H_constant_dt ou compute_H_variable_dt. 
-        Étapes principales pour chaque pas de temps j:
-        - mise à jour périodique de la viscosité dépendante de T (mu)
-        - construction des diagonales de B (termes explicites) et A
-          (termes implicites)
-        - assemblage du second membre c qui incorpore les conditions
-          limites de charge et les sources
-        - résolution du système tri-diagonal via `solver`
-        Le résultat renvoyé est `H_res` en unités physiques (re-dimensionné à la sortie).
+        """Solve the time-stepping for H.
+
+        Depending on whether the timestep is constant or variable, this
+        method delegates to `compute_H_constant_dt` or
+        `compute_H_variable_dt` respectively.
+
+        Main steps for each timestep j:
+        - periodically update temperature-dependent viscosity mu
+        - build diagonals of B (explicit terms) and A (implicit terms)
+        - assemble the RHS vector c including boundary conditions and sources
+        - solve the tridiagonal system via `solver`
+
+        The returned result is `H_res` in physical units (re-dimensionalized
+        before being returned).
         """
         if self.isdtconstant.all():
             self.compute_H_constant_dt()
@@ -234,7 +237,7 @@ class H_stratified(Linear_system):
                 lower_diagonal_A, diagonal_A, upper_diagonal_A, B_fois_H_plus_c
             )
 
-        # Re-dimensionnement H_adim_res → H_res
+        # Re-dimension H_adim_res → H_res
         self.H_res = self.compute_H_res_from_H_adim_res()
 
     def nablaH(self):  
@@ -253,13 +256,13 @@ class H_stratified(Linear_system):
     def nablaH_adim(self):  
         nablaH_adim = np.zeros((self.n_cell, self.n_times), np.float32)
 
-        H_adim_riv = (self.H_riv - self.H_init[-1]) / self.DH_0
+        H_adim_riv = (self.H_riv[0] - self.H_aq[0]) / self.DH_0
         nablaH_adim[0, :] = 2 * (self.H_adim_res[1, :] - H_adim_riv) / (3 * self.dz_adim)
 
         for i in range(1, self.n_cell - 1):
             nablaH_adim[i, :] = (self.H_adim_res[i + 1, :] - self.H_adim_res[i - 1, :]) / (2 * self.dz_adim)
 
-        H_adim_aq = (self.H_aq - self.H_init[-1]) / self.DH_0
+        H_adim_aq = (self.H_aq - self.H_aq[0]) / self.DH_0
         nablaH_adim[self.n_cell - 1, :] = (
             2 * (H_adim_aq - self.H_adim_res[self.n_cell - 2, :]) / (3 * self.dz_adim)
         )
@@ -297,7 +300,7 @@ class H_stratified(Linear_system):
                 lower_diagonal_A, diagonal_A, upper_diagonal_A, B_fois_H_plus_c
             )
         
-        # Re-dimensionnement H_adim_res → H_res
+        # Re-dimension H_adim_res → H_res
         self.H_res = self.compute_H_res_from_H_adim_res()
 
     def compute_B_diagonals(self, dt_adim):   
@@ -344,43 +347,42 @@ class H_stratified(Linear_system):
         diagonal_A,
         upper_diagonal_A,
     ):
-        """Applique un correctif numérique local aux diagonales autour
-        d'une interface entre couches (tup_idx).
-        Dans une colonne stratifiée, une interface entre deux couches 
-        (propriétés K1, K2,...) peut tomber soit exactement sur un maillage, 
-        soit à l'intérieur d'une cellule (cas fractionné). Pour préserver la 
-        précision numérique et la conservation (flux & stockage), on remplace 
-        alors localement les coefficients diagonaux par des valeurs « équivalentes »
-        intègrant la perméabilité effective et la porosité (Ss).
+        """Apply a local numerical correction to the diagonals around
+        an interface between layers (tup_idx).
 
-        - Si self.inter_cara[tup_idx][1] == 0 : l'interface coïncide
-          avec une maille de discretisation. On calcule un terme
-          équivalent utilisant la moyenne (K1+K2)/2 et on remplace la
-          valeur de la diagonale aux index concernés. Ceci modifie la
-          capacité apparente (terme en Ss/P_0) dans la diagonale B et
-          A pour tenir compte de la connectivité entre couches.
-        - Sinon (interface située à l'intérieur d'une maille) :
-          - pos_idx identifie la cellule « basse » concernée par
-            l'interface
-          - x est la fraction de la position de l'interface
-            entre les nœuds z_solve[pos_idx] et z_solve[pos_idx+1]
-          - Keq est une perméabilité équivalente (moyenne harmonique
-            pondérée) calculée par 1/(x/K1 + (1-x)/K2) — correspond
-            à la loi de conductance en série sur une portion fractionnée
-            de la cellule
-          - Les diagonales pour la cellule pos_idx et pos_idx+1 sont
-            ajustées en utilisant Keq combiné avec le K adjacent pour
-            former un terme moyen (ex: K1+Keq)/2 et (Keq+K2)/2.
+        In a stratified column, an interface between two layers
+        (with properties K1, K2, ...) can lie exactly on a mesh node
+        or inside a cell (fractional case). To preserve numerical
+        accuracy and conservation (flux & storage) we locally replace
+        diagonal coefficients with "equivalent" values that incorporate
+        effective permeability and porosity (Ss).
+
+        - If self.inter_cara[tup_idx][1] == 0: the interface coincides
+          with a discretization node. We compute an equivalent term
+          using the average (K1+K2)/2 and replace the diagonal value
+          at the affected index. This modifies the apparent storage
+          term (Ss/P_0) in diagonals B and A to account for connectivity
+          across the layers.
+        - Otherwise (interface inside a cell):
+          - pos_idx identifies the lower cell affected by the interface
+          - x is the fractional position of the interface between nodes
+            z_solve[pos_idx] and z_solve[pos_idx+1]
+          - Keq is an equivalent permeability (weighted harmonic mean)
+            computed as 1/(x/K1 + (1-x)/K2) — corresponding to series
+            conductance across sub-portions of the cell
+          - The diagonals for cells pos_idx and pos_idx+1 are adjusted
+            using Keq combined with the adjacent K to form averaged
+            terms (e.g. (K1+Keq)/2 and (Keq+K2)/2).
         """
         K1 = self.array_K[tup_idx]
         K2 = self.array_K[tup_idx + 1]
         dt_adim = self.all_dt[0] / self.P_0
 
-        # Cas interface coïncidant exactement avec un nœud de maille
+        # Case: interface exactly coincides with a mesh node
         if self.inter_cara[tup_idx][1] == 0:
-            pos_idx = int(self.inter_cara[tup_idx][0])  # index de la cellule affectée
-            # Remplacement local de la diagonale par un terme incluant la
-            # capacité (Ss) et une moyenne de conductivité (K1+K2)/2.
+            pos_idx = int(self.inter_cara[tup_idx][0])  # index of the affected cell
+            # Local replacement of the diagonal by a term including
+            # storage (Ss) and an average conductivity (K1+K2)/2.
             diagonal_B[pos_idx] = (
                 ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (K1+K2)*0.5) / dt_adim) 
                 - (2 * (1 - self.alpha) / self.dz_adim**2)
@@ -389,17 +391,17 @@ class H_stratified(Linear_system):
                 ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (K1+K2)*0.5) / dt_adim) 
                 + (2*(self.alpha) / self.dz_adim**2)
             )
-        # Cas interface à l'intérieur d'une cellule 
+        # Case: interface inside a cell 
         else: 
-            # calcul d'une perméabilité équivalente Keq par combinaison en série.
+            # calculation of an equivalent permeability Keq by series combination.
             pos_idx = int(self.inter_cara[tup_idx][0])
             x = (self.list_zLow[tup_idx] - self.z_solve[pos_idx]) / (
                 self.z_solve[pos_idx + 1] - self.z_solve[pos_idx]
             )
-            # Keq : perméabilité équivalente de la portion fractionnée
+            # Keq: equivalent permeability of the fractional portion
             Keq = 1 / (x / K1 + (1 - x) / K2)
-            # Ajuster la diagonale de la cellule contenant la portion
-            # basse (pos_idx) en utilisant une moyenne entre K1 et Keq
+            # Adjust the diagonal of the cell containing the lower portion
+            # (pos_idx) using an average between K1 and Keq
             diagonal_B[pos_idx] = (
                ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (K1+Keq)*0.5) / dt_adim) 
                 - (2 * (1 - self.alpha) / self.dz_adim**2)
@@ -409,8 +411,8 @@ class H_stratified(Linear_system):
                 + (2*(self.alpha) / self.dz_adim**2)
             )
 
-            # Ajuster aussi la cellule supérieure (pos_idx+1) qui contient
-            # la portion haute de l'interface; on combine Keq et K2.
+            # Also adjust the upper cell (pos_idx+1) containing
+            # the upper portion of the interface; combine Keq and K2.
             diagonal_B[pos_idx + 1] = (
                 ((self.Ss_list[pos_idx] * self.L_0**2 / self.P_0 / (Keq+K2)*0.5) / dt_adim) 
                 - (2 * (1 - self.alpha) / self.dz_adim**2)
@@ -421,15 +423,15 @@ class H_stratified(Linear_system):
             )
 
     def compute_c(self, j):
-        """Assemble le second membre c pour l'étape j.
-        Le vecteur `c` intègre les contributions de conditions aux
-        limites (rivière / aquifère) adimensionnées ainsi que la
-        source d'eau q_s_list.
+        """Assemble the right-hand side vector c for step j.
+        The vector `c` incorporates contributions from boundary
+        conditions (river / aquifer) in non-dimensional form as well as the
+        water source q_s_list.
         """
         c = zeros(self.n_cell, float32)
-        # Adimensionnement des charges hydrauliques aux limites
-        H_riv_adim = (self.H_riv - self.H_init[-1]) / self.DH_0
-        H_aq_adim = (self.H_aq - self.H_init[-1]) / self.DH_0
+        # Non-dimensionalization of hydraulic heads at boundaries
+        H_riv_adim = (self.H_riv - self.H_aq[0]) / self.DH_0
+        H_aq_adim = (self.H_aq - self.H_aq[0]) / self.DH_0
         
         c[0] = (8 / (3 * self.dz_adim**2)) * (
             (1 - self.alpha) * H_riv_adim[j] + (self.alpha) * H_riv_adim[j + 1]
@@ -437,21 +439,21 @@ class H_stratified(Linear_system):
         c[-1] = (8 / (3 * self.dz_adim**2)) * (
             (1 - self.alpha) * H_aq_adim[j] + (self.alpha) * H_aq_adim[j + 1]
         )
-        # Ajout du nombre adimensionnel zeta
-        # Un q_s positif correspond à une source d'eau  
+        # Addition of the non-dimensional number zeta
+        # A positive q_s corresponds to a water source  
         c += self.q_s_list * MU_W * self.L_0 ** 2 / (
             (self.IntrinK_list) * self.DH_0 * G * RHO_W
         )
         return c
 
 
-# Classe qui définit le système linéaire pour l'équation de la chaleur
+# Class defining the linear system for the heat equation
 class T_stratified(Linear_system):
-    """Solveur pour l'équation de la chaleur (T) sur une colonne stratifiée.
-    Utilise le gradient hydraulique `nablaH` calculé par H_stratified pour
-    inclure l'advection de chaleur. Construit les coefficients
-    adimensionnés (kappa, beta, phi) et assemble puis résout les systèmes
-    tri-diagonaux pour la marche temporelle en T.
+    """Solver for the heat equation (T) on a stratified column.
+    Uses the hydraulic gradient `nablaH` calculated by H_stratified to
+    include heat advection. Constructs the non-dimensional coefficients
+    (kappa, beta, phi) and assembles then solves the tri-diagonal systems
+    for the time stepping in T.
     """
     def __init__(
         self,
@@ -512,17 +514,17 @@ class T_stratified(Linear_system):
     
     def compute_T_adim_res(self):
         T_adim_res = zeros((self.n_cell, self.n_times), float32)
-        T_adim_res[:, 0] = (self.T_init[:] - self.T_init[0]) / self.DT_0
+        T_adim_res[:, 0] = (self.T_init[:] - self.T_riv[0]) / self.DT_0
         return T_adim_res
 
     def compute_T_res_from_T_adim_res(self):
-        self.T_res = self.T_adim_res * self.DT_0 + self.T_init[0]
+        self.T_res = self.T_adim_res * self.DT_0 + self.T_riv[0]
         return self.T_res
     
     def calc_param_adim(self):
-        """Calcul des paramètres adimensionnés"""
-        self.DH_0 = self.H_init[0] - self.H_init[-1]
-        self.DT_0 = self.T_init[0] - self.T_init[-1]
+        """Compute non-dimensional parameters"""
+        self.DH_0 = self.H_riv[0] - self.H_aq[0]
+        self.DT_0 = self.T_riv[0] - self.T_aq[0]
         self.P_0 = self.all_dt.sum()
         self.L_0 = self.dz * (self.n_cell - 1)
         self.kappa = self.compute_kappa_list()
@@ -533,22 +535,22 @@ class T_stratified(Linear_system):
         self.nablaH_adim = self.L_0 * self.nablaH / self.DH_0
 
     def compute_T_stratified(self):
-        """Résout la marche temporelle pour la température T.
-        Étapes principales pour chaque pas de temps j:
-        - mise à jour périodique de la viscosité dépendante de T (mu)
-        - construction des diagonales de B (termes explicites) et A
-          (termes implicites)
-        - assemblage du second membre c qui incorpore les conditions
-          limites de température et les sources
-        - résolution du système tri-diagonal via `solver`
-        Le résultat renvoyé est `T_res` en unités physiques.
+        """Solve the time stepping for temperature T.
+        Main steps for each time step j:
+        - periodic update of temperature-dependent viscosity (mu)
+        - construction of the diagonals of B (explicit terms) and A
+          (implicit terms)
+        - assembly of the right-hand side vector c which incorporates
+          temperature boundary conditions and sources
+        - solving the tri-diagonal system via `solver`
+        The returned result is `T_res` in physical units.
         """
         self.T_res = zeros((self.n_cell, self.n_times), float32)
         self.T_res[:, 0] = self.T_init
         for j, dt in enumerate(self.all_dt):
             # Update of Mu(T) after N_update_Mu iterations:
             if j % self.N_update_Mu == 1:
-                self.mu_list = self.compute_Mu(self.T_adim_res[:, j - 1]*self.DT_0 + self.T_init[0])
+                self.mu_list = self.compute_Mu(self.T_adim_res[:, j - 1]*self.DT_0 + self.T_riv[0])
 
             # Compute T at time times[j+1]
             dt_adim = dt / self.P_0
@@ -614,9 +616,9 @@ class T_stratified(Linear_system):
 
     def _compute_c(self, j): 
         c = np.zeros(self.n_cell, np.float32)
-        # Adimensionnement des températures aux limites
-        T_riv_adim = (self.T_riv - self.T_init[0]) / self.DT_0
-        T_aq_adim = (self.T_aq - self.T_init[0]) / self.DT_0
+        # Non-dimensionalization of boundary temperatures
+        T_riv_adim = (self.T_riv - self.T_riv[0]) / self.DT_0
+        T_aq_adim = (self.T_aq - self.T_aq[0]) / self.DT_0
         
         c[0] = (
             8 * (self.alpha) / (3 * self.dz_adim**2)
@@ -633,7 +635,7 @@ class T_stratified(Linear_system):
             + 2 * (1 - self.alpha) * self.kappa[-1] * self.nablaH_adim[-1, j] / (3 * self.dz_adim)
         ) * T_aq_adim[j]
 
-        c += self.phi * self.T_init[0] / self.DT_0
+        c += self.phi * self.T_riv[0] / self.DT_0
         return c
 
     def _compute_A_diagonals(self, j, dt_adim): #OK

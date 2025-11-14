@@ -22,8 +22,7 @@ dependencies = [
     "nbconvert",
     "IPython",
     "pytest",
-    "nbmake",
-    "sklearn"
+    "nbmake"
 ]
 requires-python = ">= 3.9"
 
