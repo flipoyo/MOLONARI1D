@@ -2,7 +2,7 @@
 
 ## Adding Devices to the Database
 
-Once your devices are ready to operate, you need to add them to the database. To add your devices, run the script `src.receiver.GUI_labo_virtuel`.
+Once your devices are ready to operate, you need to add them to the database. To add your devices, from the `Molonaviz` folder, run the script `python -m src.receiver.GUI_virtual_lab`.
 
 ### Adding a Laboratory and a Study
 
@@ -23,13 +23,14 @@ You must add your devices in a specific order to satisfy database foreign key (F
 
 2. **Relay**
 
-   * The relay extends the Gateway's range.
+   * The relay extends the Datalogger's range.
+   * The given ID must be exact (or else data will not be inserted by the receiver), to find it run the code found in the `tests/testArduinoLoRaWAN/DevEUI.ino` on your physical relay.
    * To add a Relay, select a Gateway from those already registered in your lab using the dropdown menu. Make sure to link the relay to the physically deployed Gateway.
 
 3. **Datalogger**
 
    * Represents the LoRaWAN chip embedded in the measurement device.
-   * The `DevEUI` field corresponds to the unique chip identifier, usually found on the device box.
+   * The `DevEUI` field corresponds to the unique chip identifier, use the same technique as for the Relay.
    * You must select the Relay this device will be associated with on the network.
 
 4. **Thermometer and PressureSensor (Sensor Models)**
