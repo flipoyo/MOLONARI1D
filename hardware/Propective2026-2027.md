@@ -1,4 +1,6 @@
-For the attention of 2A minors in 2026/2027
+For the attention of 2A mineurs in 2026/2027
+
+THE GOLDEN COMMIT WORKS GET BACK TO IT IF ISSUES (THE DEMO CODES).
 
 1. This year’s final version
 
