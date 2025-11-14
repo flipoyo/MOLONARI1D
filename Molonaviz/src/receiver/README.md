@@ -1,9 +1,10 @@
 # Molonari Receiver
 
 ## Overview
-The Molonari Receiver is designed to handle data from IoT devices using MQTT protocol. It processes incoming messages, decodes them, and stores the relevant information in a local SQLite database. The project also provides functionality for exporting data to CSV format for analysis, and ultimately store it in the Molonaviz database.
+The Molonari Receiver is designed to handle data from IoT devices using MQTT protocol. It processes incoming messages, decodes them, and stores the relevant information in a local SQLite database. The project also provides functionality for exporting data to CSV format for analysis, and ultimately store it in the Molonaviz database (`Molonaviz/TestDatabase/Molonari/Molonari.sqlite` of which the architecture is detailed in `Molonaviz/src/molonaviz/doc`).
+This part is the final step of the Molonari transmission chain. It enables the user to receive the data sent through the network (device → relay → gateway), decode the datapayload, and put it in the DB.
+The server setup is available in `hardware/specs`.
 
-**To be noted**: to this stage, the local system is not implemented inside of the Molonaviz interface. Its mission is to provide a first setup to inscribe datapayloads in a DB, in order to be displayed then computed.
 
 ## Project Structure
 ```
@@ -14,29 +15,27 @@ Molonaviz
 │   │   │   ├── CA.crt             # Certification Authority certificate
 │   │   │   ├── TLS.crt            # TLS configuration certificate
 │   │   │   ├── TLS.key            # TLS configuration key
-│   │   │   ├── config.json        # Configuration of the MQTT broker and database
-│   │   │   ├── ERD_structure.sql  # File to create the database
+│   │   │   └── config.json        # MQTT broker and database configuration
 │   │   ├── __init__.py
 │   │   ├── main.py                # Entry point of the application
 │   │   ├── adapt_nodered_mqtt.py  # Handles MQTT connection and message processing
-│   │   ├── decoder.py             # Decodes base64-encoded Protobuf messages
 │   │   ├── db_insertion.py        # Manages data insertion into the database
+│   │   ├── decoder.py             # Decodes base64-encoded Protobuf messages
+│   │   ├── GUI_virtual_lab.py     # Interface to create the virtual lab objects, in order to fill information in the DB
 │   │   ├── logger_timestamps.py   # Logs timestamps from devices, relays and gateways
 │   │   ├── timestamps.log         # Log record for devices, relays and gateways timestamps
 │   │   ├── sensor_pb2.py          # Generated Protobuf message structure
-│   │   └── device_config.py       # 
-│   ├── README.md                  # Project documentation
-│   └── requirements.txt           # Project dependencies
-└── tests
-    └── test_config.py             # Unit tests for configuration loading and validation
+│   │   └── README.md              # Project documentation
 ```
 
 ## Setup Instructions
 1. **Install dependencies**:  
-   Ensure you have Python 3.x installed. Then, install the required packages using pip.
-   Put your bash in the /Molonaviz (not molonaviz) folder and run:
-   ```bash
-   pip install -e .
+   Ensure you have these modules installed on your machine:
+   ```paho.mqtt
+   PyQt5.QtSql
+   threading
+   logging
+   tkinter
    ```
 
 2. **Configuration**:  
