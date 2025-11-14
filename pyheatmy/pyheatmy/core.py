@@ -250,11 +250,11 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 T_riv = self._T_riv
                 T_aq = self._T_aq
 
-                moinslog10IntrinK, n, lambda_s, rhos_cs, q = layer.params
+                IntrinK, n, lambda_s, rhos_cs, q = layer.params
                 if verbose:
                     print(
                         "--- Compute Solve Transi ---",
-                        f"One layer : moinslog10IntrinK = {moinslog10IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}, q = {q}",
+                        f"One layer : IntrinK = {IntrinK}, n = {n}, lambda_s = {lambda_s}, rhos_cs = {rhos_cs}, q = {q}",
                         sep="\n",
                     )
 
@@ -263,7 +263,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
                 ## pour le cas uni-couche, on le simule dans H_stratified avec deux couches de mêmes paramètres
                 array_moinslog10IntrinK = np.array(
-                    [moinslog10IntrinK, moinslog10IntrinK]
+                    [-np.log10(IntrinK), -np.log10(IntrinK)]
                 )
                 # array_K = 10 ** (-array_moinslog10IntrinK * 1.0)
                 array_K = (RHO_W * G * 10.0**-array_moinslog10IntrinK) * 1.0 / MU
@@ -330,8 +330,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
                 self._temperatures = T_res
                 self._H_res = H_res  # stocke les résultats
 
-                k = 10 ** (
-                    -moinslog10IntrinK
+                k = IntrinK
                 )  # NF This is wrong since we are now using the intrinsec permeability
                 K = calc_K(
                     k
