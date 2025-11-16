@@ -1,35 +1,22 @@
-# Bulding tutorial of the MOLONARI 1D datalogger and relay
+# Bulding tutorial of the MOLONARI 1D electronic circuit
 
-MOLONARI2024 team
+__based on the work of the MOLONARI2024 team - changes made by the MOLONARI2025 team__
 
-## 1. Prerequisites
+ENERGY!!! talk about the battery (for pressure sensor - talk about piles!!!! for Wheatstone bridge!!!! )
+checker si les In the Air ont déjà mis les infos des codes à mettre sur les cartes... 
 
-### 1.1. Equipment
+## Sensors' electronic circuit
 
-- Two [Arduino MKR WAN 1310](https://docs.arduino.cc/hardware/mkr-wan-1310) (data collection + LoRa transmission)
-- Two [Waterproof Antennas](https://store.arduino.cc/products/dipole-pentaband-waterproof-antenna) (to connect to the MKR WAN 1310)
-- One [Adalogger Featherwing SD-RTC Module](https://www.adafruit.com/product/2922) (to connect as per the instructions below)
+### 1. Equipment
+
+- One [Arduino MKR WAN 1310](https://docs.arduino.cc/hardware/mkr-wan-1310) (data collection + LoRa transmission)
+- One [Adalogger Featherwing SD-RTC Module](https://www.adafruit.com/product/2922) (to connect as per the instructions below - see section 2. Connections)
+- One [Waterproof Antenna](https://store.arduino.cc/products/dipole-pentaband-waterproof-antenna) (to connect to the MKR WAN 1310)
 - Micro USB - USB cables or batteries (to power the boards). Note: USB connection allows for power supply and communication with the computer (for code and Serial port). It also allows charging a battery connected to the MKR WAN.
 
-### 1.2. Software
+### 2. Connections
 
-- [Arduino IDE](https://www.arduino.cc/en/software)
-- [Visual Studio Code](https://code.visualstudio.com/) (recommended)
-
-In Arduino IDE, make sure to install the following libraries:
-
-- ``Arduino Low Power`` (Deep sleep mode)
-- ``FlashStorage`` (Data storage in flash memory)
-- ``LoRa`` (LoRa communication)
-- ``RTCLib`` (External real-time clock management)
-- ``RTCZero`` (Internal real-time clock management for MKR WAN 1310)
-- ``SD`` (SD card communication)
-- ``Queue`` (Data packet transfer)
-- ``MKRWAN`` (LoRaWAN communication)
-
-## 2. Connections
-
-For the connections, it is highly recommended to do it on a breadboard (in this case, 2 assembled together) to have very clean connections and not have to constantly wonder if your connections are causing the problems.
+For the connections, two functionnal sensors' electronic circuits were soldered by the MOLONARI2025 team. This section is useful in order to solder more electronic circuits. 
 
 By *connections* we mean the electrical connections between the *MKR WAN 1310* (A) and the *Adalogger Featherwing* (B) (SD + RTC), as well as with the sensors. For more clarity, you can find the *pinouts* (= pin mappings of a board) at the following links:
 
@@ -40,6 +27,8 @@ It is interesting to note that the pins not used on the Featherwing are useless 
 
 Each step is detailed below, but here is a diagram that summarizes everything:
 ![Connection diagram](Images/connectingClockAndSDToArduinoMKR1310.png)
+
+For a detailed diagram of how to solder the electronic circuit, please see the document 'electronic connexion\Electronic circuit soldering diagram.pdf'.
 
 ### 2.1. Power supply part
 
@@ -70,7 +59,7 @@ For the RTC, there are 2 wires to connect:
 
 ### 2.4. Sensors
 
-This part applies to temperature sensors (rod with 4 thermistors). If you use a differential sensor (for pressure) you will need to get information. Otherwise, for the temperature part, the cable output of each sensor consists of 3 parts:
+This part applies to temperature sensors (rod with 5 thermistors). If you use a differential sensor (for pressure) you will need to get information. Otherwise, for the temperature part, the cable output of each sensor consists of 3 parts:
 
 * The yellow cable → ground (GND)
 * The blue cable → 3.3V power supply (VCC)
@@ -79,10 +68,26 @@ This part applies to temperature sensors (rod with 4 thermistors). If you use a 
 **Note:**  
 To save energy, we cut off the power to the sensors when not in use, as we mentioned before. To do this, we simply connected the + of the sensor power supply (blue cable) to pin 2 which is connected to the black line in the breadboard, in this way the sensors are only feed when it is necessary.
 
-## 3. The code to insert into the boards.
+
+## Relay's electronic circuit
+
+The electronic circuit for the relay is the same as for the sensors with one small difference, it doesn't have the blockers, those green components that are used to connect the sensors to the circuit. Because no sensors are connected to the relay's electronic circuit, neither does it need the wires connecting the ground (GND) to the green blocker. 
+
+This circuit only has the connections between the Arduino card and the Adalogger. 
+
+Here is a picture of the relay's electronic circuit : 
+
+
+
+
+
+
+## 3. The code to insert into the circuits.
 
 You will need a *USB - Micro USB* cable connected to a computer with Arduino IDE and the code to insert.  
 **Very important:** the main code file (in our case [Sensor.ino](../Sensor/Sensor.ino)) must be in a folder with the **same name** (that's how it is).
+
+To know which code to insert into which electronic circuit, please refer to ... 
 
 ### 3.1. Sensor code (in the river)
 
@@ -97,6 +102,25 @@ In order to better understand the sensor code, you can see the file *2 - Explain
 ### 3.2. Relay code (on the shore)
 
 It's the same, but with the right code ([Relay.ino](../Relay/Relay.ino)). Simple, right?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## 4. Finalize
 
@@ -129,17 +153,3 @@ This year we placed a box on the ground where it should be placed in relay in ca
 Additional options:  
 - **Curve on Arduino IDE**: If you want the data to appear on a curve, connect `pin 1` to `VCC` (+3V) on the receiving Arduino, and launch the `Serial Plotter` of `Arduino IDE`.
 
-## Heuuu why doesn't it work?
-
-Well... good luck.
-
-* Make sure the connections are good (and the contacts with a multimeter)
-* Make sure the Arduino LEDs light up and then turn off. If they do not light up, they have no power, if they do not turn off, the initialization failed. If the sensor initialization never finishes, the SD card is responsible in 99% of cases. If it happens with the relay, it is not connected to a computer, or the computer has no software trying to receive data from the Serial port.
-* At first, it is recommended to do as many tests as possible with a computer (which powers the board via USB) with a Serial connection, which allows displaying things in the terminal. It's the equivalent of print() in Python, and it's called `Serial.println()` (the `Serial.print()` does the same thing but without a newline). If you want an avalanche of comments in the console to understand what is happening, we have provided for it in the code. Just uncomment the line `#define DEBUG` at the beginning of [Sensor.ino](../Sensor/Sensor.ino) and [Relay.ino](../Relay/Relay.ino), and re-upload the program to the Arduinos.
-* There is a chance that the SD card will cause you problems, it often stops working randomly. Some tips if this happens:
-  - Reset the Arduino with the reset button
-  - Remove the SD card, blow on it and reinsert it
-  - Delete all files from the SD card
-  - All of the above at the same time
-* It has happened to us several times that in spite of trying all possible solutions, the code would not load in the arduino or the code simply would not run. After trying everything it turned out to be a problem with the cable. Make sure that the cable is working properly first of all!
-* If even after checking everything and exorcising by a certified priest it still doesn't work, you always have the solution of quantum enchantment...
