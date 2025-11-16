@@ -5,7 +5,7 @@
 
 Nous avons souhaité évaluer les pertes/gains de charge dans la tige en régime stationnaire dûes à des forces de tension superficielles causées par la finesse du rayon de notre tube et du rayon des trous que l’on a percés. 
 Nous basons notre évaluation en modélisant la tige ainsi que les trous du bas de la tige par des tubes de purin afin de calculer les pertes de charges selon la formule : 
-$h = frac{2*\gamma*cos(\theta)}{\rho*g*h}$ où $\gamma$ est le coefficient de tension superficiel de notre matériau au contact de l’eau (ici $\gamma$ = 40N.m-1 en comparaison avec d’autres coefficients de matériaux de même nature [1]), $\théta$ est l’angle de mouillage de l’ASA en contact avec l’eau (ici $\theta$ = 87°C [2]). 
+$ h = frac{2*\gamma*cos(\theta)}{\rho*g*h} $ où $\gamma$ est le coefficient de tension superficiel de notre matériau au contact de l’eau (ici $\gamma$ = 40N.m-1 en comparaison avec d’autres coefficients de matériaux de même nature [1]), $\theta$ est l’angle de mouillage de l’ASA en contact avec l’eau (ici $\theta$ = 87°C [2]). 
 
 Nous considérons, étant donné que les effets de tension superficielle sont inversement proportionnels au rayon de l’ouverture, que nous majorons la perte de charge générée par un tube de rayon ayant celui de l’ouverture la plus petite que l’on permet dans notre tige. 
 Le rayon intérieur de la tige est de 4mm, celui de l’ouverture (au bas de la tige) qui laisse l’eau s’infiltrer est de 0.5mm.
@@ -20,7 +20,7 @@ L’idée est d’utiliser un tuyau en silicone, de 40cm, dont le rayon est tel 
 
 ### Schéma explicatif : 
 On branche les deux tiges aux deux cotés de notre capteur de pression précédemment étalonné. La différence de potentiel lue sur le data-loger nous permet de remonter à la charge selon la formule affine (à 17°C, température de l’eau lors de l’experience) : 
-$$dH = 168.13*U - 235.47$$ où U est la tension.
+$$dH = 168.13*U - 235.47$$ où $U$ est la tension.
 
 ![Schéma](Images/experience_scheme.jpg)
 
