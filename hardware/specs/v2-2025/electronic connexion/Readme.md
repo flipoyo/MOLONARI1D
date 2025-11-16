@@ -26,7 +26,7 @@ By *connections* we mean the electrical connections between the *MKR WAN 1310* (
 It is interesting to note that the pins not used on the Featherwing are useless and especially **connected to nothing**. So you can run cables on the breadboard lines associated with these pins (which are not).
 
 Each step is detailed below, but here is a diagram that summarizes everything:
-![Connection diagram](Images/connectingClockAndSDToArduinoMKR1310.png)
+![Connection diagram](Images/connectingClockAndSDToArduinoMKR1310.jpg)
 
 For a detailed diagram of how to solder the electronic circuit, please see the document 'electronic connexion\Electronic circuit soldering diagram.pdf'.
 
