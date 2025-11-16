@@ -1,4 +1,15 @@
-# Description of the complete MOLONARI1D System
+# V2 Hardware Specifications
+
+This directory contains the hardware specifications and designs for the version of MOLONARI1D monitoring devices (v2) developed by the 2025 team.
+
+## Contents 
+
+- **sensors/**: Specifications related to the pressure and temperature sensors
+- **relay/**: Specifications of the relay
+- **gateway/**: All the specifications related to the gateway
+- **costs/**: Documents related to the costs audit
+
+## Overview of the complete MOLONARI1D System
 
 ## In the riverbed
 ### Metal Box with weight, seal and cover
@@ -7,13 +18,11 @@
 
 ![Seal and cover](Images/couvercle_boite_avec_joint_et_vis%20-%20Copie.jpg) 
 
-### Electronic circuit with battery and waterproof antenna
-
-![Electronic circuit](Images/circuit_capteurs_avec_antenne_et_batterie.jpg)
-
 ### Plastic hosepipe
 
 ![Hosepipe](Images/hose_pipe.jpg)
+
+It connects the shaft to the metal box.
 
 ### Shaft 
 
@@ -23,11 +32,19 @@
 
 ![Temperature sensor](Images/capteur_temperature_avec_cables.jpg)
 
+### Electronic circuit with battery and waterproof antenna
+
+![Electronic circuit](Images/circuit_capteurs_avec_antenne_et_batterie.jpg)
+
+It is inside the metal box.
+
 ### Pressure Sensor 
 
 ![Pressure sensor](Images/capteur_de_pression_avec_piles.jpg)
 
-### All together
+It is inside the metal box. 
+
+### All components together
 
 ![Box from inside](Images/box_inside_1.jpg)
 
