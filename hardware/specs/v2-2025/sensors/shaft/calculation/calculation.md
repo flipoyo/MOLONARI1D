@@ -5,7 +5,7 @@
 
 Nous avons souhaité évaluer les pertes/gains de charge dans la tige en régime stationnaire dûes à des forces de tension superficielles causées par la finesse du rayon de notre tube et du rayon des trous que l’on a percés. 
 Nous basons notre évaluation en modélisant la tige ainsi que les trous du bas de la tige par des tubes de purin afin de calculer les pertes de charges selon la formule : 
-$$h = frac{2*\gamma*cos(\theta)}{\rho*g*h}$$ où $\gamma$ est le coefficient de tension superficiel de notre matériau au contact de l’eau (ici $\gamma$ = 40N.m-1 en comparaison avec d’autres coefficients de matériaux de même nature [1]), $\théta$ est l’angle de mouillage de l’ASA en contact avec l’eau (ici $\theta$ = 87°C [2]). 
+$h = frac{2*\gamma*cos(\theta)}{\rho*g*h}$ où $\gamma$ est le coefficient de tension superficiel de notre matériau au contact de l’eau (ici $\gamma$ = 40N.m-1 en comparaison avec d’autres coefficients de matériaux de même nature [1]), $\théta$ est l’angle de mouillage de l’ASA en contact avec l’eau (ici $\theta$ = 87°C [2]). 
 
 Nous considérons, étant donné que les effets de tension superficielle sont inversement proportionnels au rayon de l’ouverture, que nous majorons la perte de charge générée par un tube de rayon ayant celui de l’ouverture la plus petite que l’on permet dans notre tige. 
 Le rayon intérieur de la tige est de 4mm, celui de l’ouverture (au bas de la tige) qui laisse l’eau s’infiltrer est de 0.5mm.
@@ -33,7 +33,9 @@ Coupe de la tige en silicone pour obtenir la même taille (soit la même charge 
 ### Résultat de nos expériences.
 
 Imprécision en charge du capteur : 
+
 Charge pour le tube en silicone de test supposé parfait : 20m
+
 Charge pour notre tube : 20,05m soit 5mm de pertes de charges en pratique, ce qui est acceptable au vu de la charge classique étudiée : (40m environ)
 
 
