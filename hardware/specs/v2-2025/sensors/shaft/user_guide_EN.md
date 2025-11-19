@@ -13,5 +13,3 @@ Print the 3 files located at ```tige à vis/fichiers stl (pour l'impression)```.
 Once printed, **carefully** screw the different parts as straight as possible. No need to apply excessive force, the sensor and cable spots should align similarly to what is done for the central part.
 
 To waterproof the shaft, apply a layer of epoxy resin, especially between the pieces. **Careful not to fill in the gaps at the bottom of the shaft, which allows for water to infiltrate. The resin might run down the end piece during the drying phase if put to dry vertically, and affect the sharpness of the ribs where the hosepipe is plugged : this might make the connection non water-proof. 
-
-### Instructions pour la modification : 
