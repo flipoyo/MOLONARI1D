@@ -1,6 +1,7 @@
 # Adimensionnement de la résolution des équations
 
-Réalisé à l'automne par MOLONARI 2025
+Réalisé à l'automne par Bastien AVRILLON et Rapfaël LECLERC, MOLONARI 2025
+À la suite de la réflexion initiée par Mathis CHEVÉ, MOLONARI 2023
 
 ## Problème général
 

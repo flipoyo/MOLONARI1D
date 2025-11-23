@@ -52,6 +52,7 @@ For now, what works is the main_demo codes (one for the sensor and one for the r
 
 - Platformio (to install on VScode)
 - Arduino MKR WAN 1310 boards
+- Arduino IDe
 - Pressure and temperature sensors
 - SD cards
 - Antenna
@@ -60,7 +61,7 @@ For now, what works is the main_demo codes (one for the sensor and one for the r
 
 ### Installation
 
-1. **Install Platformio**
+1. **Install Platformio and Arduino IDE**
 2. **Clone the repository**:
    ```bash
    git clone --depth=1 https://github.com/flipoyo/MOLONARI1D.git
@@ -70,13 +71,19 @@ For now, what works is the main_demo codes (one for the sensor and one for the r
 
 3. Go into MOLONARI1D/hardware/mains_ino/sensor
 
-- Fill the conf.csv file as in the README
-- Upload on the arduino
-- Fill the SD card with the csv file
+- Fill the SD card with the csv file:
+   You can modify the time between each measure with "intervalle_de_mesure_secondes" and the time between each communication between the relay and the device with "lora_intervalle_secondes"
+   On this file you can also modify the type of sensors that are connected and on which PIN.
+   Be careful to respect the exact syntax (virgule, space, etc...) !!!
+
+- Upload on the arduino:
+   Uploading to the boards is a real hassle on a Mac—do it on Windows.
+   When uploading the program to the boards, you must press the reset button twice when the message “Waiting for the new upload port...” appears; this reinitializes the board.
+   To check if the boards are functioning properly, they should blink regularly with an orange light.
 
 4. Same with MOLONARI1D/hardware/mains_ino/relay but on the second arduino and SD
 
-5. Place all sensors and the antenna on the sensor card
+5. Place all sensors and the antenna on the sensor card. You can connect the arduino to your computer and open arduino IDE to see the informations coming from the arduino
 
 6. You're set up !
 
