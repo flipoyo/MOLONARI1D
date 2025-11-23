@@ -8,6 +8,7 @@ This directory contains the hardware specifications and designs for the version 
 - **relay/**: Specifications of the relay
 - **gateway/**: All the specifications related to the gateway
 - **costs/**: Documents related to the costs audit
+- **electronic connexion/**: Specifications of the electronic circuits (Arduino+Adalogger) used for the telecommunication and the taking of measurements 
 
 ## Overview of the complete MOLONARI1D System
 
