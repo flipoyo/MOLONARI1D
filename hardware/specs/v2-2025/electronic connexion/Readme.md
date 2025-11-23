@@ -2,9 +2,6 @@
 
 __based on the work of the MOLONARI2024 team - changes made by the MOLONARI2025 team__
 
-ENERGY!!! talk about the battery (for pressure sensor - talk about piles!!!! for Wheatstone bridge!!!! )
-checker si les In the Air ont déjà mis les infos des codes à mettre sur les cartes... 
-
 ## Sensors' electronic circuit
 
 ### 1. Equipment
@@ -27,6 +24,8 @@ It is interesting to note that the pins not used on the Featherwing are useless 
 
 Each step is detailed below, but here is a diagram that summarizes everything:
 ![Connection diagram](Images/connectingClockAndSDToArduinoMKR1310.jpg)
+
+NB : the sensor's description wasn't updated, but the wires coming out of it are red, black and white as on the diagram. Please note that this correspond to a temperature sensor. For the pressure sensor, you will have to check on the pressure sensor's own circuit yourself.
 
 For a detailed diagram of how to solder the electronic circuit, please see the document 'electronic connexion\Electronic circuit soldering diagram.pdf'.
 
@@ -59,14 +58,18 @@ For the RTC, there are 2 wires to connect:
 
 ### 2.4. Sensors
 
-This part applies to temperature sensors (rod with 5 thermistors). If you use a differential sensor (for pressure) you will need to get information. Otherwise, for the temperature part, the cable output of each sensor consists of 3 parts:
+The sensors are connected to the circuit through the blockers, the green components on the edge of the circuit. 
 
-* The yellow cable → ground (GND)
-* The blue cable → 3.3V power supply (VCC)
-* the white cable → board pin (we took A1, A2, A3, and A4)
+For the temperature sensors (in total 5 thermistors), the cable output of each sensor consists of 3 parts:
+
+* The black cable → ground (GND)
+* The red cable → 3.3V power supply (digital pin ~4)
+* the white cable → board pin (analog pins like A0, A1...)
+
+For the differential pressure sensor there are 3 wires that need to be connected to the ground (GND), the 3.3V power supply (digital pin ~4) and an analog pin (like A5 for example). The wire wich is on the same line as the black wire from the 9V battery is connected to the ground (GND), the one sharing the same line as the red wire from the 9V battery is connected to the power supply and the last wire is connected to an analog pin. 
 
 **Note:**  
-To save energy, we cut off the power to the sensors when not in use, as we mentioned before. To do this, we simply connected the + of the sensor power supply (blue cable) to pin 2 which is connected to the black line in the breadboard, in this way the sensors are only feed when it is necessary.
+The power is delivered to the sensors through a digital pin (~4) in order to save energy. In did this pin is controlled by the firmware code and so it delivers current from time to time, just when the sensors have to take a measurement, ie the sensors are only feed when it is necessary.
 
 
 ## Relay's electronic circuit
@@ -77,12 +80,29 @@ This circuit only has the connections between the Arduino card and the Adalogger
 
 Here is a picture of the relay's electronic circuit : 
 
+![Relay's circuit](Images/circuit_relai_antenne.jpg)
+
+## 3. Energy 
+
+In both circuits, the Arduino card is powered by a 3.7V Lithium Battery (LP103395). The direction of the battery's threads had to be switched in order to match with the orientation within the Arduino card, for the battery to work with the card. This was done by cutting the wires and soldering them again, using heat-shrinkable tubings. 
+
+See below a picture of the battery : 
+
+![Battery](Images/battery_Arduino.jpg)
+
+The differential pressure sensor is powered by the Arduino card ans also by a 9V battery, either with 6 batteries of 1.5V each or by a unique 9V battery, which is used to power the Wheatstone bridge within the pressure sensor's own electronic circuit. 
 
 
 
 
 
-## 3. The code to insert into the circuits.
+
+
+
+
+
+
+## 4. The code to insert into the circuits.
 
 You will need a *USB - Micro USB* cable connected to a computer with Arduino IDE and the code to insert.  
 **Very important:** the main code file (in our case [Sensor.ino](../Sensor/Sensor.ino)) must be in a folder with the **same name** (that's how it is).
