@@ -1,27 +1,14 @@
 # Building the differential pressure sensor
 
-Find the component list in XXXX 
-
-The main component is a piezzo-resistive membrane, which reference is "Pressure sensor Honeywell 26PC series". 
-
-....
-
-: mesure de la pression via la variation de résistance d’un matériau soumis à une déformation mécanique
-Structure :
-Membrane de mesure qui se déforme sous l’effet de la pression
-Jauges de contrainte (pont de Wheatstone) pour convertir la déformation en signal électrique
-
-pression : différentielle : entre 2 entrées d’eau différentes :  entre eau qui rentre à 40cm et eau au niveau de la rivière : en fonction de qui alimente qui membrane plie d’un côté ou de l’autre…
- - membrane piezzorésistive + pont de Wheatstone (nécessité d’être alimenté par une batterie) => The sensor
-takes the form of a piezo-resistive bridge which produces a voltage
-output proportional to the applied pressure, with a value close to
-zero when the differential pressure is zero. Batterie de 9V (6x1,5V piles)
-
-ENERGY! 
-...
-
-
 The building scheme is found in the image 'Circuit_scheme_credit_Greswell.jpg'
+
+The main component is a piezo resistive membrane, which reference is "Pressure sensor Honeywell 26PC series". 
+
+The differential pressure sensor measures the pressure thanks to a piezo resistive membrane, through a variable resistance in a Wheatstone bridge, which is sensitive to mechanical deformation. Indeed, the membrane deforms under pressure, as it is related to the underground water (at 40cm depth) and to the river's water. The deformation is then converted into an electric signal and the sensor measures a voltage. 
+
+The equation and parameters linking voltage and pressure are described in the '\calibration' folder. 
+
+The membrane of the pressure sensor is powered by a 9V battery (or 6 batteries of 1.5V each), as the Wheatstone bridge needs a lot of energy. 
 
 Here is a picture of a differential pressure sensor : 
 
