@@ -53,4 +53,40 @@ Click now on "Submit" and on "Save & Apply" and you should be good to go.
 
 ## Chirpstack application
 
-Explanation to add the Application (with the relay, and gateway).
+We now need to be able to add devices to Chirpstack, so that it will try to listen to what our Arduino card is gonna send. For that, go to the "Applications" section in the left menubar. Then to "Add application". Give it a recognisable name. Then go to "Add device". Enter the fields with a *.
+
+![adding new sensor](Images\chirpstack_adding_sensor.png)
+
+Know that the most important one is the "Device EUI" one. To know which one is your DevEUI, you can run a simple Arduino script that includes:
+
+``` Arduino
+#include <MKRWAN.h>
+LoRaModem modem;
+
+void setup() {
+  Serial.begin(9600);
+  while (!Serial);
+
+  if (!modem.begin(EU868)) {  // Pour l’Europe : EU868
+    Serial.println("Échec d'initialisation du modem LoRa !");
+    while (true);
+  }
+
+  Serial.print("DevEUI : ");
+  Serial.println(modem.deviceEUI());
+}
+
+void loop() {}
+```
+
+Then click on "Submit". You'll be sent to a page where you have to configure the Appkey. This is a key that you choose in your Arduino code, and you need to make sure both match.
+
+![sensor appkey](Images\chirpstack_sensor_appkey.png)
+
+Your Chirpstack is now ready to receive the information sent by your Arduino. To see the messages, go to the "Events" page inside your choosen device.
+
+You'll see the "join" entries whenever you make a 'modem.joinOTAA(appEui, appKey);' entry on your Arduino code, and "up" entries whenever you send a message from your Arduino, as seen in the screenshot:
+
+![see messages](Images/chirpstack_seeing_messages.png)
+
+To see the content of the message, click on the "up" button, and then search for the data:"sample message encoded in Base64" section. The message has been encoded in Base64. If, when sent in the Arduino code, it was a plain string variable, you'll be able to easily decode it with a simple python code for example, but for this project we decided to encode our data using the ProtoBuf libraries as the TerraForma ecosystem generally uses that payload format. You'll be able to decode this with the code given in this repo (check the `decoder.py` and `sensor_pb2.py` in the `Molonaviz/src/receiver/ directory).
