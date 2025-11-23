@@ -1,47 +1,37 @@
 # MOLONARI Hardware Programming
 
-This directory contains all hardware-related documentation and code for the MOLONARI1D sensors network, organized for efficient collaboration between hardware developers, protocol engineers, and system integrators.
+This directory contains all firmware-related documentation and code for the MOLONARI1D sensors network.
 
-If you want to build a MOLONARI1D device, you can dive directly into the `docs/` folder.
+If you want to build a MOLONARI1D device, you can dive directly into the `specs/` folder.
 
 ## Directory Structure
 
 ```
-hardware/
-├── firmware/ 
-│   ├── libs/                           # Librairies handmade for the project
-│   │    ├── LoRa_Molonari/
-│   │    ├── LoRaWan_Molonari/
-│   │    ├── Measure/
-│   │    ├── Reader/
-│   │    ├── Time/
-│   │    ├── Waiter/
-│   │    └── Writer/
-│   ├── mains/                          # Main codes we use    
-│   │    └── relay/
-│   │    │   ├── main.cpp
-│   │    │   ├── config_relay.csv
-│   │    │   └── README
-│   │    └── sensor/
-│   │        ├── main.cpp
-│   │        ├── config_sensor.csv
-│   │        └── README
-├── tests/
-│   ├── testArduinoLoRaWAN/  
-│   ├── testArduinoLowPower/ 
-│   ├── Sender/
-│   ├── Receiver/
-│   └── ...                  
-├── docs/                               # Hardware documentation
-│   ├── 1 - Installation guide_ENG.md
-│   ├── 3 - Sensor's hardware-ENG.md
-│   ├── 4 - Our LoRa protocol_ENG.md
-│   └── ...
-├── deployment/         
-├── archived/               
-│   ├── Archive_2022/
-│   └── ...
-└── README.md
+firmware/ 
+   ├── libs/                           # Librairies handmade for the project
+   │    ├── encode/
+   │    ├── LoRa_Molonari/
+   │    ├── LoRaWan_Molonari/
+   │    ├── Measure/
+   │    ├── Memory_monitor/
+   │    ├── Reader/
+   │    ├── Time/
+   │    ├── Waiter/
+   │    └── Writer/
+   ├── mains_ino/                          # Main codes we use    
+       └── relay/
+        │   ├── main.cpp
+        ├── conf.csv
+        │   ├── Relay.ino
+        │   └── README
+        └── sensor/
+        │   ├── main.cpp
+        │   ├── conf.csv
+        │   ├──  README
+        │   └── sensor.ino
+        └── demo/
+            ├── demo_relay/
+            └── demo_sensor/
 ```
 
 For now, what works is the main_demo codes (one for the sensor and one for the relay). They can achieve almost everything we wanted to do for this year.
