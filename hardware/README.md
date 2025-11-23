@@ -2,7 +2,8 @@
 
 This directory contains all hardware-related documentation and code for the MOLONARI1D sensors network, organized for efficient collaboration between hardware developers, protocol engineers, and system integrators.
 
-If you want to build a MOLONARI1D device, you can dive directly into the `specs/` folder.
+If you want to build a MOLONARI1D device, you can dive directly into the `specs/` folder. To have an overview of the complete MOLONARI1D device, please consult `specs/v2-2025/README__#Overview_hardware_Molonari_1D_v2.0`.
+
 For all that is related to the codes, the firmware part, you can consult the `firmware/` folder. 
 
 ## Directory Structure
@@ -46,7 +47,7 @@ hardware/
 │   │        ├── differential pressure sensor/
 │   │        └── shaft/
 │   │        └── temperature sensor/
-│   │    ├── ...
+│   │    └──README__#Overview_hardware_Molonari_1D_v2.0     #overview of the complete MOLONARI1D device (with pictures)
 ├── tests/
 │   ├── Adjust_RTC/ 
 │   ├── Connection_test/ 
@@ -62,7 +63,8 @@ hardware/
 │   └── ...
 ├── Trash/     
 ├── archived/               
-│   ├── Archive_2022/
+│   ├── Archive_2024/
+│   ├── Archive_before/
 │   └── ...
 └── README.md
 ```
