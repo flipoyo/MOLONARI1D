@@ -6,9 +6,9 @@ They are NTC thermistors, which means that they have a voltage divider bridge in
 
 The voltage-temperature law is : 
 
-$ T = 1/((1/\beta)*ln(v_{mes}/(V-v_{mes})) + 1/298.15)$ 
+$T = 1/((1/\beta)*ln(v_{mes}/(V-v_{mes})) + 1/298.15)$ 
 
-with $v_{mes}$, the voltage measured by the temperature sensor and $T$ the temperature. 
+with $v_{mes}$ the voltage measured by the temperature sensor and $T$ the temperature. 
 
 This law has two parameters : V and $\beta$. 
 
