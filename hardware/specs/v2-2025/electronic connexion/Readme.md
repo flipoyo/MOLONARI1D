@@ -71,6 +71,15 @@ For the differential pressure sensor there are 3 wires that need to be connected
 **Note:**  
 The power is delivered to the sensors through a digital pin (~4) in order to save energy. In did this pin is controlled by the firmware code and so it delivers current from time to time, just when the sensors have to take a measurement, ie the sensors are only feed when it is necessary.
 
+
+Here is a picture of the sensor's electronic circuit : 
+
+![Sensor's circuit](Images/circuit_sensors.jpg)
+
+Following is a picture of the back of the circuit, that could be helpful for the soldering :
+
+![Sensor's circuit back](Images/circuit_sensors_back.jpg)
+
 ### 3. Energy 
 
 In both circuits, the Arduino card is powered by a 3.7V Lithium Battery (LP103395). The direction of the battery's threads had to be switched in order to match with the orientation within the Arduino card, for the battery to work with the card. This was done by cutting the wires and soldering them again, using heat-shrinkable tubings. 
@@ -85,6 +94,12 @@ The differential pressure sensor is powered by the Arduino card ans also by a 9V
 
 For all information regarding the code, consult the 'firmware/mains_ino/' folder.
 
+## 5. Finalize 
+
+When the circuit is ready, put silicon on its back and glue on it a seal, in order to protect the circuit from water and avoid short circuits due to the metal of the box in which the circuit has to be put. 
+
+![Circuit with seal](Images/circuit_seal.jpg)
+
 ## Relay's electronic circuit
 
 The electronic circuit for the relay is the same as for the sensors with one small difference, it doesn't have the blockers, those green components that are used to connect the sensors to the circuit. Because no sensors are connected to the relay's electronic circuit, neither does it need the wires connecting the ground (GND) to the green blocker. 
@@ -94,4 +109,9 @@ This circuit only has the connections between the Arduino card and the Adalogger
 Here is a picture of the relay's electronic circuit : 
 
 ![Relay's circuit](Images/circuit_relai_antenne.jpg)
+
+
+Following is a picture of the back of the circuit, that could be helpful for the soldering :
+
+![Relay's circuit back](Images/circuit_relai_back.jpg)
 
