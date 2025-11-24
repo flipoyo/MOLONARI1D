@@ -111,29 +111,14 @@ Some bugs may also appear. We therefore do not guarantee any reliability on the 
 ## Contributors
 MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021, under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors.
 
-- Nicolas Flipo supervises the development of the MOLONARI 1D ecosystem. He manages the github repository and the developpers' teams. With Fabien Ors and Pierre Guillou, he is in charge of the source code development either for hardware programming, scientific computing, and IT
-- Aurelien Baudin and Agnès Rivière supervise the **monitoring device development** and their **_in situ_ deployment**
+- Nicolas Flipo supervises the development of the MOLONARI 1D ecosystem. He manages the project, the infrastructure design and deployment, the coordination of teaching, production and research, as well as the github repository and the developpers' teams. With Fabien Ors and Pierre Guillou, he is in charge of the source code development either for hardware programming, scientific computing, and IT
+- Aurelien Baudin, Agnès Rivière, and Nicolas Flipo supervise the **monitoring device development** and their **_in situ_ deployment**
 - Nicolas Flipo and Thomas Romary supervise the development of **pyheatmy**
 - Fabien Ors contributed to the 2021 and 2022 editions by conceptualising **molonaviz**, and since 2024 securizing it
 - Since 2024, Pierre Guillou secures the software deployment
 
-The MOLONARI1D project is integrated into the french project [EQUIPEX+ TERRA FORMA](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires "link to TERRA FORMA") led by CNRS. 
-
-The student contributors are, for **pyheatmy**:
-- 2021 Mathis Bourdin & Youri Tchouboukoff
-- 2022 Guillaume de Rochefort, Loris Megy, Valentin Alleaume
-- 2023 Mattéo Leturcq-Daligaux, Nicolas Matte, Mathis Chevé, Zhan Jing, Dan Maurel
-- 2024 Martin Jessenne, Ombline Brunet, Alexandre Noël, Jordy Hurtado Jimenez, Aurélie Reynaud, Antoine Bourel de la Roncière, Colin Drouineau
-
-for **molonaviz**:
-- 2021 Sandra Clodion & Charlotte de Mailly Nesle
-- 2022 software restarted from scratch by Guillaume Vigne
-- 2023 Thibault Lambert
-
-for **hardware programming**:
-- 2022 Wissam Karrou, Guillaume Rouy, Pierre Louisot 
-- 2023 François Bradesi, Aymeric Cardot, Léopold Gravier, Léo Roux
-- 2024 Mohammad Kassem, Zehan Huang, Lucas Brandi, Haidar Yousef, Valeria Vega Valenzuela, Zihan Gu, Yufan Han, Yibing Wang
+The MOLONARI1D project is integrated into the french research project [EQUIPEX+ TERRA FORMA](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires "link to TERRA FORMA") led by CNRS. 
+Students contributions are listed in **contributors.md**
 
 ## Copyright
 
