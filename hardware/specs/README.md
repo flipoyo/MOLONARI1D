@@ -1,19 +1,11 @@
 # Hardware Specifications
 
-This directory contains the physical hardware specifications and designs for MOLONARI1D monitoring devices.
+This directory contains the hardware specifications and designs for MOLONARI1D monitoring devices.
 
 ## Contents
 
-- **dataloggerAndRelay/**: Relay station hardware designs and enclosure specifications
-- **differentialPressureSensor/**: Pressure measurement device specifications  
-- **distributedTemperatureSensor/**: Temperature sensor array designs and 3D printable components
-- **OneShaft_2025/**: Design of the unique shaft for all sensors
-- **MetalBox_2025/**: Design and guide for designing the sensors' box
-- **RiverModel_2025/**: Building a model to test the system in the laboratory
+- **v1-until-2024/**: specifications of the first version of the MOLONARI1D device (v1) with all the developpments until 2024 
+- **v2-2025/**: all the specifications of the new MOLONARI1D system (v2) developped by the 2025 team
 
-## Migrated from Device/hardware
 
-This content was migrated from the original `Device/hardware/` directory to consolidate all hardware-related materials in the unified `hardware/` structure.
-
-For deployment guides and installation procedures, see `hardware/deployment/`.
-For programming and firmware, see the other `hardware/` subdirectories.
+For programming and firmware, see the `hardware/firmware/` subdirectory.
