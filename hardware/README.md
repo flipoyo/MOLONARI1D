@@ -57,10 +57,11 @@ hardware/
 │   ├── Receiver/
 │   └── ...                  
 ├── docs/                               # Hardware documentation
-│   ├── 1 - Installation guide_ENG.md
+│   ├── 2 - Explaining the sensor code.md
 │   ├── 3 - Sensor's hardware-ENG.md
 │   ├── 4 - Our LoRa protocol_ENG.md
-│   └── ...
+│   ├── howtoArduino.md
+│   └── README.md
 ├── Trash/     
 ├── archived/               
 │   ├── Archive_2024/
