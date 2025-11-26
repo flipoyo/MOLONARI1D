@@ -1,6 +1,6 @@
 # Specifications of the MOLONARI 1D device's sensors 
 
-The sensors are all connected to one box that remains under water until 80 cm. The electronics is detailed in **hardware/firmware**
+The sensors are all connected to one box that remains under water. The electronics is detailed in **hardware/firmware**
 
 ## Contents 
 
