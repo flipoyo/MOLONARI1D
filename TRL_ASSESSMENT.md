@@ -68,7 +68,7 @@ This assessment follows the NASA/EU Technology Readiness Level framework:
 | Temperature Sensors (DS18B20) | ✅ Validated | 5 sensors tested underwater |
 | Differential Pressure Sensor | ✅ Validated | Tested in submerged conditions |
 | Waterproof Enclosure | ✅ Validated | Metal box with seal tested |
-| Battery Power System | ✅ Validated | 8-12 month operational life estimated |
+| Battery Power System | ✅ Validated | 8-12 months target (2.5 years in testing) |
 | LoRa Antenna (Underwater) | ⚠️ Limited | 50-100m underwater range validated |
 | Mechanical Assembly | ✅ Validated | Complete system assembled |
 
@@ -102,7 +102,7 @@ This assessment follows the NASA/EU Technology Readiness Level framework:
 
 **✅ TRL 5 Completed - Relevant Environment Validation**
 - Protocol tested with multiple sensor-relay configurations
-- Power consumption measured: target 8-12 months battery life achieved
+- Power consumption measured: 8-12 months target, up to 2.5 years achieved in testing
 - Data integrity validated with CSV storage on SD cards
 - Communication retry mechanisms tested with exponential backoff (up to 6 attempts)
 
@@ -206,7 +206,7 @@ The MOLONARI1D system has **successfully completed laboratory validation** of al
 - **Underwater functionality demonstrated** (as stated in issue)
 - All hardware components integrated and functional
 - Firmware operates reliably with measurement, storage, and communication cycles
-- Power consumption targets met (8-12 months battery life)
+- Power consumption targets met (8-12 months specification, 2.5 years in testing)
 - End-to-end data flow validated
 
 #### 🔄 TRL 6 In Progress
@@ -330,7 +330,7 @@ The MOLONARI1D system has **successfully completed laboratory validation** of al
 
 1. **Extended Field Operation**
    - Deploy multiple sensor networks in operational environments
-   - Validate 8-12 month battery life in field conditions
+   - Validate 8-12 month minimum battery life in field conditions
    - Monitor seasonal variations and environmental stress
    - Collect performance data across diverse deployment sites
 
@@ -461,7 +461,7 @@ The system is **ready for field deployment** and operational environment validat
 ### Internal Documentation
 - [MOLONARI1D README](README.md)
 - [Hardware Documentation](hardware/docs/README.md)
-- [LoRa Protocol Specification](hardware/docs/4%20-%20Our%20LoRa%20protocol_ENG.md)
+- [LoRa Protocol Specification](hardware/docs/4 - Our LoRa protocol_ENG.md)
 - [Hardware Specifications v2](hardware/specs/v2-2025/README__#Overview_hardware_Molonari_1D_v2.0.md)
 - [Test Suite Documentation](hardware/tests/README.md)
 - [Future Initiatives](FUTURE_INITIATIVES.md)
