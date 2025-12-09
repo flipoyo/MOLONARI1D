@@ -55,10 +55,19 @@ This assessment follows the NASA/EU Technology Readiness Level framework:
 - Metal box enclosure with waterproof seal tested for underwater deployment
 - Plastic hosepipe and shaft assembly validated in water
 
+
 **🔄 TRL 6 In Progress - System Prototype in Relevant Environment**
 - System ready for riverbed field deployment
 - Comprehensive test suite available (hardware/tests/)
 - Integration testing with relay and gateway completed in laboratory
+- **Signal Propagation Through Water**: 2023 testing succeded with LoRa transfer through water-air boundary with a 80 cm water depth. Solutions proposed include:
+   a. Different antenna types for underwater/near-water communication
+   b. Modified box design to reduce signal interference
+   c. Lower LoRa frequencies (169 MHz or 433 MHz)
+- **SD Card Reliability**: Intermittent data storage issues identified but mitigated in 2024 through:
+   a. Improved code and Queue library implementation
+   b. Better breadboard connections
+   c. Potential alternative: Flash memory storage
 
 #### Technical Specifications Validated
 
@@ -74,20 +83,12 @@ This assessment follows the NASA/EU Technology Readiness Level framework:
 
 #### Remaining Challenges for TRL 6
 
-1. **Signal Propagation Through Water**: 2023 testing showed challenges with LoRa signals through water-air boundary. Solutions proposed include:
-   - Different antenna types for underwater/near-water communication
-   - Modified box design to reduce signal interference
-   - Lower LoRa frequencies (169 MHz or 433 MHz)
+**Long-Range Communication**: Field testing achieved 800m (vs. 2km target). Improvements needed:
+   a. Signal power level optimization
+   b. Alternative frequencies or antenna configurations
+   c. Further field testing in open areas
 
-2. **Long-Range Communication**: Field testing achieved 800m (vs. 2km target). Improvements needed:
-   - Signal power level optimization
-   - Alternative frequencies or antenna configurations
-   - Further field testing in open areas
 
-3. **SD Card Reliability**: Intermittent data storage issues identified but mitigated in 2024 through:
-   - Improved code and Queue library implementation
-   - Better breadboard connections
-   - Potential alternative: Flash memory storage
 
 ### 2. Firmware and Communication Protocols: **TRL 6**
 
