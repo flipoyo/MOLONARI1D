@@ -86,6 +86,16 @@ MOLONARI1D/
 - **📡 Protocol Engineers**: Develop communication systems
 - **🏭 Fablabs**: Manufacture and deploy monitoring hardware
 
+## Technology Readiness
+
+**Current TRL: 5-6** - Laboratory validation complete, field deployment in progress
+
+The MOLONARI1D system has successfully demonstrated complete functionality in laboratory underwater testing. See [TRL_ASSESSMENT.md](TRL_ASSESSMENT.md) for detailed Technology Readiness Level evaluation, including:
+- ✅ Complete system validated underwater in laboratory (TRL 5)
+- 🔄 Transitioning to field deployment and operational validation (TRL 6)
+- Evidence-based assessment of hardware, firmware, and system integration
+- Recommendations for advancing to higher TRL levels
+
 ## Getting Help
 
 - **📖 Documentation**: See component-specific README files
