@@ -32,4 +32,11 @@ This process will redirect all requests to `http(s)://molonari.io/` to the VPS.
 
 The `@` host can be changed to any value, for example `www` or `mysubdomain`. In that case, the DNS will forward requests addressed to `http(s)://www.molonari.io/` or `http(s)://mysubdomain.molonari.io/`.
 
+- Important, to avoid certificate renewal failure, add a record:
+    - type: `CNAME Record`
+    - host: `www`
+    - value: `molonari.io`
+    - TTL: automatic
+This maps: www.molonari.io → molonari.io 
+
 **Checking:** We can verify that the DNS has been updated worldwide with the website [dnschecker.org](https://dnschecker.org/).
