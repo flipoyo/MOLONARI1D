@@ -42,7 +42,17 @@ We first have to install WordPress. From a root SSH terminal:
             include fastcgi_params;
         }
 
-        # certbot lines...
+        # certbot lines (HTTP → HTTPS redirect and SSL config are added here by certbot)
+        # After certbot runs, add the following OCSP stapling directives inside
+        # the SSL server block (listen 443 ssl) to fix Firefox SEC_ERROR_REVOKED_CERTIFICATE:
+        #
+        #   ssl_stapling on;
+        #   ssl_stapling_verify on;
+        #   ssl_trusted_certificate /etc/letsencrypt/live/molonari.io/chain.pem;
+        #   resolver 8.8.8.8 8.8.4.4 valid=300s;
+        #   resolver_timeout 5s;
+        #
+        # See server/vps_config.md for full details.
     }
     ```
 - restart nginx: `nginx -t` then `systemctl restart nginx`

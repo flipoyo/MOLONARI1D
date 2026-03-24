@@ -56,3 +56,40 @@ The website should run in `https`. To do so, we will use `certbot`. On the VPS, 
 - `certbot --nginx -d molonari.io -d www.molonari.io`
 
 Now, you should be able to access `https://molonari.io/`
+
+### Enabling OCSP Stapling (required for Firefox compatibility)
+
+Firefox performs strict OCSP (Online Certificate Status Protocol) checks to verify that a certificate has not been revoked. Without OCSP stapling, Firefox must query the certificate authority's OCSP server directly, which can fail if the intermediate certificate has been revoked or if the OCSP server is unreachable, causing a `SEC_ERROR_REVOKED_CERTIFICATE` error.
+
+Enabling OCSP stapling means NGINX proactively fetches and caches the OCSP response, serving it directly to the browser during the TLS handshake. This resolves Firefox's `SEC_ERROR_REVOKED_CERTIFICATE` error.
+
+After certbot has generated the certificate, edit the NGINX configuration (`nano /etc/nginx/sites-available/molonari.io`) and add the following directives inside the `server` block that handles port 443 (the HTTPS block added by certbot):
+
+```
+# OCSP Stapling
+ssl_stapling on;
+ssl_stapling_verify on;
+ssl_trusted_certificate /etc/letsencrypt/live/molonari.io/chain.pem;
+resolver 8.8.8.8 8.8.4.4 valid=300s;
+resolver_timeout 5s;
+```
+
+Then test and reload NGINX:
+- `nginx -t`
+- `systemctl reload nginx`
+
+## Renewing or replacing a revoked certificate
+
+If Firefox shows `SEC_ERROR_REVOKED_CERTIFICATE` even though the certificate appears valid, the Let's Encrypt **intermediate** certificate used to sign your certificate may have been revoked (e.g. the E8 intermediate revocation in February 2026). In this case, force-renew the certificate to obtain a new one signed by a non-revoked intermediate:
+
+```
+certbot renew --force-renewal
+systemctl reload nginx
+```
+
+To verify the new certificate is no longer using the revoked intermediate, you can inspect the chain:
+```
+openssl s_client -connect molonari.io:443 -status 2>/dev/null | openssl x509 -noout -issuer
+```
+
+The issuer should no longer show the revoked intermediate (e.g. it should not show `CN=E8`). After renewal, ensure OCSP stapling is still enabled in the NGINX configuration (see section above).
