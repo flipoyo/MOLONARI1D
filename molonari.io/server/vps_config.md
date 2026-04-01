@@ -57,39 +57,112 @@ The website should run in `https`. To do so, we will use `certbot`. On the VPS, 
 
 Now, you should be able to access `https://molonari.io/`
 
-### Enabling OCSP Stapling (required for Firefox compatibility)
+## Full NGINX configuration (post-certbot)
 
-Firefox performs strict OCSP (Online Certificate Status Protocol) checks to verify that a certificate has not been revoked. Without OCSP stapling, Firefox must query the certificate authority's OCSP server directly, which can fail if the intermediate certificate has been revoked or if the OCSP server is unreachable, causing a `SEC_ERROR_REVOKED_CERTIFICATE` error.
+After certbot has generated the certificate, replace the entire content of `/etc/nginx/sites-available/molonari.io` with the following:
 
-Enabling OCSP stapling means NGINX proactively fetches and caches the OCSP response, serving it directly to the browser during the TLS handshake. This resolves Firefox's `SEC_ERROR_REVOKED_CERTIFICATE` error.
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name molonari.io www.molonari.io;
 
-After certbot has generated the certificate, edit the NGINX configuration (`nano /etc/nginx/sites-available/molonari.io`) and add the following directives inside the `server` block that handles port 443 (the HTTPS block added by certbot):
+    return 301 https://molonari.io$request_uri;
+}
 
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name molonari.io www.molonari.io;
+
+    root /var/www/html/molonari.io/wordpress;
+    index index.php index.html index.htm;
+
+    ssl_certificate /etc/letsencrypt/live/molonari.io/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/molonari.io/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    ssl_stapling off;
+    ssl_stapling_verify off;
+    # NOTE: OCSP stapling is disabled while the revoked certificate is being replaced.
+    # Once certbot renew --force-renewal has been run and the new certificate is verified
+    # (see section below), re-enable stapling by replacing the two lines above with:
+    #   ssl_stapling on;
+    #   ssl_stapling_verify on;
+    #   ssl_trusted_certificate /etc/letsencrypt/live/molonari.io/chain.pem;
+    #   resolver 8.8.8.8 8.8.4.4 valid=300s;
+    #   resolver_timeout 5s;
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;  # Adjust PHP version as needed
+    }
+
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|webp)$ {
+        expires max;
+        log_not_found off;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
 ```
-# OCSP Stapling
-ssl_stapling on;
-ssl_stapling_verify on;
-ssl_trusted_certificate /etc/letsencrypt/live/molonari.io/chain.pem;
-resolver 8.8.8.8 8.8.4.4 valid=300s;
-resolver_timeout 5s;
+
+**Notes on this configuration:**
+- The HTTP block redirects all traffic (both `molonari.io` and `www.molonari.io`) with a 301 to the canonical HTTPS URL without `www`.
+- Both server names are covered by the certificate, so `www.molonari.io` does not fall back to a default vhost.
+- `ssl_stapling` is intentionally disabled here. It should remain `off` until a fresh, non-revoked certificate has been obtained (see section below). Once the certificate is renewed, it can be re-enabled.
+- `include snippets/fastcgi-php.conf;` already sets `SCRIPT_FILENAME` on Debian, so the directive is not duplicated.
+
+After editing, ensure the symlink in `sites-enabled` exists:
+```
+ls -l /etc/nginx/sites-enabled/
+```
+If the symlink is missing, create it:
+```
+ln -s /etc/nginx/sites-available/molonari.io /etc/nginx/sites-enabled/molonari.io
 ```
 
-Then test and reload NGINX:
-- `nginx -t`
-- `systemctl reload nginx`
+Remove the default site if it exists to avoid conflicts:
+```
+rm -f /etc/nginx/sites-enabled/default
+```
 
-## Renewing or replacing a revoked certificate
+Then validate and reload:
+```
+nginx -t
+systemctl start nginx
+systemctl reload nginx
+```
 
-If Firefox shows `SEC_ERROR_REVOKED_CERTIFICATE` even though the certificate appears valid, the Let's Encrypt **intermediate** certificate used to sign your certificate may have been revoked (e.g. the E8 intermediate revocation in February 2026). In this case, force-renew the certificate to obtain a new one signed by a non-revoked intermediate:
+## Renewing a revoked certificate (fixing Firefox SEC_ERROR_REVOKED_CERTIFICATE)
 
+Firefox performs strict OCSP (Online Certificate Status Protocol) checks and will show `SEC_ERROR_REVOKED_CERTIFICATE` if the Let's Encrypt **intermediate** certificate used to sign your certificate has been revoked (e.g. the E8 intermediate revocation in February 2026). Chrome and Edge use a soft-fail policy and are unaffected.
+
+To fix this, force-renew the certificate to obtain a new one signed by a non-revoked intermediate:
 ```
 certbot renew --force-renewal
 systemctl reload nginx
 ```
 
-To verify the new certificate is no longer using the revoked intermediate, you can inspect the chain:
+Verify that the new certificate is no longer using the revoked intermediate:
 ```
-openssl s_client -connect molonari.io:443 -status 2>/dev/null | openssl x509 -noout -issuer
+openssl s_client -connect molonari.io:443 -servername molonari.io | openssl x509 -noout -serial -fingerprint -issuer
 ```
 
-The issuer should no longer show the revoked intermediate (e.g. it should not show `CN=E8`). After renewal, ensure OCSP stapling is still enabled in the NGINX configuration (see section above).
+The serial number must differ from the revoked certificate's serial (the one reported in the Firefox error — e.g. `058D237F541B0DEA66A95818E05434477D5D` in the February 2026 incident). If the serial is unchanged, nginx is still serving the old certificate and the renewal did not succeed — check `/etc/letsencrypt/live/molonari.io/`.
+
+You can also verify the HTTP redirect and HTTPS response with:
+```
+curl -I http://molonari.io/
+curl -I http://www.molonari.io/
+curl -I https://molonari.io/
+```
+- HTTP requests should return `301 Moved Permanently`.
+- The HTTPS request should return `200 OK`.
