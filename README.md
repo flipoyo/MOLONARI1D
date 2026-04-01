@@ -40,7 +40,7 @@ Here is an overview of the main features developed so far in the MOLONARI1D proj
 - **Data Pipeline**: Quality control workflows from raw sensor data to analysis-ready datasets
 - **Analysis Integration**: Direct launching of pyheatmy inference workflows
 
-**⚠️ Requirements**: Python 3.10+ for Molonaviz, Python 3.9+ for pyheatmy
+**⚠️ Requirements**: use [pixi](https://pixi.sh/latest/) for Python environment management in this repository.
 
 ## Network Architecture
 

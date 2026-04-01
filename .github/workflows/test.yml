@@ -8,33 +8,23 @@ on:
 
 jobs:
   test-pyheatmy:
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.12"]
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout the repository
       uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+    - name: Setup pixi
+      uses: prefix-dev/setup-pixi@v0.8.3
 
-    - name: Install dependencies
-      run: |
-        pip install --timeout 300 pytest nbmake
-        pip install --timeout 300 -e pyheatmy/
+    - name: Install environment
+      run: pixi install
 
     - name: Test pyheatmy
-      run: pytest pyheatmy/tests/ -v
+      run: pixi run test-pyheatmy
       
     - name: Test Jupyter Notebooks
-      if: matrix.python-version == '3.12'
-      run: |
-        pytest --nbmake --nbmake-timeout=600 \
-          pyheatmy/demoPyheatmy.ipynb \
-          pyheatmy/demo_genData.ipynb
+      run: pixi run test-notebooks
 
   test-molonaviz:
     runs-on: ubuntu-latest
@@ -43,20 +33,14 @@ jobs:
     - name: Checkout the repository
       uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
+    - name: Setup pixi
+      uses: prefix-dev/setup-pixi@v0.8.3
 
-    - name: Install dependencies
-      run: |
-        pip install --timeout 300 pytest
-        pip install --timeout 300 pyqt5 pandas scipy matplotlib setuptools
+    - name: Install environment
+      run: pixi install
 
     - name: Test Molonaviz structure
-      run: |
-        cd Molonaviz/src/
-        export PYTHONPATH="$PWD:$PYTHONPATH"
-        python -c "import molonaviz; print('Molonaviz structure validated')" || echo "Expected GUI import error in headless mode"
+      run: pixi run validate-molonaviz-structure || echo "Expected GUI import error in headless mode"
         
     # Note: Full GUI tests commented out due to headless CI environment
     # - name: Test Molonaviz

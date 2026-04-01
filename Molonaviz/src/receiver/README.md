@@ -32,7 +32,8 @@ Molonaviz
 1. **Install dependencies**:  
    All the dependencies are correctly installed when installing the "molonaviz" module by running (in the overall `Molonaviz` folder)
    ```bash
-   pip install -e .
+   cd ../../..
+   pixi install
    ```
 
 2. **Configuration**:  
