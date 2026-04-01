@@ -1,4 +1,5 @@
 # **Sensor – River Bed Monitoring System (MOLONARI 1D)**
+For setup, build, SD card config location, and flashing steps, start with `/hardware/firmware/README.md`.
 This firmware is part of the MOLONARI 1D project, designed for river bed monitoring using temperature and pressure sensors connected to an Arduino MKR WAN 1310. Read the README.md in harware first !
 It combines LoRa communication, SD card logging, and low-power management for long-term autonomous measurements and transfer.
 

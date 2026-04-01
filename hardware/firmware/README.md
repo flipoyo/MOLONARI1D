@@ -1,182 +1,76 @@
-# MOLONARI Hardware Programming
+# Firmware getting started (MOLONARI1D)
 
-This directory contains all firmware-related documentation and code for the MOLONARI1D sensors network.
+This is the main entry point for firmware developers.
 
-If you want to build a MOLONARI1D device, you can dive directly into the `specs/` folder.
+If you are new here, read this file first. Other README files in subfolders are component details.
 
-## Directory Structure
+## 1) What to edit
 
+- Sensor firmware: `hardware/firmware/mains_ino/sensor/main.cpp`
+- Relay firmware: `hardware/firmware/mains_ino/relay/main.cpp`
+- Shared libraries: `hardware/firmware/libs/*`
+- Build configuration: `hardware/platformio.ini`
+
+## 2) SD card configuration file (important)
+
+Each board reads a CSV config file from the SD card at boot.
+
+Edit these source files in the repository:
+- Sensor config template: `hardware/firmware/mains_ino/sensor/conf.csv`
+- Relay config template: `hardware/firmware/mains_ino/relay/conf.csv`
+
+Then copy the relevant `conf.csv` to the **root of the SD card** before booting the board.
+
+## 3) Compile in VS Code with PlatformIO
+
+1. Open folder: `MOLONARI1D/hardware` in VS Code.
+2. Install PlatformIO extension.
+3. Use the environment from `hardware/platformio.ini`:
+   - `main_sensor` for the sensor board
+   - `main_relay` for the relay board
+
+CLI equivalent (from `hardware/`):
+
+```bash
+pio run -e main_sensor
+pio run -e main_relay
 ```
-firmware/ 
-   ├── libs/                           # Librairies handmade for the project
-   │    ├── encode/
-   │    ├── LoRa_Molonari/
-   │    ├── LoRaWan_Molonari/
-   │    ├── Measure/
-   │    ├── Memory_monitor/
-   │    ├── Reader/
-   │    ├── Time/
-   │    ├── Waiter/
-   │    └── Writer/
-   ├── mains_ino/                          # Main codes we use    
-       └── relay/
-        │   ├── main.cpp
-        ├── conf.csv
-        │   ├── Relay.ino
-        │   └── README
-        └── sensor/
-        │   ├── main.cpp
-        │   ├── conf.csv
-        │   ├──  README
-        │   └── sensor.ino
-        └── demo/
-            ├── demo_relay/
-            └── demo_sensor/
+
+## 4) Flash to Arduino MKR WAN 1310
+
+You can flash with either PlatformIO or Arduino IDE.
+
+### Option A — PlatformIO upload (VS Code or CLI)
+
+From `hardware/`:
+
+```bash
+pio run -e main_sensor -t upload
+pio run -e main_relay -t upload
 ```
 
-For now, what works is the main_demo codes (one for the sensor and one for the relay). They can achieve almost everything we wanted to do for this year.
+If upload waits for a new port, double-press reset on MKR WAN 1310.
 
-## Quick Start
+### Option B — Arduino IDE upload
 
-### Prerequisites
+If you want to flash with Arduino IDE:
 
-- Platformio (to install on VScode)
-- Arduino MKR WAN 1310 boards
-- Arduino IDe
-- Pressure and temperature sensors
-- SD cards
-- Antenna
-- ...
+1. Open `hardware/firmware/mains_ino/sensor/sensor.ino` (sensor) or `hardware/firmware/mains_ino/relay/Relay.ino` (relay).
+2. In Arduino IDE, select board **Arduino MKR WAN 1310**.
+3. Select the correct serial port.
+4. Click **Upload**.
+5. Keep `conf.csv` on the SD card root.
 
+## 5) Minimal ergonomic workflow
 
-### Installation
+1. Edit `main.cpp` (+ libs if needed).
+2. Edit matching `conf.csv`.
+3. Compile with PlatformIO in VS Code (`main_sensor` or `main_relay`).
+4. Copy `conf.csv` to SD card root.
+5. Flash board (PlatformIO or Arduino IDE).
 
-1. **Install Platformio and Arduino IDE**
-2. **Clone the repository**:
-   ```bash
-   git clone --depth=1 https://github.com/flipoyo/MOLONARI1D.git
-   cd MOLONARI1D/hardware
-   ```
+## 6) Where to go next
 
-
-3. Go into MOLONARI1D/hardware/mains_ino/sensor
-
-- Fill the SD card with the csv file:
-   You can modify the time between each measure with "intervalle_de_mesure_secondes" and the time between each communication between the relay and the device with "lora_intervalle_secondes"
-   On this file you can also modify the type of sensors that are connected and on which PIN.
-   Be careful to respect the exact syntax (virgule, space, etc...) !!!
-
-- Upload on the arduino:
-   Uploading to the boards is a real hassle on a Mac—do it on Windows.
-   When uploading the program to the boards, you must press the reset button twice when the message “Waiting for the new upload port...” appears; this reinitializes the board.
-   To check if the boards are functioning properly, they should blink regularly with an orange light.
-
-4. Same with MOLONARI1D/hardware/mains_ino/relay but on the second arduino and SD
-
-5. Place all sensors and the antenna on the sensor card. You can connect the arduino to your computer and open arduino IDE to see the informations coming from the arduino
-
-6. You're set up !
-
-
-
-## Component Overview
-
-
-### Libraries
-
-The `/firmware/libs/` directory contains common code used across all hardware components.
-
-It has its onw documentation it the repertory.
-
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Compilation Errors**:
-   - Check Arduino board selection (arduino:samd:mkrwan1310)
-   - Check the imports of the .ini file
-
-2. **Communication Failures**:
-   - Check antenna connections
-   - Verify frequency settings (868MHz EU, 915MHz US)
-   - Test with shorter range first
-
-3. **Power Issues**:
-   - Verify battery voltage (>3.3V under load)
-   - Check sleep mode implementation
-   - Monitor current consumption
-
-4. **SD Card Problems**:
-   - Format SD card as FAT32
-   - Check card compatibility (Class 10 recommended)
-   - Verify CS pin connection (pin 5)
-
-### Getting Help
-
-- **Documentation**: Check `docs/` directory for detailed guides
-- **Archived Code**: Reference `archived/` for historical implementations
-- **Community**: Open issues on GitHub for support
-
-## Contributing
-
-### Code Standards
-
-- **Commenting**: All Arduino files must have functionality header
-- **Testing**: Validate compilation
-- **Documentation**: Update relevant docs when modifying protocols
-
-### Pull Request Process
-
-1. Test your changes with hardware validation CI
-2. Update documentation if modifying protocols
-3. Ensure backward compatibility where possible
-4. Follow existing code formatting conventions
-
-## Hardware Specifications
-
-### Target Hardware
-
-- **Arduino MKR WAN 1310**: Main microcontroller platform
-- **Adalogger FeatherWing**: SD card and RTC functionality
-- **DS18B20**: Temperature sensors
-- **Differential pressure sensors**: For flow measurement
-- **LoRa antennas**: 868MHz (EU) or 915MHz (US)
-- **SD card**
-
-### Power Requirements
-
-- **Sensor Nodes**: 3.7V Li-ion battery (5000mAh recommended)
-- **Relay Stations**: 12V battery or solar panel system
-- **Expected Lifetime**: 8-12 months for sensor nodes
-
-### Environmental Specifications
-
-- **Operating Temperature**: -20°C to +60°C
-- **Water Depth**: 0-10 meters
-- **Enclosure Rating**: IP68 required for underwater deployment
-
-## Future Development
-
-### Planned Enhancements
-
-- **Protocol Improvements**: Mesh networking, adaptive power control
-- **Gateway Integration**: Direct cellular connectivity
-
-### Research Areas
-
-- **Underwater Communication**: Improved antenna design
-- **Energy Harvesting**: Solar and thermal energy collection
-- **Data Compression**: Reduced transmission bandwidth
-- **Fault Tolerance**: Redundant communication pathways
-
-## Integration with Device/ Structure
-
-This `hardware/` directory provides a reorganized, team-oriented view of the hardware components found in the original `Device/` structure:
-
-- **hardware/** ↔ **Device/hardwareProgramming/** - Organized firmware development  
-- **hardware/docs/** ↔ **Device/hardwareProgramming/Documentation/** - Consolidated documentation
-- **hardware/deployment/** ↔ **Device/installationSystem/** - Field deployment guides
-- **hardware/shared/** - Replaces duplicated `internals/` directories across projects
-
-This reorganization maintains backward compatibility while improving development workflows and reducing code duplication.
+- Sensor details: `hardware/firmware/mains_ino/sensor/README.md`
+- Relay details: `hardware/firmware/mains_ino/relay/README.md`
+- General hardware docs: `hardware/docs/`
