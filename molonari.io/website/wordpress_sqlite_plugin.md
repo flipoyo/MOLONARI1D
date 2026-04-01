@@ -37,9 +37,9 @@ To use the plugin, simply type in `[sqlite_molonaviz]` in a text block in the Wo
 We now have to access the data logs from this PHP function. First, we clone the repository and create a Python environment in `Molonaviz`:
 ```
 git clone https://github.com/flipoyo/MOLONARI1D.git
-cd MOLONARI1D/Molonaviz
-pip install -e .
-python -m src.receiver.main
+cd MOLONARI1D
+pixi install
+pixi run python -m Molonaviz.src.receiver.main
 ```
 
 This should create a `TestDatabase` folder and a `Molonari.sqlite` database inside. This file should be accessible from the WordPress service, i.e. `nginx`, i.e. the `www-data` user. To do so, we run `chmod +xr TestDatabase/Molonari.sqlite`.

@@ -153,29 +153,28 @@ Always reference these instructions first and fallback to search or bash command
 - **Recommended**: Python 3.12 (tested and fully compatible)
 
 **Network Timeout Considerations:**
-- PyPI connections may timeout in constrained environments
-- Always use `--timeout 300` for pip installations
-- PYTHONPATH workarounds available for development environments
+- Pixi/Conda package resolution can timeout in constrained environments
+- Run `pixi install` from the repository root to provision the full environment
+- PYTHONPATH workarounds are available for development environments if needed
 
 ### Quick Bootstrap Sequence
 **Validated installation workflow with timing expectations:**
 
 1. **Install test dependencies** (~5 seconds):
    ```bash
-   pip install pytest nbmake
+   pixi install
    ```
 
 2. **Install pyheatmy** (~10 seconds):
    ```bash
-   cd pyheatmy/
-   pip install --timeout 300 -e .
+   pixi run python -c "import pyheatmy; print('pyheatmy ready')"
    ```
 
 3. **Install Molonaviz dependencies** (~30-60 seconds):
    ```bash
-   pip install --timeout 300 pyqt5 pandas scipy matplotlib setuptools
+   pixi run python -c "import molonaviz; print('molonaviz ready')"
    ```
-   **Note**: `pip install -e Molonaviz/` frequently fails due to network timeouts
+   **Note**: use `pixi install` once from the repository root to set up both packages
 
 4. **Validate installation**:
    ```bash
@@ -583,13 +582,10 @@ energy_flux = results.get_parameter_distribution('thermal_conductivity')
 git clone --depth=1 https://github.com/flipoyo/MOLONARI1D.git
 
 # Set up Python environment
-python -m venv molonari_dev
-source molonari_dev/bin/activate  # Linux/Mac
-# molonari_dev\Scripts\activate.bat  # Windows
+pixi install
 
 # Install development dependencies
-pip install --timeout 300 -e pyheatmy/
-pip install --timeout 300 pyqt5 pandas scipy matplotlib setuptools
+pixi run python -c "import pyheatmy; import molonaviz"
 ```
 
 **Component Development Guidelines**:
@@ -715,12 +711,12 @@ python sensor_communication_test.py
 **Python Environment Issues:**
 - Version compatibility verification (3.9+ for pyheatmy, 3.10+ for Molonaviz)
 - Dependency conflict resolution using virtual environments
-- Network timeout workarounds for PyPI access
-- **PYTHONPATH fallback**: Development installation without pip
+- Network timeout workarounds for package resolution
+- **PYTHONPATH fallback**: Development installation fallback when package setup is unavailable
 
 ```bash
-# Network timeout recovery
-pip install --timeout 300 --retries 3 package_name
+# Environment provisioning
+pixi install
 
 # PYTHONPATH development setup
 export PYTHONPATH="/path/to/pyheatmy:/path/to/Molonaviz/src:$PYTHONPATH"

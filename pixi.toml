@@ -1,0 +1,25 @@
+[project]
+name = "molonari1d"
+version = "0.1.0"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[dependencies]
+python = ">=3.12,<3.13"
+pytest = "*"
+nbmake = "*"
+pyqt = "*"
+pandas = "*"
+scipy = "*"
+matplotlib = "*"
+setuptools = "*"
+
+[pypi-dependencies]
+pyheatmy = { path = "pyheatmy", editable = true }
+molonaviz = { path = "Molonaviz", editable = true }
+
+[tasks]
+test-pyheatmy = "pytest pyheatmy/tests/ -v"
+test-notebooks = "pytest --nbmake --nbmake-timeout=600 pyheatmy/demoPyheatmy.ipynb pyheatmy/demo_genData.ipynb"
+validate-molonaviz-structure = "cd Molonaviz/src && python -c \"import molonaviz; print('Molonaviz structure validated')\""
+test-all = { depends-on = ["test-pyheatmy", "test-notebooks", "validate-molonaviz-structure"] }

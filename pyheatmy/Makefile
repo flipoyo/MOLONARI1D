@@ -1,2 +1,2 @@
 init:
-	pip install -r requirements.txt
+	pixi install

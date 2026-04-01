@@ -9,8 +9,9 @@ We do not guarantee the accuracy of the calculated results at this stage. Howeve
 ## Installation :
 
 ```sh
-pip install -r requirements.txt
-pip install -e .
+cd ..
+pixi install
+pixi run python -c "import pyheatmy; print('pyheatmy ready')"
 ```
 
 ## Tutorial :
