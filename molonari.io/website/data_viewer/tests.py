@@ -72,3 +72,19 @@ class QueryMolonavizDBTests(TestCase):
         self.assertIn("not found", error)
 
         Path(db_path).unlink()
+
+    def test_invalid_table_name_rejected(self):
+        """Table names with SQL injection characters must be rejected."""
+        with tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False) as tmp:
+            db_path = tmp.name
+
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE safe_table (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        result, error = _query_molonaviz_db(db_path, table_name="t; DROP TABLE x")
+        self.assertIsNone(result)
+        self.assertIn("Invalid", error)
+
+        Path(db_path).unlink()

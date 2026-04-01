@@ -77,7 +77,14 @@ python manage.py test
 
 ### 1. Configure the DNS
 
-See the **Configuring the DNS** section of the previous `README.md` — the A-record and CNAME setup on Namecheap remains the same.
+The domain name must redirect requests to the VPS. On Namecheap:
+
+1. Find the fixed IPv4 address of the VPS (`Panel` > `Serveurs` > `IPv4` on LWS).
+2. On Namecheap, go to `Domain List` > `Advanced DNS` and add:
+   - **A record**: host `@`, value = VPS IPv4, TTL automatic
+   - **CNAME record**: host `www`, value `molonari.io`, TTL automatic
+
+Verify propagation at [dnschecker.org](https://dnschecker.org/).
 
 ### 2. Prepare the VPS
 

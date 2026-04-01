@@ -1,8 +1,12 @@
+import re
 import sqlite3
 from pathlib import Path
 
 from django.conf import settings
 from django.shortcuts import render
+
+# Only allow simple identifiers as table names to prevent SQL injection.
+_SAFE_TABLE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def _query_molonaviz_db(db_path, table_name="RawMeasuresTemp", limit=128):
@@ -12,6 +16,9 @@ def _query_molonaviz_db(db_path, table_name="RawMeasuresTemp", limit=128):
     """
     if not Path(db_path).is_file():
         return None, "Database file not found."
+
+    if not _SAFE_TABLE_RE.match(table_name):
+        return None, "Invalid table name."
 
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
