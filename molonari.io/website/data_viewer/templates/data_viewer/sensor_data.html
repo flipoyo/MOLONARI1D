@@ -1,0 +1,45 @@
+{% extends "pages/base.html" %}
+{% load data_viewer_tags %}
+
+{% block title %}Sensor Data{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <h1>Sensor Data</h1>
+  <p>Live measurements from the Molonaviz database</p>
+</section>
+
+<section class="content-section">
+  {% if not db_configured %}
+    <p class="info-message">
+      The Molonaviz database is not configured on this server. Set the
+      <code>MOLONAVIZ_DB_PATH</code> environment variable to enable live data display.
+    </p>
+  {% elif error %}
+    <p class="error-message">{{ error }}</p>
+  {% elif rows %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            {% for header in headers %}
+              <th>{{ header }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              {% for header in headers %}
+                <td>{{ row|get_item:header }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="info-message">No data available yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
