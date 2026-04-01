@@ -709,7 +709,7 @@ python sensor_communication_test.py
 **Installation and runtime troubleshooting:**
 
 **Python Environment Issues:**
-- Version compatibility verification (3.9+ for pyheatmy, 3.10+ for Molonaviz)
+- Version compatibility is managed by pixi (see `pixi.toml`, currently `python >=3.10,<3.14`)
 - Dependency conflict resolution using virtual environments
 - Network timeout workarounds for package resolution
 - **PYTHONPATH fallback**: Development installation fallback when package setup is unavailable

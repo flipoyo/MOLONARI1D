@@ -27,12 +27,12 @@ pixi run python -c "import molonaviz; print('molonaviz ready')"
 
 You are now set to use the ecosystem. To launch it, run ```pixi run molonaviz``` in a terminal.
 
-**WARNING** For less advanced users, use pixi directly instead of manually setting up Python/conda/venv.
+**WARNING** For all users, pixi is the recommended and supported approach because it manages Python versions and dependencies consistently across Linux/macOS/Windows.
 
 **3. Validate Installation:**
 ```bash
 # Test pyheatmy
-pixi run python -c "import pyheatmy; print('pyheatmy ready')"
+pixi run test-pyheatmy
 
 # Test Molonaviz structure (expected GUI import error in headless mode)
 pixi run validate-molonaviz-structure
