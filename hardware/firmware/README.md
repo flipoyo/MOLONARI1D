@@ -23,9 +23,9 @@ Then copy the relevant `conf.csv` to the **root of the SD card** before booting 
 
 ## 3) Compile in VS Code with PlatformIO
 
-1. Open folder: `MOLONARI1D/hardware` in VS Code.
+1. Open your cloned repository's `hardware/` folder in VS Code.
 2. Install PlatformIO extension.
-3. Use the environment from `hardware/platformio.ini`:
+3. Use the environment from `platformio.ini`:
    - `main_sensor` for the sensor board
    - `main_relay` for the relay board
 
