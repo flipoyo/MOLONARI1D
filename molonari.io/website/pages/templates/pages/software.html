@@ -1,0 +1,61 @@
+{% extends "pages/base.html" %}
+
+{% block title %}Software{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <h1>Software</h1>
+  <p>Python-based scientific computing ecosystem</p>
+</section>
+
+<section class="content-section">
+  <h2>pyheatmy – Scientific Computing Engine</h2>
+  <p>
+    <strong>pyheatmy</strong> implements Bayesian MCMC inference to estimate hydrological
+    parameters from sensor data. It models a 1D riverbed column and provides:
+  </p>
+  <ul>
+    <li>Metropolis-Hastings sampling with adaptive step sizes</li>
+    <li>Uncertainty quantification through posterior distributions</li>
+    <li>Direct integration with Molonaviz databases and CSV exports</li>
+    <li>Multi-chain MCMC for improved convergence diagnostics</li>
+  </ul>
+  <p><strong>Requirements:</strong> Python 3.9+</p>
+  <pre><code>pip install -e pyheatmy/</code></pre>
+</section>
+
+<section class="content-section">
+  <h2>Molonaviz – Device Management &amp; Visualisation</h2>
+  <p>
+    <strong>Molonaviz</strong> is a PyQt5 desktop application for operational monitoring.
+    It manages the full laboratory hierarchy (sites → stations → sensors) and provides:
+  </p>
+  <ul>
+    <li>Device registration and configuration</li>
+    <li>Data quality control workflows</li>
+    <li>Real-time visualisation of sensor streams</li>
+    <li>Direct launching of pyheatmy inference</li>
+  </ul>
+  <p><strong>Requirements:</strong> Python 3.10+</p>
+  <pre><code>pip install -e Molonaviz/</code></pre>
+</section>
+
+<section class="content-section">
+  <h2>Quick Start</h2>
+  <pre><code># Clone the repository
+git clone https://github.com/flipoyo/MOLONARI1D.git
+cd MOLONARI1D
+
+# Install pyheatmy
+pip install -e pyheatmy/
+
+# Install Molonaviz dependencies
+pip install pyqt5 pandas scipy matplotlib setuptools
+</code></pre>
+  <p>
+    For detailed instructions see the
+    <a href="https://github.com/flipoyo/MOLONARI1D/blob/main/INSTALL.md">INSTALL.md</a>
+    guide.
+  </p>
+</section>
+{% endblock %}

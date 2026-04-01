@@ -1,0 +1,39 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MOLONARI{% endblock %} – molonari.io</title>
+  <link rel="stylesheet" href="{% static 'pages/css/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-container">
+      <a href="{% url 'pages:home' %}" class="nav-brand">
+        <span class="nav-logo">🌊</span> MOLONARI
+      </a>
+      <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+      <ul class="nav-links">
+        <li><a href="{% url 'pages:home' %}">Home</a></li>
+        <li><a href="{% url 'pages:about' %}">About</a></li>
+        <li><a href="{% url 'pages:hardware' %}">Hardware</a></li>
+        <li><a href="{% url 'pages:software' %}">Software</a></li>
+        <li><a href="{% url 'data_viewer:sensor_data' %}">Data</a></li>
+        <li><a href="{% url 'pages:contact' %}">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <p>&copy; Contributors to the MOLONARI1D softwares – <a href="https://github.com/flipoyo/MOLONARI1D">GitHub</a></p>
+      <p class="footer-license">Licensed under <a href="https://opensource.org/licenses/EPL-2.0">Eclipse Public License 2.0</a></p>
+    </div>
+  </footer>
+</body>
+</html>

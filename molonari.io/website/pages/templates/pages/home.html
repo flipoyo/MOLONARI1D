@@ -1,0 +1,109 @@
+{% extends "pages/base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <h1>MOLONARI1D</h1>
+    <p class="hero-subtitle">Monitoring local stream-aquifer water and heat exchanges</p>
+    <p class="hero-description">
+      An open-source ecosystem for building, deploying and operating underwater sensor
+      networks that measure temperature and pressure in riverbeds.
+    </p>
+    <div class="hero-actions">
+      <a href="{% url 'pages:about' %}" class="btn btn-primary">Learn More</a>
+      <a href="https://github.com/flipoyo/MOLONARI1D" class="btn btn-secondary">View on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <h2>Core Components</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>🔧 Hardware</h3>
+      <p>
+        Arduino-based underwater sensors with LoRa communication, designed for
+        8–12&nbsp;months of autonomous operation in riverbeds.
+      </p>
+      <a href="{% url 'pages:hardware' %}">Explore hardware →</a>
+    </div>
+    <div class="card">
+      <h3>🔬 pyheatmy</h3>
+      <p>
+        Bayesian MCMC inference engine that estimates water and heat fluxes from
+        sensor data with full uncertainty quantification.
+      </p>
+      <a href="{% url 'pages:software' %}">Explore software →</a>
+    </div>
+    <div class="card">
+      <h3>📊 Molonaviz</h3>
+      <p>
+        PyQt5 desktop application for device management, data quality control and
+        launching scientific analyses.
+      </p>
+      <a href="{% url 'pages:software' %}">Explore software →</a>
+    </div>
+  </div>
+</section>
+
+<section class="architecture">
+  <h2>Data Flow Pipeline</h2>
+  <div class="pipeline">
+    <div class="pipeline-step">
+      <span class="pipeline-icon">📡</span>
+      <span class="pipeline-label">Sensors</span>
+      <span class="pipeline-detail">Arduino</span>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <span class="pipeline-icon">🔁</span>
+      <span class="pipeline-label">Relay</span>
+      <span class="pipeline-detail">LoRa</span>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <span class="pipeline-icon">🌐</span>
+      <span class="pipeline-label">Gateway</span>
+      <span class="pipeline-detail">LoRaWAN</span>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <span class="pipeline-icon">🖥️</span>
+      <span class="pipeline-label">Server</span>
+      <span class="pipeline-detail">Django</span>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <span class="pipeline-icon">🗄️</span>
+      <span class="pipeline-label">Database</span>
+      <span class="pipeline-detail">SQLite</span>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <span class="pipeline-icon">📈</span>
+      <span class="pipeline-label">Analysis</span>
+      <span class="pipeline-detail">pyheatmy</span>
+    </div>
+  </div>
+</section>
+
+<section class="audiences">
+  <h2>Who Is This For?</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>🔬 Researchers</h3>
+      <p>Operate monitoring systems and analyse flux data with uncertainty quantification.</p>
+    </div>
+    <div class="card">
+      <h3>💻 Developers</h3>
+      <p>Extend the Python ecosystem, contribute to pyheatmy or Molonaviz.</p>
+    </div>
+    <div class="card">
+      <h3>🏭 Fablabs</h3>
+      <p>Manufacture and deploy low-tech, open-source sensor networks.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

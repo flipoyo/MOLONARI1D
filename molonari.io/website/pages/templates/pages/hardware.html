@@ -1,0 +1,56 @@
+{% extends "pages/base.html" %}
+
+{% block title %}Hardware{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <h1>Hardware</h1>
+  <p>Arduino-based underwater sensor networks</p>
+</section>
+
+<section class="content-section">
+  <h2>Sensor Nodes</h2>
+  <p>
+    Each sensor node is built around an <strong>Arduino MKR WAN 1310</strong> and includes
+    temperature sensors (DS18B20), differential pressure sensors, an SD card for local
+    storage and a LoRa antenna for communication.
+  </p>
+  <ul>
+    <li>Measurements every 15 minutes</li>
+    <li>Local CSV storage on SD card</li>
+    <li>Deep sleep between measurements (&lt;&nbsp;1&nbsp;mA)</li>
+    <li>8–12 months battery life on a 3.7&nbsp;V 5000&nbsp;mAh Li-ion cell</li>
+  </ul>
+</section>
+
+<section class="content-section">
+  <h2>Relay Stations</h2>
+  <p>
+    Relay stations aggregate data from up to 10 sensor nodes via a custom LoRa protocol
+    and forward it over LoRaWAN to the internet gateway.
+  </p>
+  <ul>
+    <li>Three-way handshake for reliable connections</li>
+    <li>Exponential backoff retry mechanism (up to 6 attempts)</li>
+    <li>Time-division multiple access to avoid collisions</li>
+  </ul>
+</section>
+
+<section class="content-section">
+  <h2>Gateway</h2>
+  <p>
+    A Robustel R3000 gateway bridges LoRaWAN traffic to the internet via Ethernet,
+    forwarding sensor data to the Django server as JSON payloads over HTTPS.
+  </p>
+</section>
+
+<section class="content-section">
+  <h2>Deployment</h2>
+  <p>
+    Detailed assembly guides, waterproofing procedures and field deployment checklists
+    are available in the
+    <a href="https://github.com/flipoyo/MOLONARI1D/tree/main/hardware">hardware directory</a>
+    of the repository.
+  </p>
+</section>
+{% endblock %}

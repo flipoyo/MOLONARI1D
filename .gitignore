@@ -9,3 +9,8 @@ build/
 .pio
 Trash
 hardware/.pio/libdeps/*
+
+# Django
+molonari.io/website/db.sqlite3
+molonari.io/website/staticfiles/
+molonari.io/website/.venv/
