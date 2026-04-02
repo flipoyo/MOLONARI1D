@@ -17,7 +17,7 @@ pyqt = "*"
 numba = "*"
 
 [pypi-dependencies]
-molonari-website = { path = "molonari.io/website", editable = true }
+molonari_website = { path = "molonari.io/website", editable = true }
 
 [tasks.pyheatmy-import-check]
 cmd = "python -c \"import pyheatmy; print('pyheatmy ready')\""
