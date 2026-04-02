@@ -15,8 +15,9 @@ setuptools = "*"
 paho-mqtt = "*"
 pyqt = "*"
 numba = "*"
-django = ">=6.0,<7.0"
-gunicorn = ">=23.0,<26.0"
+
+[pypi-dependencies]
+molonari-website = { path = "molonari.io/website", editable = true }
 
 [tasks.pyheatmy-import-check]
 cmd = "python -c \"import pyheatmy; print('pyheatmy ready')\""

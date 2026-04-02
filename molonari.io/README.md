@@ -40,6 +40,7 @@ molonari.io/
 ```bash
 cd /path/to/MOLONARI1D
 pixi install
+# installs the local molonari.io website package from molonari.io/website
 pixi run website-migrate
 pixi run website-dev
 ```
@@ -90,7 +91,7 @@ cd /var/www/molonari.io
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 
-# Resolve dependencies
+# Resolve dependencies and package the local Django site from the repo checkout
 pixi install
 ```
 

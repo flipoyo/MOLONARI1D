@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "molonari-website"
+version = "0.1.0"
+description = "Django website for molonari.io"
+requires-python = ">=3.10"
+dependencies = [
+    "django>=6.0,<7.0",
+    "gunicorn>=23.0,<26.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/flipoyo/MOLONARI1D/tree/main/molonari.io"
+
+[tool.setuptools]
+packages = ["molonari_site", "pages", "data_viewer"]
+include-package-data = false
+
+[tool.setuptools.package-data]
+pages = [
+    "templates/pages/*.html",
+    "static/pages/css/*.css",
+]
+data_viewer = [
+    "templates/data_viewer/*.html",
+]
