@@ -117,6 +117,8 @@ tr:hover {
 </style>
 ';
 
+define('TEMPERATURE_PRECISION', 2);
+
 $output .= '<table><thead><tr>';
 foreach ($headers as $header) {
     $output .= "<th>" . esc_html($header) . "</th>";
@@ -135,7 +137,7 @@ while ($row = $data_result->fetchArray(SQLITE3_ASSOC)) {
             $date = date_create($row[$header]);
             $str = ($date !== false) ? date_format($date, "Y-m-d H:i:s") : esc_html($row[$header]);
         }
-        else if (str_contains($header, "Temp") && is_numeric($row[$header])) $str = round($row[$header]*100)/100;
+        else if (str_contains($header, "Temp") && is_numeric($row[$header])) $str = round($row[$header], TEMPERATURE_PRECISION);
         $output .= "<td>" . $str . "</td>";
     }
     $output .= "</tr>";

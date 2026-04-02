@@ -10,7 +10,7 @@ Anticipating further customization (dataloggers API, remote MCMC, chatbot and co
 
 The website (html pages) is hosted by the VPS and built with WordPress. It should be accessible with the domain name (DNS) `molonari.io`, which was bought on **Namecheap**.
 
-The documented production setup remains the WordPress deployment described in `website/wordpress_config.md` and the related WordPress guides in `website/`. In parallel, the repository now also contains an **exploratory Django option** for quick deployments and experiments from the repo checkout.
+The documented production setup remains the WordPress deployment described in `website/wordpress_config.md`, `website/wordpress_building.md`, and `website/wordpress_sqlite_plugin.md`. In parallel, the repository now also contains an **exploratory Django option** for quick deployments and experiments from the repo checkout.
 
 ## Configuration
 
