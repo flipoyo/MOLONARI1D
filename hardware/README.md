@@ -4,7 +4,7 @@ This directory contains all hardware-related documentation and code for the MOLO
 
 If you want to build a MOLONARI1D device, you can dive directly into the `specs/` folder. To have an overview of the complete MOLONARI1D device, please consult `specs/v2-2025/README__#Overview_hardware_Molonari_1D_v2.0`.
 
-For all that is related to the codes, the firmware part, you can consult the `firmware/` folder. 
+For all firmware developer onboarding (PlatformIO, SD card `conf.csv`, compile and flash steps), start with `firmware/README.md`.
 
 ## Directory Structure
 

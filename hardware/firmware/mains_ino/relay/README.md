@@ -1,4 +1,5 @@
 # **Relay – Data Forwarding Node (MOLONARI 1D)**
+For setup, build, SD card config location, and flashing steps, start with `/hardware/firmware/README.md`.
 
 This firmware is part of the **MOLONARI 1D** project, acting as the **relay unit** between a sensor node and the gateway.
 It ensures reliable data forwarding, configuration management, and low-power operation.
@@ -98,4 +99,3 @@ d)
 - Upload the code on the arduino via platformio. 
 - Put the conf.csv in the SD card, that goes in the arduino.
 - You're set up !
-
