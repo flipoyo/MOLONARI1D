@@ -15,7 +15,7 @@ We first have to install WordPress. From a root SSH terminal:
     FLUSH PRIVILEGES;
     EXIT;
     ```
-    Replace `<YOUR_STRONG_PASSWORD_HERE>` with an actual strong password before running the command.
+    Replace `<YOUR_STRONG_PASSWORD_HERE>` with an actual strong password before running the command. Use at least 16 characters with uppercase, lowercase, numbers, and special characters.
 - download and install WordPress:
     - `cd /tmp`
     - `wget https://wordpress.org/latest.tar.gz`

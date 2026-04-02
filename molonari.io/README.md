@@ -54,6 +54,8 @@ pixi run website-collectstatic
 pixi run website-serve
 ```
 
+Persist `DJANGO_SECRET_KEY` securely for subsequent deployments (for example in an environment file or secrets manager) rather than regenerating it each time.
+
 Sample Nginx and Gunicorn files for this exploratory Django option are available in `molonari.io/website/deployment/`.
 
 ## Configuring the DNS
