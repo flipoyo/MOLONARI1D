@@ -131,7 +131,12 @@ while ($row = $data_result->fetchArray(SQLITE3_ASSOC)) {
     $output .= "<tr>";
     foreach ($headers as $header) {
         $str = esc_html($row[$header]);
-        if ($header == 'Date') $str = date_format(date_create($row[$header]), "Y-m-d H:i:s");
+        if ($header == 'Date') {
+            $date = date_create($row[$header]);
+            if ($date !== false) {
+                $str = date_format($date, "Y-m-d H:i:s");
+            }
+        }
         else if (str_contains($header, "Temp")) $str = round($row[$header]*100)/100;
         $output .= "<td>" . $str . "</td>";
     }
