@@ -10,11 +10,12 @@ We first have to install WordPress. From a root SSH terminal:
 - create a MySQL database for WordPress: log into MySQL with `mysql -u root` and execute the following commands:
     ```
     CREATE DATABASE wordpress_db;
-    CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY 'your_strong_password';
+    CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY 'replace_with_a_strong_password';
     GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';
     FLUSH PRIVILEGES;
     EXIT;
     ```
+    Replace `replace_with_a_strong_password` with an actual strong password before running the command.
 - download and install WordPress:
     - `cd /tmp`
     - `wget https://wordpress.org/latest.tar.gz`

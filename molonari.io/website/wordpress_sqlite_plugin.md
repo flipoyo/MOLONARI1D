@@ -21,7 +21,7 @@ Author: MOLONARI
 add_shortcode('sqlite_molonaviz', 'sqlite_molonaviz_shortcode');
 
 function sqlite_molonaviz_shortcode() {
-    // this functions should return an HTML code:
+    // this function should return HTML:
 
     return '<p>Hello, world!</p>'
 }
@@ -42,14 +42,22 @@ pip install -e .
 python -m src.receiver.main
 ```
 
-This should create a `TestDatabase` folder and a `Molonari.sqlite` database inside. This file should be accessible from the WordPress service, i.e. `nginx`, i.e. the `www-data` user. To do so, we run `chmod +xr TestDatabase/Molonari.sqlite`.
+This should create a `TestDatabase` folder and a `Molonari.sqlite` database inside. Move the database to a path readable by the WordPress service, for example:
+
+```bash
+mkdir -p /var/www/molonari-data
+cp TestDatabase/Molonari.sqlite /var/www/molonari-data/Molonari.sqlite
+chown -R www-data:www-data /var/www/molonari-data
+chmod 755 /var/www/molonari-data
+chmod 644 /var/www/molonari-data/Molonari.sqlite
+```
 
 ## Accessing the database
 
 The following code can be added to the function to query the database and display results:
 
 ```php
-$db_path = '/root/MOLONARI1D/Molonaviz/TestDatabase/Molonari.sqlite';
+$db_path = '/var/www/molonari-data/Molonari.sqlite';
 
 if (!file_exists($db_path)) {
     return "Error: Database file not found.";
@@ -60,10 +68,18 @@ if (!$db) {
     return "Error: Unable to open the database.";
 }
 
+$allowed_tables = ['RawMeasuresTemp'];
 $table_name = 'RawMeasuresTemp';
 
+if (!in_array($table_name, $allowed_tables, true)) {
+    $db->close();
+    return "Error: Unauthorized table name.";
+}
+
+$quoted_table_name = '"' . str_replace('"', '""', $table_name) . '"';
+
 // Query to get table headers (column names)
-$headers_query = "PRAGMA table_info($table_name)";
+$headers_query = "PRAGMA table_info($quoted_table_name)";
 $headers_result = $db->query($headers_query);
 
 // Fetch the column names
@@ -107,7 +123,7 @@ foreach ($headers as $header) {
 }
 $output .= "</tr></thead>";
 
-$data_query = "SELECT * FROM $table_name ORDER BY Date DESC LIMIT 128";
+$data_query = "SELECT * FROM $quoted_table_name ORDER BY Date DESC LIMIT 128";
 $data_result = $db->query($data_query);
 
 $output .= "<tbody>";
