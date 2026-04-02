@@ -11,12 +11,12 @@ We first have to install WordPress. From a root SSH terminal:
     ```
     CREATE DATABASE wordpress_db;
     -- Replace the placeholder below before executing this command.
-    CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY '<YOUR_STRONG_PASSWORD_HERE>';
+    CREATE USER 'wordpress_user'@'localhost' IDENTIFIED BY 'REPLACE_WITH_ACTUAL_PASSWORD';
     GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wordpress_user'@'localhost';
     FLUSH PRIVILEGES;
     EXIT;
     ```
-    Replace `<YOUR_STRONG_PASSWORD_HERE>` with an actual strong password before running the command. Use at least 16 characters with uppercase, lowercase, numbers, and special characters.
+    Replace `REPLACE_WITH_ACTUAL_PASSWORD` with an actual strong password before running the command. Use at least 16 characters with uppercase, lowercase, numbers, and special characters.
 - download and install WordPress:
     - `cd /tmp`
     - `wget https://wordpress.org/latest.tar.gz`

@@ -23,7 +23,7 @@ add_shortcode('sqlite_molonaviz', 'sqlite_molonaviz_shortcode');
 function sqlite_molonaviz_shortcode() {
     // this function should return HTML:
 
-    return '<p>Hello, world!</p>'
+    return '<p>Hello, world!</p>';
 }
 ?>
 ```
@@ -137,7 +137,9 @@ while ($row = $data_result->fetchArray(SQLITE3_ASSOC)) {
             $date = date_create($row[$header]);
             $str = ($date !== false) ? date_format($date, "Y-m-d H:i:s") : esc_html($row[$header]);
         }
-        elseif (str_contains($header, "Temp") && is_numeric($row[$header])) $str = round($row[$header], $temperature_precision);
+        elseif (str_contains($header, "Temp") && is_numeric($row[$header])) {
+            $str = round($row[$header], $temperature_precision);
+        }
         $output .= "<td>" . $str . "</td>";
     }
     $output .= "</tr>";
