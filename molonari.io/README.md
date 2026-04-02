@@ -1,6 +1,6 @@
 # Deploying molonari.io with Django
 
-This directory contains the Django-based website for [molonari.io](https://molonari.io), replacing the previous WordPress setup. Using Django keeps the entire MOLONARI1D stack in Python.
+This directory contains the Django-based website for [molonari.io](https://molonari.io), replacing the previous WordPress setup. Using Django keeps the entire MOLONARI1D stack in Python, and the repository now uses **pixi** rather than pip for Python environments.
 
 ## Overall Architecture
 
@@ -20,7 +20,6 @@ molonari.io/
 │   └── vps_config.md                # VPS & Nginx setup guide
 └── website/                         # Django project root
     ├── manage.py                    # Django management CLI
-    ├── requirements.txt             # Python dependencies
     ├── molonari_site/               # Project settings & URL config
     ├── pages/                       # Static content pages app
     │   ├── views.py
@@ -39,20 +38,10 @@ molonari.io/
 ## Local Development
 
 ```bash
-cd molonari.io/website
-
-# Create a virtual environment (recommended)
-python -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run database migrations
-python manage.py migrate
-
-# Start the development server
-python manage.py runserver
+cd /path/to/MOLONARI1D
+pixi install
+pixi run website-migrate
+pixi run website-dev
 ```
 
 Open http://127.0.0.1:8000/ in your browser.
@@ -63,14 +52,14 @@ To enable the sensor data page, point `MOLONAVIZ_DB_PATH` at a Molonaviz SQLite 
 
 ```bash
 export MOLONAVIZ_DB_PATH=/path/to/Molonari.sqlite
-python manage.py runserver
+pixi run website-dev
 ```
 
 ## Running Tests
 
 ```bash
-cd molonari.io/website
-python manage.py test
+cd /path/to/MOLONARI1D
+pixi run website-test
 ```
 
 ## Production Deployment
@@ -95,12 +84,14 @@ apt update && apt install python3 python3-venv nginx certbot python3-certbot-ngi
 
 # Clone the repository
 git clone https://github.com/flipoyo/MOLONARI1D.git /var/www/molonari.io
-cd /var/www/molonari.io/molonari.io/website
+cd /var/www/molonari.io
 
-# Create a virtual environment & install dependencies
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+# Install pixi
+curl -fsSL https://pixi.sh/install.sh | bash
+export PATH="$HOME/.pixi/bin:$PATH"
+
+# Resolve dependencies
+pixi install
 ```
 
 ### 3. Configure Django for Production
@@ -111,14 +102,15 @@ export DJANGO_DEBUG=False
 export DJANGO_ALLOWED_HOSTS="molonari.io,www.molonari.io"
 export MOLONAVIZ_DB_PATH="/path/to/Molonari.sqlite"   # optional
 
-python manage.py migrate
-python manage.py collectstatic --noinput
+pixi run website-migrate
+pixi run website-collectstatic
 ```
 
 ### 4. Run with Gunicorn
 
 ```bash
-gunicorn -c deployment/gunicorn.conf.py molonari_site.wsgi
+cd /var/www/molonari.io
+pixi run website-serve
 ```
 
 Or create a systemd service for automatic startup — see the deployment directory for a sample Nginx config (`deployment/nginx_molonari.conf`).

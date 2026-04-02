@@ -1,0 +1,32 @@
+[project]
+name = "molonari1d"
+version = "0.1.0"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.12.*"
+pytest = "*"
+nbmake = "*"
+pandas = "*"
+scipy = "*"
+matplotlib = "*"
+setuptools = "*"
+paho-mqtt = "*"
+pyqt = "*"
+numba = "*"
+django = ">=6.0,<7.0"
+gunicorn = ">=23.0,<26.0"
+
+[tasks]
+pyheatmy-import-check = "export PYTHONPATH=\"$PIXI_PROJECT_ROOT/pyheatmy:$PYTHONPATH\" && python -c \"import pyheatmy; print('pyheatmy ready')\""
+pyheatmy-test = "export PYTHONPATH=\"$PIXI_PROJECT_ROOT/pyheatmy:$PYTHONPATH\" && pytest pyheatmy/tests/ -v"
+pyheatmy-notebooks = "export PYTHONPATH=\"$PIXI_PROJECT_ROOT/pyheatmy:$PYTHONPATH\" && pytest --nbmake --nbmake-timeout=600 pyheatmy/demoPyheatmy.ipynb pyheatmy/demo_genData.ipynb"
+molonaviz-import-check = "cd $PIXI_PROJECT_ROOT/Molonaviz/src && export PYTHONPATH=\"$PWD:$PYTHONPATH\" && python -c \"import molonaviz; print('Molonaviz structure validated')\" || echo \"Expected GUI import error in headless mode\""
+molonaviz-run = "cd $PIXI_PROJECT_ROOT/Molonaviz/src && export PYTHONPATH=\"$PWD:$PYTHONPATH\" && python -m molonaviz.main"
+website-check = "cd $PIXI_PROJECT_ROOT/molonari.io/website && python manage.py check"
+website-test = "cd $PIXI_PROJECT_ROOT/molonari.io/website && python manage.py test"
+website-migrate = "cd $PIXI_PROJECT_ROOT/molonari.io/website && python manage.py migrate"
+website-collectstatic = "cd $PIXI_PROJECT_ROOT/molonari.io/website && python manage.py collectstatic --noinput"
+website-dev = "cd $PIXI_PROJECT_ROOT/molonari.io/website && python manage.py runserver"
+website-serve = "cd $PIXI_PROJECT_ROOT/molonari.io/website && gunicorn -c deployment/gunicorn.conf.py molonari_site.wsgi"

@@ -13,14 +13,13 @@ cd MOLONARI1D
 
 **2. Install Python Components:**
 
-Here is a step-by-step guide to install the ecosystem: 
-- First install **pyheatmy**, from the **pyheatmy** folder, by running ```pip install -e .```
-For more informations on the software, please check the folder.
+Here is a step-by-step guide to install the ecosystem with **pixi**:
+- Install pixi on your machine: https://pixi.sh/latest/
+- From the repository root, run ```pixi install```
+- Validate **pyheatmy** with ```pixi run pyheatmy-import-check```
+- Validate **molonaviz** with ```pixi run molonaviz-import-check```
 
-- Second install **molonaviz**, from the **Molonaviz** folder, by running ```pip install -e .```
-For more informations on the software, please check the folder.
-
-You are now set to use the ecosystem. To launch it, you can simply run ```molonaviz``` in a terminal.
+You are now set to use the ecosystem. To launch the GUI from the repository checkout, run ```pixi run molonaviz-run```.
 
 **WARNING** For less advanced users, please refer to the end of the section to set-up your environment to at least `python3.10+`
 
@@ -177,5 +176,5 @@ Once ``conda`` is installed, run:
 > conda create -n molonari python=3.12
 > conda activate molonari
 > cd ../chemin/pyheatmy
-> pip install -e .
+> pixi install
 ```

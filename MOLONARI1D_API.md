@@ -33,8 +33,9 @@ This library defines the exchange interfaces between the three core components (
 
 ### Installation
 ```bash
-cd pyheatmy/
-pip install -e .
+cd /path/to/MOLONARI1D
+pixi install
+pixi run pyheatmy-import-check
 ```
 
 ### Core Imports
@@ -980,9 +981,9 @@ from pyheatmy import Column, Layer
 surface_layer = Layer("surface", 0.5, 5.0, 0.3, 2.5, 2.1e6)
 column = Column(..., all_layers=[surface_layer])
 
-# Issue: Network timeouts during pip install
-# Solution: Use timeout parameter
-# pip install --timeout 300 -e pyheatmy/
+# Issue: dependency bootstrap problems
+# Solution: use the shared pixi environment from the repository root
+# pixi install
 ```
 
 ### Data Format Issues

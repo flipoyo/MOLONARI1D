@@ -30,9 +30,11 @@ Molonaviz
 
 ## Setup Instructions
 1. **Install dependencies**:  
-   All the dependencies are correctly installed when installing the "molonaviz" module by running (in the overall `Molonaviz` folder)
+   Resolve the shared pixi environment from the repository root:
    ```bash
-   pip install -e .
+   cd /path/to/MOLONARI1D
+   pixi install
+   pixi run molonaviz-import-check
    ```
 
 2. **Configuration**:  

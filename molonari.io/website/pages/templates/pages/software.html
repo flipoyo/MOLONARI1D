@@ -21,7 +21,9 @@
     <li>Multi-chain MCMC for improved convergence diagnostics</li>
   </ul>
   <p><strong>Requirements:</strong> Python 3.9+</p>
-  <pre><code>pip install -e pyheatmy/</code></pre>
+  <pre><code>cd MOLONARI1D
+pixi install
+pixi run pyheatmy-import-check</code></pre>
 </section>
 
 <section class="content-section">
@@ -37,7 +39,9 @@
     <li>Direct launching of pyheatmy inference</li>
   </ul>
   <p><strong>Requirements:</strong> Python 3.10+</p>
-  <pre><code>pip install -e Molonaviz/</code></pre>
+  <pre><code>cd MOLONARI1D
+pixi install
+pixi run molonaviz-import-check</code></pre>
 </section>
 
 <section class="content-section">
@@ -46,11 +50,12 @@
 git clone https://github.com/flipoyo/MOLONARI1D.git
 cd MOLONARI1D
 
-# Install pyheatmy
-pip install -e pyheatmy/
+# Resolve the shared Python environment
+pixi install
 
-# Install Molonaviz dependencies
-pip install pyqt5 pandas scipy matplotlib setuptools
+# Validate both software components
+pixi run pyheatmy-import-check
+pixi run molonaviz-import-check
 </code></pre>
   <p>
     For detailed instructions see the
