@@ -3,7 +3,6 @@
 ## Host
 
 * Hostname: vps115892.serveur-vps.net
-* Provider: LWS
 * Type: Virtual Private Server (VPS)
 
 ## Operating System
