@@ -1,4 +1,4 @@
-project = "MOLONARI"
+project = "MOLONARI1D"
 repos = [
     { repository = "github:flipoyo/MOLONARI1D", fallback_branch = "CGS-MOLO" },
     { repository = "github:flipoyo/MOLONARI-API", relative_path = "Molonaviz" },
