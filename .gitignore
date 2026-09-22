@@ -9,3 +9,10 @@ build/
 .pio
 Trash
 hardware/.pio/libdeps/*
+.cgitsync/
+Molonaviz
+dev-hub
+hardware
+lMOLO.lgr
+molonari.io
+pyheatmy
