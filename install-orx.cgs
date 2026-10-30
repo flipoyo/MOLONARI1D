@@ -1,0 +1,9 @@
+project = { name = "MOLONARI1D", default_branch = "CGS-MOLO" }
+repos = [
+    { repository = "github:flipoyo/MOLONARI1D", fallback_branch = "CGS-MOLO" },
+    { repository = "github:flipoyo/MOLONARI-API", relative_path = "Molonaviz" },
+    { repository = "github:flipoyo/MOLONARI-data", relative_path = "data" },
+    { repository = "github:flipoyo/MOLONARI-computo", relative_path = "pyheatmy" },
+    { repository = "github:flipoyo/MOLONARI-hardware", relative_path = "hardware" },
+    { repository = "github:KeanuToofa/MOLONARI-TWIN", relative_path = "MOLONARI-TWIN", private = true },
+]

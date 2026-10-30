@@ -12,6 +12,7 @@ hardware/.pio/libdeps/*
 .cgitsync/
 MOLONARI1D.lgr
 Molonaviz
+MOLONARI-TWIN
 data
 hardware
 molonari.io
