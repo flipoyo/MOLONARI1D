@@ -1,0 +1,13 @@
+# MOLONARI — CGS-ALPHA POC. Six historical GitRepos remain on CGS-MOLO.
+# atCGS/CGS-ALPHA is the seventh public GitRepo. No private register mounted.
+project = { name = "MOLONARI", default_branch = "CGS-ALPHA", fallback_branch = "main" }
+
+repos = [
+  { repository = "github:flipoyo/MOLONARI1D", relative_path = ".", default_branch = "CGS-ALPHA", fallback_branch = "CGS-MOLO", nested_config = "disabled", access_protocol = "https" },
+  { repository = "github:flipoyo/MOLONARI-API", relative_path = "Molonaviz", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled", access_protocol = "https" },
+  { repository = "github:flipoyo/MOLONARI-data", relative_path = "data", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled", access_protocol = "https" },
+  { repository = "github:flipoyo/MOLONARI-hardware", relative_path = "hardware", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled", access_protocol = "https" },
+  { repository = "github:flipoyo/MOLONARI-gate", relative_path = "molonari.io", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled", access_protocol = "https" },
+  { repository = "github:flipoyo/MOLONARI-computo", relative_path = "pyheatmy", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled", access_protocol = "https" },
+  { repository = "github:flipoyo/atCGS", relative_path = "atCGS", default_branch = "CGS-ALPHA", fallback_branch = "main", nested_config = "disabled", access_protocol = "https" },
+]

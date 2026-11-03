@@ -1,0 +1,16 @@
+# Recorded 2026-11-03 from GitHub branch heads. Source baseline only,
+# NOT a .gts, Omniscience publication, or the commit of this POC branch.
+[engine]
+atcgs = "0e205004236d92ce782bdaaccf8384142136b7e5"
+complexgitsync = "dd3472b7b02ebd3028854413620197936a2f5f0e"
+atcgs_branch = "CGS-ALPHA"
+complexgitsync_branch = "CGS-ALPHA"
+
+[gitrepos]
+"MOLONARI1D" = "d05914194c746fdfc3737d2b8706b84ae0750f25"
+"MOLONARI-API" = "9850263a4ad869669e5e74b8ec7e847284416e0a"
+"MOLONARI-data" = "5aa83c6294428024868f4da4153b13678b41adb4"
+"MOLONARI-hardware" = "97de3e637f39732c71574ea597f35fc9abf4ec13"
+"MOLONARI-gate" = "06ce233883cab98fbc496e8ae60e0cc41afb18c9"
+"MOLONARI-computo" = "645edfc95cce4260af55149fd104b00c5021c954"
+"atCGS" = "0e205004236d92ce782bdaaccf8384142136b7e5"

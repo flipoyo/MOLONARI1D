@@ -1,0 +1,49 @@
+# MOLONARI CGS-ALPHA — typed logical TWIN graph (not GitRepo grammar).
+[operating_space]
+name = "MOLONARI"
+root_repository = "github:flipoyo/MOLONARI1D"
+root_branch = "CGS-ALPHA"
+legacy_branch = "CGS-MOLO"
+configuration = "MOLONARI.cgs"
+state = "DECLARED_ONLY"
+
+[omniscience]
+namespace = "MOLONARI"
+publication = "NOT_PUBLISHED"
+requires_verified_gts = true
+publish_secrets = false
+
+[[twins]]
+name = "MOLONARI"
+kind = "operating-space"
+parent = ""
+phase = "active-poc"
+repos = ["MOLONARI1D", "MOLONARI-API", "MOLONARI-data", "MOLONARI-hardware", "MOLONARI-gate", "MOLONARI-computo", "atCGS"]
+
+[[twins]]
+name = "MOLO-HRDW"
+kind = "pole"
+parent = "MOLONARI"
+phase = "logical-poc"
+repos = ["MOLONARI-hardware"]
+
+[[twins]]
+name = "MOLO-DATA"
+kind = "pole"
+parent = "MOLONARI"
+phase = "logical-poc"
+repos = ["MOLONARI-data"]
+
+[[twins]]
+name = "MOLO-CMPT"
+kind = "pole"
+parent = "MOLONARI"
+phase = "logical-poc"
+repos = ["MOLONARI-computo"]
+
+[[twins]]
+name = "MOLO-TWIN"
+kind = "pole"
+parent = "MOLONARI"
+phase = "logical-poc"
+repos = ["MOLONARI1D", "MOLONARI-API", "MOLONARI-gate", "atCGS"]
