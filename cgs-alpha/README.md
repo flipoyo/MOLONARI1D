@@ -36,8 +36,13 @@ MOLO-TWIN after an explicit history-preserving GitRepo migration.
 
 ## atCGS and registered TWINs
 
-`atCGS/CGS-ALPHA` version `1.6.0-alpha` pins
-`ComplexGitSync/CGS-ALPHA` at `8.7.0`.
+`atCGS/CGS-ALPHA` version `1.7.1-alpha` pins
+`ComplexGitSync/CGS-ALPHA` at `8.7.1` (MemorySetupBranch).
+The engine-owned `.cgitsync/.memory` mount is declared at OPX and DEV;
+its branch is derived by ComplexGitSync rather than fixed to `main`.
+This is distinct from the `.omniscience` publication boundary.
+For precise current commits, consult `cgs-alpha/refs.lock.toml` and
+`cgs-alpha/LATEST_CGS_ALPHA.md`.
 atCGS owns identities, grants, GLYPH-sealed SSH keys, OPX/DEV/USR/PUB routing
 and public projection. ComplexGitSync owns GitTree, .gts, memory and Integrity.
 
@@ -96,7 +101,7 @@ remote publish or write operation has been run by this POC.
 - [x] Six MOLONARI historical repositories and CGS-MOLO branches conserved.
 - [x] atCGS linked at CGS-ALPHA; candidate MOLONARI root + four poles.
 - [x] Synthetic Virtual Lab and Sampling Point references.
-- [ ] Validate with actual ComplexGitSync 8.7.0 CgsDocument inside Pixi.
+- [ ] Validate with actual ComplexGitSync 8.7.1 CgsDocument inside Pixi.
 - [ ] BOOT real 7-GitRepo State to READY, .gts saved and independently restored.
 - [ ] atCGS role-filtered TWIN.cgs retains topological paths, branch and mixed grants.
 - [ ] Authenticate and publish verified TWIN references into real .omniscience.
