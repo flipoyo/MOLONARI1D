@@ -1,0 +1,65 @@
+# Fictional fixture: typed domain references only; not a CGS .cgs and not a live sampling site.
+[operating_space]
+name = "MOLONARI"
+root_twin = "MOLONARI"
+schema = "atCGS/OperatingSpace/TWIN-NODE-DATA-CMP"
+state = "PROPOSED"
+
+[[twin]]
+name = "LAB-DEMO"
+kind = "virtual-lab"
+parent = "MOLO-TWIN"
+
+[[twin]]
+name = "SP-DEMO"
+kind = "sampling-point"
+parent = "LAB-DEMO"
+
+[[node]]
+id = "RIVERBED-001"
+kind = "RIVERBED"
+twin = "SP-DEMO"
+private_location = true
+
+[[node]]
+id = "SENSOR-001"
+kind = "HARDWARE"
+twin = "SP-DEMO"
+
+[[node]]
+id = "SENSOR-002"
+kind = "HARDWARE"
+twin = "SP-DEMO"
+
+[[relation]]
+type = "observes"
+source = "SENSOR-001"
+target = "RIVERBED-001"
+from = "2026-01-01T00:00:00Z"
+to = "2026-02-01T00:00:00Z"
+
+[[relation]]
+type = "observes"
+source = "SENSOR-002"
+target = "RIVERBED-001"
+from = "2026-02-01T00:00:00Z"
+to = "2026-03-01T00:00:00Z"
+
+[[data]]
+name = "temperature-pressure-demo"
+twin = "SP-DEMO"
+source_node = "SENSOR-001"
+kind = "observations"
+provenance = "candidate-only"
+
+[[cmp]]
+name = "pyheatmy-demo"
+twin = "SP-DEMO"
+implementation = "pyheatmy"
+input_data = "temperature-pressure-demo"
+output_data = "flux-demo"
+state = "NOT_EXECUTED"
+
+[omniscience]
+publication = "NOT_PUBLISHED"
+gts_verified = false

@@ -8,6 +8,10 @@ one Operating Space, `MOLONARI`, rooted at `flipoyo/MOLONARI1D`.
 Its six historical repositories retain the existing paths and CGS-MOLO branch;
 `flipoyo/atCGS/CGS-ALPHA` is mounted at `atCGS/`.
 
+## Domain-level Operating Space strategy
+
+Canonical MOLONARI domain model: [`{TWIN, NODE, DATA, CMP}`](ONTOLOGY_TWIN_NODE_DATA_CMP.md), with an [illustrative physical-node/data/computation fixture](examples/domain-sampling-point.toml). **NODE denotes a physical object (`HARDWARE` or `RIVERBED`), not a GitRepo nor the infrastructure graph NODE.** Virtual Labs, Sampling Points and the four poles are TWINs. This is separate from `PRIME G`, changes no `.cgs` grammar, and does not publish into `.omniscience`.
+
 ## The two graphs are different
 
 **Actual GitTree**: MOLONARI1D (root), Molonaviz, data, hardware, molonari.io,
