@@ -1,5 +1,4 @@
-# Recorded 2026-11-03 from GitHub branch heads. Source baseline only,
-# NOT a .gts, Omniscience publication, or the commit of this POC branch.
+# Observed GitHub refs 2026-11-03; not a .gts Merkle snapshot.
 [engine]
 atcgs = "0e205004236d92ce782bdaaccf8384142136b7e5"
 complexgitsync = "dd3472b7b02ebd3028854413620197936a2f5f0e"

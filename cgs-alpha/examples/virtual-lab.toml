@@ -1,7 +1,7 @@
-# Synthetic example, not an actual sampling laboratory or site.
+# Synthetic example, not a registered physical lab.
 [twin]
 name = "LAB-DEMO"
 kind = "virtual-lab"
 parent = "MOLO-TWIN"
 phase = "example"
-context = "Synthetic Virtual Lab with no real identity or coordinates"
+context = "Demonstration virtual laboratory"

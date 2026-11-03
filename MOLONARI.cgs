@@ -1,5 +1,5 @@
-# MOLONARI — CGS-ALPHA POC. Six historical GitRepos remain on CGS-MOLO.
-# atCGS/CGS-ALPHA is the seventh public GitRepo. No private register mounted.
+# CGS-ALPHA POC — unchanged historical CGS-MOLO repositories and atCGS gate.
+# PUBLIC-only topology. No private .omniscience, journal, identity or SSH key.
 project = { name = "MOLONARI", default_branch = "CGS-ALPHA", fallback_branch = "main" }
 
 repos = [

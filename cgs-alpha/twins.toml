@@ -1,4 +1,4 @@
-# MOLONARI CGS-ALPHA — typed logical TWIN graph (not GitRepo grammar).
+# Four poles are logical Twins in phase 1, not repositories.
 [operating_space]
 name = "MOLONARI"
 root_repository = "github:flipoyo/MOLONARI1D"
@@ -10,6 +10,7 @@ state = "DECLARED_ONLY"
 [omniscience]
 namespace = "MOLONARI"
 publication = "NOT_PUBLISHED"
+public_projection = true
 requires_verified_gts = true
 publish_secrets = false
 

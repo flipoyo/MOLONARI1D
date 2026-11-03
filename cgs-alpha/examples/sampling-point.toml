@@ -1,7 +1,7 @@
-# Synthetic example, not an actual monitoring station.
+# Synthetic example, no real sampling-site coordinates.
 [twin]
 name = "SP-DEMO"
 kind = "sampling-point"
 parent = "LAB-DEMO"
 phase = "example"
-context = "Synthetic Sampling Point with no real location"
+context = "Demonstration sampling point"
