@@ -1,7 +1,10 @@
 # Observed GitHub refs 2026-11-03; not a .gts Merkle snapshot.
+# This is an inventory of source refs observed at different times; not a frozen state.
+# Engine updated to CGS 1.7.1-alpha / ComplexGitSync 8.7.1 (MemorySetupBranch).
+# Memory repository branch is resolved by CGS at load time, not set here.
 [engine]
-atcgs = "0e205004236d92ce782bdaaccf8384142136b7e5"
-complexgitsync = "dd3472b7b02ebd3028854413620197936a2f5f0e"
+atcgs = "8e7b847701df52192699daab8042c16cf596f555"
+complexgitsync = "f56d8148cb4d484a228a9d8550c4e84fccdb9f19"
 atcgs_branch = "CGS-ALPHA"
 complexgitsync_branch = "CGS-ALPHA"
 
@@ -12,4 +15,4 @@ complexgitsync_branch = "CGS-ALPHA"
 "MOLONARI-hardware" = "97de3e637f39732c71574ea597f35fc9abf4ec13"
 "MOLONARI-gate" = "06ce233883cab98fbc496e8ae60e0cc41afb18c9"
 "MOLONARI-computo" = "645edfc95cce4260af55149fd104b00c5021c954"
-"atCGS" = "0e205004236d92ce782bdaaccf8384142136b7e5"
+"atCGS" = "8e7b847701df52192699daab8042c16cf596f555"
