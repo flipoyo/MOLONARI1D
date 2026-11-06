@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Chaîne complète sur Point034 : bootstrap, lab build, run, report, puis requêtes au niveau user.
+# Chaîne complète sur Point034 : bootstrap, lab build, run, report, requêtes au niveau user, puis le travail d'un dev.
 #
 #     scripts/demo_lundi.sh <dossier vide>
 #
 # Un dossier qui contient déjà l'espace de travail MOLONARI1D est repris : bootstrap et installation sont sautés, et les
 # twins déjà calculés ne sont pas recalculés. S'arrête à la première étape en échec, avec un code de sortie non nul.
-# Variables : CGITSYNC_HOME (dossier de ComplexGitSync), PORT (port du serveur local).
+# Variables : CGITSYNC_HOME (dossier de ComplexGitSync), PORT (port du serveur local), TWIN_CLI et PYTHON (pour essayer un
+# autre code que celui de l'espace de travail : le script lance alors cette commande au lieu de celle du venv).
 
 set -euo pipefail
 
@@ -21,8 +22,10 @@ mkdir -p "$1"
 TARGET="$(cd "$1" && pwd)"
 WORKSPACE="$TARGET/MOLONARI1D"
 BACKEND="$WORKSPACE/Molonaviz/molonaviz2"
-TWINS="MOLONARI-TWIN/Point034/twins"
-REPORTS="MOLONARI-TWIN/Point034/public_reports"
+POINT="MOLONARI-TWIN/Point034"
+TWINS="$POINT/twins"
+REPORTS="$POINT/public_reports"
+LAB="MOLONARI-TWIN/virtual_lab/lab_point034/description"  # lab.yaml est dans le sous-dépôt description du lab
 BASE="http://127.0.0.1:$PORT/v1"
 
 if [ ! -d "$WORKSPACE" ] && [ -n "$(ls -A "$TARGET")" ]; then
@@ -67,13 +70,13 @@ else
     (cd "$CGITSYNC_HOME" && .pixi/envs/default/bin/cgitsync bootstrap "$MANIFEST" --cgs-path "$TARGET")
     (cd "$BACKEND" && uv sync --package molonari-twin --extra server --no-default-groups)
 fi
-TWIN_CLI="$BACKEND/.venv/bin/molonari-twin"
-PYTHON="$BACKEND/.venv/bin/python"
+TWIN_CLI="${TWIN_CLI:-$BACKEND/.venv/bin/molonari-twin}"
+PYTHON="${PYTHON:-$BACKEND/.venv/bin/python}"
 cd "$WORKSPACE"
 "$TWIN_CLI" --help > /dev/null
 
 step "Virtual lab : lab build"
-"$TWIN_CLI" lab build MOLONARI-TWIN/virtual_lab/lab_point034 --point Point034
+"$TWIN_CLI" lab build "$LAB" --point Point034
 "$PYTHON" - <<'EOF'
 import json
 
@@ -93,6 +96,10 @@ step "Twin MCMC"
 
 step "Rapport public"
 "$TWIN_CLI" report "$TWINS/twin_mcmc" --output "$REPORTS"
+test -f "$TWINS/twin_direct/generation.yaml"  # écrit par report : les couches et les bornes de generate
+for twin in twin_direct twin_mcmc; do
+    test -f "$TWINS/$twin/registry.csv" && test -n "$(ls "$TWINS/$twin/results")"  # résultats et registre par twin
+done
 "$PYTHON" - "$REPORTS" "$TARGET" "$HOME" <<'EOF'
 import json
 import pathlib
@@ -110,6 +117,20 @@ flux = json.loads((folder / "inversion-water_flux.json").read_text(encoding="utf
 print(f"Point {index['point']} : {len(index['entries'])} entrées, ni graine ni chemin dans {len(files)} fichiers")
 print(f"Flux d'eau moyen, inversion : {flux['value']:.2e} m/s, intervalle {flux['interval']}")
 EOF
+
+step "Lecture du rapport et état généré (user)"
+"$TWIN_CLI" reports list MOLONARI-TWIN
+"$TWIN_CLI" reports show "$POINT"
+"$TWIN_CLI" reports chains "$POINT"
+STATE="$TARGET/state"
+rm -rf "$STATE"
+"$TWIN_CLI" generate "$POINT" --output "$STATE"
+"$TWIN_CLI" ask "$STATE" water_flux --level user
+if "$TWIN_CLI" ask "$STATE" residuals --level user --json > /dev/null; then
+    echo "residuals aurait dû être refusée au niveau user sur un état généré" >&2
+    exit 1
+fi
+echo "Question réservée au dev refusée sur l'état généré : residuals"
 
 step "Requêtes au niveau user"
 ASKED="$TARGET/ask.json"
@@ -152,6 +173,34 @@ for request in "questions/residuals" "run"; do
     fi
     echo "Refusé par le serveur (403) : $request"
 done
+
+step "Travail d'un dev : twin de σ dans son operating space"
+# Le dev lance son twin avec sa propre graine, hors du dossier du point, et reçoit un rapport local de ce twin. Il lui faut
+# le dépôt de données (MOLONARI_DATA), puisque son space n'est pas dans l'espace de travail.
+SPACE="$TARGET/operating-space"
+SIGMA="0.08"
+DEVSEED="7"
+rm -rf "$SPACE"
+BEFORE=$(cd "$REPORTS" && find . -type f | sort | xargs shasum | shasum)
+MOLONARI_DATA="$WORKSPACE/data" "$TWIN_CLI" run "$TWINS/twin_mcmc" --sigma-temperature "$SIGMA" --space "$SPACE" --seed "$DEVSEED"
+DEVTWIN="$SPACE/twin_mcmc_sigmaT$SIGMA"
+MOLONARI_DATA="$WORKSPACE/data" "$TWIN_CLI" report "$DEVTWIN" --forward "$TWINS/twin_direct" --output "$SPACE/rapport_local"
+AFTER=$(cd "$REPORTS" && find . -type f | sort | xargs shasum | shasum)
+"$PYTHON" - "$POINT/orx/twin_mcmc.yaml" "$DEVTWIN" "$SPACE/rapport_local" "$DEVSEED" "$BEFORE" "$AFTER" <<'EOF'
+import json
+import pathlib
+import sys
+
+import yaml
+
+reference, devtwin, local, devseed, before, after = sys.argv[1:]
+assert before == after, "le rapport local a modifié public_reports/"
+refseed = yaml.safe_load(open(reference, encoding="utf-8"))["mcmc"]["seed"]
+dev = yaml.safe_load((pathlib.Path(devtwin) / "orx.yaml").read_text(encoding="utf-8"))["mcmc"]["seed"]
+assert dev == int(devseed) != refseed, (dev, refseed)  # la graine du dev, jamais la graine de référence
+assert json.loads((pathlib.Path(local) / "report.json").read_text(encoding="utf-8")).get("local") is True
+print(f"Twin du dev : graine {dev} (celle de référence n'est pas copiée), rapport local marqué local, public_reports/ inchangé")
+EOF
 
 finish_step
 STEP=""
