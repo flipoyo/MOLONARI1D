@@ -21,7 +21,6 @@ pixi install
 
 - Then run commands inside the environment:
 ```bash
-pixi run python -c "import pyheatmy; print('pyheatmy ready')"
 pixi run python -c "import molonaviz; print('molonaviz ready')"
 ```
 
@@ -31,35 +30,18 @@ You are now set to use the ecosystem. To launch it, run ```pixi run molonaviz```
 
 **3. Validate Installation:**
 ```bash
-# Test pyheatmy
-pixi run test-pyheatmy
-
 # Test Molonaviz structure (expected GUI import error in headless mode)
 pixi run validate-molonaviz-structure
 ```
 
-**4. Run Tests:**
-```bash
-# Unit tests (~5 seconds)
-pixi run test-pyheatmy
+Les tests de pyheatmy et ses notebooks sont dans MOLONARI-computo (`flipoyo/MOLONARI-computo`, `pixi run test-all` de ce dépôt).
 
-# Scientific workflow validation (~85 seconds)
-pixi run test-notebooks
-```
+**4. Run Tests:**
+Les tests de pyheatmy et ses notebooks sont dans MOLONARI-computo (`flipoyo/MOLONARI-computo`, `pixi run test-all` de ce dépôt).
 
 ## Usage Examples
 
-**Scientific Analysis with pyheatmy:**
-```python
-import pyheatmy
-
-# Load sensor data and run MCMC inference
-column = pyheatmy.Column.from_sensor_data('site_data.csv')
-results = column.run_inference(n_iterations=10000)
-
-# Extract flux estimates with uncertainty
-water_flux = results.get_parameter_distribution('darcy_velocity')
-```
+Les exemples d'analyse avec pyheatmy sont dans MOLONARI-computo (`flipoyo/MOLONARI-computo`, `pixi run test-all` de ce dépôt).
 
 **Device Management with Molonaviz:**
 ```bash
@@ -81,6 +63,5 @@ Use pixi on Linux, macOS, and Windows. The same commands are valid in all enviro
 
 ```bash
 pixi install
-pixi run test-pyheatmy
 pixi run molonaviz
 ```
