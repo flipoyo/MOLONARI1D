@@ -22,3 +22,12 @@ molonaviz = { path = "Molonaviz", editable = true }
 [tasks]
 validate-molonaviz-structure = "cd Molonaviz/src && python -c \"import molonaviz; print('Molonaviz structure validated')\""
 test-all = { depends-on = ["validate-molonaviz-structure"] }
+
+[feature.simu.dependencies]
+uv = "*"
+
+[feature.simu.tasks]
+simu-direct = "bash scripts/simu_direct.sh"
+
+[environments]
+simu = { features = ["simu"], no-default-feature = true }

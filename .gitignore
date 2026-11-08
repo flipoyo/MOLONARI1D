@@ -10,9 +10,11 @@ build/
 Trash
 hardware/.pio/libdeps/*
 .cgitsync/
+.pixi/
 MOLONARI1D.lgr
 Molonaviz
 MOLONARI-TWIN
+SIMU
 data
 hardware
 molonari.io
