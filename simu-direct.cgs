@@ -1,0 +1,12 @@
+project = { name = "MOLONARI1D", default_branch = "CGS-MOLO" }
+repos = [
+    { repository = "github:flipoyo/MOLONARI1D", fallback_branch = "CGS-MOLO" },
+    { repository = "github:flipoyo/MOLONARI-API", relative_path = "Molonaviz" },
+    { repository = "github:flipoyo/MOLONARI-data", relative_path = "data" },
+    { repository = "github:KeanuToofa/MOLONARI-TWIN", relative_path = "MOLONARI-TWIN" },
+    # Expérience SIMU : chaque machine y dépose l'export de son twin direct (forward/Point034/<MACHINE>/).
+    { repository = "github:KeanuToofa/SIMU", relative_path = "SIMU" },
+]
+
+[environment]
+tools = { git = "2.39", uv = "0.9", pixi = "0.81" }
