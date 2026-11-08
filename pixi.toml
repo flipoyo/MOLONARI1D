@@ -14,12 +14,11 @@ scipy = "*"
 matplotlib = "*"
 setuptools = "*"
 
+# Les tests de pyheatmy sont dans MOLONARI-computo (`pixi run test-all` de ce dépôt) ;
+# le twin fige pyheatmy dans Molonaviz/molonari_desk/uv.lock.
 [pypi-dependencies]
-pyheatmy = { path = "pyheatmy", editable = true }
 molonaviz = { path = "Molonaviz", editable = true }
 
 [tasks]
-test-pyheatmy = "pytest pyheatmy/tests/ -v"
-test-notebooks = "pytest --nbmake --nbmake-timeout=600 pyheatmy/demoPyheatmy.ipynb pyheatmy/demo_genData.ipynb"
 validate-molonaviz-structure = "cd Molonaviz/src && python -c \"import molonaviz; print('Molonaviz structure validated')\""
-test-all = { depends-on = ["test-pyheatmy", "test-notebooks", "validate-molonaviz-structure"] }
+test-all = { depends-on = ["validate-molonaviz-structure"] }
