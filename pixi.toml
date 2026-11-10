@@ -1,33 +1,27 @@
-[project]
+# Environment of the MOLONARI1D repository on its own: it needs no other repository of the Operating Space.
+# Molonaviz, the twin and SIMU are brought by `cgitsync bootstrap .config/molonari.cgs`; their environment and tasks
+# belong to the Operating Space, not to this file.
+[workspace]
 name = "molonari1d"
-version = "0.1.0"
+version = "1.0.0"
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [dependencies]
-python = ">=3.10,<3.14"
-pytest = "*"
-nbmake = "*"
-pyqt = "*"
-pandas = "*"
-scipy = "*"
-matplotlib = "*"
-setuptools = "*"
+python = ">=3.11,<3.14"  # ComplexGitSync needs 3.11
+git = "*"
 
-# Les tests de pyheatmy sont dans MOLONARI-computo (`pixi run test-all` de ce dépôt) ;
-# le twin fige pyheatmy dans Molonaviz/molonari_desk/uv.lock.
 [pypi-dependencies]
-molonaviz = { path = "Molonaviz", editable = true }
+# cgitsync, the tool that recomposes the Operating Space; pixi.lock pins its commit
+complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", branch = "main" }
 
 [tasks]
-validate-molonaviz-structure = "cd Molonaviz/src && python -c \"import molonaviz; print('Molonaviz structure validated')\""
-test-all = { depends-on = ["validate-molonaviz-structure"] }
-
-[feature.simu.dependencies]
-uv = "*"
-
-[feature.simu.tasks]
-simu-direct = "bash scripts/simu_direct.sh"
-
-[environments]
-simu = { features = ["simu"], no-default-feature = true }
+# recompose / update / inspect the Operating Space: pixi run molo load .config/molonari.cgs (see scripts/molo.py)
+molo = "python scripts/molo.py"
+# SemVer of this repository: pixi.toml is the reference, see scripts/bump_version.py
+bump-version = "python scripts/bump_version.py"
+check-version = "python scripts/bump_version.py --check"
+# the shell scripts parse; they run only inside the Operating Space
+check-scripts = "bash -n scripts/simu_direct.sh && bash -n scripts/demo_lundi.sh"
+check-molo = "python scripts/molo.py --help > /dev/null && cgitsync --version"
+test-all = { depends-on = ["check-version", "check-scripts", "check-molo"] }

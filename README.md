@@ -1,5 +1,5 @@
-# git from molonari.io
-#  ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D ecosystem
+# git from molonari.io STATE2026
+#  ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D v1.0.0 ecosystem administrated with ComplexGitSync
 
 MOLONARI stands for "**mo**nitoring **lo**cal des échanges **na**ppe-**ri**vière", which translates in English to **lo**cal **mo**nitoring of **s**tream-aquifer exchanges (LOMOS). This project aims to develop a comprehensive environmental monitoring solution for **water and heat exchanges** in riverbed environments. 
 
@@ -7,6 +7,31 @@ This repository provides detailed descriptions and scripts on how to build, prep
 
 ![MOLONARI1D_v1.0](Figures/schemaMOLONARI.png)
 *MOLONARI 1D v1.0 is composed of two devices, measuring depth distributed temperatures and the associated hydraulic head difference over the riverbed. MOLONARI 1D v2.0 integrates all the sensor in one device only*
+
+## Recompose the Operating Space
+
+Requires only [pixi](https://pixi.sh) and Git. From a clone of this repository:
+
+```bash
+pixi run molo load .config/molonari.cgs           # add --https without an SSH key
+export CGSHOME=...                                # line printed by load
+pixi run molo status
+```
+
+Other spaces in [.config/](.config): `molonari-light.cgs`, `simu-direct.cgs`, `install-orx.cgs`. Already loaded? `pixi run molo update .config/molonari.cgs`. `molo` runs the matching `cgitsync` command (`load` → `bootstrap`, `update` → `pull`, `status` → `status`) from [ComplexGitSync](https://github.com/flipoyo/ComplexGitSync), installed by pixi.
+
+## Administration with pixi
+
+pixi is the single entry point; [pixi.toml](pixi.toml) needs no other repository:
+
+```bash
+pixi install                       # environment of this repository
+pixi run test-all                  # check-version, check-scripts, check-molo
+pixi run check-version             # every mirror holds the version of pixi.toml
+pixi run bump-version minor        # or patch / major; add --dry-run to preview, --stage rc for a pre-release
+```
+
+The version follows [SemVer](https://semver.org); `[workspace] version` in [pixi.toml](pixi.toml) is the reference, handled by [scripts/bump_version.py](scripts/bump_version.py) (same script as MOLONARI-computo). After a bump, commit with the subject `MOLONARI1D-<new version> …` and tag it with `cgitsync tag`.
 
 **Key attention points** - The MOLONARI1D device is designed with the following key concepts in mind :
 - low-tech production
