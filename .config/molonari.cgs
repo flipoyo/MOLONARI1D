@@ -6,6 +6,6 @@ repos = [
     { repository = "github:flipoyo/MOLO-data-light", relative_path = "data", default_branch = "CGS-MOLO" },
     { repository = "github:flipoyo/MOLONARI-hardware", relative_path = "hardware", default_branch = "CGS-MOLO" },
     { repository = "github:flipoyo/MOLONARI-gate", relative_path = "molonari.io", default_branch = "CGS-MOLO" },
-    { repository = "github:flipoyo/MOLONARI-computo", relative_path = "pyheatmy", default_branch = "CGS-MOLO"},
+    { repository = "github:flipoyo/MOLONARI-computo", relative_path = "computo", default_branch = "CGS-MOLO"},
     { repository = "github:flipoyo/ComplexGitSync", relative_path = "dev-hub", private = true, writable = true },
 ]

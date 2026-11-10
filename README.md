@@ -1,5 +1,5 @@
 # git from molonari.io STATE2026
-#  ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D v1.0.0 ecosystem administrated with pixi based on ComplexGitSync
+#  ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D v1.0.1 ecosystem administrated with pixi based on ComplexGitSync
 
 MOLONARI stands for "**mo**nitoring **lo**cal des échanges **na**ppe-**ri**vière", which translates in English to **lo**cal **mo**nitoring of **s**tream-aquifer exchanges (LOMOS). This project aims to develop a comprehensive environmental monitoring solution for **water and heat exchanges** in riverbed environments. 
 
@@ -97,7 +97,7 @@ MOLONARI1D/
 │   ├── shared/              # Common libraries and protocols
 │   ├── tests/               # Hardware validation tests
 │   └── docs/                # Hardware documentation
-├── pyheatmy/              # Scientific computing engine
+├── computo/               # Scientific computing engine (pyheatmy, bayesian-inversion, data-pre-proc, TUTO)
 ├── Molonaviz/             # Device management GUI
 ├── data/                  # Sample datasets
 └── dataAnalysis/          # Analysis tools and notebooks
