@@ -1,7 +1,8 @@
-# git from molonari.io STATE2026
-#  ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D v1.0.1 ecosystem administrated with pixi based on ComplexGitSync
+# ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D v1.0.2 ecosystem administrated with pixi based on ComplexGitSync
 
-MOLONARI stands for "**mo**nitoring **lo**cal des échanges **na**ppe-**ri**vière", which translates in English to **lo**cal **mo**nitoring of **s**tream-aquifer exchanges (LOMOS). This project aims to develop a comprehensive environmental monitoring solution for **water and heat exchanges** in riverbed environments. 
+*git from molonari.io STATE2026*
+
+MOLONARI stands for "**mo**nitoring **lo**cal des échanges **na**ppe-**ri**vière", which translates in English to **lo**cal **mo**nitoring of **s**tream-aquifer exchanges (LOMOS). This project aims to develop a comprehensive environmental monitoring solution for **water and heat exchanges** in riverbed environments.
 
 This repository provides detailed descriptions and scripts on how to build, prepare and deploy a 1D MOLONARI device, from hardware deployment to scientific analysis. A MOLONARI1D device provides **temperature and pressure sensors** in the river bed, at depths ranging from 0 to ~40cm. In the long run, these measures give us informations on water and heat exchanges between the river and the aquifer, and on the aquifer's properties (porosity, permeability, etc.)
 
@@ -34,6 +35,7 @@ pixi run bump-version minor        # or patch / major; add --dry-run to preview,
 The version follows [SemVer](https://semver.org); `[workspace] version` in [pixi.toml](pixi.toml) is the reference, handled by [scripts/bump_version.py](scripts/bump_version.py) (same script as MOLONARI-computo). After a bump, commit with the subject `MOLONARI1D-<new version> …` and tag it with `cgitsync tag`.
 
 **Key attention points** - The MOLONARI1D device is designed with the following key concepts in mind :
+
 - low-tech production
 - open-source and replicability
 - scalability
@@ -43,7 +45,8 @@ The version follows [SemVer](https://semver.org); `[workspace] version` in [pixi
 Here is an overview of the main features developed so far in the MOLONARI1D project.
 
 ### 🔧 **Hardware** - MOLONARI1D Devices Ecosystem
-*Arduino-based underwater sensors network*
+
+Arduino-based underwater sensors network
 
 - **Sensor Nodes**: Waterproof packages with temperature/pressure sensors
 - **Relay Stations**: Data aggregation and LoRaWAN communication
@@ -51,15 +54,17 @@ Here is an overview of the main features developed so far in the MOLONARI1D proj
 - **Power Management**: 8-12 months autonomous operation
 
 ### 🔬 **pyheatmy** - Scientific Computing Engine
-*Bayesian inference for hydrological parameter estimation*
+
+Bayesian inference for hydrological parameter estimation
 
 - **Bayesian inversion, MCMC based**: Infers physical properties of 1D riverbed columns - multichain MCMC also available
 - **Data Integration**: Direct coupling with sensor data streams from monitoring systems
 - **Uncertainty Quantification**: Provides parameter estimates with confidence intervals
 - **Research Extensions**: Modular architecture supporting experimental features
 
-### 📊 **Molonaviz** - Device Management & Visualization  
-*PyQt5-based GUI for operational monitoring*
+### 📊 **Molonaviz** - Device Management & Visualization
+
+PyQt5-based GUI for operational monitoring
 
 - **Device Registration**: Laboratory and sampling point hierarchy management
 - **Data Pipeline**: Quality control workflows from raw sensor data to analysis-ready datasets
@@ -75,7 +80,7 @@ MOLONARI1D implements a **multi-tier monitoring network architecture** designed 
 
 **Data Flow Pipeline:**
 
-```
+```text
 Underwater Sensors → Relay → Gateway → Server → Database → Analysis Tools
      (Arduino)       (LoRa)  (LoRaWAN)  (Internet) (SQL)   (Python ML/GUI)
 ```
@@ -89,7 +94,7 @@ Underwater Sensors → Relay → Gateway → Server → Database → Analysis To
 
 ## Repository Structure
 
-```
+```text
 MOLONARI1D/
 ├── hardware/              # Arduino-based monitoring devices
 │   ├── sensors/             # Temperature, pressure, and demo sensors
@@ -116,6 +121,7 @@ MOLONARI1D/
 **Current TRL: 5-6** - Laboratory validation complete, field deployment in progress
 
 The MOLONARI1D system has successfully demonstrated complete functionality in laboratory underwater testing. See [TRL_ASSESSMENT.md](TRL_ASSESSMENT.md) for detailed Technology Readiness Level evaluation, including:
+
 - ✅ Complete system validated underwater in laboratory (TRL 5)
 - 🔄 Transitioning to field deployment and operational validation (TRL 6)
 - Evidence-based assessment of hardware, firmware, and system integration
@@ -144,16 +150,19 @@ Some bugs may also appear. We therefore do not guarantee any reliability on the 
 ✅ **Quality Assurance**: Fixed CI issues, validated all test suites, and ensured robust development workflows for multi-team collaboration.
 
 ## Contributors
+
 MOLONARI1D is a teaching and research project held at Mines Paris - PSL since 2021, under the supervision of Nicolas Flipo, Aurélien Baudin, Agnès Rivière, Thomas Romary, and Fabien Ors.
 
 - Nicolas Flipo supervises the development of the MOLONARI 1D ecosystem. He manages the project, the infrastructure design and deployment, the coordination of teaching, production and research, as well as the github repository and the developpers' teams. With Fabien Ors and Pierre Guillou, he is in charge of the source code development either for hardware programming, scientific computing, and IT
-- Aurelien Baudin, Agnès Rivière, and Nicolas Flipo supervise the **monitoring device development** and their **_in situ_ deployment**
+- Aurelien Baudin, Agnès Rivière, and Nicolas Flipo supervise the **monitoring device development** and their ***in situ* deployment**
 - Nicolas Flipo and Thomas Romary supervise the development of **pyheatmy**
 - Fabien Ors contributed to the 2021 and 2022 editions by conceptualising **molonaviz**, and since 2024 securizing it
 - Since 2024, Pierre Guillou secures the software deployment
 
-The MOLONARI1D project is integrated into the french research project [EQUIPEX+ TERRA FORMA](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires "link to TERRA FORMA") led by CNRS. 
+The MOLONARI1D project is integrated into the french research project [EQUIPEX+ TERRA FORMA](https://www.insu.cnrs.fr/fr/cnrsinfo/terra-forma-un-nouveau-paradigme-pour-lobservation-des-territoires "link to TERRA FORMA") led by CNRS.
 Students contributions are listed in **contributors.md**
+
+Parts of the code, scripts and documentation were written with the assistance of large language models (Anthropic's Claude, through Claude Code), under the direction and review of the contributors above, who remain responsible for the content. LLM assistance is credited here, not in the commit messages.
 
 ## Copyright
 
@@ -161,6 +170,6 @@ Students contributions are listed in **contributors.md**
 
 &copy; Contributors to the MOLONARI1D softwares.
 
-*All rights reserved*. This software and the accompanying materials are made available under the terms of the Eclipse Public License (EPL) v2.0 which accompanies this distribution, and is available at http://www.eclipse.org/legal/epl-v20.html.
+*All rights reserved*. This software and the accompanying materials are made available under the terms of the Eclipse Public License (EPL) v2.0 which accompanies this distribution, and is available at <http://www.eclipse.org/legal/epl-v20.html>.
 
 **pyheatmy** and **molonaviz**  were first released in 2021 under the MIT license.
