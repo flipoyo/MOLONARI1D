@@ -1,4 +1,4 @@
-# ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D v1.0.8 ecosystem administrated with pixi based on ComplexGitSync
+# ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D v1.0.9 ecosystem administrated with pixi based on ComplexGitSync
 
 *git from molonari.io STATE2026*
 
