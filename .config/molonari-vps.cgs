@@ -1,0 +1,11 @@
+# The Operating Space of the molonari.io server: the public repositories of molonari.cgs, no private one,
+# so that it loads over HTTPS with no SSH key. molosite runs here and pushes the site (see molonari.io/README.md).
+project = "MOLONARI-vps"
+repos = [
+    { repository = "github:flipoyo/MOLONARI1D", relative_path = ".", default_branch = "CGS-MOLO" },
+    { repository = "github:flipoyo/MOLONARI-API", relative_path = "Molonaviz", default_branch = "CGS-MOLO" },
+    { repository = "github:flipoyo/MOLO-data-light", relative_path = "data", default_branch = "CGS-MOLO" },
+    { repository = "github:flipoyo/MOLONARI-hardware", relative_path = "hardware", default_branch = "CGS-MOLO" },
+    { repository = "github:flipoyo/MOLONARI-gate", relative_path = "molonari.io", default_branch = "CGS-MOLO" },
+    { repository = "github:flipoyo/MOLONARI-computo", relative_path = "computo", default_branch = "CGS-MOLO" },
+]

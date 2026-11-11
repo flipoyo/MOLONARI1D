@@ -1,4 +1,4 @@
-# ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D v1.0.7 ecosystem administrated with pixi based on ComplexGitSync
+# ![logo](Figures/logo_MOLONARI_smll.png)  MOLONARI1D v1.0.8 ecosystem administrated with pixi based on ComplexGitSync
 
 *git from molonari.io STATE2026*
 
@@ -19,7 +19,7 @@ export CGSHOME=...                                # line printed by load
 pixi run molo status
 ```
 
-Other spaces in [.config/](.config): `molonari-light.cgs`, `simu-direct.cgs`, `install-orx.cgs`. Already loaded? `pixi run molo update .config/molonari.cgs`. `molo` runs the matching `cgitsync` command (`load` → `bootstrap`, `update` → `pull`, `status` → `status`) from [ComplexGitSync](https://github.com/flipoyo/ComplexGitSync), installed by pixi.
+Other spaces in [.config/](.config): `molonari-light.cgs`, `molonari-vps.cgs` (the server: public repositories only), `simu-direct.cgs`, `install-orx.cgs`. Already loaded? `pixi run molo update .config/molonari.cgs`. `molo` runs the matching `cgitsync` command (`load` → `bootstrap`, `update` → `pull`, `status` → `status`) from [ComplexGitSync](https://github.com/flipoyo/ComplexGitSync), installed by pixi.
 
 ## Administration with pixi
 
