@@ -57,6 +57,8 @@ Arduino-based underwater sensors network
 
 Bayesian inference for hydrological parameter estimation
 
+Its code lives in a tree of its own, [MOLONARI-computo](https://github.com/flipoyo/MOLONARI-computo/tree/CGS-MOLO): the direct model `pyheatmy`, the Bayesian inversion `bayesian_inversion`, the processing of raw measurements and three tutorials to start with.
+
 - **Bayesian inversion, MCMC based**: Infers physical properties of 1D riverbed columns - multichain MCMC also available
 - **Data Integration**: Direct coupling with sensor data streams from monitoring systems
 - **Uncertainty Quantification**: Provides parameter estimates with confidence intervals
